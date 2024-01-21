@@ -1,0 +1,6 @@
+@AlertHawk.Monitoring_HostAddress = http://localhost:5149
+
+GET {{AlertHawk.Monitoring_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
