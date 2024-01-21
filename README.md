@@ -1,5 +1,8 @@
 # AlertHawk
-[![Build status](https://ci.appveyor.com/api/projects/status/7ph5b2otk7v9thi4?svg=true)](https://ci.appveyor.com/project/thiagoloureiro/alerthawk)
-![](https://img.shields.io/appveyor/tests/thiagoloureiro/alerthawk)
+[![Build status](https://thiagoguaru.visualstudio.com/AlertHawk/_apis/build/status/AlertHawk.Notification)](https://thiagoguaru.visualstudio.com/AlertHawk/_build/latest?definitionId=9)
+![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/thiagoguaru/alerthawk/9)
+![Azure DevOps tests](https://img.shields.io/azure-devops/tests/thiagoguaru/alerthawk/9)
 
-[![Build history](https://buildstats.info/appveyor/chart/thiagoloureiro/alerthawk)](https://ci.appveyor.com/project/thiagoloureiro/alerthawk/history)
+## AlertHawk.Notification
+![Docker Image Size (tag)](https://img.shields.io/docker/image-size/thiagoguaru/alerthawk.notification/latest)
+[![Build status](https://thiagoguaru.visualstudio.com/AlertHawk/_apis/build/status/AlertHawk.Notification%20-%20Docker)](https://thiagoguaru.visualstudio.com/AlertHawk/_build/latest?definitionId=10)
