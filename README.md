@@ -2,6 +2,8 @@
 **Overview**
 **AlertHawk** is a cutting-edge, easy-to-use self-hosted monitoring tool designed to empower you with real-time insights into the health and performance of your applications. Whether you're managing WebAPIs, websites, databases, or a variety of other components, AlertHawk is your go-to solution for comprehensive monitoring.
 
+**This project is in the initial phase of development, if you want to contribute please reach out**
+
 ## Key Features
 **Versatile Component Monitoring:** AlertHawk provides seamless monitoring for a wide array of components, including WebAPIs, websites, databases, and many others. Gain deep insights into the performance and health of each component in real-time.
 
