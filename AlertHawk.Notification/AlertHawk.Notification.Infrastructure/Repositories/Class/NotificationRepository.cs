@@ -49,9 +49,9 @@ namespace AlertHawk.Notification.Infrastructure.Repositories.Class
         {
             // Insert
             await using var db = new SqlConnection(_connstring);
-            string sql = @"INSERT INTO [NotificationType] (Name, Description) VALUES (@Name, @Description)";
+            string sql = @"INSERT INTO [NotificationType] (Id, Name, Description) VALUES (@Id, @Name, @Description)";
 
-            await db.ExecuteAsync(sql, new { Name = notificationtype.Name, Description = notificationtype.Description }, commandType: CommandType.Text);
+            await db.ExecuteAsync(sql, new { Id = notificationtype.Id, Name = notificationtype.Name, Description = notificationtype.Description }, commandType: CommandType.Text);
         }
 
         public async Task UpdateNotificationType(NotificationType notificationtype)

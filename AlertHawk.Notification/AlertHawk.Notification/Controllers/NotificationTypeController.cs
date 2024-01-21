@@ -20,7 +20,7 @@ namespace AlertHawk.Notification.Controllers
             _caching = caching;
         }
 
-        [HttpGet("GetNotificationTypes")]
+        [HttpGet("GetNotificationType")]
         [SwaggerOperation(Summary = "Return List of notification types")]
         [ProducesResponseType(typeof(List<NotificationType>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetNotificationTypes()
@@ -31,7 +31,7 @@ namespace AlertHawk.Notification.Controllers
             return Ok(result);
         }
 
-        [HttpGet("GetNotificationTypes/{id}")]
+        [HttpGet("GetNotificationType/{id}")]
         [SwaggerOperation(Summary = "Return List of notification type by Id")]
         [ProducesResponseType(typeof(NotificationType), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetNotificationTypesById(int id)
@@ -45,7 +45,7 @@ namespace AlertHawk.Notification.Controllers
         }
 
         [HttpPost("InsertNotificationType")]
-        [SwaggerOperation(Summary = "Create a new Notification Type")]
+        [SwaggerOperation(Summary = "Create a new NotificationSend Type")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         public async Task<IActionResult> InsertNotificationType(NotificationType notification)
         {
@@ -55,7 +55,7 @@ namespace AlertHawk.Notification.Controllers
 
                 if (notificationByName != null)
                 {
-                    return BadRequest($"Notification with this name {notification.Name} already exists");
+                    return BadRequest($"NotificationSend with this name {notification.Name} already exists");
                 }
             }
 
@@ -65,7 +65,7 @@ namespace AlertHawk.Notification.Controllers
         }
 
         [HttpPut("UpdateNotificationType")]
-        [SwaggerOperation(Summary = "Update a Notification Type")]
+        [SwaggerOperation(Summary = "Update a NotificationSend Type")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         public async Task<IActionResult> UpdateNotificationType(NotificationType notification)
         {
@@ -75,7 +75,7 @@ namespace AlertHawk.Notification.Controllers
         }
 
         [HttpDelete("DeleteNotificationType")]
-        [SwaggerOperation(Summary = "Delete a Notification Type")]
+        [SwaggerOperation(Summary = "Delete a NotificationSend Type")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         public async Task<IActionResult> DeleteNotificationType(int id)
         {
