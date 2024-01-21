@@ -10,6 +10,8 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["AlertHawk.Notification/AlertHawk.Notification.csproj", "AlertHawk.Notification/"]
+COPY ["AlertHawk.Notification.Domain/AlertHawk.Notification.Domain.csproj", "AlertHawk.Notification.Domain/"]
+COPY ["AlertHawk.Notification.Infrastructure/AlertHawk.Notification.Infrastructure.csproj", "AlertHawk.Notification.Infrastructure/"]
 RUN dotnet restore "./AlertHawk.Notification/./AlertHawk.Notification.csproj"
 COPY . .
 WORKDIR "/src/AlertHawk.Notification"
