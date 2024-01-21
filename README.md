@@ -11,6 +11,7 @@
 
 ## AlertHawk.Notification - Docker Container
 ![Docker Image Size (tag)](https://img.shields.io/docker/image-size/thiagoguaru/alerthawk.notification/latest)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/393efae670d247b8921db1a51dbd28ed)](https://app.codacy.com/gh/thiagoloureiro/AlertHawk?utm_source=github.com&utm_medium=referral&utm_content=thiagoloureiro/AlertHawk&utm_campaign=Badge_Grade)
 [![Build status](https://thiagoguaru.visualstudio.com/AlertHawk/_apis/build/status/AlertHawk.Notification%20-%20Docker)](https://thiagoguaru.visualstudio.com/AlertHawk/_build/latest?definitionId=10)
 ![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/thiagoguaru/alerthawk/9)
 ![Azure DevOps tests](https://img.shields.io/azure-devops/tests/thiagoguaru/alerthawk/9)
