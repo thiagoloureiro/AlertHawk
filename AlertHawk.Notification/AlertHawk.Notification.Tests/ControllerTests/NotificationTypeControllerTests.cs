@@ -58,7 +58,7 @@ public class NotificationTypeControllerTests
     {
         // Arrange
         var nonExistingId = 999; // Provide a non-existing id
-        _notificationTypeService.SelectNotificationTypeById(nonExistingId).Returns((NotificationType)null);
+        _notificationTypeService.SelectNotificationTypeById(nonExistingId).Returns((NotificationType)null!);
 
         // Act
         var result = await _controller.GetNotificationTypesById(nonExistingId) as NotFoundResult;
@@ -73,7 +73,7 @@ public class NotificationTypeControllerTests
     {
         // Arrange
         var notification = new NotificationType { Name = "NewNotification" }; // Provide valid data
-        _notificationTypeService.SelectNotificationTypeByName(notification.Name).Returns((NotificationType)null);
+        _notificationTypeService.SelectNotificationTypeByName(notification.Name).Returns((NotificationType)null!);
 
         // Act
         var result = await _controller.InsertNotificationType(notification) as OkObjectResult;
@@ -100,7 +100,7 @@ public class NotificationTypeControllerTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
-        Assert.Contains("already exists", result.Value.ToString());
+        Assert.Contains("already exists", result.Value?.ToString());
         await _notificationTypeService.DidNotReceive().InsertNotificationType(Arg.Any<NotificationType>());
         _caching.DidNotReceive().Invalidate("GetNotificationTypes");
     }
@@ -146,7 +146,7 @@ public class NotificationTypeControllerTests
     {
         // Arrange
         var nonExistingId = 999; // Provide a non-existing id
-        _notificationTypeService.SelectNotificationTypeById(nonExistingId).Returns((NotificationType)null);
+        _notificationTypeService.SelectNotificationTypeById(nonExistingId).Returns((NotificationType)null!);
 
         // Act
         var result = await _controller.DeleteNotificationType(nonExistingId) as NotFoundObjectResult;

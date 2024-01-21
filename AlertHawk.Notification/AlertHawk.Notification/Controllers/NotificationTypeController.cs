@@ -11,8 +11,8 @@ namespace AlertHawk.Notification.Controllers
     public class NotificationTypeController : ControllerBase
     {
         private readonly INotificationTypeService _notificationTypeService;
-        private ICaching _caching;
-        private string _cacheKey = "GetNotificationTypes";
+        private readonly ICaching _caching;
+        private readonly string _cacheKey = "GetNotificationTypes";
 
         public NotificationTypeController(INotificationTypeService notificationTypeService, ICaching caching)
         {
@@ -49,11 +49,14 @@ namespace AlertHawk.Notification.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         public async Task<IActionResult> InsertNotificationType(NotificationType notification)
         {
-            var notificationByName = await _notificationTypeService.SelectNotificationTypeByName(notification.Name);
-
-            if (notificationByName != null)
+            if (notification.Name != null)
             {
-                return BadRequest($"Notification with this name {notification.Name} already exists");
+                var notificationByName = await _notificationTypeService.SelectNotificationTypeByName(notification.Name);
+
+                if (notificationByName != null)
+                {
+                    return BadRequest($"Notification with this name {notification.Name} already exists");
+                }
             }
 
             await _notificationTypeService.InsertNotificationType(notification);

@@ -3,7 +3,9 @@ using AlertHawk.Notification.Domain.Interfaces.Repositories;
 using AlertHawk.Notification.Domain.Interfaces.Services;
 using AlertHawk.Notification.Infrastructure.Repositories.Class;
 using EasyMemoryCache.Configuration;
+using System.Diagnostics.CodeAnalysis;
 
+[assembly: ExcludeFromCodeCoverage]
 var builder = WebApplication.CreateBuilder(args);
 
 var configuration = new ConfigurationBuilder()
