@@ -28,10 +28,4 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\AlertHawk.Notification.Domain\AlertHawk.Notification.Domain.csproj" />
-    <ProjectReference Include="..\AlertHawk.Notification.Infrastructure\AlertHawk.Notification.Infrastructure.csproj" />
-    <ProjectReference Include="..\AlertHawk.Notification\AlertHawk.Notification.csproj" />
-  </ItemGroup>
-
 </Project>

@@ -13,10 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AlertHawk.Notification.Domain\AlertHawk.Notification.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Folder Include="Repositories\Interface\" />
   </ItemGroup>
 

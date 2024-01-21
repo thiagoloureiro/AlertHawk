@@ -1,0 +1,60 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34511.84
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AlertHawk.Monitoring", "AlertHawk.Monitoring", "{2128B102-BB29-41C1-88B7-E483B3DCEFB3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AlertHawk.Notification", "AlertHawk.Notification", "{CA77A017-8417-4FC2-AEE9-3F090875F9DB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AlertHawk.Monitoring", "AlertHawk.Monitoring\AlertHawk.Monitoring\AlertHawk.Monitoring.csproj", "{16A3F823-749C-454F-9CB8-2ADDE2105E53}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AlertHawk.Notification", "AlertHawk.Notification\AlertHawk.Notification\AlertHawk.Notification.csproj", "{24B8C509-473E-4929-A017-084578105200}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AlertHawk.Notification.Domain", "AlertHawk.Notification\AlertHawk.Notification.Domain\AlertHawk.Notification.Domain.csproj", "{781D2651-8F47-4B6D-A9F1-587ACD2D1FF8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AlertHawk.Notification.Infrastructure", "AlertHawk.Notification\AlertHawk.Notification.Infrastructure\AlertHawk.Notification.Infrastructure.csproj", "{92C60C24-2797-4697-A6D1-B3F83E03EE12}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AlertHawk.Notification.Tests", "AlertHawk.Notification\AlertHawk.Notification.Tests\AlertHawk.Notification.Tests.csproj", "{BF04EB32-E54D-449B-B759-AAF64B7F5268}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{16A3F823-749C-454F-9CB8-2ADDE2105E53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16A3F823-749C-454F-9CB8-2ADDE2105E53}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16A3F823-749C-454F-9CB8-2ADDE2105E53}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16A3F823-749C-454F-9CB8-2ADDE2105E53}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24B8C509-473E-4929-A017-084578105200}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24B8C509-473E-4929-A017-084578105200}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24B8C509-473E-4929-A017-084578105200}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24B8C509-473E-4929-A017-084578105200}.Release|Any CPU.Build.0 = Release|Any CPU
+		{781D2651-8F47-4B6D-A9F1-587ACD2D1FF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{781D2651-8F47-4B6D-A9F1-587ACD2D1FF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{781D2651-8F47-4B6D-A9F1-587ACD2D1FF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{781D2651-8F47-4B6D-A9F1-587ACD2D1FF8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92C60C24-2797-4697-A6D1-B3F83E03EE12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92C60C24-2797-4697-A6D1-B3F83E03EE12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92C60C24-2797-4697-A6D1-B3F83E03EE12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92C60C24-2797-4697-A6D1-B3F83E03EE12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF04EB32-E54D-449B-B759-AAF64B7F5268}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF04EB32-E54D-449B-B759-AAF64B7F5268}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF04EB32-E54D-449B-B759-AAF64B7F5268}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF04EB32-E54D-449B-B759-AAF64B7F5268}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{16A3F823-749C-454F-9CB8-2ADDE2105E53} = {2128B102-BB29-41C1-88B7-E483B3DCEFB3}
+		{24B8C509-473E-4929-A017-084578105200} = {CA77A017-8417-4FC2-AEE9-3F090875F9DB}
+		{781D2651-8F47-4B6D-A9F1-587ACD2D1FF8} = {CA77A017-8417-4FC2-AEE9-3F090875F9DB}
+		{92C60C24-2797-4697-A6D1-B3F83E03EE12} = {CA77A017-8417-4FC2-AEE9-3F090875F9DB}
+		{BF04EB32-E54D-449B-B759-AAF64B7F5268} = {CA77A017-8417-4FC2-AEE9-3F090875F9DB}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6F43E98B-8A2F-4FF4-81DB-D1A0E8CC70DE}
+	EndGlobalSection
+EndGlobal
