@@ -40,4 +40,8 @@
     <ProjectReference Include="..\AlertHawk.Notification\AlertHawk.Notification.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="NotifierTests\" />
+  </ItemGroup>
+
 </Project>

@@ -4,25 +4,22 @@ namespace AlertHawk.Notification.Domain.Classes.Notifications
 {
     public static class SlackNotifier
     {
+        public static string webHookUrl = "";
+
         public static async Task SendNotification(string channel, string message)
         {
             try
             {
-                // Fetch WebhookUrl
-                var SlackWebhookUrl = "";
+                using HttpClient httpClient = new HttpClient();
+                string payload = $"{{\"channel\": \"{channel}\", \"text\": \"{message}\"}}";
 
-                using (HttpClient httpClient = new HttpClient())
-                {
-                    string payload = $"{{\"channel\": \"{channel}\", \"text\": \"{message}\"}}";
+                using StringContent content = new StringContent(payload, Encoding.UTF8, "application/json");
 
-                    StringContent content = new StringContent(payload, Encoding.UTF8, "application/json");
+                using HttpResponseMessage response = await httpClient.PostAsync(webHookUrl, content);
 
-                    HttpResponseMessage response = await httpClient.PostAsync(SlackWebhookUrl, content);
+                response.EnsureSuccessStatusCode();
 
-                    response.EnsureSuccessStatusCode();
-
-                    Console.WriteLine("Notification sent successfully!");
-                }
+                Console.WriteLine("Notification sent successfully!");
             }
             catch (Exception ex)
             {
