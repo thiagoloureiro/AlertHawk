@@ -16,8 +16,8 @@ public class NotificationTypeServiceTests
 
         var expectedNotificationTypes = new List<NotificationType>
         {
-            new NotificationType { Id = 1, Name = "Type1", Description = "Item Description1"},
-            new NotificationType { Id = 2, Name = "Type2", Description = "Item Description2"}
+            new() { Id = 1, Name = "Type1", Description = "Item Description1"},
+            new() { Id = 2, Name = "Type2", Description = "Item Description2"}
         };
 
         repositorySubstitute.SelectNotificationType().Returns(expectedNotificationTypes);

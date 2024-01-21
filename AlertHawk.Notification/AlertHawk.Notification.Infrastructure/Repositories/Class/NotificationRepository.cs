@@ -4,9 +4,11 @@ using Dapper;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Notification.Infrastructure.Repositories.Class
 {
+    [ExcludeFromCodeCoverage]
     public class NotificationTypeRepository : RepositoryBase, INotificationTypeRepository
     {
         private readonly string _connstring;
