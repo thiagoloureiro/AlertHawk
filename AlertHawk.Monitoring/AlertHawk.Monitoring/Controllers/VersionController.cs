@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Reflection;
+﻿using System.Reflection;
+using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
-namespace AlertHawk.Notification.Controllers
+namespace AlertHawk.Monitoring.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
