@@ -58,7 +58,7 @@ namespace AlertHawk.Notification.Infrastructure.Repositories.Class
         {
             // Update
             await using var db = new SqlConnection(_connstring);
-            string sql = @"UPDATE [NotificationType] Name = @Name, Description = @Description WHERE Id = @Id";
+            string sql = @"UPDATE [NotificationType] SET Name = @Name, Description = @Description WHERE Id = @Id";
 
             await db.ExecuteAsync(sql, new { Id = notificationtype.Id, Name = notificationtype.Name, Description = notificationtype.Description }, commandType: CommandType.Text);
         }
