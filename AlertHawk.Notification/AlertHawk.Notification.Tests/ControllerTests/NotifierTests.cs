@@ -25,9 +25,9 @@ public class NotifierTests : IClassFixture<NotificationController>
             NotificationTypeId = 3,
             NotificationTelegram = new NotificationTelegram
             {
-                ChatId = Convert.ToInt64(Environment.GetEnvironmentVariable("ChatId")),
+                ChatId = Convert.ToInt64(Environment.GetEnvironmentVariable("ChatId", EnvironmentVariableTarget.Process)),
                 NotificationId = 1,
-                TelegramBotToken = Environment.GetEnvironmentVariable("TelegramBotToken"),
+                TelegramBotToken = Environment.GetEnvironmentVariable("TelegramBotToken", EnvironmentVariableTarget.Process),
             },
 
         };
