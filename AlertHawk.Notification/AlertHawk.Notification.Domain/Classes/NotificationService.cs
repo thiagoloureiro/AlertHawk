@@ -36,16 +36,19 @@ namespace AlertHawk.Notification.Domain.Classes
 
                 case 2: // MS Teams
                     await _teamsNotifier.SendNotification(notificationSend.Message, notificationSend.NotificationTeams.WebHookUrl);
+                    return true;
                     break;
 
                 case 3: // Telegram
                     await _telegramNotifier.SendNotification(notificationSend.NotificationTelegram.ChatId, notificationSend.Message,
                         notificationSend.NotificationTelegram.TelegramBotToken);
+                    return true;
                     break;
 
                 case 4: // Slack
                     await _slackNotifier.SendNotification(notificationSend.NotificationSlack.Channel,
                         notificationSend.Message, notificationSend.NotificationSlack.WebHookUrl);
+                    return true;
                     break;
             }
 

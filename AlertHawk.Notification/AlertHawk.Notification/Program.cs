@@ -26,6 +26,8 @@ builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<Cach
 
 builder.Services.AddTransient<INotificationTypeService, NotificationTypeService>();
 builder.Services.AddTransient<INotificationTypeRepository, NotificationTypeRepository>();
+builder.Services.AddTransient<INotificationService, NotificationService>();
+builder.Services.AddTransient<INotificationRepository, NotificationRepository>();
 
 builder.Services.AddTransient<IMailNotifier, MailNotifier>();
 builder.Services.AddTransient<ISlackNotifier, SlackNotifier>();

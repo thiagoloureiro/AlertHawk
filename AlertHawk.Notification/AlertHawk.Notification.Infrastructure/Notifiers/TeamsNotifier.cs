@@ -15,8 +15,6 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
             HttpResponseMessage response = await httpClient.PostAsync(webHookUrl, content);
 
             response.EnsureSuccessStatusCode();
-
-            Console.WriteLine("Notification sent successfully!");
         }
     }
 }
