@@ -1,23 +1,94 @@
-<mxfile host="app.diagrams.net" modified="2024-01-22T14:19:52.075Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" etag="_VCp1tfvg-fypFx4wB-I" version="22.1.21" type="github">
+<mxfile host="app.diagrams.net" modified="2024-01-22T14:27:46.600Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" etag="Y6pBlvIiiTbrXfLA7CKE" version="22.1.21" type="github">
   <diagram name="Página-1" id="EC5-yDx1gmlKd79TGFPl">
     <mxGraphModel dx="1153" dy="755" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="1MhiarmOQ1BAu21N2S9K-1" value="Notification Service" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="100" y="230" width="120" height="60" as="geometry" />
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="1MhiarmOQ1BAu21N2S9K-2" target="1MhiarmOQ1BAu21N2S9K-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-11" value="Alerts" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="1MhiarmOQ1BAu21N2S9K-9">
+          <mxGeometry x="-0.0857" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
         </mxCell>
         <mxCell id="1MhiarmOQ1BAu21N2S9K-2" value="Monitoring Service" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="320" y="230" width="120" height="60" as="geometry" />
+          <mxGeometry x="400" y="230" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="1MhiarmOQ1BAu21N2S9K-3" value="UI" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="540" y="500" width="120" height="60" as="geometry" />
+          <mxGeometry x="210" y="540" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="1MhiarmOQ1BAu21N2S9K-4" value="Notification DB" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/databases/SQL_Server.svg;" vertex="1" parent="1">
-          <mxGeometry x="135" y="90" width="50" height="50" as="geometry" />
+          <mxGeometry x="95" y="50" width="50" height="50" as="geometry" />
         </mxCell>
         <mxCell id="1MhiarmOQ1BAu21N2S9K-5" value="Monitoring DB" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/databases/SQL_Server.svg;" vertex="1" parent="1">
-          <mxGeometry x="355" y="90" width="50" height="50" as="geometry" />
+          <mxGeometry x="435" y="50" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=none;startArrow=classic;startFill=1;" edge="1" parent="1" source="1MhiarmOQ1BAu21N2S9K-6" target="1MhiarmOQ1BAu21N2S9K-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-6" value="Internet / Users" style="image;aspect=fixed;perimeter=ellipsePerimeter;html=1;align=center;shadow=0;dashed=0;spacingTop=3;image=img/lib/active_directory/internet_cloud.svg;" vertex="1" parent="1">
+          <mxGeometry x="245" y="740" width="50" height="31.5" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="1MhiarmOQ1BAu21N2S9K-8" target="1MhiarmOQ1BAu21N2S9K-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-12" value="Alerts" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="1MhiarmOQ1BAu21N2S9K-10">
+          <mxGeometry x="0.1429" y="-3" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-8" value="Message Queue" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="230" width="80" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1.06;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="1MhiarmOQ1BAu21N2S9K-1" target="1MhiarmOQ1BAu21N2S9K-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-14" value="Save notification Log&lt;br&gt;Get nofification Details" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="130" y="140" width="180" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1.1;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="1MhiarmOQ1BAu21N2S9K-2" target="1MhiarmOQ1BAu21N2S9K-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-16" value="Save Monitoring Data" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="470" y="140" width="180" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-18" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="60" y="230" width="120" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-1" value="Notification Service" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1MhiarmOQ1BAu21N2S9K-18">
+          <mxGeometry width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-17" value="" style="aspect=fixed;sketch=0;html=1;dashed=0;whitespace=wrap;fillColor=#2875E2;strokeColor=#ffffff;points=[[0.005,0.63,0],[0.1,0.2,0],[0.9,0.2,0],[0.5,0,0],[0.995,0.63,0],[0.72,0.99,0],[0.5,1,0],[0.28,0.99,0]];shape=mxgraph.kubernetes.icon2;kubernetesLabel=1;prIcon=api" vertex="1" parent="1MhiarmOQ1BAu21N2S9K-18">
+          <mxGeometry x="70" y="70" width="41.67" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="1MhiarmOQ1BAu21N2S9K-17" target="1MhiarmOQ1BAu21N2S9K-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-20" value="Fetch Notification Information" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="1MhiarmOQ1BAu21N2S9K-19">
+          <mxGeometry x="0.3152" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-22" value="API Gateway" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws3.api_gateway;fillColor=#D9A741;gradientColor=none;" vertex="1" parent="1">
+          <mxGeometry x="60" y="540" width="58.25" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="1MhiarmOQ1BAu21N2S9K-6" target="1MhiarmOQ1BAu21N2S9K-22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="1MhiarmOQ1BAu21N2S9K-22" target="1MhiarmOQ1BAu21N2S9K-17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-28" value="" style="aspect=fixed;sketch=0;html=1;dashed=0;whitespace=wrap;fillColor=#2875E2;strokeColor=#ffffff;points=[[0.005,0.63,0],[0.1,0.2,0],[0.9,0.2,0],[0.5,0,0],[0.995,0.63,0],[0.72,0.99,0],[0.5,1,0],[0.28,0.99,0]];shape=mxgraph.kubernetes.icon2;kubernetesLabel=1;prIcon=api" vertex="1" parent="1">
+          <mxGeometry x="485" y="306" width="35.42" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="1MhiarmOQ1BAu21N2S9K-29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;labelBorderColor=none;jumpStyle=arc;startArrow=classic;startFill=1;" edge="1" parent="1" source="1MhiarmOQ1BAu21N2S9K-22" target="1MhiarmOQ1BAu21N2S9K-28">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="89" y="420" />
+              <mxPoint x="503" y="420" />
+            </Array>
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
