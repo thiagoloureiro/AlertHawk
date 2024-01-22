@@ -5,9 +5,7 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
 {
     public class SlackNotifier : ISlackNotifier
     {
-        public static string webHookUrl = "";
-
-        public async Task SendNotification(string channel, string message)
+        public async Task SendNotification(string channel, string message, string webHookUrl)
         {
             using HttpClient httpClient = new HttpClient();
             string payload = $"{{\"channel\": \"{channel}\", \"text\": \"{message}\"}}";

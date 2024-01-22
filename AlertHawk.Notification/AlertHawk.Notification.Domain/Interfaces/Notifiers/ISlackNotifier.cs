@@ -2,6 +2,6 @@
 {
     public interface ISlackNotifier
     {
-        Task SendNotification(string channel, string message);
+        Task SendNotification(string channel, string message, string webHookUrl);
     }
 }

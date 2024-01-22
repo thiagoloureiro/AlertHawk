@@ -2,6 +2,6 @@
 {
     public interface ITeamsNotifier
     {
-        Task SendNotification(string message);
+        Task SendNotification(string message, string webHookUrl);
     }
 }

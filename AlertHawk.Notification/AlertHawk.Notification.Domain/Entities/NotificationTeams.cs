@@ -2,6 +2,7 @@
 {
     public class NotificationTeams
     {
-        public string Message { get; set; }
+        public int NotificationId { get; set; }
+        public string WebHookUrl { get; set; }
     }
 }

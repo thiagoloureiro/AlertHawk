@@ -5,15 +5,14 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
 {
     public class TeamsNotifier : ITeamsNotifier
     {
-        public async Task SendNotification(string message)
+        public async Task SendNotification(string message, string webHookUrl)
         {
-            var TeamsWebhookUrl = "";
             using HttpClient httpClient = new HttpClient();
             string payload = $"{{\"text\": \"{message}\"}}";
 
             StringContent content = new StringContent(payload, Encoding.UTF8, "application/json");
 
-            HttpResponseMessage response = await httpClient.PostAsync(TeamsWebhookUrl, content);
+            HttpResponseMessage response = await httpClient.PostAsync(webHookUrl, content);
 
             response.EnsureSuccessStatusCode();
 

@@ -24,5 +24,14 @@ namespace AlertHawk.Notification.Controllers
             var result = await _notificationService.Send(notification);
             return Ok();
         }
+
+        [HttpPost("Create NotificationItem")]
+        [SwaggerOperation(Summary = "Create notification item")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        public async Task<IActionResult> InsertNotificationItem(NotificationItem notificationItem)
+        {
+            await _notificationService.InsertNotificationItem(notificationItem);
+            return Ok();
+        }
     }
 }
