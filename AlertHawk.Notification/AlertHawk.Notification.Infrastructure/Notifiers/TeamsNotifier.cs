@@ -1,10 +1,11 @@
 ﻿using System.Text;
+using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 
-namespace AlertHawk.Notification.Domain.Classes.Notifications
+namespace AlertHawk.Notification.Infrastructure.Notifiers
 {
-    public static class TeamsNotifier
+    public class TeamsNotifier : ITeamsNotifier
     {
-        public static async Task SendNotification(string message)
+        public async Task SendNotification(string message)
         {
             var TeamsWebhookUrl = "";
             using HttpClient httpClient = new HttpClient();

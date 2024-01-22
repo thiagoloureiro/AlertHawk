@@ -1,12 +1,13 @@
-﻿using AlertHawk.Notification.Domain.Entities;
-using System.Net;
+﻿using System.Net;
 using System.Net.Mail;
+using AlertHawk.Notification.Domain.Entities;
+using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 
-namespace AlertHawk.Notification.Domain.Classes.Notifications
+namespace AlertHawk.Notification.Infrastructure.Notifiers
 {
-    public static class MailNotifier
+    public class MailNotifier : IMailNotifier
     {
-        public static async Task<bool> Send(NotificationEmail emailNotification)
+        public async Task<bool> Send(NotificationEmail emailNotification)
         {
             // Set up SMTP client
             var smtpClient = new SmtpClient(emailNotification.Hostname);

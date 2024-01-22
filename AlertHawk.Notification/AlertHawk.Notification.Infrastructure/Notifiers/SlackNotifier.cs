@@ -1,12 +1,13 @@
 ﻿using System.Text;
+using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 
-namespace AlertHawk.Notification.Domain.Classes.Notifications
+namespace AlertHawk.Notification.Infrastructure.Notifiers
 {
-    public static class SlackNotifier
+    public class SlackNotifier : ISlackNotifier
     {
         public static string webHookUrl = "";
 
-        public static async Task SendNotification(string channel, string message)
+        public async Task SendNotification(string channel, string message)
         {
             using HttpClient httpClient = new HttpClient();
             string payload = $"{{\"channel\": \"{channel}\", \"text\": \"{message}\"}}";

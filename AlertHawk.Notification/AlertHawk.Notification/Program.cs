@@ -4,6 +4,8 @@ using AlertHawk.Notification.Domain.Interfaces.Services;
 using AlertHawk.Notification.Infrastructure.Repositories.Class;
 using EasyMemoryCache.Configuration;
 using System.Diagnostics.CodeAnalysis;
+using AlertHawk.Notification.Domain.Interfaces.Notifiers;
+using AlertHawk.Notification.Infrastructure.Notifiers;
 
 [assembly: ExcludeFromCodeCoverage]
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +26,11 @@ builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<Cach
 
 builder.Services.AddTransient<INotificationTypeService, NotificationTypeService>();
 builder.Services.AddTransient<INotificationTypeRepository, NotificationTypeRepository>();
+
+builder.Services.AddTransient<IMailNotifier, MailNotifier>();
+builder.Services.AddTransient<ISlackNotifier, SlackNotifier>();
+builder.Services.AddTransient<ITeamsNotifier, TeamsNotifier>();
+builder.Services.AddTransient<ITelegramNotifier, TelegramNotifier>();
 
 builder.WebHost.UseSentry();
 
