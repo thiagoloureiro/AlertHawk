@@ -1,24 +1,17 @@
 ﻿using Telegram.Bot;
+using Telegram.Bot.Types;
 
 namespace AlertHawk.Notification.Domain.Classes.Notifications
 {
     public static class TelegramNotifier
     {
-        public static async Task SendNotification(string message, string chatId)
+        public static async Task<Message> SendNotification(long chatId, string message, string telegramBotToken)
         {
-            try
-            {
-                var TelegramBotToken = "";
-                TelegramBotClient botClient = new TelegramBotClient(TelegramBotToken);
+            var botClient = new TelegramBotClient(telegramBotToken);
 
-                await botClient.SendTextMessageAsync(chatId, message);
+            var result = await botClient.SendTextMessageAsync(chatId, message);
 
-                Console.WriteLine("Notification sent successfully!");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error sending notification: {ex.Message}");
-            }
+            return result;
         }
     }
 }

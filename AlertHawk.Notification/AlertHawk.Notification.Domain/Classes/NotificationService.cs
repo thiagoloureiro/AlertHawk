@@ -21,7 +21,7 @@ namespace AlertHawk.Notification.Domain.Classes
                     break;
 
                 case 3: // Telegram
-                    await TelegramNotifier.SendNotification(notificationSend.NotificationTelegram.Message, notificationSend.NotificationTelegram.ChatId);
+                        // await TelegramNotifier.SendNotification(notificationSend.NotificationTelegram.Message, notificationSend.NotificationTelegram.ChatId);
                     break;
 
                 case 4: // Slack
