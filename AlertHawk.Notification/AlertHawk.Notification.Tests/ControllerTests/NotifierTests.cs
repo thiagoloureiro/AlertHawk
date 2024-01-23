@@ -1,15 +1,13 @@
 using AlertHawk.Notification.Controllers;
-using AlertHawk.Notification.Domain.Classes;
 using AlertHawk.Notification.Domain.Entities;
-using AlertHawk.Notification.Domain.Interfaces.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AlertHawk.Notification.Tests.NotifierTests;
+namespace AlertHawk.Notification.Tests.ControllerTests;
 
 public class NotifierTests : IClassFixture<NotificationController>
 {
-    private NotificationController _notificationController;
+    private readonly NotificationController _notificationController;
 
     public NotifierTests(NotificationController notificationController)
     {
@@ -25,11 +23,10 @@ public class NotifierTests : IClassFixture<NotificationController>
             NotificationTypeId = 3,
             NotificationTelegram = new NotificationTelegram
             {
-                ChatId = Convert.ToInt64(Environment.GetEnvironmentVariable("ChatId", EnvironmentVariableTarget.Process)),
+                ChatId = GlobalVariables.TelegramChatId,
                 NotificationId = 1,
-                TelegramBotToken = Environment.GetEnvironmentVariable("TelegramBotToken", EnvironmentVariableTarget.Process),
+                TelegramBotToken = GlobalVariables.TelegramWebHook,
             },
-
         };
         var result = await _notificationController.SendNotification(notificationSend) as OkObjectResult;
 
