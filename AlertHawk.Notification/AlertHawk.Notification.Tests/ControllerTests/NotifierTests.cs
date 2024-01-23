@@ -118,7 +118,7 @@ public class NotifierTests : IClassFixture<NotificationController>
             NotificationSlack = new NotificationSlack()
             {
                 NotificationId = 1,
-                WebHookUrl = "slackwebhookurl-replace",
+                WebHookUrl = GlobalVariables.SlackWebHookUrl,
                 ChannelName = "alerthawk-test"
             },
         };
