@@ -17,6 +17,7 @@ public class NotifierTests : IClassFixture<NotificationController>
     [Fact]
     public async Task Should_Send_Telegram_Notification()
     {
+        // Arrange
         var notificationSend = new NotificationSend
         {
             Message = "Message",
@@ -28,6 +29,8 @@ public class NotifierTests : IClassFixture<NotificationController>
                 TelegramBotToken = GlobalVariables.TelegramWebHook,
             },
         };
+
+        // Act
         var result = await _notificationController.SendNotification(notificationSend) as OkObjectResult;
 
         // Assert
@@ -39,6 +42,7 @@ public class NotifierTests : IClassFixture<NotificationController>
     [Fact]
     public async Task Should_Send_EmailSmtp_Notification()
     {
+        // Arrange
         var notificationSend = new NotificationSend
         {
             Message = "Message",
@@ -58,6 +62,43 @@ public class NotifierTests : IClassFixture<NotificationController>
                 NotificationId = 1
             },
         };
+
+        // Act
+        var result = await _notificationController.SendNotification(notificationSend) as OkObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+        Assert.Equal(true, result.Value);
+    }
+
+    [Fact]
+    public async Task Should_Send_EmailSmtpWithCCAndBCC_Notification()
+    {
+        // Arrange
+        var notificationSend = new NotificationSend
+        {
+            Message = "Message",
+            NotificationTypeId = 1, // EmailSmtp
+            NotificationEmail = new NotificationEmail
+            {
+                ToEmail = "alerthawk@outlook.com",
+                ToCCEmail = "alerthawk@outlook.com",
+                ToBCCEmail = "alerthawk@outlook.com",
+                FromEmail = "alerthawk@outlook.com",
+                Username = "alerthawk@outlook.com",
+                Password = GlobalVariables.EmailPassword,
+                Hostname = "smtp.office365.com",
+                Body = "Body",
+                Subject = "Subject",
+                Port = 587,
+                EnableSsl = true,
+                IsHtmlBody = false,
+                NotificationId = 1
+            },
+        };
+
+        // Act
         var result = await _notificationController.SendNotification(notificationSend) as OkObjectResult;
 
         // Assert
