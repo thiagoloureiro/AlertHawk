@@ -106,4 +106,29 @@ public class NotifierTests : IClassFixture<NotificationController>
         Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
         Assert.Equal(true, result.Value);
     }
+
+    [Fact]
+    public async Task Should_Send_Slack_Notification()
+    {
+        // Arrange
+        var notificationSend = new NotificationSend
+        {
+            Message = "Message",
+            NotificationTypeId = 4, // Slack
+            NotificationSlack = new NotificationSlack()
+            {
+                NotificationId = 1,
+                WebHookUrl = "slackwebhookurl-replace",
+                ChannelName = "alerthawk-test"
+            },
+        };
+
+        // Act
+        var result = await _notificationController.SendNotification(notificationSend) as OkObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+        Assert.Equal(true, result.Value);
+    }
 }
