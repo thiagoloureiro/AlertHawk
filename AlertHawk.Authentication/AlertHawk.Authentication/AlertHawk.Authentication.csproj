@@ -13,9 +13,13 @@
   <ItemGroup>
     <PackageReference Include="EasyMemoryCache" Version="2.0.1" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.6" />
-    <PackageReference Include="Sentry.AspNetCore" Version="3.41.3" />
+    <PackageReference Include="Sentry.AspNetCore" Version="3.41.4" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AlertHawk.Authentication.Domain\AlertHawk.Authentication.Domain.csproj" />
   </ItemGroup>
 
 </Project>

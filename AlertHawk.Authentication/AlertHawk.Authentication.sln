@@ -5,6 +5,10 @@ VisualStudioVersion = 17.8.34511.84
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Authentication", "AlertHawk.Authentication\AlertHawk.Authentication.csproj", "{438C3A2A-C82C-4899-B2FE-F250791FCB85}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Authentication.Domain", "AlertHawk.Authentication.Domain\AlertHawk.Authentication.Domain.csproj", "{279D2DCE-90A6-428B-B801-7D2662E44B42}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Authentication.Infrastructure", "AlertHawk.Authentication.Infrastructure\AlertHawk.Authentication.Infrastructure.csproj", "{CC33936D-9824-4106-95E5-541751C85200}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{438C3A2A-C82C-4899-B2FE-F250791FCB85}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{438C3A2A-C82C-4899-B2FE-F250791FCB85}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{438C3A2A-C82C-4899-B2FE-F250791FCB85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{279D2DCE-90A6-428B-B801-7D2662E44B42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{279D2DCE-90A6-428B-B801-7D2662E44B42}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{279D2DCE-90A6-428B-B801-7D2662E44B42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{279D2DCE-90A6-428B-B801-7D2662E44B42}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC33936D-9824-4106-95E5-541751C85200}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC33936D-9824-4106-95E5-541751C85200}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC33936D-9824-4106-95E5-541751C85200}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC33936D-9824-4106-95E5-541751C85200}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
