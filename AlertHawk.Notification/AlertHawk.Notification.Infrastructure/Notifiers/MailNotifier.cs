@@ -26,13 +26,19 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
             var emailBCCList = emailNotification.ToBCCEmail?.Split(";").ToList();
 
             if (emailTo != null)
+            {
                 emailRecipients.AddRange(emailTo);
+            }
 
             if (emailCCList != null)
+            {
                 emailRecipients.AddRange(emailCCList);
+            }
 
             if (emailBCCList != null)
+            {
                 emailRecipients.AddRange(emailBCCList);
+            }
 
             foreach (var recipient in emailRecipients)
             {

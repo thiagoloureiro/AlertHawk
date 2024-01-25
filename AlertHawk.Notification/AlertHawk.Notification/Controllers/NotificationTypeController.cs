@@ -41,6 +41,7 @@ namespace AlertHawk.Notification.Controllers
             {
                 return NotFound();
             }
+
             return Ok(result);
         }
 
@@ -81,7 +82,9 @@ namespace AlertHawk.Notification.Controllers
         {
             var notificationTypeById = await _notificationTypeService.SelectNotificationTypeById(id);
             if (notificationTypeById == null)
+            {
                 return NotFound($"NotificationType not found by Id {id}");
+            }
 
             await _notificationTypeService.DeleteNotificationType(id);
             _caching.Invalidate(_cacheKey);
