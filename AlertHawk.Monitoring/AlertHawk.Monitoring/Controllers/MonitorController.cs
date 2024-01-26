@@ -16,15 +16,15 @@ namespace AlertHawk.Monitoring.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ProduceNotification(OrderDto orderDto)
+        public async Task<IActionResult> ProduceNotification(int notificationId, string message)
         {
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 100; i++)
             {
                 await _publishEndpoint.Publish<NotificationAlert>(new
                 {
-                    NotificationId = i,
+                    NotificationId = notificationId,
                     TimeStamp = DateTime.UtcNow,
-                    Message = "Alert"
+                    Message = message + "_" + i
                 });
             }
 
