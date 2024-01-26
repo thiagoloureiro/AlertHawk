@@ -14,6 +14,7 @@ namespace AlertHawk.Authentication.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         public async Task<IActionResult> PostUserAuth([FromBody] UserAuth userAuth)
         {
+            // call service, and check on the database if username and password exists.
             return Ok();
         }
         
@@ -22,6 +23,16 @@ namespace AlertHawk.Authentication.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         public async Task<IActionResult> PostUserCreation([FromBody] UserCreation userCreation)
         {
+            // call database and store user credentials
+            return Ok();
+        }
+        
+        [HttpPut("update")]
+        [SwaggerOperation(Summary = "Update User")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        public async Task<IActionResult> PutUserUpdate([FromBody] UserCreation userCreation)
+        {
+            // call database and update user credentials
             return Ok();
         }
     }

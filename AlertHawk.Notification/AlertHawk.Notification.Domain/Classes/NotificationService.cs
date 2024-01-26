@@ -73,5 +73,15 @@ namespace AlertHawk.Notification.Domain.Classes
                     break;
             }
         }
+
+        public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList()
+        {
+            return await _notificationRepository.SelectNotificationItemList();
+        }
+
+        public async Task<NotificationItem> SelectNotificationItemById(int id)
+        {
+            return await _notificationRepository.SelectNotificationItemById(id);
+        }
     }
 }

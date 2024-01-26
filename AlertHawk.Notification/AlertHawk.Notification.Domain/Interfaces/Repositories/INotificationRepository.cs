@@ -9,4 +9,5 @@ public interface INotificationRepository
     Task InsertNotificationItemMSTeams(NotificationItem notificationItem);
     Task InsertNotificationItemTelegram(NotificationItem notificationItem);
     Task InsertNotificationItemSlack(NotificationItem notificationItem);
+    Task<NotificationItem> SelectNotificationItemById(int id);
 }

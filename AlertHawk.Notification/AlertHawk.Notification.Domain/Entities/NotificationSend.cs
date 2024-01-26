@@ -8,5 +8,6 @@
         public NotificationSlack NotificationSlack { get; set; }
         public NotificationTeams NotificationTeams { get; set; }
         public NotificationTelegram NotificationTelegram { get; set; }
+        public DateTime NotificationTime { get; set; }
     }
 }
