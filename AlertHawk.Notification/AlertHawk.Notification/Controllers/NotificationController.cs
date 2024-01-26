@@ -34,7 +34,7 @@ namespace AlertHawk.Notification.Controllers
             return Ok();
         }
 
-        public async Task TaskToHangFireSend(int notificationItemId, string message)
+        private async Task TaskToHangFireSend(int notificationItemId, string message)
         {
             var notificationItem = await _notificationService.SelectNotificationItemById(notificationItemId);
 
