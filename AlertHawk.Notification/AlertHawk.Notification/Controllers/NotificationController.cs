@@ -37,13 +37,13 @@ namespace AlertHawk.Notification.Controllers
         public async Task TaskToHangFireSend(int notificationItemId, string message)
         {
             var notificationItem = await _notificationService.SelectNotificationItemById(notificationItemId);
-            
+
             var notificationSend = new NotificationSend
             {
                 NotificationEmail = notificationItem.NotificationEmail,
                 Message = message
             };
-            _notificationService.Send(notificationSend);
+            await _notificationService.Send(notificationSend);
         }
     }
 }
