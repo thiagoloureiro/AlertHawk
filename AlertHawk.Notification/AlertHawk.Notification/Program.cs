@@ -6,6 +6,8 @@ using EasyMemoryCache.Configuration;
 using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Infrastructure.Notifiers;
+using MassTransit;
+using SharedModels;
 
 [assembly: ExcludeFromCodeCoverage]
 var builder = WebApplication.CreateBuilder(args);
@@ -16,10 +18,30 @@ var configuration = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
+var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
+var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
+var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
+
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<NotificationConsumer>();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
+        {
+            h.Username(rabbitMqUser);
+            h.Password(rabbitMqPass);
+        });
+
+        cfg.ReceiveEndpoint("notifications", e => { e.ConfigureConsumer<NotificationConsumer>(context); });
+    });
+});
 
 // DI
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
