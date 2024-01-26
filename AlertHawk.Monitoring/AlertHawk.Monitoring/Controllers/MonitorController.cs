@@ -16,9 +16,14 @@ namespace AlertHawk.Monitoring.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ProduceNotification(int notificationId, string message)
+        public async Task<IActionResult> ProduceNotification(int notificationId, string message, int messageQuantity)
         {
-            for (int i = 0; i < 100; i++)
+            if (messageQuantity > 50)
+            {
+                messageQuantity = 50;
+            }
+            
+            for (int i = 0; i < messageQuantity; i++)
             {
                 await _publishEndpoint.Publish<NotificationAlert>(new
                 {
@@ -28,7 +33,7 @@ namespace AlertHawk.Monitoring.Controllers
                 });
             }
 
-            return Ok();
+            return Ok($"{messageQuantity} Messages sent");
         }
     }
 }
