@@ -47,7 +47,7 @@ namespace AlertHawk.Notification.Domain.Classes
 
                 case 4: // Slack
 
-                    await _slackNotifier.SendNotification(notificationSend.NotificationSlack.ChannelName,
+                    await _slackNotifier.SendNotification(notificationSend.NotificationSlack.Channel,
                         notificationSend.Message, notificationSend.NotificationSlack.WebHookUrl);
                     return true;
             }

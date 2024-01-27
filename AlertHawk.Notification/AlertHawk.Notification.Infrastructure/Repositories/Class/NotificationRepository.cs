@@ -138,7 +138,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         {
             notificationId,
             notificationItem.NotificationSlack?.WebHookUrl,
-            notificationItem.NotificationSlack?.ChannelName
+            ChannelName = notificationItem.NotificationSlack?.Channel
         }, commandType: CommandType.Text);
     }
 
