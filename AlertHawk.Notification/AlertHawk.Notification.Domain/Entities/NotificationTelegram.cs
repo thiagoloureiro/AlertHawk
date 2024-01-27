@@ -4,6 +4,6 @@
     {
         public int NotificationId { get; set; }
         public long ChatId { get; set; }
-        public string TelegramBotToken { get; set; }
+        public string TelegramBotToken { get; set; } = null!;
     }
 }

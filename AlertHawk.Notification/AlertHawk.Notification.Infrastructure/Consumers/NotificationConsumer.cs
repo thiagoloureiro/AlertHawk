@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using MassTransit;
+using Sentry;
 
 namespace SharedModels;
 
@@ -16,9 +17,14 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
 
     public async Task Consume(ConsumeContext<NotificationAlert> context)
     {
+        // Later Fetch webhookUrl from NotificationId
         var webHookUrl = Environment.GetEnvironmentVariable("slack-webhookurl");
 
-        await _slackNotifier.SendNotification("alerthawk-test", context.Message.Message, webHookUrl);
+        if (webHookUrl != null)
+        {
+            await _slackNotifier.SendNotification("alerthawk-test", context.Message.Message, webHookUrl);
+        }
+        
         // Handle the received message
         Console.WriteLine(
             $"NotificationId: {context.Message.NotificationId} Notification Message: {context.Message.Message}");

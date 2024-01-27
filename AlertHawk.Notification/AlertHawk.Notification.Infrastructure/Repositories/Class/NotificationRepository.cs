@@ -67,12 +67,12 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         await db.ExecuteAsync(sqlDetails, new
         {
             notificationId,
-            notificationItem.NotificationEmail.FromEmail, notificationItem.NotificationEmail.ToEmail,
-            notificationItem.NotificationEmail.Hostname, notificationItem.NotificationEmail.Port,
-            notificationItem.NotificationEmail.Username, notificationItem.NotificationEmail.Password,
-            notificationItem.NotificationEmail.ToCCEmail, notificationItem.NotificationEmail.ToBCCEmail,
-            notificationItem.NotificationEmail.EnableSsl, notificationItem.NotificationEmail.Subject,
-            notificationItem.NotificationEmail.Body, notificationItem.NotificationEmail.IsHtmlBody
+            notificationItem.NotificationEmail?.FromEmail, notificationItem.NotificationEmail?.ToEmail,
+            notificationItem.NotificationEmail?.Hostname, notificationItem.NotificationEmail?.Port,
+            notificationItem.NotificationEmail?.Username, notificationItem.NotificationEmail?.Password,
+            notificationItem.NotificationEmail?.ToCCEmail, notificationItem.NotificationEmail?.ToBCCEmail,
+            notificationItem.NotificationEmail?.EnableSsl, notificationItem.NotificationEmail?.Subject,
+            notificationItem.NotificationEmail?.Body, notificationItem.NotificationEmail?.IsHtmlBody
         }, commandType: CommandType.Text);
     }
 
@@ -87,7 +87,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         await db.ExecuteAsync(sqlDetails, new
         {
             notificationId,
-            notificationItem.NotificationTeams.WebHookUrl
+            notificationItem.NotificationTeams?.WebHookUrl
         }, commandType: CommandType.Text);
     }
 
@@ -102,8 +102,8 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         await db.ExecuteAsync(sqlDetails, new
         {
             notificationId,
-            notificationItem.NotificationTelegram.ChatId,
-            notificationItem.NotificationTelegram.TelegramBotToken,
+            notificationItem.NotificationTelegram?.ChatId,
+            notificationItem.NotificationTelegram?.TelegramBotToken,
         }, commandType: CommandType.Text);
     }
 
@@ -118,12 +118,12 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         await db.ExecuteAsync(sqlDetails, new
         {
             notificationId,
-            notificationItem.NotificationSlack.WebHookUrl,
-            notificationItem.NotificationSlack.ChannelName
+            notificationItem.NotificationSlack?.WebHookUrl,
+            notificationItem.NotificationSlack?.ChannelName
         }, commandType: CommandType.Text);
     }
 
-    public async Task<NotificationItem> SelectNotificationItemById(int id)
+    public async Task<NotificationItem?> SelectNotificationItemById(int id)
     {
         await using var db = new SqlConnection(_connstring);
         string sql = @"SELECT Id, Name, Description FROM [NotificationItem]";
@@ -135,11 +135,8 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         var notificationTeamsList = await SelectNotificationTeamsList();
         var notificationSlackList = await SelectNotificationSlackList();
         var notificationTelegramList = await SelectNotificationTelegramList();
-
-        var selectNotificationItemList = notificationItemList.ToList();
-
-
-        switch (notificationItem.NotificationTypeId)
+        
+        switch (notificationItem?.NotificationTypeId)
         {
             case 1: // Smtp
                 notificationItem.NotificationEmail =

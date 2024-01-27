@@ -3,7 +3,7 @@
     public class NotificationSlack
     {
         public int NotificationId { get; set; }
-        public string ChannelName { get; set; }
-        public string WebHookUrl { get; set; }
+        public required string ChannelName { get; set; }
+        public required string WebHookUrl { get; set; }
     }
 }

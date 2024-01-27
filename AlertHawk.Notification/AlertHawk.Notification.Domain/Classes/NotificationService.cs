@@ -30,26 +30,26 @@ namespace AlertHawk.Notification.Domain.Classes
             {
                 case 1: // Email SMTP - Those will be fixed.
                     // should retrieve configs from DB for the notificationEmail object
+
                     var result = await _mailNotifier.Send(notificationSend.NotificationEmail);
                     return result;
-                    break;
 
                 case 2: // MS Teams
-                    await _teamsNotifier.SendNotification(notificationSend.Message, notificationSend.NotificationTeams.WebHookUrl);
+                    await _teamsNotifier.SendNotification(notificationSend.Message,
+                        notificationSend.NotificationTeams.WebHookUrl);
                     return true;
-                    break;
 
                 case 3: // Telegram
-                    await _telegramNotifier.SendNotification(notificationSend.NotificationTelegram.ChatId, notificationSend.Message,
+                    await _telegramNotifier.SendNotification(notificationSend.NotificationTelegram.ChatId,
+                        notificationSend.Message,
                         notificationSend.NotificationTelegram.TelegramBotToken);
                     return true;
-                    break;
 
                 case 4: // Slack
+
                     await _slackNotifier.SendNotification(notificationSend.NotificationSlack.ChannelName,
                         notificationSend.Message, notificationSend.NotificationSlack.WebHookUrl);
                     return true;
-                    break;
             }
 
             return false;
@@ -79,7 +79,7 @@ namespace AlertHawk.Notification.Domain.Classes
             return await _notificationRepository.SelectNotificationItemList();
         }
 
-        public async Task<NotificationItem> SelectNotificationItemById(int id)
+        public async Task<NotificationItem?> SelectNotificationItemById(int id)
         {
             return await _notificationRepository.SelectNotificationItemById(id);
         }

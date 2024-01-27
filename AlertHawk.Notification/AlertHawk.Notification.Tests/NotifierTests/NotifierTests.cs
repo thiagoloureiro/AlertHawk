@@ -28,6 +28,7 @@ public class NotifierTests : IClassFixture<NotificationController>
                 NotificationId = 1,
                 TelegramBotToken = GlobalVariables.TelegramWebHook,
             },
+            NotificationTimeStamp = DateTime.UtcNow
         };
 
         // Act
@@ -61,6 +62,7 @@ public class NotifierTests : IClassFixture<NotificationController>
                 IsHtmlBody = false,
                 NotificationId = 1
             },
+            NotificationTimeStamp = DateTime.UtcNow
         };
 
         // Act
@@ -121,6 +123,7 @@ public class NotifierTests : IClassFixture<NotificationController>
                 WebHookUrl = GlobalVariables.SlackWebHookUrl,
                 ChannelName = "alerthawk-test"
             },
+            NotificationTimeStamp = DateTime.UtcNow
         };
 
         // Act
@@ -145,6 +148,7 @@ public class NotifierTests : IClassFixture<NotificationController>
                 NotificationId = 1,
                 WebHookUrl = GlobalVariables.TeamsWebHookUrl
             },
+            NotificationTimeStamp = DateTime.UtcNow
         };
 
         // Act

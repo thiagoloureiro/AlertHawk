@@ -8,6 +8,6 @@ namespace AlertHawk.Notification.Domain.Interfaces.Services
         Task InsertNotificationItem(NotificationItem notificationItem);
         
         Task<IEnumerable<NotificationItem>> SelectNotificationItemList();
-        Task<NotificationItem> SelectNotificationItemById(int id);
+        Task<NotificationItem?> SelectNotificationItemById(int id);
     }
 }

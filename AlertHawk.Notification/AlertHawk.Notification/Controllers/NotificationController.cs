@@ -38,12 +38,15 @@ namespace AlertHawk.Notification.Controllers
         {
             var notificationItem = await _notificationService.SelectNotificationItemById(notificationItemId);
 
-            var notificationSend = new NotificationSend
+            if (notificationItem?.NotificationEmail != null)
             {
-                NotificationEmail = notificationItem.NotificationEmail,
-                Message = message
-            };
-            await _notificationService.Send(notificationSend);
+                var notificationSend = new NotificationSend
+                {
+                    NotificationEmail = notificationItem.NotificationEmail,
+                    Message = message
+                };
+                await _notificationService.Send(notificationSend);
+            }
         }
     }
 }
