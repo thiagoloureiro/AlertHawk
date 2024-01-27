@@ -131,4 +131,28 @@ public class NotifierTests : IClassFixture<NotificationController>
         Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
         Assert.Equal(true, result.Value);
     }
+    
+    [Fact]
+    public async Task Should_Send_Teams_Notification()
+    {
+        // Arrange
+        var notificationSend = new NotificationSend
+        {
+            Message = "Test from Unit testing",
+            NotificationTypeId = 2, // Teams
+            NotificationTeams = new NotificationTeams()
+            {
+                NotificationId = 1,
+                WebHookUrl = GlobalVariables.TeamsWebHookUrl
+            },
+        };
+
+        // Act
+        var result = await _notificationController.SendNotification(notificationSend) as OkObjectResult;
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+        Assert.Equal(true, result.Value);
+    }
 }

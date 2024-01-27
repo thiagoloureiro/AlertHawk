@@ -7,5 +7,7 @@
 
         public static string EmailPassword { get; set; } = "emailpassword-replace";
         public static string SlackWebHookUrl { get; set; } = "slackwebhookurl-replace";
+        
+        public static string TeamsWebHookUrl { get; set; } = "teamswebhookurl-replace";
     }
 }
