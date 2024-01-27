@@ -16,7 +16,7 @@ namespace AlertHawk.Notification.Controllers
             _notificationService = notificationService;
         }
 
-        [HttpPost("SendNotification")]
+        [HttpPost("SendManualNotification")]
         [SwaggerOperation(Summary = "Send Manual notification")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         public async Task<IActionResult> SendNotification(NotificationSend notification)
