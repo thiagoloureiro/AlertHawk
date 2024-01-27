@@ -1,4 +1,5 @@
-﻿using MassTransit;
+﻿using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using SharedModels;
 
@@ -9,10 +10,17 @@ namespace AlertHawk.Monitoring.Controllers
     public class MonitorController : ControllerBase
     {
         private readonly IPublishEndpoint _publishEndpoint;
-
-        public MonitorController(IPublishEndpoint publishEndpoint)
+        private IMonitorManager _monitorManager;
+        public MonitorController(IPublishEndpoint publishEndpoint, IMonitorManager monitorManager)
         {
             _publishEndpoint = publishEndpoint;
+            _monitorManager = monitorManager;
+        }
+
+        [HttpGet]
+        public async Task StartMonitor()
+        {
+            await _monitorManager.Start();
         }
 
         [HttpPost]

@@ -1,3 +1,6 @@
+using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using AlertHawk.Monitoring.Infrastructure.MonitorManager;
+using AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 using MassTransit;
 using Microsoft.OpenApi.Models;
 using SharedModels;
@@ -25,6 +28,9 @@ builder.Services.AddMassTransit(x =>
         });
     });
 });
+
+builder.Services.AddTransient<IMonitorAgentRepository, MonitorAgentRepository>();
+builder.Services.AddTransient<IMonitorManager, MonitorManager>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -55,3 +61,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
