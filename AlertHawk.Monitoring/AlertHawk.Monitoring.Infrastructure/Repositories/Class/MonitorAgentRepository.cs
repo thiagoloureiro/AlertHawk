@@ -23,25 +23,42 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
 
         var allMonitors = await GetAllMonitors(db);
 
+        await DeleteOutdatedMonitors(allMonitors, db);
+
         if (!allMonitors.Any(x => x.IsMaster))
         {
-            await RegisterMonitor(monitorAgent, db, true);
+            var currentMonitor = allMonitors.FirstOrDefault(x => x.Hostname == monitorAgent.Hostname);
             monitorAgent.IsMaster = true;
-            allMonitors.Add(monitorAgent);
+            // If monitor exists but he is not the master.
+            if (currentMonitor != null)
+            {
+                monitorAgent.Id = currentMonitor.Id;
+                await UpdateExistingMonitor(db, monitorAgent);
+                return;
+            }
+            else
+            {
+                await RegisterMonitor(monitorAgent, db, true);
+
+                allMonitors.Add(monitorAgent);
+            }
         }
-        
+
         var monitorToUpdate = allMonitors.FirstOrDefault(x =>
             string.Equals(x.Hostname, monitorAgent.Hostname, StringComparison.CurrentCultureIgnoreCase));
 
         if (monitorToUpdate != null)
         {
-            await UpdateExistingMonitor(monitorAgent, db, monitorToUpdate);
+            await UpdateExistingMonitor(db, monitorToUpdate);
         }
         else // if monitor don't exists register himself as secondary.
         {
             await RegisterMonitor(monitorAgent, db, false);
         }
+    }
 
+    private static async Task DeleteOutdatedMonitors(List<MonitorAgent> allMonitors, SqlConnection db)
+    {
         var monitorsToDelete = allMonitors
             .Where(agent => agent.TimeStamp < DateTime.UtcNow.AddMinutes(-2))
             .ToList();
@@ -50,6 +67,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         {
             var sqlDelete = @"DELETE FROM [MonitorAgent] WHERE Id = @Id";
             await db.ExecuteAsync(sqlDelete, new { monitor.Id }, commandType: CommandType.Text);
+            allMonitors.Remove(monitor);
         }
     }
 
@@ -61,17 +79,18 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         return result.ToList();
     }
 
-    private static async Task UpdateExistingMonitor(MonitorAgent monitorAgent, SqlConnection db,
+    private static async Task UpdateExistingMonitor(SqlConnection db,
         MonitorAgent monitorToUpdate)
     {
         string sqlInsertMaster =
-            @"UPDATE [MonitorAgent] SET TimeStamp = @TimeStamp WHERE Id = @id";
+            @"UPDATE [MonitorAgent] SET TimeStamp = @TimeStamp, IsMaster = @IsMaster WHERE Id = @id";
 
         await db.ExecuteAsync(sqlInsertMaster,
             new
             {
                 Id = monitorToUpdate.Id,
-                TimeStamp = monitorAgent.TimeStamp
+                TimeStamp = DateTime.UtcNow,
+                IsMaster = monitorToUpdate.IsMaster
             }, commandType: CommandType.Text);
     }
 
