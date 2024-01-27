@@ -82,6 +82,11 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
     private static async Task UpdateExistingMonitor(SqlConnection db,
         MonitorAgent monitorToUpdate)
     {
+        string sqlRemoveAllOlderMastersIfExist =
+            @"UPDATE [MonitorAgent] SET IsMaster = 'false' WHERE 1=1";
+
+        await db.ExecuteAsync(sqlRemoveAllOlderMastersIfExist, commandType: CommandType.Text);
+
         string sqlInsertMaster =
             @"UPDATE [MonitorAgent] SET TimeStamp = @TimeStamp, IsMaster = @IsMaster WHERE Id = @id";
 
