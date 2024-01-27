@@ -22,7 +22,7 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpGet]
         public async Task StartMonitor()
         {
-            await _monitorManager.Start();
+            await _monitorManager.StartMonitorHeartBeatManager();
         }
 
         [HttpGet("monitorStatus")]

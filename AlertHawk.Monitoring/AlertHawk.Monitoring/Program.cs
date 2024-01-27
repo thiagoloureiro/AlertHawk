@@ -40,6 +40,7 @@ builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<Cach
 builder.Services.AddTransient<IMonitorTypeService, MonitorTypeService>();
 builder.Services.AddTransient<IMonitorTypeRepository, MonitorTypeRepository>();
 
+builder.Services.AddTransient<IMonitorRepository, MonitorRepository>();
 builder.Services.AddTransient<IMonitorAgentRepository, MonitorAgentRepository>();
 builder.Services.AddTransient<IMonitorManager, MonitorManager>();
 
@@ -53,7 +54,9 @@ var app = builder.Build();
 app.UseHangfireDashboard();
 app.UseHangfireServer();
 
-RecurringJob.AddOrUpdate<IMonitorManager>(x => x.Start(), "*/15 * * * * *");
+RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMonitorHeartBeatManager(), "*/15 * * * * *");
+RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMonitorAgentTaskManager(), "*/30 * * * * *");
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

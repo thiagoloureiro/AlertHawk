@@ -19,11 +19,9 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
 
     public async Task ManageMonitorStatus(MonitorAgent monitorAgent)
     {
-        // Select
+        var allMonitors = await GetAllMonitorAgents();
+
         await using var db = new SqlConnection(_connstring);
-
-        var allMonitors = await GetAllMonitors(db);
-
         await DeleteOutdatedMonitors(allMonitors, db);
 
         if (!allMonitors.Any(x => x.IsMaster))
@@ -62,20 +60,24 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
 
     private static async Task DeleteOutdatedMonitors(List<MonitorAgent> allMonitors, SqlConnection db)
     {
-        var monitorsToDelete = allMonitors
+        var monitorAgents = allMonitors
             .Where(agent => agent.TimeStamp < DateTime.UtcNow.AddMinutes(-1))
             .ToList();
 
-        foreach (var monitor in monitorsToDelete)
+        foreach (var monitorAgent in monitorAgents)
         {
             var sqlDelete = @"DELETE FROM [MonitorAgent] WHERE Id = @Id";
-            await db.ExecuteAsync(sqlDelete, new { monitor.Id }, commandType: CommandType.Text);
-            allMonitors.Remove(monitor);
+            var sqlDeleteFromTasks = @"DELETE FROM [MonitorAgentTasks] WHERE MonitorAgentId = @Id";
+            
+            await db.ExecuteAsync(sqlDelete, new { monitorAgent.Id }, commandType: CommandType.Text);
+            await db.ExecuteAsync(sqlDeleteFromTasks, new { monitorAgent.Id }, commandType: CommandType.Text);
+            allMonitors.Remove(monitorAgent);
         }
     }
 
-    private async Task<List<MonitorAgent>> GetAllMonitors(SqlConnection db)
+    public async Task<List<MonitorAgent>> GetAllMonitorAgents()
     {
+        await using var db = new SqlConnection(_connstring);
         string sqlAllMonitors = @"SELECT Id, Hostname, TimeStamp, IsMaster FROM [MonitorAgent]";
         var result = await db.QueryAsync<MonitorAgent>(sqlAllMonitors, commandType: CommandType.Text);
         return result.ToList();
