@@ -1,6 +1,9 @@
+using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using AlertHawk.Monitoring.Infrastructure.Repositories.Class;
+using EasyMemoryCache.Configuration;
 using Hangfire;
 using Hangfire.MemoryStorage;
 using MassTransit;
@@ -32,6 +35,10 @@ builder.Services.AddMassTransit(x =>
 });
 
 builder.Services.AddHangfire(config => config.UseMemoryStorage());
+builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
+
+builder.Services.AddTransient<IMonitorTypeService, MonitorTypeService>();
+builder.Services.AddTransient<IMonitorTypeRepository, MonitorTypeRepository>();
 
 builder.Services.AddTransient<IMonitorAgentRepository, MonitorAgentRepository>();
 builder.Services.AddTransient<IMonitorManager, MonitorManager>();
