@@ -23,10 +23,11 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
 
         var allMonitors = await GetAllMonitors(db);
 
-        if (!allMonitors.Any() ||
-            allMonitors.Any(x => x.IsMaster)) // if no monitors or no master monitors, register himself as master.
+        if (!allMonitors.Any(x => x.IsMaster))
         {
             await RegisterMonitor(monitorAgent, db, true);
+            monitorAgent.IsMaster = true;
+            allMonitors.Add(monitorAgent);
         }
         
         var monitorToUpdate = allMonitors.FirstOrDefault(x =>
