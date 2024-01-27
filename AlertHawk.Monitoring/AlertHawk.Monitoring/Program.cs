@@ -1,6 +1,8 @@
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using AlertHawk.Monitoring.Infrastructure.Repositories.Class;
+using Hangfire;
+using Hangfire.MemoryStorage;
 using MassTransit;
 using Microsoft.OpenApi.Models;
 using SharedModels;
@@ -29,6 +31,8 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+builder.Services.AddHangfire(config => config.UseMemoryStorage());
+
 builder.Services.AddTransient<IMonitorAgentRepository, MonitorAgentRepository>();
 builder.Services.AddTransient<IMonitorManager, MonitorManager>();
 
@@ -38,6 +42,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+app.UseHangfireDashboard();
+app.UseHangfireServer();
+
+RecurringJob.AddOrUpdate<IMonitorManager>(x => x.Start(), "*/30 * * * * *");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
