@@ -63,7 +63,7 @@ namespace AlertHawk.Notification.Domain.Classes
                     await _notificationRepository.InsertNotificationItemEmailSmtp(notificationItem);
                     break;
                 case 2: // MS Teams
-                    await _notificationRepository.InsertNotificationItemMSTeams(notificationItem);
+                    await _notificationRepository.InsertNotificationItemMsTeams(notificationItem);
                     break;
                 case 3: // Telegram
                     await _notificationRepository.InsertNotificationItemTelegram(notificationItem);
@@ -72,6 +72,17 @@ namespace AlertHawk.Notification.Domain.Classes
                     await _notificationRepository.InsertNotificationItemSlack(notificationItem);
                     break;
             }
+        }
+
+        public async Task UpdateNotificationItem(NotificationItem notificationItem)
+        {
+            await _notificationRepository.UpdateNotificationItem(notificationItem);
+            await InsertNotificationItem(notificationItem);
+        }
+
+        public async Task DeleteNotificationItem(int id)
+        {
+            await _notificationRepository.DeleteNotificationItem(id);
         }
 
         public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList()

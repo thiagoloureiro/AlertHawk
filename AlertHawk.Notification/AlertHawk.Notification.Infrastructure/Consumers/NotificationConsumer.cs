@@ -3,7 +3,6 @@ using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Domain.Interfaces.Services;
 using MassTransit;
-using Sentry;
 
 namespace SharedModels;
 
