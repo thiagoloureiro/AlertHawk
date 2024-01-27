@@ -27,6 +27,7 @@ public class MonitorManager : IMonitorManager
 
     public async Task StartMonitorAgentTaskManager()
     {
+        Console.WriteLine($"Started StartMonitorAgentTaskManager, current Master: {GlobalVariables.MasterNode}");
         // Only MasterNode is responsible for Managing Tasks
         if (GlobalVariables.MasterNode)
         {
