@@ -33,7 +33,8 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
             var notificationSend = new NotificationSend
             {
                 NotificationEmail = notificationItem.NotificationEmail,
-                Message = context.Message.Message
+                Message = context.Message.Message,
+                NotificationTypeId = notificationItem.NotificationTypeId
             };
             await _notificationService.Send(notificationSend);
         }
@@ -45,6 +46,7 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
             {
                 NotificationTeams = notificationItem.NotificationTeams,
                 Message = context.Message.Message,
+                NotificationTypeId = notificationItem.NotificationTypeId
             };
             await _notificationService.Send(notificationSend);
         }
@@ -56,6 +58,7 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
             {
                 NotificationSlack = notificationItem.NotificationSlack,
                 Message = context.Message.Message,
+                NotificationTypeId = notificationItem.NotificationTypeId
             };
             await _notificationService.Send(notificationSend);
         }
@@ -67,6 +70,7 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
             {
                 NotificationTelegram = notificationItem.NotificationTelegram,
                 Message = context.Message.Message,
+                NotificationTypeId = notificationItem.NotificationTypeId
             };
             await _notificationService.Send(notificationSend);
         }

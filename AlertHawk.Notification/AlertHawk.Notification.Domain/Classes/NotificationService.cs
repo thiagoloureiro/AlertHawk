@@ -28,9 +28,7 @@ namespace AlertHawk.Notification.Domain.Classes
         {
             switch (notificationSend.NotificationTypeId)
             {
-                case 1: // Email SMTP - Those will be fixed.
-                    // should retrieve configs from DB for the notificationEmail object
-
+                case 1: // Email SMTP
                     var result = await _mailNotifier.Send(notificationSend.NotificationEmail);
                     return result;
 
@@ -49,6 +47,9 @@ namespace AlertHawk.Notification.Domain.Classes
                     await _slackNotifier.SendNotification(notificationSend.NotificationSlack.Channel,
                         notificationSend.Message, notificationSend.NotificationSlack.WebHookUrl);
                     return true;
+                default:
+                    Console.WriteLine($"Not found NotificationTypeId: {notificationSend.NotificationTypeId}");
+                    break;
             }
 
             return false;
