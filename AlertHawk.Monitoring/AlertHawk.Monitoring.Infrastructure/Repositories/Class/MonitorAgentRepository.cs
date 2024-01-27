@@ -20,24 +20,26 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
     {
         // Select
         await using var db = new SqlConnection(_connstring);
-        
+
         var allMonitors = await GetAllMonitors(db);
 
-        var monitorList = allMonitors.Where(x => x.Hostname == monitorAgent.Hostname);
-
-        var monitorAgents = monitorList.ToList();
-
-        await RegisterMasterMonitor(monitorAgent, monitorAgents, db);
-
-        var monitorToUpdate = monitorAgents.FirstOrDefault(x =>
+        if (!allMonitors.Any() ||
+            allMonitors.Any(x => x.IsMaster)) // if no monitors or no master monitors, register himself as master.
+        {
+            await RegisterMonitor(monitorAgent, db, true);
+        }
+        
+        var monitorToUpdate = allMonitors.FirstOrDefault(x =>
             string.Equals(x.Hostname, monitorAgent.Hostname, StringComparison.CurrentCultureIgnoreCase));
 
         if (monitorToUpdate != null)
         {
             await UpdateExistingMonitor(monitorAgent, db, monitorToUpdate);
         }
-
-    
+        else // if monitor don't exists register himself as secondary.
+        {
+            await RegisterMonitor(monitorAgent, db, false);
+        }
 
         var monitorsToDelete = allMonitors
             .Where(agent => agent.TimeStamp < DateTime.UtcNow.AddMinutes(-2))
@@ -72,22 +74,19 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
             }, commandType: CommandType.Text);
     }
 
-    private static async Task RegisterMasterMonitor(MonitorAgent monitorAgent, List<MonitorAgent> monitorAgents,
-        SqlConnection db)
+    private static async Task RegisterMonitor(MonitorAgent monitorAgent,
+        SqlConnection db, bool isMaster)
     {
-        if (!monitorAgents.Any()) // If no monitors, register Master
-        {
-            monitorAgent.IsMaster = true;
-            // Insert
-            string sqlInsertMaster =
-                @"INSERT INTO [MonitorAgent] (Hostname, TimeStamp, IsMaster) VALUES (@Hostname, @TimeStamp, @IsMaster)";
-            await db.ExecuteAsync(sqlInsertMaster,
-                new
-                {
-                    HostName = monitorAgent.Hostname,
-                    TimeStamp = monitorAgent.TimeStamp,
-                    IsMaster = monitorAgent.IsMaster
-                }, commandType: CommandType.Text);
-        }
+        monitorAgent.IsMaster = isMaster;
+        // Insert
+        string sqlInsertMaster =
+            @"INSERT INTO [MonitorAgent] (Hostname, TimeStamp, IsMaster) VALUES (@Hostname, @TimeStamp, @IsMaster)";
+        await db.ExecuteAsync(sqlInsertMaster,
+            new
+            {
+                HostName = monitorAgent.Hostname,
+                TimeStamp = monitorAgent.TimeStamp,
+                IsMaster = monitorAgent.IsMaster
+            }, commandType: CommandType.Text);
     }
 }
