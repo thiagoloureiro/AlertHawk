@@ -64,6 +64,8 @@ builder.WebHost.UseSentry();
 
 var app = builder.Build();
 
+app.UseHttpsRedirection();
+
 if (app.Environment.IsDevelopment())
 {
     var basePath = Environment.GetEnvironmentVariable("basePath") ?? "";
@@ -72,13 +74,12 @@ if (app.Environment.IsDevelopment())
         c.RouteTemplate = "swagger/{documentName}/swagger.json";
         c.PreSerializeFilters.Add((swaggerDoc, httpReq) =>
         {
-            swaggerDoc.Servers = new List<OpenApiServer> { new OpenApiServer { Url = $"{httpReq.Scheme}://{httpReq.Host.Value}{basePath}" } };
+            swaggerDoc.Servers = new List<OpenApiServer>
+                { new OpenApiServer { Url = $"https://{httpReq.Host.Value}{basePath}" } };
         });
     });
     app.UseSwaggerUI();
 }
-
-app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
