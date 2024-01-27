@@ -29,6 +29,7 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
 
         if (notificationItem?.NotificationEmail != null)
         {
+            Console.WriteLine("Sending Email notification");
             var notificationSend = new NotificationSend
             {
                 NotificationEmail = notificationItem.NotificationEmail,
@@ -39,6 +40,7 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
 
         if (notificationItem?.NotificationTeams != null)
         {
+            Console.WriteLine("Sending Teams notification");
             var notificationSend = new NotificationSend
             {
                 NotificationTeams = notificationItem.NotificationTeams,
@@ -49,6 +51,7 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
 
         if (notificationItem?.NotificationSlack != null)
         {
+            Console.WriteLine("Sending Slack notification");
             var notificationSend = new NotificationSend
             {
                 NotificationSlack = notificationItem.NotificationSlack,
@@ -59,6 +62,7 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
 
         if (notificationItem?.NotificationTelegram != null)
         {
+            Console.WriteLine("Sending Telegram notification");
             var notificationSend = new NotificationSend
             {
                 NotificationTelegram = notificationItem.NotificationTelegram,
