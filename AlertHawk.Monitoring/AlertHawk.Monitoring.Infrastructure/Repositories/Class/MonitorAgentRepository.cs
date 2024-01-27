@@ -2,6 +2,7 @@ using System.Data;
 using System.Data.SqlClient;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 
@@ -29,6 +30,8 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         {
             var currentMonitor = allMonitors.FirstOrDefault(x => x.Hostname == monitorAgent.Hostname);
             monitorAgent.IsMaster = true;
+            GlobalVariables.MasterNode = true;
+            
             // If monitor exists but he is not the master.
             if (currentMonitor != null)
             {

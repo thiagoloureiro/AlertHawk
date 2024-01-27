@@ -1,4 +1,5 @@
 ﻿using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using SharedModels;
@@ -11,6 +12,7 @@ namespace AlertHawk.Monitoring.Controllers
     {
         private readonly IPublishEndpoint _publishEndpoint;
         private IMonitorManager _monitorManager;
+
         public MonitorController(IPublishEndpoint publishEndpoint, IMonitorManager monitorManager)
         {
             _publishEndpoint = publishEndpoint;
@@ -23,6 +25,12 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorManager.Start();
         }
 
+        [HttpGet("monitorStatus")]
+        public IActionResult MonitorStatus()
+        {
+            return Ok($"Master Node: {GlobalVariables.MasterNode}");
+        }
+
         [HttpPost]
         public async Task<IActionResult> ProduceNotification(int notificationId, string message, int messageQuantity)
         {
@@ -30,7 +38,7 @@ namespace AlertHawk.Monitoring.Controllers
             {
                 messageQuantity = 50;
             }
-            
+
             for (int i = 0; i < messageQuantity; i++)
             {
                 await _publishEndpoint.Publish<NotificationAlert>(new
