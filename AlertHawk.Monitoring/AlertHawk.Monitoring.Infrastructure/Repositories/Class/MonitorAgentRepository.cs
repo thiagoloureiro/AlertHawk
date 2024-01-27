@@ -60,7 +60,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
     private static async Task DeleteOutdatedMonitors(List<MonitorAgent> allMonitors, SqlConnection db)
     {
         var monitorsToDelete = allMonitors
-            .Where(agent => agent.TimeStamp < DateTime.UtcNow.AddMinutes(-2))
+            .Where(agent => agent.TimeStamp < DateTime.UtcNow.AddMinutes(-1))
             .ToList();
 
         foreach (var monitor in monitorsToDelete)
