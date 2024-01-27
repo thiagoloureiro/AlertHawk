@@ -62,7 +62,7 @@ namespace AlertHawk.Notification.Controllers
         }
 
         [HttpGet("SelectNotificationItemById/{id}")]
-        [SwaggerOperation(Summary = "Select Notification Item By Id")]
+        [SwaggerOperation(Summary = "Select NotificationItem By Id")]
         [ProducesResponseType(typeof(NotificationItem), StatusCodes.Status200OK)]
         public async Task<IActionResult> SelectNotificationItemList(int id)
         {
