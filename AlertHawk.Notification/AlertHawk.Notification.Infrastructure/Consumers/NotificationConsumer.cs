@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using MassTransit;
 
 namespace SharedModels;
 
+[ExcludeFromCodeCoverage]
 public class NotificationConsumer : IConsumer<NotificationAlert>
 {
     private readonly ISlackNotifier _slackNotifier;
