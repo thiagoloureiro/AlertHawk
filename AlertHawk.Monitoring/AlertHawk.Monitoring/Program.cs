@@ -46,7 +46,7 @@ var app = builder.Build();
 app.UseHangfireDashboard();
 app.UseHangfireServer();
 
-RecurringJob.AddOrUpdate<IMonitorManager>(x => x.Start(), "*/30 * * * * *");
+RecurringJob.AddOrUpdate<IMonitorManager>(x => x.Start(), "*/15 * * * * *");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
