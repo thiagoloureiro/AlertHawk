@@ -21,7 +21,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
     public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList()
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = @"SELECT Id, Name, Description FROM [NotificationItem]";
+        string sql = "SELECT Id, Name, Description FROM [NotificationItem]";
 
         var notificationItemList = await db.QueryAsync<NotificationItem>(sql, commandType: CommandType.Text);
 
@@ -113,7 +113,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
         await using var db = new SqlConnection(_connstring);
         string sqlDetails =
-            @"INSERT INTO [NotificationSlack] (NotificationId, WebHookUrl, Channel, Username) VALUES (@notificationId, @WebHookUrl, @Channel, @Username)";
+            @"INSERT INTO [NotificationSlack] (NotificationId, WebHookUrl, Channel) VALUES (@notificationId, @WebHookUrl, @Channel)";
 
         await db.ExecuteAsync(sqlDetails, new
         {

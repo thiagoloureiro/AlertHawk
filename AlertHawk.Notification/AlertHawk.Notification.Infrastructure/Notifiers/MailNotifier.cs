@@ -22,22 +22,22 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
             var emailRecipients = new List<string>();
 
             var emailTo = emailNotification.ToEmail?.Split(";").ToList();
-            var emailCCList = emailNotification.ToCCEmail?.Split(";").ToList();
-            var emailBCCList = emailNotification.ToBCCEmail?.Split(";").ToList();
+            var emailCcList = emailNotification.ToCCEmail?.Split(";").ToList();
+            var emailBccList = emailNotification.ToBCCEmail?.Split(";").ToList();
 
             if (emailTo != null)
             {
                 emailRecipients.AddRange(emailTo);
             }
 
-            if (emailCCList != null)
+            if (emailCcList != null)
             {
-                emailRecipients.AddRange(emailCCList);
+                emailRecipients.AddRange(emailCcList);
             }
 
-            if (emailBCCList != null)
+            if (emailBccList != null)
             {
-                emailRecipients.AddRange(emailBCCList);
+                emailRecipients.AddRange(emailBccList);
             }
 
             foreach (var recipient in emailRecipients)

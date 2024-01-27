@@ -4,9 +4,11 @@ using AlertHawk.Notification.Domain.Interfaces.Services;
 using AlertHawk.Notification.Infrastructure.Repositories.Class;
 using EasyMemoryCache.Configuration;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Infrastructure.Notifiers;
 using MassTransit;
+using Microsoft.OpenApi.Models;
 using SharedModels;
 
 [assembly: ExcludeFromCodeCoverage]
@@ -23,6 +25,8 @@ var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
 var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
 
 builder.Services.AddControllers();
+
+var version = Assembly.GetEntryAssembly()?.GetName().Version.ToString();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -62,7 +66,15 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
+    var basePath = Environment.GetEnvironmentVariable("basePath") ?? "";
+    app.UseSwagger(c =>
+    {
+        c.RouteTemplate = "swagger/{documentName}/swagger.json";
+        c.PreSerializeFilters.Add((swaggerDoc, httpReq) =>
+        {
+            swaggerDoc.Servers = new List<OpenApiServer> { new OpenApiServer { Url = $"{httpReq.Scheme}://{httpReq.Host.Value}{basePath}" } };
+        });
+    });
     app.UseSwaggerUI();
 }
 
