@@ -3,7 +3,7 @@ using AlertHawk.Notification.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AlertHawk.Notification.Tests.ControllerTests;
+namespace AlertHawk.Notification.Tests.NotifierTests;
 
 public class NotifierTests : IClassFixture<NotificationController>
 {
