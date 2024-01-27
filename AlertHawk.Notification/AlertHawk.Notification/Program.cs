@@ -26,8 +26,6 @@ var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
 
 builder.Services.AddControllers();
 
-var version = Assembly.GetEntryAssembly()?.GetName().Version.ToString();
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
