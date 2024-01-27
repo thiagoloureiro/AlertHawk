@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Repositories;
 using Dapper;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace AlertHawk.Notification.Infrastructure.Repositories.Class;
 
+[ExcludeFromCodeCoverage]
 public class NotificationRepository : RepositoryBase, INotificationRepository
 {
     private readonly string _connstring;
