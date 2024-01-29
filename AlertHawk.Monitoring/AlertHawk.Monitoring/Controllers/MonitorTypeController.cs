@@ -1,10 +1,6 @@
-﻿using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
-using AlertHawk.Monitoring.Domain.Interfaces.Services;
-using AlertHawk.Monitoring.Infrastructure.MonitorManager;
+﻿using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using EasyMemoryCache;
-using MassTransit;
 using Microsoft.AspNetCore.Mvc;
-using SharedModels;
 
 namespace AlertHawk.Monitoring.Controllers
 {

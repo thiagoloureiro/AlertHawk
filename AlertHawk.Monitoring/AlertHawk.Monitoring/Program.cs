@@ -8,7 +8,6 @@ using Hangfire;
 using Hangfire.MemoryStorage;
 using MassTransit;
 using Microsoft.OpenApi.Models;
-using SharedModels;
 
 var builder = WebApplication.CreateBuilder(args);
 
