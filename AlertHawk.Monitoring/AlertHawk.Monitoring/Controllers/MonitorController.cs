@@ -11,18 +11,10 @@ namespace AlertHawk.Monitoring.Controllers
     public class MonitorController : ControllerBase
     {
         private readonly IPublishEndpoint _publishEndpoint;
-        private IMonitorManager _monitorManager;
 
-        public MonitorController(IPublishEndpoint publishEndpoint, IMonitorManager monitorManager)
+        public MonitorController(IPublishEndpoint publishEndpoint)
         {
             _publishEndpoint = publishEndpoint;
-            _monitorManager = monitorManager;
-        }
-
-        [HttpGet]
-        public async Task StartMonitor()
-        {
-            await _monitorManager.StartMonitorHeartBeatManager();
         }
 
         [HttpGet("monitorStatus")]
