@@ -34,6 +34,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
             if (currentMonitor != null)
             {
                 monitorAgent.Id = currentMonitor.Id;
+                GlobalVariables.NodeId = monitorAgent.Id;
                 await UpdateExistingMonitor(db, monitorAgent);
                 return;
             }

@@ -6,7 +6,7 @@ namespace AlertHawk.Monitoring.Infrastructure.MonitorManager;
 public class MonitorManager : IMonitorManager
 {
     private readonly IMonitorAgentRepository _monitorAgentRepository;
-    private IMonitorRepository _monitorRepository;
+    private readonly IMonitorRepository _monitorRepository;
 
     public MonitorManager(IMonitorAgentRepository monitorAgentRepository, IMonitorRepository monitorRepository)
     {
@@ -70,8 +70,16 @@ public class MonitorManager : IMonitorManager
                 currentIndex += tasksToTake;
             }
 
+            if (GlobalVariables.TaskList != null)
+            {
+                GlobalVariables.TaskList.Clear();
+            }
+
+            GlobalVariables.TaskList = new List<int>();
+
             foreach (var item in lstMonitorAgentTasks)
             {
+                GlobalVariables.TaskList.Add(item.MonitorId);
                 Console.WriteLine($"MonitorId: {item.MonitorId}, AgentId: {item.MonitorAgentId}");
             }
         }
