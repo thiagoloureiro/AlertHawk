@@ -6,6 +6,7 @@ using EasyMemoryCache.Configuration;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
+using AlertHawk.Notification.Helpers;
 using AlertHawk.Notification.Infrastructure.Notifiers;
 using MassTransit;
 using Microsoft.OpenApi.Models;
@@ -66,6 +67,7 @@ app.UseHttpsRedirection();
 
 if (app.Environment.IsDevelopment())
 {
+    app.UseMiddleware<SwaggerBasicAuthMiddleware>();
     var basePath = Environment.GetEnvironmentVariable("basePath") ?? "";
     app.UseSwagger(c =>
     {

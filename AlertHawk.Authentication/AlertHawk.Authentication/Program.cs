@@ -1,3 +1,4 @@
+using AlertHawk.Authentication.Helpers;
 using EasyMemoryCache.Configuration;
 using Microsoft.OpenApi.Models;
 
@@ -24,6 +25,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseMiddleware<SwaggerBasicAuthMiddleware>();
     var basePath = Environment.GetEnvironmentVariable("basePath") ?? "";
     app.UseSwagger(c =>
     {
