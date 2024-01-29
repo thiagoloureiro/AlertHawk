@@ -23,9 +23,4 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string sql = @"SELECT Id, Name FROM [Monitor]";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
-
-    public async Task<IEnumerable<MonitorAgentTasks>> GetAgentTasksList()
-    {
-        throw new NotImplementedException();
-    }
 }

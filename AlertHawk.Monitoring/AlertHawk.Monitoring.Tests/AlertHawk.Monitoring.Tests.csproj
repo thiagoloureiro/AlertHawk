@@ -22,4 +22,9 @@
         </PackageReference>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\AlertHawk.Monitoring.Domain\AlertHawk.Monitoring.Domain.csproj" />
+      <ProjectReference Include="..\AlertHawk.Monitoring.Infrastructure\AlertHawk.Monitoring.Infrastructure.csproj" />
+    </ItemGroup>
+
 </Project>

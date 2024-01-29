@@ -2,6 +2,7 @@ using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
+using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 using AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 using EasyMemoryCache.Configuration;
 using Hangfire;
@@ -42,6 +43,8 @@ builder.Services.AddTransient<IMonitorTypeRepository, MonitorTypeRepository>();
 builder.Services.AddTransient<IMonitorRepository, MonitorRepository>();
 builder.Services.AddTransient<IMonitorAgentRepository, MonitorAgentRepository>();
 builder.Services.AddTransient<IMonitorManager, MonitorManager>();
+
+builder.Services.AddTransient<IHttpClientRunner, HttpClientRunner>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

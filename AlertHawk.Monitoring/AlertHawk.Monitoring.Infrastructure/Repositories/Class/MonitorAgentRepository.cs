@@ -161,11 +161,11 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
             }, commandType: CommandType.Text);
     }
 
-    public class MonitorAgentTasksEqualityComparer : IEqualityComparer<MonitorAgentTasks>
+    private class MonitorAgentTasksEqualityComparer : IEqualityComparer<MonitorAgentTasks>
     {
-        public bool Equals(MonitorAgentTasks x, MonitorAgentTasks y)
+        public bool Equals(MonitorAgentTasks? x, MonitorAgentTasks? y)
         {
-            return x.MonitorId == y.MonitorId && x.MonitorAgentId == y.MonitorAgentId;
+            return x?.MonitorId == y?.MonitorId && x?.MonitorAgentId == y?.MonitorAgentId;
         }
 
         public int GetHashCode(MonitorAgentTasks obj)
