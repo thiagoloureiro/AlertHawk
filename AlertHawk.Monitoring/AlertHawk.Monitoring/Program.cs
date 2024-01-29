@@ -1,6 +1,7 @@
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
+using AlertHawk.Monitoring.Helpers;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 using AlertHawk.Monitoring.Infrastructure.Repositories.Class;
@@ -64,6 +65,7 @@ RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMasterMonitorAgentTaskMana
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseMiddleware<SwaggerBasicAuthMiddleware>();
     var basePath = Environment.GetEnvironmentVariable("basePath") ?? "";
     app.UseSwagger(c =>
     {
