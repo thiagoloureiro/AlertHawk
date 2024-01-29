@@ -41,7 +41,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
             else
             {
                 await RegisterMonitor(monitorAgent, db, true);
-
+                GlobalVariables.NodeId = monitorAgent.Id;
                 allMonitors.Add(monitorAgent);
             }
         }
@@ -51,6 +51,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
 
         if (monitorToUpdate != null)
         {
+            GlobalVariables.NodeId = monitorToUpdate.Id;
             await UpdateExistingMonitor(db, monitorToUpdate);
         }
         else // if monitor don't exists register himself as secondary.

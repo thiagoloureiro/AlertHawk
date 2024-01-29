@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.SqlClient;
+using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
 using Microsoft.Extensions.Configuration;
@@ -21,5 +22,10 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
         string sql = @"SELECT Id, Name FROM [Monitor]";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
+    }
+
+    public async Task<IEnumerable<MonitorAgentTasks>> GetAgentTasksList()
+    {
+        throw new NotImplementedException();
     }
 }

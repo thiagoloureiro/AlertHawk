@@ -22,10 +22,19 @@ public class MonitorManager : IMonitorManager
             TimeStamp = DateTime.UtcNow
         };
 
-        await _monitorAgentRepository.ManageMonitorStatus(monitorAgent);
+       // await _monitorAgentRepository.ManageMonitorStatus(monitorAgent);
     }
 
     public async Task StartMonitorAgentTaskManager()
+    {
+        // This is for the Child agents manage their Ids/Tasks
+        if (!GlobalVariables.MasterNode)
+        {
+            var tasksAgentList = await _monitorAgentRepository.GetAllMonitorAgents();
+        }
+    }
+
+    public async Task StartMasterMonitorAgentTaskManager()
     {
         // Only MasterNode is responsible for Managing Tasks
         if (GlobalVariables.MasterNode)
@@ -83,7 +92,7 @@ public class MonitorManager : IMonitorManager
                 {
                     GlobalVariables.TaskList.Add(item.MonitorId);
                 }
-                
+
                 Console.WriteLine($"MonitorId: {item.MonitorId}, AgentId: {item.MonitorAgentId}");
             }
         }
