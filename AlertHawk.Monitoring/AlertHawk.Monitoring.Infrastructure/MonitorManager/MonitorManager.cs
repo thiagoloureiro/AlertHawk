@@ -79,7 +79,11 @@ public class MonitorManager : IMonitorManager
 
             foreach (var item in lstMonitorAgentTasks)
             {
-                GlobalVariables.TaskList.Add(item.MonitorId);
+                if (item.MonitorAgentId == GlobalVariables.NodeId)
+                {
+                    GlobalVariables.TaskList.Add(item.MonitorId);
+                }
+                
                 Console.WriteLine($"MonitorId: {item.MonitorId}, AgentId: {item.MonitorAgentId}");
             }
         }

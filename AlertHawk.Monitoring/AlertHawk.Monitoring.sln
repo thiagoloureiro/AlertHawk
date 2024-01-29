@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Monitoring.Domain
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Monitoring.Infrastructure", "AlertHawk.Monitoring.Infrastructure\AlertHawk.Monitoring.Infrastructure.csproj", "{00660E27-FCDF-49A6-A224-1456C35418F1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Monitoring.Tests", "AlertHawk.Monitoring.Tests\AlertHawk.Monitoring.Tests.csproj", "{196CD3F6-A59B-4D1A-822B-710477D325B7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Monitoring.Tests", "AlertHawk.Monitoring.Tests\AlertHawk.Monitoring.Tests.csproj", "{CA3181EE-16DB-40AE-8FF5-2005E09D900B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +29,10 @@ Global
 		{00660E27-FCDF-49A6-A224-1456C35418F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{00660E27-FCDF-49A6-A224-1456C35418F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{00660E27-FCDF-49A6-A224-1456C35418F1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{196CD3F6-A59B-4D1A-822B-710477D325B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{196CD3F6-A59B-4D1A-822B-710477D325B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{196CD3F6-A59B-4D1A-822B-710477D325B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{196CD3F6-A59B-4D1A-822B-710477D325B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA3181EE-16DB-40AE-8FF5-2005E09D900B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA3181EE-16DB-40AE-8FF5-2005E09D900B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA3181EE-16DB-40AE-8FF5-2005E09D900B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA3181EE-16DB-40AE-8FF5-2005E09D900B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

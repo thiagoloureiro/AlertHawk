@@ -19,7 +19,7 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpGet("monitorStatus")]
         public IActionResult MonitorStatus()
         {
-            return Ok($"Master Node: {GlobalVariables.MasterNode}, MonitorId: {GlobalVariables.NodeId}, TasksList Count: {GlobalVariables.TaskList.Count()}");
+            return Ok($"Master Node: {GlobalVariables.MasterNode}, MonitorId: {GlobalVariables.NodeId}, TasksList Count: {GlobalVariables.TaskList?.Count()}");
         }
 
         [HttpPost]
