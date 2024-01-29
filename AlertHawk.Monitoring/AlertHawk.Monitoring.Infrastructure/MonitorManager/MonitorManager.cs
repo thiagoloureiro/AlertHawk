@@ -29,8 +29,8 @@ public class MonitorManager : IMonitorManager
     {
         // This is for the Child agents manage their Ids/Tasks
         //if (!GlobalVariables.MasterNode)
-       // {
-          //  var tasksAgentList = await _monitorAgentRepository.GetAllMonitorAgents();
+        //{
+        //    var tasksAgentList = await _monitorAgentRepository.GetAllMonitorAgentTasks();
         //}
     }
 
@@ -95,6 +95,8 @@ public class MonitorManager : IMonitorManager
 
                 Console.WriteLine($"MonitorId: {item.MonitorId}, AgentId: {item.MonitorAgentId}");
             }
+
+            await _monitorAgentRepository.UpsertMonitorAgentTasks(lstMonitorAgentTasks);
         }
     }
 }

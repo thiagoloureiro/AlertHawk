@@ -6,4 +6,6 @@ public interface IMonitorAgentRepository
 {
     Task ManageMonitorStatus(MonitorAgent monitorAgent);
     Task<List<MonitorAgent>> GetAllMonitorAgents();
+    Task UpsertMonitorAgentTasks(List<MonitorAgentTasks> lstMonitorAgentTasks);
+    Task<List<MonitorAgentTasks>> GetAllMonitorAgentTasks();
 }

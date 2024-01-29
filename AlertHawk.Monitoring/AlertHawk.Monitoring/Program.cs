@@ -54,7 +54,7 @@ app.UseHangfireDashboard();
 app.UseHangfireServer();
 
 RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMonitorHeartBeatManager(), "*/15 * * * * *");
-RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMasterMonitorAgentTaskManager(), "*/30 * * * * *");
+RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
 //RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMonitorAgentTaskManager(), "*/30 * * * * *");
 
 

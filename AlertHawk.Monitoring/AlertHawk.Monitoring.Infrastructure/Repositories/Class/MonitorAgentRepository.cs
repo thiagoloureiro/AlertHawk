@@ -29,7 +29,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
             var currentMonitor = allMonitors.FirstOrDefault(x => x.Hostname == monitorAgent.Hostname);
             monitorAgent.IsMaster = true;
             GlobalVariables.MasterNode = true;
-            
+
             // If monitor exists but he is not the master.
             if (currentMonitor != null)
             {
@@ -70,7 +70,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         {
             var sqlDelete = @"DELETE FROM [MonitorAgent] WHERE Id = @Id";
             var sqlDeleteFromTasks = @"DELETE FROM [MonitorAgentTasks] WHERE MonitorAgentId = @Id";
-            
+
             await db.ExecuteAsync(sqlDelete, new { monitorAgent.Id }, commandType: CommandType.Text);
             await db.ExecuteAsync(sqlDeleteFromTasks, new { monitorAgent.Id }, commandType: CommandType.Text);
             allMonitors.Remove(monitorAgent);
@@ -82,6 +82,51 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         await using var db = new SqlConnection(_connstring);
         string sqlAllMonitors = @"SELECT Id, Hostname, TimeStamp, IsMaster FROM [MonitorAgent]";
         var result = await db.QueryAsync<MonitorAgent>(sqlAllMonitors, commandType: CommandType.Text);
+        return result.ToList();
+    }
+
+    public async Task UpsertMonitorAgentTasks(List<MonitorAgentTasks> lstMonitorAgentTasks)
+    {
+        var lstCurrentMonitorAgentTasks = await GetAllMonitorAgentTasks();
+
+        bool areEqual = lstMonitorAgentTasks.OrderBy(x => x.MonitorId)
+            .ThenBy(x => x.MonitorAgentId)
+            .SequenceEqual(lstCurrentMonitorAgentTasks.OrderBy(x => x.MonitorId)
+                    .ThenBy(x => x.MonitorAgentId),
+                new MonitorAgentTasksEqualityComparer());
+
+        if (!areEqual)
+        {
+            await DeleteAllMonitorAgentTasks();
+
+            string sqlInsertMaster =
+                @"INSERT INTO [MonitorAgentTasks] (MonitorId, MonitorAgentId) VALUES (@MonitorId, @MonitorAgentId)";
+            await using var db = new SqlConnection(_connstring);
+
+            foreach (var item in lstMonitorAgentTasks)
+            {
+                await db.ExecuteAsync(sqlInsertMaster,
+                    new
+                    {
+                        MonitorId = item.MonitorId,
+                        MonitorAgentId = item.MonitorAgentId
+                    }, commandType: CommandType.Text);
+            }
+        }
+    }
+
+    private async Task DeleteAllMonitorAgentTasks()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlAllMonitors = @"DELETE FROM [MonitorAgentTasks] WHERE 1=1";
+        await db.ExecuteAsync(sqlAllMonitors, commandType: CommandType.Text);
+    }
+
+    public async Task<List<MonitorAgentTasks>> GetAllMonitorAgentTasks()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlAllMonitors = @"SELECT MonitorId, MonitorAgentId FROM [MonitorAgentTasks]";
+        var result = await db.QueryAsync<MonitorAgentTasks>(sqlAllMonitors, commandType: CommandType.Text);
         return result.ToList();
     }
 
@@ -114,5 +159,18 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
                 TimeStamp = monitorAgent.TimeStamp,
                 IsMaster = monitorAgent.IsMaster
             }, commandType: CommandType.Text);
+    }
+
+    public class MonitorAgentTasksEqualityComparer : IEqualityComparer<MonitorAgentTasks>
+    {
+        public bool Equals(MonitorAgentTasks x, MonitorAgentTasks y)
+        {
+            return x.MonitorId == y.MonitorId && x.MonitorAgentId == y.MonitorAgentId;
+        }
+
+        public int GetHashCode(MonitorAgentTasks obj)
+        {
+            return (obj.MonitorId.GetHashCode() * 397) ^ obj.MonitorAgentId.GetHashCode();
+        }
     }
 }
