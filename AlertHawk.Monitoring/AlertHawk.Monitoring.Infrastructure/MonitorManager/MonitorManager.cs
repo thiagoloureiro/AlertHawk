@@ -84,7 +84,7 @@ public class MonitorManager : IMonitorManager
                     GlobalVariables.TaskList.Add(item.MonitorId);
                 }
             }
-
+            
             await _monitorAgentRepository.UpsertMonitorAgentTasks(lstMonitorAgentTasks);
         }
     }

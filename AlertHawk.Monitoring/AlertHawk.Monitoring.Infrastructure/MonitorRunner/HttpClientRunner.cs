@@ -3,6 +3,7 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using Hangfire;
+using Hangfire.Storage;
 using MassTransit;
 using Polly;
 using SharedModels;
@@ -38,6 +39,26 @@ public class HttpClientRunner : IHttpClientRunner
             {
                 var httpMonitorIds = lstMonitorByHttpType.Select(x => x.Id).ToList();
                 var lstMonitors = await _monitorRepository.GetHttpMonitorByIds(httpMonitorIds);
+
+                var lstStringsToAdd = new List<string>();
+                foreach (var monitorHttp in lstMonitors)
+                {
+                    string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
+                    lstStringsToAdd.Add(jobId);
+                }
+
+                IEnumerable<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
+                recurringJobs = recurringJobs.Where(x => x.Id.StartsWith("StartRunnerManager_CheckUrlsAsync_JobId"))
+                    .ToList();
+                
+                foreach (var job in recurringJobs)
+                {
+                    if (!lstStringsToAdd.Contains(job.Id))
+                    {
+                        RecurringJob.RemoveIfExists(job.Id);
+                    }
+                }
+
 
                 foreach (var monitorHttp in lstMonitors)
                 {
