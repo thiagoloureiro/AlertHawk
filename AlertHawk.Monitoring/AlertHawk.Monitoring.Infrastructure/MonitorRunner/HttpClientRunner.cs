@@ -50,7 +50,7 @@ public class HttpClientRunner : IHttpClientRunner
                 IEnumerable<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
                 recurringJobs = recurringJobs.Where(x => x.Id.StartsWith("StartRunnerManager_CheckUrlsAsync_JobId"))
                     .ToList();
-                
+
                 foreach (var job in recurringJobs)
                 {
                     if (!lstStringsToAdd.Contains(job.Id))
@@ -141,15 +141,14 @@ public class HttpClientRunner : IHttpClientRunner
             {
                 Console.WriteLine($"{monitorHttp.UrlToCheck} returned {response.StatusCode}");
                 monitorHttp.ResponseStatusCode = response.StatusCode;
-                throw new HttpRequestException($"HTTP request failed with status code: {response.StatusCode}");
+                return response;
+                // throw new HttpRequestException($"HTTP request failed with status code: {response.StatusCode}");
             }
         });
 
         if (policyResult.Outcome == OutcomeType.Failure)
         {
-            //Console.WriteLine($"Retry policy exhausted for {monitorHttp.UrlToCheck}. Last status code: {policyResult.FinalHandledResult?.Result?.StatusCode}");
-            monitorHttp.ResponseStatusCode =
-                policyResult.FinalHandledResult.StatusCode; // or another appropriate status code
+            monitorHttp.ResponseStatusCode = policyResult.FinalHandledResult.StatusCode; // or another appropriate status code
         }
         else
         {
