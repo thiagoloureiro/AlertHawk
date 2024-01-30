@@ -28,7 +28,7 @@ namespace AlertHawk.Authentication.Controllers
         {
             try
             {
-                var user = await _userService.Login(userAuth.Email, userAuth.Password);
+                var user = await _userService.Login(userAuth.Username, userAuth.Password);
             
                 if (user is null)
                 {

@@ -63,10 +63,10 @@ public class UserRepository : BaseRepository, IUserRepository
         });
     }
     
-    public async Task<UserDto?> Login(string email, string password)
+    public async Task<UserDto?> Login(string username, string password)
     {
-        const string sql = "SELECT Id, Email, Username, IsAdmin, Password, Salt FROM Users WHERE LOWER(Email) = LOWER(@Email)";
-        var user = await ExecuteQueryAsync<User>(sql, new { Email = email.ToLower() });
+        const string sql = "SELECT Id, Email, Username, IsAdmin, Password, Salt FROM Users WHERE LOWER(Username) = LOWER(@username)";
+        var user = await ExecuteQueryAsync<User>(sql, new { username = username.ToLower() });
 
         if (user is null || !PasswordHasher.VerifyPassword(password, user.Password, user.Salt))
         {
