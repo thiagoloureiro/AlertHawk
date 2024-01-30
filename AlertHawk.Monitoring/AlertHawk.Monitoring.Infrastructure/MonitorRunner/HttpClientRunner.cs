@@ -65,7 +65,7 @@ public class HttpClientRunner : IHttpClientRunner
                 NotificationId = item.NotificationId,
                 TimeStamp = DateTime.UtcNow,
                 Message =
-                    $"Error calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
+                    $":white_check_mark: Error calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
             });
         }
     }
@@ -127,7 +127,8 @@ public class HttpClientRunner : IHttpClientRunner
         if (policyResult.Outcome == OutcomeType.Failure)
         {
             //Console.WriteLine($"Retry policy exhausted for {monitorHttp.UrlToCheck}. Last status code: {policyResult.FinalHandledResult?.Result?.StatusCode}");
-            monitorHttp.ResponseStatusCode = HttpStatusCode.Gone; // or another appropriate status code
+            monitorHttp.ResponseStatusCode =
+                policyResult.FinalHandledResult.StatusCode; // or another appropriate status code
         }
         else
         {
