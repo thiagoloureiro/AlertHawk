@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  authentication:
+    image: thiagoguaru/alerthawk.authentication:latest
+    ports:
+      - "8080:80"  # Example port mapping, you can change it
+
+  notification:
+    image: thiagoguaru/alerthawk.notification:latest
+    depends_on:
+      - rabbitmq
+    ports:
+      - "8085:80"  # Example port mapping, you can change it
+
+  monitoring:
+    image: thiagoguaru/alerthawk.monitoring:latest
+    depends_on:
+      - rabbitmq
+    ports:
+      - "8090:80"  # Example port mapping, you can change it
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+volumes:
+  rabbitmq_data:
