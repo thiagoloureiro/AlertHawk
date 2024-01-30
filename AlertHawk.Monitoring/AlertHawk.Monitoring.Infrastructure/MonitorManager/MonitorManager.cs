@@ -83,8 +83,6 @@ public class MonitorManager : IMonitorManager
                 {
                     GlobalVariables.TaskList.Add(item.MonitorId);
                 }
-
-                Console.WriteLine($"MonitorId: {item.MonitorId}, AgentId: {item.MonitorAgentId}");
             }
 
             await _monitorAgentRepository.UpsertMonitorAgentTasks(lstMonitorAgentTasks);
