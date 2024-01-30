@@ -3,7 +3,9 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using Hangfire;
+using MassTransit;
 using Polly;
+using SharedModels;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
@@ -12,10 +14,14 @@ public class HttpClientRunner : IHttpClientRunner
     private readonly IMonitorAgentRepository _monitorAgentRepository;
     private readonly IMonitorRepository _monitorRepository;
 
-    public HttpClientRunner(IMonitorAgentRepository monitorAgentRepository, IMonitorRepository monitorRepository)
+    private readonly IPublishEndpoint _publishEndpoint;
+
+    public HttpClientRunner(IMonitorAgentRepository monitorAgentRepository, IMonitorRepository monitorRepository,
+        IPublishEndpoint publishEndpoint)
     {
         _monitorAgentRepository = monitorAgentRepository;
         _monitorRepository = monitorRepository;
+        _publishEndpoint = publishEndpoint;
     }
 
     public async Task StartRunnerManager()
@@ -36,7 +42,7 @@ public class HttpClientRunner : IHttpClientRunner
                 foreach (var monitorHttp in lstMonitors)
                 {
                     string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
-                    
+
                     var monitor = lstMonitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
                     RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, x => x.CheckUrlsAsync(monitorHttp),
                         $"*/{monitor.HeartBeatInterval} * * * *");
@@ -45,6 +51,24 @@ public class HttpClientRunner : IHttpClientRunner
         }
     }
 
+    private async Task HandleNotifications(MonitorHttp monitorHttp)
+    {
+        var notificationIdList = await _monitorRepository.GetMonitorNotifications(monitorHttp.MonitorId);
+
+        Console.WriteLine(
+            $"sending notification Error calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}");
+
+        foreach (var item in notificationIdList)
+        {
+            await _publishEndpoint.Publish<NotificationAlert>(new
+            {
+                NotificationId = item.NotificationId,
+                TimeStamp = DateTime.UtcNow,
+                Message =
+                    $"Error calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
+            });
+        }
+    }
 
     public async Task<MonitorHttp> CheckUrlsAsync(MonitorHttp monitorHttp)
     {
@@ -109,6 +133,13 @@ public class HttpClientRunner : IHttpClientRunner
         {
             // Update status code for successful responses
             monitorHttp.ResponseStatusCode = policyResult.Result?.StatusCode ?? HttpStatusCode.OK;
+        }
+
+        var succeeded = ((int)monitorHttp.ResponseStatusCode >= 200) && ((int)monitorHttp.ResponseStatusCode <= 299);
+
+        if (!succeeded)
+        {
+            await HandleNotifications(monitorHttp);
         }
 
         return monitorHttp;
