@@ -1,7 +1,9 @@
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
+using AlertHawk.Monitoring.Helpers;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
+using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 using AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 using EasyMemoryCache.Configuration;
 using Hangfire;
@@ -43,6 +45,8 @@ builder.Services.AddTransient<IMonitorRepository, MonitorRepository>();
 builder.Services.AddTransient<IMonitorAgentRepository, MonitorAgentRepository>();
 builder.Services.AddTransient<IMonitorManager, MonitorManager>();
 
+builder.Services.AddTransient<IHttpClientRunner, HttpClientRunner>();
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -53,13 +57,15 @@ var app = builder.Build();
 app.UseHangfireDashboard();
 app.UseHangfireServer();
 
-RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMonitorHeartBeatManager(), "*/15 * * * * *");
-RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMonitorAgentTaskManager(), "*/30 * * * * *");
 
+RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMonitorHeartBeatManager(), "*/6 * * * * *");
+RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
+RecurringJob.AddOrUpdate<IHttpClientRunner>(x => x.StartRunnerManager(), "*/5 * * * * *");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseMiddleware<SwaggerBasicAuthMiddleware>();
     var basePath = Environment.GetEnvironmentVariable("basePath") ?? "";
     app.UseSwagger(c =>
     {
