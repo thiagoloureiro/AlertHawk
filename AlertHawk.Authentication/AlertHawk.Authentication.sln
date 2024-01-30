@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Authentication.In
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Authentication.Tests", "AlertHawk.Authentication.Tests\AlertHawk.Authentication.Tests.csproj", "{D54BAFD6-3D26-48BB-AEE3-09D84E832B49}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Application", "AlertHawk.Application\AlertHawk.Application.csproj", "{F23A77B9-03E7-4FD8-AB08-A06620888900}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{D54BAFD6-3D26-48BB-AEE3-09D84E832B49}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D54BAFD6-3D26-48BB-AEE3-09D84E832B49}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D54BAFD6-3D26-48BB-AEE3-09D84E832B49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F23A77B9-03E7-4FD8-AB08-A06620888900}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F23A77B9-03E7-4FD8-AB08-A06620888900}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F23A77B9-03E7-4FD8-AB08-A06620888900}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F23A77B9-03E7-4FD8-AB08-A06620888900}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
