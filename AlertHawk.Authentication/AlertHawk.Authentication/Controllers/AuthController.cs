@@ -2,6 +2,7 @@
 using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Sentry;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace AlertHawk.Authentication.Controllers
@@ -38,8 +39,9 @@ namespace AlertHawk.Authentication.Controllers
             
                 return Ok(new { token });
             }
-            catch (Exception)
+            catch (Exception err)
             {
+                SentrySdk.CaptureException(err);
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }
@@ -65,8 +67,9 @@ namespace AlertHawk.Authentication.Controllers
                 // If user already exists, return 400
                 return BadRequest(new Message(ex.Message));
             }
-            catch (Exception)
+            catch (Exception err)
             {
+                SentrySdk.CaptureException(err);
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }
