@@ -45,6 +45,15 @@ public class UserController : Controller
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
     }
+    
+     [HttpPost("resetPassword/{username}")]
+     [SwaggerOperation(Summary = "Reset Password")]
+     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+     public async Task<IActionResult> ResetPassword(string username)
+     {
+         // call database and update user credentials
+         return Ok();
+     }
 
     // [HttpPut("update")]
     // [SwaggerOperation(Summary = "Update User")]

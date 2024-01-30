@@ -8,6 +8,17 @@ public static class PasswordHasher
     private const int Iterations = 10000;
     private const int KeySize = 32;
 
+    public static string GenerateRandomPassword(int length)
+    {
+        const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+";
+
+        Random random = new Random();
+        string password = new string(Enumerable.Repeat(chars, length)
+            .Select(s => s[random.Next(s.Length)]).ToArray());
+
+        return password;
+    }
+
     public static string GenerateSalt()
     {
         var salt = new byte[16];
@@ -30,7 +41,8 @@ public static class PasswordHasher
     {
         var saltBytes = Convert.FromBase64String(storedSalt);
         var storedHashBytes = Convert.FromBase64String(storedHash);
-        var hashToCompare = Rfc2898DeriveBytes.Pbkdf2(inputPassword, saltBytes, Iterations, HashAlgorithmName.SHA256, KeySize);
+        var hashToCompare =
+            Rfc2898DeriveBytes.Pbkdf2(inputPassword, saltBytes, Iterations, HashAlgorithmName.SHA256, KeySize);
 
         return CryptographicOperations.FixedTimeEquals(hashToCompare, storedHashBytes);
     }

@@ -32,6 +32,13 @@ public class UserRepository : BaseRepository, IUserRepository
         return _mapper.Map<UserDto>(user);
     }
 
+    public async Task<UserDto?> GetByUsername(string username)
+    {
+        const string sql = "SELECT Id, Email, Username, IsAdmin FROM Users WHERE LOWER(Username) = LOWER(@Username)";
+        var user = await ExecuteQueryAsync<User>(sql, new { Username = username.ToLower() });
+        return _mapper.Map<UserDto>(user);
+    }
+
     public async Task Create(UserCreation userCreation)
     {
         const string checkExistingUserSql = "SELECT Id FROM Users WHERE Email = @Email OR Username = @Username";
@@ -62,7 +69,24 @@ public class UserRepository : BaseRepository, IUserRepository
             IsAdmin = userCreation.IsAdmin
         });
     }
-    
+
+    public async Task<string> ResetPassword(string username)
+    {
+        var newPassword = PasswordHasher.GenerateRandomPassword(10);
+        var salt = PasswordHasher.GenerateSalt();
+        var hashedPassword = PasswordHasher.HashPassword(newPassword, salt);
+        
+        const string insertUserSql = @"UPDATE User SET Password = @Password, Salt = @Salt WHERE LOWER(Username) = LOWER(@Username)";
+
+        await ExecuteNonQueryAsync(insertUserSql, new
+        {
+            Username = username.ToLower(),
+            Password = hashedPassword,
+            Salt = salt
+        });
+        return hashedPassword;
+    }
+
     public async Task<UserDto?> Login(string username, string password)
     {
         const string sql = "SELECT Id, Email, Username, IsAdmin, Password, Salt FROM Users WHERE LOWER(Username) = LOWER(@username)";
