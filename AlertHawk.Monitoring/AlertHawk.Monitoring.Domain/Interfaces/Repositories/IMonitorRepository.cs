@@ -6,4 +6,6 @@ namespace AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 public interface IMonitorRepository
 {
     Task<IEnumerable<Monitor>> GetMonitorList();
+    Task<IEnumerable<MonitorHttp>> GetHttpMonitorByIds(List<int> ids);
+    Task<IEnumerable<Monitor>> GetMonitorListByIds(List<int> ids);
 }

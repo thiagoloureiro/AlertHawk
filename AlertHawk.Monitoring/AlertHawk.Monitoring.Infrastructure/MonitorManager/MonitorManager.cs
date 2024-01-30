@@ -25,15 +25,6 @@ public class MonitorManager : IMonitorManager
         await _monitorAgentRepository.ManageMonitorStatus(monitorAgent);
     }
 
-    public async Task StartMonitorAgentTaskManager()
-    {
-        // This is for the Child agents manage their Ids/Tasks
-        //if (!GlobalVariables.MasterNode)
-        //{
-        //    var tasksAgentList = await _monitorAgentRepository.GetAllMonitorAgentTasks();
-        //}
-    }
-
     public async Task StartMasterMonitorAgentTaskManager()
     {
         // Only MasterNode is responsible for Managing Tasks

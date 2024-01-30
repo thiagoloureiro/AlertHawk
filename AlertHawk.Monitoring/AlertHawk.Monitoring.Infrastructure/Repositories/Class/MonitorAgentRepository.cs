@@ -85,6 +85,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         return result.ToList();
     }
 
+
     public async Task UpsertMonitorAgentTasks(List<MonitorAgentTasks> lstMonitorAgentTasks)
     {
         var lstCurrentMonitorAgentTasks = await GetAllMonitorAgentTasks();
@@ -127,6 +128,14 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         await using var db = new SqlConnection(_connstring);
         string sqlAllMonitors = @"SELECT MonitorId, MonitorAgentId FROM [MonitorAgentTasks]";
         var result = await db.QueryAsync<MonitorAgentTasks>(sqlAllMonitors, commandType: CommandType.Text);
+        return result.ToList();
+    }
+
+    public async Task<List<MonitorAgentTasks>> GetAllMonitorAgentTasksByAgentId(int id)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlAllMonitors = @"SELECT MonitorId, MonitorAgentId FROM [MonitorAgentTasks] WHERE MonitorAgentId = @id";
+        var result = await db.QueryAsync<MonitorAgentTasks>(sqlAllMonitors, new { id }, commandType: CommandType.Text);
         return result.ToList();
     }
 

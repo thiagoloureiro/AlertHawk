@@ -1,29 +1,48 @@
 using System.Net;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using AlertHawk.Monitoring.Infrastructure.MonitorManager;
+using Hangfire;
 using Polly;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
 public class HttpClientRunner : IHttpClientRunner
 {
-    public async Task StartRunner()
+    private readonly IMonitorAgentRepository _monitorAgentRepository;
+    private readonly IMonitorRepository _monitorRepository;
+
+    public HttpClientRunner(IMonitorAgentRepository monitorAgentRepository, IMonitorRepository monitorRepository)
     {
-        var monitorHttp =
-            new MonitorHttp
+        _monitorAgentRepository = monitorAgentRepository;
+        _monitorRepository = monitorRepository;
+    }
+
+    public async Task StartRunnerManager()
+    {
+        var tasksToMonitor = await _monitorAgentRepository.GetAllMonitorAgentTasksByAgentId(GlobalVariables.NodeId);
+        if (tasksToMonitor.Any())
+        {
+            var monitorIds = tasksToMonitor.Select(x => x.MonitorId).ToList();
+            var monitorListByIds = await _monitorRepository.GetMonitorListByIds(monitorIds);
+
+            // HTTP
+            var lstMonitorByHttpType = monitorListByIds.Where(x => x.MonitorTypeId == 1);
+            if (lstMonitorByHttpType.Any())
             {
-                MaxRedirects = 5,
-                Name = "Monitoring API",
-                HeartBeatInterval = 60,
-                Retries = 0,
-                UrlToCheck = "https://dev.api.alerthawk.tech/monitoring/api/version",
-                CheckCertExpiry = true,
-                IgnoreTlsSsl = false,
-                Timeout = 10
-            };
+                var httpMonitorIds = lstMonitorByHttpType.Select(x => x.Id).ToList();
+                var lstMonitors = await _monitorRepository.GetHttpMonitorByIds(httpMonitorIds);
 
-
-        var result = await CheckUrlsAsync(monitorHttp);
+                foreach (var monitorHttp in lstMonitors)
+                {
+                    string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
+                    
+                    var monitor = lstMonitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
+                    RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, x => x.CheckUrlsAsync(monitorHttp),
+                        $"*/{monitor.HeartBeatInterval} * * * *");
+                }
+            }
+        }
     }
 
 

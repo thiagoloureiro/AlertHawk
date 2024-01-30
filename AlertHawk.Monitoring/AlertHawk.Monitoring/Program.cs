@@ -55,12 +55,17 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 app.UseHangfireDashboard();
-app.UseHangfireServer();
+//app.UseHangfireServer();
 
-RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMonitorHeartBeatManager(), "*/15 * * * * *");
+app.UseHangfireServer(new BackgroundJobServerOptions
+{
+    // queue name must be in lowercase
+    Queues = new[] { "checkurlsasync_1", "checkurlsasync_2", "checkurlsasync_3" ,"default"} //This will setup the server to only process qname queues 
+});
+
+RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMonitorHeartBeatManager(), "*/6 * * * * *");
 RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
-//RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMonitorAgentTaskManager(), "*/30 * * * * *");
-
+RecurringJob.AddOrUpdate<IHttpClientRunner>(x => x.StartRunnerManager(), "*/5 * * * * *");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
