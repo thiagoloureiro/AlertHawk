@@ -63,7 +63,7 @@ public class HttpClientRunner : IHttpClientRunner
                 foreach (var monitorHttp in lstMonitors)
                 {
                     string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
-
+                    Thread.Sleep(50);
                     var monitor = lstMonitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
                     RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, x => x.CheckUrlsAsync(monitorHttp),
                         $"*/{monitor.HeartBeatInterval} * * * *");
@@ -148,7 +148,8 @@ public class HttpClientRunner : IHttpClientRunner
 
         if (policyResult.Outcome == OutcomeType.Failure)
         {
-            monitorHttp.ResponseStatusCode = policyResult.FinalHandledResult.StatusCode; // or another appropriate status code
+            monitorHttp.ResponseStatusCode =
+                policyResult.FinalHandledResult.StatusCode; // or another appropriate status code
         }
         else
         {

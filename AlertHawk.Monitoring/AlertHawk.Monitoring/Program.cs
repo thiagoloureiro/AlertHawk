@@ -60,7 +60,7 @@ app.UseHangfireServer();
 
 RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMonitorHeartBeatManager(), "*/6 * * * * *");
 RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
-RecurringJob.AddOrUpdate<IHttpClientRunner>(x => x.StartRunnerManager(), "*/5 * * * * *");
+RecurringJob.AddOrUpdate<IHttpClientRunner>(x => x.StartRunnerManager(), "*/25 * * * * *");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
