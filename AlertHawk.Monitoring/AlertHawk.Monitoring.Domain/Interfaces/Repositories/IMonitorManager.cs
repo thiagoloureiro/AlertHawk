@@ -4,5 +4,5 @@ public interface IMonitorManager
 {
     Task StartMonitorHeartBeatManager();
 
-    Task StartMonitorAgentTaskManager();
+    Task StartMasterMonitorAgentTaskManager();
 }
