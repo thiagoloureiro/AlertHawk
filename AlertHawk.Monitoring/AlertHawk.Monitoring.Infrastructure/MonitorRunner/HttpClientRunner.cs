@@ -86,7 +86,7 @@ public class HttpClientRunner : IHttpClientRunner
                 NotificationId = item.NotificationId,
                 TimeStamp = DateTime.UtcNow,
                 Message =
-                    $":white_check_mark: Error calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
+                    $"Error calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
             });
         }
     }
