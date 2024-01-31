@@ -40,6 +40,13 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return await db.QueryAsync<MonitorNotification>(sql, new { id }, commandType: CommandType.Text);
     }
 
+    public async Task UpdateMonitorStatus(int id, bool status)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = @"UPDATE [Monitor] SET Status=@status WHERE Id=@id";
+        await db.ExecuteAsync(sql, new { id, status }, commandType: CommandType.Text);
+    }
+
     public async Task<IEnumerable<MonitorHttp>> GetHttpMonitorByIds(List<int> ids)
     {
         await using var db = new SqlConnection(_connstring);

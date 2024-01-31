@@ -9,4 +9,5 @@ public interface IMonitorRepository
     Task<IEnumerable<MonitorHttp>> GetHttpMonitorByIds(List<int> ids);
     Task<IEnumerable<Monitor>> GetMonitorListByIds(List<int> ids);
     Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id);
+    Task UpdateMonitorStatus(int id, bool status);
 }
