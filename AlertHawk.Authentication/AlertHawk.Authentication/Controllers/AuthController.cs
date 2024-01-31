@@ -42,7 +42,7 @@ namespace AlertHawk.Authentication.Controllers
             catch (Exception err)
             {
                 SentrySdk.CaptureException(err);
-                return StatusCode(StatusCodes.Status500InternalServerError);
+                return StatusCode(StatusCodes.Status500InternalServerError, new Message("Something went wrong."));
             }
         }
     }

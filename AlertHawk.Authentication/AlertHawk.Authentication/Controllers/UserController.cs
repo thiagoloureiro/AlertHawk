@@ -2,8 +2,10 @@ using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Sentry;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Security.Claims;
 
 namespace AlertHawk.Authentication.Controllers;
 
@@ -20,10 +22,15 @@ public class UserController : Controller
 
     [HttpPost("create")]
     [SwaggerOperation(Summary = "Create User")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(Message), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> PostUserCreation([FromBody] UserCreation userCreation)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         if (!string.Equals(userCreation.Password, userCreation.RepeatPassword))
         {
             return BadRequest(new Message("Passwords do not match."));
@@ -32,7 +39,7 @@ public class UserController : Controller
         try
         {
             await _userService.Create(userCreation);
-            return Created();
+            return Ok(new Message("User account created successfully."));
         }
         catch (InvalidOperationException ex)
         {
@@ -42,25 +49,58 @@ public class UserController : Controller
         catch (Exception err)
         {
             SentrySdk.CaptureException(err);
-            return StatusCode(StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, new Message("Something went wrong."));
         }
     }
-    
-     [HttpPost("resetPassword/{username}")]
-     [SwaggerOperation(Summary = "Reset Password")]
-     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-     public async Task<IActionResult> ResetPassword(string username)
-     {
-         // call database and update user credentials
-         return Ok();
-     }
 
-    // [HttpPut("update")]
-    // [SwaggerOperation(Summary = "Update User")]
-    // [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-    // public async Task<IActionResult> PutUserUpdate([FromBody] UserCreation userCreation)
-    // {
-    //     // call database and update user credentials
-    //     return Ok();
-    // }
+    [Authorize]
+    [HttpPut("update")]
+    [SwaggerOperation(Summary = "Update User")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> PutUserUpdate([FromBody] UserUpdate userUpdate)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        if (!string.Equals(userUpdate.NewPassword, userUpdate.RepeatNewPassword))
+        {
+            return BadRequest(new Message("Passwords do not match."));
+        }
+
+        var userIdClaim = HttpContext.User.FindFirstValue("id");
+
+        if (!Guid.TryParse(userIdClaim, out var id))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new Message("Unauthorized to perform this action."));
+        }
+
+        try
+        {
+            await _userService.Update(id, userUpdate);
+            return Ok(new Message("User account updated successfully."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            SentrySdk.CaptureException(ex);
+            return BadRequest(new Message(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            SentrySdk.CaptureException(ex);
+            return StatusCode(StatusCodes.Status500InternalServerError, new Message("Something went wrong."));
+        }
+    }
+
+    [HttpPost("resetPassword/{username}")]
+    [SwaggerOperation(Summary = "Reset Password")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ResetPassword(string username)
+    {
+        // call database and update user credentials
+        return Ok();
+    }
 }
