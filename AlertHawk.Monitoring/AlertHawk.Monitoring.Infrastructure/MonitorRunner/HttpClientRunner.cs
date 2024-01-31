@@ -35,13 +35,15 @@ public class HttpClientRunner : IHttpClientRunner
 
             // HTTP
             var lstMonitorByHttpType = monitorListByIds.Where(x => x.MonitorTypeId == 1);
-            if (lstMonitorByHttpType.Any())
+            var monitorByHttpType = lstMonitorByHttpType.ToList();
+            if (monitorByHttpType.Any())
             {
-                var httpMonitorIds = lstMonitorByHttpType.Select(x => x.Id).ToList();
+                var httpMonitorIds = monitorByHttpType.Select(x => x.Id).ToList();
                 var lstMonitors = await _monitorRepository.GetHttpMonitorByIds(httpMonitorIds);
 
                 var lstStringsToAdd = new List<string>();
-                foreach (var monitorHttp in lstMonitors)
+                var monitorHttps = lstMonitors.ToList();
+                foreach (var monitorHttp in monitorHttps)
                 {
                     string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
                     lstStringsToAdd.Add(jobId);
@@ -58,15 +60,14 @@ public class HttpClientRunner : IHttpClientRunner
                         RecurringJob.RemoveIfExists(job.Id);
                     }
                 }
-
-
-                foreach (var monitorHttp in lstMonitors)
+                
+                foreach (var monitorHttp in monitorHttps)
                 {
                     string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
                     Thread.Sleep(50);
-                    var monitor = lstMonitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
+                    var monitor = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
                     RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, x => x.CheckUrlsAsync(monitorHttp),
-                        $"*/{monitor.HeartBeatInterval} * * * *");
+                        $"*/{monitor?.HeartBeatInterval} * * * *");
                 }
             }
         }
@@ -163,6 +164,8 @@ public class HttpClientRunner : IHttpClientRunner
         {
             await HandleNotifications(monitorHttp);
         }
+
+        await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded);
 
         return monitorHttp;
     }

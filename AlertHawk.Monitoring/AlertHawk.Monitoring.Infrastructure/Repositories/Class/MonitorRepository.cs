@@ -20,7 +20,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     public async Task<IEnumerable<Monitor>> GetMonitorList()
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries FROM [Monitor]";
+        string sql = @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status FROM [Monitor]";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
 
@@ -29,7 +29,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
         string whereClause = $"WHERE Id IN ({string.Join(",", ids)})";
 
-        string sql = $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries FROM [Monitor] {whereClause}";
+        string sql = $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status FROM [Monitor] {whereClause}";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
 
@@ -38,6 +38,13 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
         string sql = @"SELECT MonitorId, NotificationId FROM [MonitorNotification] WHERE MonitorId=@id";
         return await db.QueryAsync<MonitorNotification>(sql, new { id }, commandType: CommandType.Text);
+    }
+
+    public async Task UpdateMonitorStatus(int id, bool status)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = @"UPDATE [Monitor] SET Status=@status WHERE Id=@id";
+        await db.ExecuteAsync(sql, new { id, status }, commandType: CommandType.Text);
     }
 
     public async Task<IEnumerable<MonitorHttp>> GetHttpMonitorByIds(List<int> ids)
