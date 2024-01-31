@@ -19,5 +19,5 @@ public class UserCreation
     [EmailAddress]
     public required string UserEmail { get; set; }
 
-    public bool IsAdmin { get; set; } = false;
+    public bool IsAdmin { get; set; }
 }
