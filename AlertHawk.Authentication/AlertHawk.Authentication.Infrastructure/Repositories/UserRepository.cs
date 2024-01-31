@@ -41,11 +41,11 @@ public class UserRepository : BaseRepository, IUserRepository
 
     public async Task Create(UserCreation userCreation)
     {
-        const string checkExistingUserSql = "SELECT Id FROM Users WHERE Email = @Email OR Username = @Username";
+        const string checkExistingUserSql = "SELECT Id FROM Users WHERE LOWER(Email) = @Email OR LOWER(Username) = @Username";
         var existingUser = await ExecuteQueryAsync<Guid?>(checkExistingUserSql, new
         {
-            Username = userCreation.Username,
-            Email = userCreation.UserEmail
+            Username = userCreation.Username.ToLower(),
+            Email = userCreation.UserEmail.ToLower()
         });
 
         if (existingUser.HasValue)
@@ -63,11 +63,80 @@ public class UserRepository : BaseRepository, IUserRepository
         await ExecuteNonQueryAsync(insertUserSql, new
         {
             Username = userCreation.Username,
-            Email = userCreation.UserEmail,
+            Email = userCreation.UserEmail.ToLower(),
             Password = hashedPassword,
             Salt = salt,
             IsAdmin = userCreation.IsAdmin
         });
+    }
+
+    public async Task Update(Guid id, UserUpdate userUpdate)
+    {
+        bool updateUsername = !string.IsNullOrWhiteSpace(userUpdate.Username);
+        bool updateEmail = !string.IsNullOrWhiteSpace(userUpdate.UserEmail);
+
+        var parameters = new DynamicParameters();
+        parameters.Add("Id", id);
+
+        // Check if the new username or email is already taken by another user
+        if (updateUsername || updateEmail)
+        {
+            var conditions = new List<string>();
+
+            if (updateUsername)
+            {
+                conditions.Add("LOWER(Username) = LOWER(@Username)");
+                parameters.Add("Username", userUpdate.Username);
+            }
+
+            if (updateEmail)
+            {
+                conditions.Add("LOWER(Email) = LOWER(@Email)");
+                parameters.Add("Email", userUpdate.UserEmail.ToLower());
+            }
+
+            var checkUserSql = $@"
+                SELECT Id 
+                FROM Users 
+                WHERE ({string.Join(" OR ", conditions)})
+                AND Id != @Id";
+
+            var existingUser = await ExecuteQueryAsync<Guid?>(checkUserSql, parameters);
+            if (existingUser.HasValue)
+            {
+                throw new InvalidOperationException("Username or Email already exists.");
+            }
+        }
+
+        var updateFields = new List<string>();
+        if (updateUsername)
+        {
+            updateFields.Add("Username = @Username");
+            parameters.Add("Username", userUpdate.Username);
+        }
+
+        if (updateEmail)
+        {
+            updateFields.Add("Email = @Email");
+            parameters.Add("Email", userUpdate.UserEmail?.ToLower());
+        }
+
+        if (!string.IsNullOrWhiteSpace(userUpdate.NewPassword))
+        {
+            var salt = PasswordHasher.GenerateSalt();
+            var hashedPassword = PasswordHasher.HashPassword(userUpdate.NewPassword, salt);
+
+            updateFields.Add("Password = @Password");
+            updateFields.Add("Salt = @Salt");
+            parameters.Add("Password", hashedPassword);
+            parameters.Add("Salt", salt);
+        }
+
+        if (updateFields.Any())
+        {
+            var updateSql = $"UPDATE Users SET {string.Join(", ", updateFields)} WHERE Id = @Id";
+            await ExecuteNonQueryAsync(updateSql, parameters);
+        }
     }
 
     public async Task<string> ResetPassword(string username)

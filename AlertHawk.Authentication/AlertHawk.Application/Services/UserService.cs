@@ -19,6 +19,11 @@ public class UserService : IUserService
     {
         await _userRepository.Create(userCreation);
     }
+    
+    public async Task Update(Guid id, UserUpdate userUpdate)
+    {
+        await _userRepository.Update(id, userUpdate);
+    }
 
     public async Task ResetPassword(string username)
     {
