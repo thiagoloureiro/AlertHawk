@@ -42,6 +42,8 @@ public class HttpClientRunner : IHttpClientRunner
                 var httpMonitorIds = monitorByHttpType.Select(x => x.Id).ToList();
                 var lstMonitors = await _monitorRepository.GetHttpMonitorByIds(httpMonitorIds);
 
+                GlobalVariables.TaskList = httpMonitorIds;
+                
                 var lstStringsToAdd = new List<string>();
                 var monitorHttps = lstMonitors.ToList();
 
