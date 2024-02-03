@@ -49,6 +49,7 @@ public class HttpClientRunner : IHttpClientRunner
                 {
                     monitorHttp.LastStatus =
                         monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Status;
+                    monitorHttp.Name =  monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Name;
 
                     string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
                     lstStringsToAdd.Add(jobId);
