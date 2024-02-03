@@ -19,11 +19,7 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
                 using StringContent content = new StringContent(payload, Encoding.UTF8, "application/json");
 
                 using HttpResponseMessage response = await httpClient.PostAsync(webHookUrl, content);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    Console.WriteLine(response.Content.ReadAsStringAsync());
-                }
+                
                 response.EnsureSuccessStatusCode();
 
                 Console.WriteLine("Notification sent successfully!");

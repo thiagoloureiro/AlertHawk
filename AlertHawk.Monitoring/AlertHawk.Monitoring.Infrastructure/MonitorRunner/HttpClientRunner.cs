@@ -92,7 +92,7 @@ public class HttpClientRunner : IHttpClientRunner
                 NotificationId = item.NotificationId,
                 TimeStamp = DateTime.UtcNow,
                 Message =
-                    $"Error calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
+                    $"Error calling {monitorHttp.Name}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
             });
         }
     }
@@ -111,7 +111,7 @@ public class HttpClientRunner : IHttpClientRunner
                 NotificationId = item.NotificationId,
                 TimeStamp = DateTime.UtcNow,
                 Message =
-                    $"Success calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
+                    $"Success calling {monitorHttp.Name}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
             });
         }
     }
