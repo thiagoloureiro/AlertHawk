@@ -160,13 +160,13 @@ public class HttpClientRunner : IHttpClientRunner
                 // Check if the status code is 200 OK
                 if (response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine($"{monitorHttp.UrlToCheck} returned 200 OK");
+                    //Console.WriteLine($"{monitorHttp.UrlToCheck} returned 200 OK");
                     monitorHttp.ResponseStatusCode = response.StatusCode;
                     return response;
                 }
                 else
                 {
-                    Console.WriteLine($"{monitorHttp.UrlToCheck} returned {response.StatusCode}");
+                   // Console.WriteLine($"{monitorHttp.UrlToCheck} returned {response.StatusCode}");
                     monitorHttp.ResponseStatusCode = response.StatusCode;
                     return response;
                     // throw new HttpRequestException($"HTTP request failed with status code: {response.StatusCode}");
