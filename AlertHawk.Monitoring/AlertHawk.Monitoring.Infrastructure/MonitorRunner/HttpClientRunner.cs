@@ -43,7 +43,7 @@ public class HttpClientRunner : IHttpClientRunner
                 var lstMonitors = await _monitorRepository.GetHttpMonitorByIds(httpMonitorIds);
 
                 GlobalVariables.TaskList = httpMonitorIds;
-                
+
                 var lstStringsToAdd = new List<string>();
                 var monitorHttps = lstMonitors.ToList();
 
@@ -51,7 +51,7 @@ public class HttpClientRunner : IHttpClientRunner
                 {
                     monitorHttp.LastStatus =
                         monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Status;
-                    monitorHttp.Name =  monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Name;
+                    monitorHttp.Name = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Name;
 
                     string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
                     lstStringsToAdd.Add(jobId);
@@ -169,7 +169,7 @@ public class HttpClientRunner : IHttpClientRunner
                 }
                 else
                 {
-                   // Console.WriteLine($"{monitorHttp.UrlToCheck} returned {response.StatusCode}");
+                    // Console.WriteLine($"{monitorHttp.UrlToCheck} returned {response.StatusCode}");
                     monitorHttp.ResponseStatusCode = response.StatusCode;
                     return response;
                     // throw new HttpRequestException($"HTTP request failed with status code: {response.StatusCode}");
@@ -206,6 +206,15 @@ public class HttpClientRunner : IHttpClientRunner
             }
 
             await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded);
+            var monitorHistory = new MonitorHistory
+            {
+                MonitorId = monitorHttp.MonitorId,
+                Status = succeeded,
+                StatusCode = (int)monitorHttp.ResponseStatusCode,
+                TimeStamp = DateTime.UtcNow
+            };
+
+            await _monitorRepository.SaveMonitorHistory(monitorHistory);
 
             return monitorHttp;
         }
