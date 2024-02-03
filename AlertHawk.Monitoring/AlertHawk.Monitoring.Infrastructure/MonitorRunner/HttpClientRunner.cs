@@ -43,8 +43,12 @@ public class HttpClientRunner : IHttpClientRunner
 
                 var lstStringsToAdd = new List<string>();
                 var monitorHttps = lstMonitors.ToList();
+
                 foreach (var monitorHttp in monitorHttps)
                 {
+                    monitorHttp.LastStatus =
+                        monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Status;
+
                     string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
                     lstStringsToAdd.Add(jobId);
                 }
@@ -60,7 +64,7 @@ public class HttpClientRunner : IHttpClientRunner
                         RecurringJob.RemoveIfExists(job.Id);
                     }
                 }
-                
+
                 foreach (var monitorHttp in monitorHttps)
                 {
                     string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
@@ -73,7 +77,7 @@ public class HttpClientRunner : IHttpClientRunner
         }
     }
 
-    private async Task HandleNotifications(MonitorHttp monitorHttp)
+    private async Task HandleFailedNotifications(MonitorHttp monitorHttp)
     {
         var notificationIdList = await _monitorRepository.GetMonitorNotifications(monitorHttp.MonitorId);
 
@@ -88,6 +92,25 @@ public class HttpClientRunner : IHttpClientRunner
                 TimeStamp = DateTime.UtcNow,
                 Message =
                     $"Error calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
+            });
+        }
+    }
+
+    private async Task HandleSuccessNotifications(MonitorHttp monitorHttp)
+    {
+        var notificationIdList = await _monitorRepository.GetMonitorNotifications(monitorHttp.MonitorId);
+
+        Console.WriteLine(
+            $"sending success notification calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}");
+
+        foreach (var item in notificationIdList)
+        {
+            await _publishEndpoint.Publish<NotificationAlert>(new
+            {
+                NotificationId = item.NotificationId,
+                TimeStamp = DateTime.UtcNow,
+                Message =
+                    $"Success calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
             });
         }
     }
@@ -160,9 +183,19 @@ public class HttpClientRunner : IHttpClientRunner
 
         var succeeded = ((int)monitorHttp.ResponseStatusCode >= 200) && ((int)monitorHttp.ResponseStatusCode <= 299);
 
-        if (!succeeded)
+        if (succeeded)
         {
-            await HandleNotifications(monitorHttp);
+            if (monitorHttp.LastStatus == false)
+            {
+                await HandleSuccessNotifications(monitorHttp);
+            }
+        }
+        else
+        {
+            if (monitorHttp.LastStatus) // only send notification when goes from online to offline to avoid flood
+            {
+                await HandleFailedNotifications(monitorHttp);
+            }
         }
 
         await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded);
