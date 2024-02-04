@@ -92,7 +92,7 @@ public class UserRepository : BaseRepository, IUserRepository
             if (updateEmail)
             {
                 conditions.Add("LOWER(Email) = LOWER(@Email)");
-                parameters.Add("Email", userUpdate.UserEmail.ToLower());
+                parameters.Add("Email", userUpdate.UserEmail?.ToLower());
             }
 
             var checkUserSql = $@"
