@@ -85,7 +85,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         await db.ExecuteAsync(sql,
             new
             {
-                Name = notificationItem.Name, 
+                Name = notificationItem.Name,
                 NotificationTypeId = notificationItem.NotificationTypeId,
                 Id = notificationItem.Id,
                 Description = notificationItem.Description
@@ -176,6 +176,46 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         }
 
         return notificationItem;
+    }
+
+    public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList(List<int> ids)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = "SELECT Id, Name, Description, NotificationTypeId FROM [NotificationItem] WHERE id IN @ids";
+
+        var notificationItemList =
+            await db.QueryAsync<NotificationItem>(sql, new { ids }, commandType: CommandType.Text);
+
+        var notificationEmailList = await SelectNotificationEmailList();
+        var notificationTeamsList = await SelectNotificationTeamsList();
+        var notificationSlackList = await SelectNotificationSlackList();
+        var notificationTelegramList = await SelectNotificationTelegramList();
+
+        var selectNotificationItemList = notificationItemList.ToList();
+        foreach (var notificationItem in selectNotificationItemList)
+        {
+            switch (notificationItem?.NotificationTypeId)
+            {
+                case 1: // Smtp
+                    notificationItem.NotificationEmail =
+                        notificationEmailList.SingleOrDefault(x => x.NotificationId == notificationItem.Id);
+                    break;
+                case 2: // Teams
+                    notificationItem.NotificationTeams =
+                        notificationTeamsList.SingleOrDefault(x => x.NotificationId == notificationItem.Id);
+                    break;
+                case 3: // Telegram
+                    notificationItem.NotificationTelegram =
+                        notificationTelegramList.SingleOrDefault(x => x.NotificationId == notificationItem.Id);
+                    break;
+                case 4: // Slack
+                    notificationItem.NotificationSlack =
+                        notificationSlackList.SingleOrDefault(x => x.NotificationId == notificationItem.Id);
+                    break;
+            }
+        }
+
+        return selectNotificationItemList;
     }
 
     public async Task DeleteNotificationItem(int id)

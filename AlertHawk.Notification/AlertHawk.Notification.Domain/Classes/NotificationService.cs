@@ -90,6 +90,11 @@ namespace AlertHawk.Notification.Domain.Classes
             return await _notificationRepository.SelectNotificationItemList();
         }
 
+        public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList(List<int> ids)
+        {
+            return await _notificationRepository.SelectNotificationItemList(ids);
+        }
+
         public async Task<NotificationItem?> SelectNotificationItemById(int id)
         {
             return await _notificationRepository.SelectNotificationItemById(id);

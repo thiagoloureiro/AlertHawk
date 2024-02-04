@@ -9,6 +9,7 @@ namespace AlertHawk.Notification.Domain.Interfaces.Services
         Task UpdateNotificationItem(NotificationItem notificationItem);
         Task DeleteNotificationItem(int id);
         Task<IEnumerable<NotificationItem>> SelectNotificationItemList();
+        Task<IEnumerable<NotificationItem>> SelectNotificationItemList(List<int> ids);
         Task<NotificationItem?> SelectNotificationItemById(int id);
     }
 }
