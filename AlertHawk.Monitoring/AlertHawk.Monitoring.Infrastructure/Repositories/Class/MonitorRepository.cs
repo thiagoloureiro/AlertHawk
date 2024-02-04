@@ -50,8 +50,8 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     public async Task SaveMonitorHistory(MonitorHistory monitorHistory)
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = @"INSERT INTO [MonitorHistory] (MonitorId, Status, TimeStamp, StatusCode) VALUES (@MonitorId, @Status, @TimeStamp, @StatusCode)";
-        await db.ExecuteAsync(sql, new { monitorHistory.MonitorId, monitorHistory.Status, monitorHistory.TimeStamp, monitorHistory.StatusCode }, commandType: CommandType.Text);
+        string sql = @"INSERT INTO [MonitorHistory] (MonitorId, Status, TimeStamp, StatusCode, ResponseTime) VALUES (@MonitorId, @Status, @TimeStamp, @StatusCode, @ResponseTime)";
+        await db.ExecuteAsync(sql, new { monitorHistory.MonitorId, monitorHistory.Status, monitorHistory.TimeStamp, monitorHistory.StatusCode, monitorHistory.ResponseTime }, commandType: CommandType.Text);
     }
 
     public async Task<IEnumerable<MonitorHttp>> GetHttpMonitorByIds(List<int> ids)

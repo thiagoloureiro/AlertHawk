@@ -7,4 +7,5 @@ public class MonitorHistory
     public bool Status { get; set; }
     public DateTime TimeStamp { get; set; }
     public int StatusCode { get; set; }
+    public int ResponseTime { get; set; }
 }

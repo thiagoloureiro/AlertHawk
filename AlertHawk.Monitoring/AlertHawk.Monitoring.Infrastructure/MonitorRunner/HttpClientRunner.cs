@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
@@ -102,8 +103,13 @@ public class HttpClientRunner : IHttpClientRunner
 
             var policyResult = await retryPolicy.ExecuteAndCaptureAsync(async () =>
             {
+                var sw = new Stopwatch();
+                sw.Start();
                 HttpResponseMessage response = await client.GetAsync(monitorHttp.UrlToCheck);
-
+                var elapsed = sw.ElapsedMilliseconds;
+                monitorHttp.ResponseTime = (int)elapsed;
+                sw.Stop();
+                
                 // Check if the status code is 200 OK
                 if (response.IsSuccessStatusCode)
                 {
@@ -155,7 +161,8 @@ public class HttpClientRunner : IHttpClientRunner
                 MonitorId = monitorHttp.MonitorId,
                 Status = succeeded,
                 StatusCode = (int)monitorHttp.ResponseStatusCode,
-                TimeStamp = DateTime.UtcNow
+                TimeStamp = DateTime.UtcNow,
+                ResponseTime = monitorHttp.ResponseTime
             };
 
             await _monitorRepository.SaveMonitorHistory(monitorHistory);
