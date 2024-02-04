@@ -1,5 +1,7 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using Hangfire;
+using Hangfire.Storage;
 using Sentry;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorManager;
@@ -13,6 +15,61 @@ public class MonitorManager : IMonitorManager
     {
         _monitorAgentRepository = monitorAgentRepository;
         _monitorRepository = monitorRepository;
+    }
+
+    public async Task StartRunnerManager()
+    {
+        var tasksToMonitor = await _monitorAgentRepository.GetAllMonitorAgentTasksByAgentId(GlobalVariables.NodeId);
+        if (tasksToMonitor.Any())
+        {
+            var monitorIds = tasksToMonitor.Select(x => x.MonitorId).ToList();
+            var monitorListByIds = await _monitorRepository.GetMonitorListByIds(monitorIds);
+
+            // HTTP
+            var lstMonitorByHttpType = monitorListByIds.Where(x => x.MonitorTypeId == 1);
+            var monitorByHttpType = lstMonitorByHttpType.ToList();
+            if (monitorByHttpType.Any())
+            {
+                var httpMonitorIds = monitorByHttpType.Select(x => x.Id).ToList();
+                var lstMonitors = await _monitorRepository.GetHttpMonitorByIds(httpMonitorIds);
+
+                GlobalVariables.TaskList = httpMonitorIds;
+
+                var lstStringsToAdd = new List<string>();
+                var monitorHttps = lstMonitors.ToList();
+
+                foreach (var monitorHttp in monitorHttps)
+                {
+                    monitorHttp.LastStatus =
+                        monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Status;
+                    monitorHttp.Name = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Name;
+
+                    string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
+                    lstStringsToAdd.Add(jobId);
+                }
+
+                IEnumerable<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
+                recurringJobs = recurringJobs.Where(x => x.Id.StartsWith("StartRunnerManager_CheckUrlsAsync_JobId"))
+                    .ToList();
+
+                foreach (var job in recurringJobs)
+                {
+                    if (!lstStringsToAdd.Contains(job.Id))
+                    {
+                        RecurringJob.RemoveIfExists(job.Id);
+                    }
+                }
+
+                foreach (var monitorHttp in monitorHttps)
+                {
+                    string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
+                    Thread.Sleep(50);
+                    var monitor = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
+                    RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, x => x.CheckUrlsAsync(monitorHttp),
+                        $"*/{monitor?.HeartBeatInterval} * * * *");
+                }
+            }
+        }
     }
 
     public async Task StartMonitorHeartBeatManager()
