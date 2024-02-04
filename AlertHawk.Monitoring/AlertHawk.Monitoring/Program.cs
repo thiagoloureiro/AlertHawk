@@ -39,8 +39,10 @@ builder.Services.AddHangfire(config => config.UseMemoryStorage());
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
 
 builder.Services.AddTransient<IMonitorTypeService, MonitorTypeService>();
-builder.Services.AddTransient<IMonitorTypeRepository, MonitorTypeRepository>();
+builder.Services.AddTransient<IMonitorService, MonitorService>();
 
+
+builder.Services.AddTransient<IMonitorTypeRepository, MonitorTypeRepository>();
 builder.Services.AddTransient<IMonitorRepository, MonitorRepository>();
 builder.Services.AddTransient<IMonitorAgentRepository, MonitorAgentRepository>();
 builder.Services.AddTransient<IMonitorManager, MonitorManager>();
