@@ -100,6 +100,8 @@ public class HttpClientRunner : IHttpClientRunner
             handler.MaxAutomaticRedirections = monitorHttp.MaxRedirects;
 
             using HttpClient client = new HttpClient(handler);
+            client.DefaultRequestHeaders.Add("User-Agent", "PostmanRuntime/7.36.1"); 
+            client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
             client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
 
             var sw = new Stopwatch();
