@@ -1,6 +1,7 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
+using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
 
@@ -21,5 +22,10 @@ public class MonitorService : IMonitorService
     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id)
     {
         return await _monitorRepository.GetMonitorHistory(id);
+    }
+
+    public async Task<IEnumerable<Monitor>> GetMonitorList()
+    {
+        return await _monitorRepository.GetMonitorList();
     }
 }

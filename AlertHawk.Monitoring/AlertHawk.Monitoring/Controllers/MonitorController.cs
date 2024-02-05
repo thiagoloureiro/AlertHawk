@@ -26,6 +26,13 @@ namespace AlertHawk.Monitoring.Controllers
             return Ok($"Master Node: {GlobalVariables.MasterNode}, MonitorId: {GlobalVariables.NodeId}, TasksList Count: {GlobalVariables.TaskList?.Count()}");
         }
         
+        [HttpGet("monitorList")]
+        public async Task<IActionResult> GetMonitorList()
+        {
+            var result = await _monitorService.GetMonitorList();
+            return Ok(result);
+        }
+        
         [HttpGet("monitorNotifications/{id}")]
         public async Task<IActionResult> GetMonitorNotification(int id)
         {
