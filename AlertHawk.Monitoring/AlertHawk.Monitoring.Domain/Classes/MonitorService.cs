@@ -17,4 +17,9 @@ public class MonitorService : IMonitorService
     {
         return await _monitorRepository.GetMonitorNotifications(id);
     }
+
+    public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id)
+    {
+        return await _monitorRepository.GetMonitorHistory(id);
+    }
 }

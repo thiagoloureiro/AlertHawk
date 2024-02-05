@@ -54,6 +54,13 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sql, new { monitorHistory.MonitorId, monitorHistory.Status, monitorHistory.TimeStamp, monitorHistory.StatusCode, monitorHistory.ResponseTime }, commandType: CommandType.Text);
     }
 
+    public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = @"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime FROM [MonitorHistory] WHERE MonitorId=@id ORDER BY TimeStamp ASC";
+        return await db.QueryAsync<MonitorHistory>(sql, new { id }, commandType: CommandType.Text);
+    }
+
     public async Task<IEnumerable<MonitorHttp>> GetHttpMonitorByIds(List<int> ids)
     {
         await using var db = new SqlConnection(_connstring);
