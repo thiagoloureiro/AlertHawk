@@ -40,12 +40,14 @@ builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<Cach
 
 builder.Services.AddTransient<IMonitorTypeService, MonitorTypeService>();
 builder.Services.AddTransient<IMonitorService, MonitorService>();
+builder.Services.AddTransient<IMonitorGroupService, MonitorGroupService>();
 
 
 builder.Services.AddTransient<IMonitorTypeRepository, MonitorTypeRepository>();
 builder.Services.AddTransient<IMonitorRepository, MonitorRepository>();
 builder.Services.AddTransient<IMonitorAgentRepository, MonitorAgentRepository>();
 builder.Services.AddTransient<IMonitorManager, MonitorManager>();
+builder.Services.AddTransient<IMonitorGroupRepository, MonitorGroupRepository>();
 
 builder.Services.AddTransient<IHttpClientRunner, HttpClientRunner>();
 

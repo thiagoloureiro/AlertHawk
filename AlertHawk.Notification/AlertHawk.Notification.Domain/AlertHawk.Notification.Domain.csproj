@@ -5,6 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Thiago Loureiro</Authors>
+    <PackageProjectUrl>https://github.com/thiagoloureiro/alerthawk</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/thiagoloureiro/AlertHawk/blob/main/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/thiagoloureiro/alerthawk</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>

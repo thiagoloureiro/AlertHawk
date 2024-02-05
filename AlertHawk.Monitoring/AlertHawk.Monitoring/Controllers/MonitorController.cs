@@ -1,5 +1,4 @@
-﻿using AlertHawk.Monitoring.Domain.Entities;
-using AlertHawk.Monitoring.Domain.Interfaces.Services;
+﻿using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
