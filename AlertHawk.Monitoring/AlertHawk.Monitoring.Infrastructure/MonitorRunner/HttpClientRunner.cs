@@ -11,15 +11,13 @@ namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
 public class HttpClientRunner : IHttpClientRunner
 {
-    private readonly IMonitorAgentRepository _monitorAgentRepository;
     private readonly IMonitorRepository _monitorRepository;
 
     private readonly IPublishEndpoint _publishEndpoint;
 
-    public HttpClientRunner(IMonitorAgentRepository monitorAgentRepository, IMonitorRepository monitorRepository,
+    public HttpClientRunner(IMonitorRepository monitorRepository,
         IPublishEndpoint publishEndpoint)
     {
-        _monitorAgentRepository = monitorAgentRepository;
         _monitorRepository = monitorRepository;
         _publishEndpoint = publishEndpoint;
     }
