@@ -22,6 +22,7 @@ namespace AlertHawk.Monitoring.Controllers
         public string Get()
         {
             var version = Assembly.GetEntryAssembly()?.GetName().Version;
+            Thread.Sleep(200);
             return version!.ToString();
         }
     }
