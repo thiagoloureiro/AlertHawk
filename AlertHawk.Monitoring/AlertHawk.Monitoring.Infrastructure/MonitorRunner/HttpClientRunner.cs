@@ -1,11 +1,10 @@
+using System.Diagnostics;
 using System.Net;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
-using AlertHawk.Monitoring.Infrastructure.MonitorManager;
-using Hangfire;
-using Hangfire.Storage;
 using MassTransit;
 using Polly;
+using Sentry;
 using SharedModels;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
@@ -25,55 +24,9 @@ public class HttpClientRunner : IHttpClientRunner
         _publishEndpoint = publishEndpoint;
     }
 
-    public async Task StartRunnerManager()
-    {
-        var tasksToMonitor = await _monitorAgentRepository.GetAllMonitorAgentTasksByAgentId(GlobalVariables.NodeId);
-        if (tasksToMonitor.Any())
-        {
-            var monitorIds = tasksToMonitor.Select(x => x.MonitorId).ToList();
-            var monitorListByIds = await _monitorRepository.GetMonitorListByIds(monitorIds);
+   
 
-            // HTTP
-            var lstMonitorByHttpType = monitorListByIds.Where(x => x.MonitorTypeId == 1);
-            var monitorByHttpType = lstMonitorByHttpType.ToList();
-            if (monitorByHttpType.Any())
-            {
-                var httpMonitorIds = monitorByHttpType.Select(x => x.Id).ToList();
-                var lstMonitors = await _monitorRepository.GetHttpMonitorByIds(httpMonitorIds);
-
-                var lstStringsToAdd = new List<string>();
-                var monitorHttps = lstMonitors.ToList();
-                foreach (var monitorHttp in monitorHttps)
-                {
-                    string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
-                    lstStringsToAdd.Add(jobId);
-                }
-
-                IEnumerable<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
-                recurringJobs = recurringJobs.Where(x => x.Id.StartsWith("StartRunnerManager_CheckUrlsAsync_JobId"))
-                    .ToList();
-
-                foreach (var job in recurringJobs)
-                {
-                    if (!lstStringsToAdd.Contains(job.Id))
-                    {
-                        RecurringJob.RemoveIfExists(job.Id);
-                    }
-                }
-                
-                foreach (var monitorHttp in monitorHttps)
-                {
-                    string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
-                    Thread.Sleep(50);
-                    var monitor = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
-                    RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, x => x.CheckUrlsAsync(monitorHttp),
-                        $"*/{monitor?.HeartBeatInterval} * * * *");
-                }
-            }
-        }
-    }
-
-    private async Task HandleNotifications(MonitorHttp monitorHttp)
+    private async Task HandleFailedNotifications(MonitorHttp monitorHttp)
     {
         var notificationIdList = await _monitorRepository.GetMonitorNotifications(monitorHttp.MonitorId);
 
@@ -87,86 +40,141 @@ public class HttpClientRunner : IHttpClientRunner
                 NotificationId = item.NotificationId,
                 TimeStamp = DateTime.UtcNow,
                 Message =
-                    $"Error calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
+                    $"Error calling {monitorHttp.Name}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
+            });
+        }
+    }
+
+    private async Task HandleSuccessNotifications(MonitorHttp monitorHttp)
+    {
+        var notificationIdList = await _monitorRepository.GetMonitorNotifications(monitorHttp.MonitorId);
+
+        Console.WriteLine(
+            $"sending success notification calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}");
+
+        foreach (var item in notificationIdList)
+        {
+            await _publishEndpoint.Publish<NotificationAlert>(new
+            {
+                NotificationId = item.NotificationId,
+                TimeStamp = DateTime.UtcNow,
+                Message =
+                    $"Success calling {monitorHttp.Name}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
             });
         }
     }
 
     public async Task<MonitorHttp> CheckUrlsAsync(MonitorHttp monitorHttp)
     {
-        var retryPolicy = Policy
-            .Handle<HttpRequestException>()
-            .Or<TimeoutException>()
-            .OrResult<HttpResponseMessage>(response => !response.IsSuccessStatusCode)
-            .WaitAndRetryAsync(
-                retryCount: monitorHttp.Retries, // Number of retries
-                sleepDurationProvider: retryAttempt => TimeSpan.FromMilliseconds(100),
-                onRetryAsync: async (exception, retryCount) =>
-                {
-                    if (exception is HttpRequestException)
-                    {
-                        Console.WriteLine(
-                            $"Retry {retryCount} after HTTP request exception: {exception.Exception.Message}");
-                    }
-                    else if (exception is TimeoutException)
-                    {
-                        Console.WriteLine($"Retry {retryCount} after Timeout exception");
-                    }
-                    else if (exception is DelegateResult<HttpResponseMessage> result && result != null)
-                    {
-                        Console.WriteLine($"Retry {retryCount} after status code: {result.Result?.StatusCode}");
-                    }
-                }
-            );
-
-        using HttpClientHandler handler = new HttpClientHandler();
-
-        // Set the maximum number of automatic redirects
-        handler.MaxAutomaticRedirections = monitorHttp.MaxRedirects;
-
-        using HttpClient client = new HttpClient(handler);
-        client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
-
-        var policyResult = await retryPolicy.ExecuteAndCaptureAsync(async () =>
+        try
         {
-            HttpResponseMessage response = await client.GetAsync(monitorHttp.UrlToCheck);
+            var retryPolicy = Policy
+                .Handle<HttpRequestException>()
+                .Or<TimeoutException>()
+                .OrResult<HttpResponseMessage>(response => !response.IsSuccessStatusCode)
+                .WaitAndRetryAsync(
+                    retryCount: monitorHttp.Retries, // Number of retries
+                    sleepDurationProvider: retryAttempt => TimeSpan.FromMilliseconds(100),
+                    onRetryAsync: async (exception, retryCount) =>
+                    {
+                        if (exception is HttpRequestException)
+                        {
+                            Console.WriteLine(
+                                $"Retry {retryCount} after HTTP request exception: {exception.Exception.Message}");
+                        }
+                        else if (exception is TimeoutException)
+                        {
+                            Console.WriteLine($"Retry {retryCount} after Timeout exception");
+                        }
+                        else if (exception is DelegateResult<HttpResponseMessage> result && result != null)
+                        {
+                            Console.WriteLine($"Retry {retryCount} after status code: {result.Result?.StatusCode}");
+                        }
+                    }
+                );
 
-            // Check if the status code is 200 OK
-            if (response.IsSuccessStatusCode)
+            using HttpClientHandler handler = new HttpClientHandler();
+
+            // Set the maximum number of automatic redirects
+            handler.MaxAutomaticRedirections = monitorHttp.MaxRedirects;
+
+            using HttpClient client = new HttpClient(handler);
+            client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
+
+            var policyResult = await retryPolicy.ExecuteAndCaptureAsync(async () =>
             {
-                Console.WriteLine($"{monitorHttp.UrlToCheck} returned 200 OK");
-                monitorHttp.ResponseStatusCode = response.StatusCode;
-                return response;
+                var sw = new Stopwatch();
+                sw.Start();
+                HttpResponseMessage response = await client.GetAsync(monitorHttp.UrlToCheck);
+                var elapsed = sw.ElapsedMilliseconds;
+                monitorHttp.ResponseTime = (int)elapsed;
+                sw.Stop();
+                
+                // Check if the status code is 200 OK
+                if (response.IsSuccessStatusCode)
+                {
+                    //Console.WriteLine($"{monitorHttp.UrlToCheck} returned 200 OK");
+                    monitorHttp.ResponseStatusCode = response.StatusCode;
+                    return response;
+                }
+                else
+                {
+                    // Console.WriteLine($"{monitorHttp.UrlToCheck} returned {response.StatusCode}");
+                    monitorHttp.ResponseStatusCode = response.StatusCode;
+                    return response;
+                    // throw new HttpRequestException($"HTTP request failed with status code: {response.StatusCode}");
+                }
+            });
+
+            if (policyResult.Outcome == OutcomeType.Failure)
+            {
+                monitorHttp.ResponseStatusCode =
+                    policyResult.FinalHandledResult.StatusCode; // or another appropriate status code
             }
             else
             {
-                Console.WriteLine($"{monitorHttp.UrlToCheck} returned {response.StatusCode}");
-                monitorHttp.ResponseStatusCode = response.StatusCode;
-                return response;
-                // throw new HttpRequestException($"HTTP request failed with status code: {response.StatusCode}");
+                // Update status code for successful responses
+                monitorHttp.ResponseStatusCode = policyResult.Result?.StatusCode ?? HttpStatusCode.OK;
             }
-        });
 
-        if (policyResult.Outcome == OutcomeType.Failure)
-        {
-            monitorHttp.ResponseStatusCode =
-                policyResult.FinalHandledResult.StatusCode; // or another appropriate status code
+            var succeeded = ((int)monitorHttp.ResponseStatusCode >= 200) &&
+                            ((int)monitorHttp.ResponseStatusCode <= 299);
+
+            if (succeeded)
+            {
+                if (monitorHttp.LastStatus == false)
+                {
+                    await HandleSuccessNotifications(monitorHttp);
+                }
+            }
+            else
+            {
+                if (monitorHttp.LastStatus) // only send notification when goes from online to offline to avoid flood
+                {
+                    await HandleFailedNotifications(monitorHttp);
+                }
+            }
+
+            await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded);
+            var monitorHistory = new MonitorHistory
+            {
+                MonitorId = monitorHttp.MonitorId,
+                Status = succeeded,
+                StatusCode = (int)monitorHttp.ResponseStatusCode,
+                TimeStamp = DateTime.UtcNow,
+                ResponseTime = monitorHttp.ResponseTime
+            };
+
+            await _monitorRepository.SaveMonitorHistory(monitorHistory);
+
+            return monitorHttp;
         }
-        else
+
+        catch (Exception e)
         {
-            // Update status code for successful responses
-            monitorHttp.ResponseStatusCode = policyResult.Result?.StatusCode ?? HttpStatusCode.OK;
+            SentrySdk.CaptureException(e);
         }
 
-        var succeeded = ((int)monitorHttp.ResponseStatusCode >= 200) && ((int)monitorHttp.ResponseStatusCode <= 299);
-
-        if (!succeeded)
-        {
-            await HandleNotifications(monitorHttp);
-        }
-
-        await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded);
-
-        return monitorHttp;
+        return null;
     }
 }

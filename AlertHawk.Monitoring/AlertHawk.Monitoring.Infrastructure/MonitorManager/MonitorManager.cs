@@ -1,5 +1,8 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using Hangfire;
+using Hangfire.Storage;
+using Sentry;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorManager;
 
@@ -14,78 +17,147 @@ public class MonitorManager : IMonitorManager
         _monitorRepository = monitorRepository;
     }
 
+    public async Task StartRunnerManager()
+    {
+        var tasksToMonitor = await _monitorAgentRepository.GetAllMonitorAgentTasksByAgentId(GlobalVariables.NodeId);
+        if (tasksToMonitor.Any())
+        {
+            var monitorIds = tasksToMonitor.Select(x => x.MonitorId).ToList();
+            var monitorListByIds = await _monitorRepository.GetMonitorListByIds(monitorIds);
+
+            // HTTP
+            var lstMonitorByHttpType = monitorListByIds.Where(x => x.MonitorTypeId == 1);
+            var monitorByHttpType = lstMonitorByHttpType.ToList();
+            if (monitorByHttpType.Any())
+            {
+                var httpMonitorIds = monitorByHttpType.Select(x => x.Id).ToList();
+                var lstMonitors = await _monitorRepository.GetHttpMonitorByIds(httpMonitorIds);
+
+                GlobalVariables.TaskList = httpMonitorIds;
+
+                var lstStringsToAdd = new List<string>();
+                var monitorHttps = lstMonitors.ToList();
+
+                foreach (var monitorHttp in monitorHttps)
+                {
+                    monitorHttp.LastStatus =
+                        monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Status;
+                    monitorHttp.Name = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Name;
+
+                    string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
+                    lstStringsToAdd.Add(jobId);
+                }
+
+                IEnumerable<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
+                recurringJobs = recurringJobs.Where(x => x.Id.StartsWith("StartRunnerManager_CheckUrlsAsync_JobId"))
+                    .ToList();
+
+                foreach (var job in recurringJobs)
+                {
+                    if (!lstStringsToAdd.Contains(job.Id))
+                    {
+                        RecurringJob.RemoveIfExists(job.Id);
+                    }
+                }
+
+                foreach (var monitorHttp in monitorHttps)
+                {
+                    string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
+                    Thread.Sleep(50);
+                    var monitor = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
+                    RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, x => x.CheckUrlsAsync(monitorHttp),
+                        $"*/{monitor?.HeartBeatInterval} * * * *");
+                }
+            }
+        }
+    }
+
     public async Task StartMonitorHeartBeatManager()
     {
-        var monitorAgent = new MonitorAgent
+        try
         {
-            Hostname = Environment.MachineName,
-            TimeStamp = DateTime.UtcNow
-        };
+            var monitorAgent = new MonitorAgent
+            {
+                Hostname = Environment.MachineName,
+                TimeStamp = DateTime.UtcNow
+            };
 
-        await _monitorAgentRepository.ManageMonitorStatus(monitorAgent);
+            await _monitorAgentRepository.ManageMonitorStatus(monitorAgent);
+        }
+        catch (Exception e)
+        {
+            SentrySdk.CaptureException(e);
+        }
     }
 
     public async Task StartMasterMonitorAgentTaskManager()
     {
-        // Only MasterNode is responsible for Managing Tasks
-        if (GlobalVariables.MasterNode)
+        try
         {
-            var lstMonitorAgentTasks = new List<MonitorAgentTasks>();
-            var iEnumerable = await _monitorRepository.GetMonitorList();
-            var monitorList = iEnumerable.ToList();
-            var monitorAgents = await _monitorAgentRepository.GetAllMonitorAgents();
-
-            var countMonitor = monitorList.Count();
-            var countAgents = monitorAgents.Count();
-
-            int tasksPerMonitor = countMonitor / countAgents;
-            int extraTasks = countMonitor % countAgents;
-
-            int currentIndex = 0;
-            int indexAgent = 0;
-
-            for (int i = 0; i < countMonitor; i++)
+            // Only MasterNode is responsible for Managing Tasks
+            if (GlobalVariables.MasterNode)
             {
-                int tasksToTake = tasksPerMonitor + (i < extraTasks ? 1 : 0);
+                var lstMonitorAgentTasks = new List<MonitorAgentTasks>();
+                var iEnumerable = await _monitorRepository.GetMonitorList();
+                var monitorList = iEnumerable.ToList();
+                var monitorAgents = await _monitorAgentRepository.GetAllMonitorAgents();
 
-                var tasksForMonitor = monitorList.Skip(currentIndex).Take(tasksToTake).ToList();
+                var countMonitor = monitorList.Count();
+                var countAgents = monitorAgents.Count();
 
-                if (!tasksForMonitor.Any())
+                int tasksPerMonitor = countMonitor / countAgents;
+                int extraTasks = countMonitor % countAgents;
+
+                int currentIndex = 0;
+                int indexAgent = 0;
+
+                for (int i = 0; i < countMonitor; i++)
                 {
-                    break;
-                }
+                    int tasksToTake = tasksPerMonitor + (i < extraTasks ? 1 : 0);
 
-                var agent = monitorAgents.ElementAt(indexAgent);
+                    var tasksForMonitor = monitorList.Skip(currentIndex).Take(tasksToTake).ToList();
 
-                foreach (var task in tasksForMonitor)
-                {
-                    lstMonitorAgentTasks.Add(new MonitorAgentTasks
+                    if (!tasksForMonitor.Any())
                     {
-                        MonitorId = task.Id,
-                        MonitorAgentId = agent.Id
-                    });
+                        break;
+                    }
+
+                    var agent = monitorAgents.ElementAt(indexAgent);
+
+                    foreach (var task in tasksForMonitor)
+                    {
+                        lstMonitorAgentTasks.Add(new MonitorAgentTasks
+                        {
+                            MonitorId = task.Id,
+                            MonitorAgentId = agent.Id
+                        });
+                    }
+
+                    indexAgent += 1;
+                    currentIndex += tasksToTake;
                 }
 
-                indexAgent += 1;
-                currentIndex += tasksToTake;
-            }
-
-            if (GlobalVariables.TaskList != null)
-            {
-                GlobalVariables.TaskList.Clear();
-            }
-
-            GlobalVariables.TaskList = new List<int>();
-
-            foreach (var item in lstMonitorAgentTasks)
-            {
-                if (item.MonitorAgentId == GlobalVariables.NodeId)
+                if (GlobalVariables.TaskList != null)
                 {
-                    GlobalVariables.TaskList.Add(item.MonitorId);
+                    GlobalVariables.TaskList.Clear();
                 }
+
+                GlobalVariables.TaskList = new List<int>();
+
+                foreach (var item in lstMonitorAgentTasks)
+                {
+                    if (item.MonitorAgentId == GlobalVariables.NodeId)
+                    {
+                        GlobalVariables.TaskList.Add(item.MonitorId);
+                    }
+                }
+
+                await _monitorAgentRepository.UpsertMonitorAgentTasks(lstMonitorAgentTasks);
             }
-            
-            await _monitorAgentRepository.UpsertMonitorAgentTasks(lstMonitorAgentTasks);
+        }
+        catch (Exception e)
+        {
+            SentrySdk.CaptureException(e);
         }
     }
 }

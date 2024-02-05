@@ -1,4 +1,6 @@
-﻿using AlertHawk.Monitoring.Infrastructure.MonitorManager;
+﻿using AlertHawk.Monitoring.Domain.Entities;
+using AlertHawk.Monitoring.Domain.Interfaces.Services;
+using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using SharedModels;
@@ -10,16 +12,25 @@ namespace AlertHawk.Monitoring.Controllers
     public class MonitorController : ControllerBase
     {
         private readonly IPublishEndpoint _publishEndpoint;
+        private readonly IMonitorService _monitorService;
 
-        public MonitorController(IPublishEndpoint publishEndpoint)
+        public MonitorController(IPublishEndpoint publishEndpoint, IMonitorService monitorService)
         {
             _publishEndpoint = publishEndpoint;
+            _monitorService = monitorService;
         }
 
         [HttpGet("monitorStatus")]
         public IActionResult MonitorStatus()
         {
             return Ok($"Master Node: {GlobalVariables.MasterNode}, MonitorId: {GlobalVariables.NodeId}, TasksList Count: {GlobalVariables.TaskList?.Count()}");
+        }
+        
+        [HttpGet("monitorNotifications/{id}")]
+        public async Task<IActionResult> GetMonitorNotification(int id)
+        {
+            var result = await _monitorService.GetMonitorNotifications(id);
+            return Ok(result);
         }
 
         [HttpPost]

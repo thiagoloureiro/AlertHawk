@@ -10,4 +10,5 @@ public interface IMonitorRepository
     Task<IEnumerable<Monitor>> GetMonitorListByIds(List<int> ids);
     Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id);
     Task UpdateMonitorStatus(int id, bool status);
+    Task SaveMonitorHistory(MonitorHistory monitorHistory);
 }

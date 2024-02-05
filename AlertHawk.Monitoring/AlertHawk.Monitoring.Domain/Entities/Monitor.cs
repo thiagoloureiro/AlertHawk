@@ -8,4 +8,5 @@ public class Monitor
     public required string Name { get; set; }
     public required int HeartBeatInterval { get; set; }
     public required int Retries { get; set; }
+    public bool Status { get; set; }
 }

@@ -60,6 +60,15 @@ namespace AlertHawk.Notification.Controllers
             var result = await _notificationService.SelectNotificationItemList();
             return Ok(result);
         }
+        
+        [HttpPost("SelectNotificationItemListByIds")]
+        [SwaggerOperation(Summary = "Select Notification Item List By List of Ids")]
+        [ProducesResponseType(typeof(List<NotificationItem>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> SelectNotificationItemList([FromBody] List<int> ids)
+        {
+            var result = await _notificationService.SelectNotificationItemList(ids);
+            return Ok(result);
+        }
 
         [HttpGet("SelectNotificationItemById/{id}")]
         [SwaggerOperation(Summary = "Select NotificationItem By Id")]

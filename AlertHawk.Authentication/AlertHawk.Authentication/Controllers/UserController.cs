@@ -100,7 +100,7 @@ public class UserController : Controller
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     public async Task<IActionResult> ResetPassword(string username)
     {
-        // call database and update user credentials
+        await _userService.ResetPassword(username);
         return Ok();
     }
 }

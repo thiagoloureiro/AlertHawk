@@ -12,4 +12,6 @@ public class MonitorHttp : Monitor
     public required string UrlToCheck { get; set; }
     public HttpStatusCode ResponseStatusCode { get; set; }
     public required int Timeout { get; set; }
+    public bool LastStatus { get; set; }
+    public int ResponseTime { get; set; }
 }

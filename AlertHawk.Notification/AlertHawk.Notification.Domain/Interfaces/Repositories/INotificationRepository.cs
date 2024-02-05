@@ -11,5 +11,6 @@ public interface INotificationRepository
     Task InsertNotificationItemTelegram(NotificationItem notificationItem);
     Task InsertNotificationItemSlack(NotificationItem notificationItem);
     Task<NotificationItem?> SelectNotificationItemById(int id);
+    Task<IEnumerable<NotificationItem>> SelectNotificationItemList(List<int> ids);
     Task DeleteNotificationItem(int id);
 }
