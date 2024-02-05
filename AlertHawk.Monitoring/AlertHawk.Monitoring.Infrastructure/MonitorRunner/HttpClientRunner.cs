@@ -165,8 +165,6 @@ public class HttpClientRunner : IHttpClientRunner
             {
                 await HandleFailedNotifications(monitorHttp);
             }
-
-            SentrySdk.CaptureException(e);
         }
 
         return null;
