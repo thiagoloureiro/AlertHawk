@@ -101,7 +101,7 @@ public class HttpClientRunner : IHttpClientRunner
 
             using HttpClient client = new HttpClient(handler);
             client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
-            
+
             var sw = new Stopwatch();
             sw.Start();
             HttpResponseMessage response = await client.GetAsync(monitorHttp.UrlToCheck);
@@ -110,7 +110,7 @@ public class HttpClientRunner : IHttpClientRunner
             sw.Stop();
 
             monitorHttp.ResponseStatusCode = response.StatusCode;
-            
+
             var succeeded = ((int)monitorHttp.ResponseStatusCode >= 200) &&
                             ((int)monitorHttp.ResponseStatusCode <= 299);
 
@@ -146,7 +146,24 @@ public class HttpClientRunner : IHttpClientRunner
 
         catch (Exception e)
         {
-            await HandleFailedNotifications(monitorHttp);
+            await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, false);
+
+            var monitorHistory = new MonitorHistory
+            {
+                MonitorId = monitorHttp.MonitorId,
+                Status = false,
+                StatusCode = (int)monitorHttp.ResponseStatusCode,
+                TimeStamp = DateTime.UtcNow,
+                ResponseTime = monitorHttp.ResponseTime
+            };
+
+            await _monitorRepository.SaveMonitorHistory(monitorHistory);
+           
+            if (monitorHttp.LastStatus) // only send notification when goes from online to offline to avoid flood
+            {
+                await HandleFailedNotifications(monitorHttp);
+            }
+
             SentrySdk.CaptureException(e);
         }
 
