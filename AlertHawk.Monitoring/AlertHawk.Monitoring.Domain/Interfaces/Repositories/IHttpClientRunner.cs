@@ -4,5 +4,5 @@ namespace AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 
 public interface IHttpClientRunner
 {
-    Task<MonitorHttp> CheckUrlsAsync(MonitorHttp monitorHttp);
+    Task CheckUrlsAsync(MonitorHttp monitorHttp);
 }

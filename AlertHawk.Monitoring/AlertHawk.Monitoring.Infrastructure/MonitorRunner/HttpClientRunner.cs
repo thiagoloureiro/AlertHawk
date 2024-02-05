@@ -61,7 +61,7 @@ public class HttpClientRunner : IHttpClientRunner
         }
     }
 
-    public async Task<MonitorHttp> CheckUrlsAsync(MonitorHttp monitorHttp)
+    public async Task CheckUrlsAsync(MonitorHttp monitorHttp)
     {
         try
         {
@@ -113,8 +113,6 @@ public class HttpClientRunner : IHttpClientRunner
             };
 
             await _monitorRepository.SaveMonitorHistory(monitorHistory);
-
-            return monitorHttp;
         }
 
         catch (Exception e)
@@ -137,7 +135,5 @@ public class HttpClientRunner : IHttpClientRunner
                 await HandleFailedNotifications(monitorHttp);
             }
         }
-
-        return null;
     }
 }
