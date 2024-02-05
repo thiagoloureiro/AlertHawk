@@ -65,40 +65,13 @@ public class HttpClientRunner : IHttpClientRunner
     {
         try
         {
-            /*
-            var retryPolicy = Policy
-                .Handle<HttpRequestException>()
-                .Or<TimeoutException>()
-                .OrResult<HttpResponseMessage>(response => !response.IsSuccessStatusCode)
-                .WaitAndRetryAsync(
-                    retryCount: monitorHttp.Retries, // Number of retries
-                    sleepDurationProvider: retryAttempt => TimeSpan.FromMilliseconds(100),
-                    onRetryAsync: async (exception, retryCount) =>
-                    {
-                        if (exception is HttpRequestException)
-                        {
-                            Console.WriteLine(
-                                $"Retry {retryCount} after HTTP request exception: {exception.Exception.Message}");
-                        }
-                        else if (exception is TimeoutException)
-                        {
-                            Console.WriteLine($"Retry {retryCount} after Timeout exception");
-                        }
-                        else if (exception is DelegateResult<HttpResponseMessage> result && result != null)
-                        {
-                            Console.WriteLine($"Retry {retryCount} after status code: {result.Result?.StatusCode}");
-                        }
-                    }
-                );
-            */
-
             using HttpClientHandler handler = new HttpClientHandler();
 
             // Set the maximum number of automatic redirects
             handler.MaxAutomaticRedirections = monitorHttp.MaxRedirects;
 
             using HttpClient client = new HttpClient(handler);
-            client.DefaultRequestHeaders.Add("User-Agent", "PostmanRuntime/7.36.1"); 
+            client.DefaultRequestHeaders.Add("User-Agent", "PostmanRuntime/7.36.1");
             client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
             client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
 
@@ -158,7 +131,7 @@ public class HttpClientRunner : IHttpClientRunner
             };
 
             await _monitorRepository.SaveMonitorHistory(monitorHistory);
-           
+
             if (monitorHttp.LastStatus) // only send notification when goes from online to offline to avoid flood
             {
                 await HandleFailedNotifications(monitorHttp);
