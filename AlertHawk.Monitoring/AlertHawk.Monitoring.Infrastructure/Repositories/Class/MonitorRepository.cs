@@ -29,7 +29,8 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
         string whereClause = $"WHERE Id IN ({string.Join(",", ids)})";
 
-        string sql = $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status FROM [Monitor] {whereClause}";
+        string sql =
+            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status FROM [Monitor] {whereClause}";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
 
@@ -50,15 +51,29 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     public async Task SaveMonitorHistory(MonitorHistory monitorHistory)
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = @"INSERT INTO [MonitorHistory] (MonitorId, Status, TimeStamp, StatusCode, ResponseTime) VALUES (@MonitorId, @Status, @TimeStamp, @StatusCode, @ResponseTime)";
-        await db.ExecuteAsync(sql, new { monitorHistory.MonitorId, monitorHistory.Status, monitorHistory.TimeStamp, monitorHistory.StatusCode, monitorHistory.ResponseTime }, commandType: CommandType.Text);
+        string sql =
+            @"INSERT INTO [MonitorHistory] (MonitorId, Status, TimeStamp, StatusCode, ResponseTime) VALUES (@MonitorId, @Status, @TimeStamp, @StatusCode, @ResponseTime)";
+        await db.ExecuteAsync(sql,
+            new
+            {
+                monitorHistory.MonitorId, monitorHistory.Status, monitorHistory.TimeStamp, monitorHistory.StatusCode,
+                monitorHistory.ResponseTime
+            }, commandType: CommandType.Text);
     }
 
     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id)
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = @"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime FROM [MonitorHistory] WHERE MonitorId=@id ORDER BY TimeStamp ASC";
+        string sql =
+            @"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime FROM [MonitorHistory] WHERE MonitorId=@id ORDER BY TimeStamp ASC";
         return await db.QueryAsync<MonitorHistory>(sql, new { id }, commandType: CommandType.Text);
+    }
+
+    public async Task DeleteMonitorHistory(int days)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = @"DELETE FROM [MonitorHistory] WHERE TimeStamp < DATEADD(DAY, -@days, GETDATE())";
+        await db.QueryAsync<MonitorHistory>(sql, new { days }, commandType: CommandType.Text);
     }
 
     public async Task<IEnumerable<MonitorHttp>> GetHttpMonitorByIds(List<int> ids)

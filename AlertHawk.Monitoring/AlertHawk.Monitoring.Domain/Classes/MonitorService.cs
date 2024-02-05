@@ -28,4 +28,9 @@ public class MonitorService : IMonitorService
     {
         return await _monitorRepository.GetMonitorList();
     }
+
+    public async Task DeleteMonitorHistory(int days)
+    {
+        await _monitorRepository.DeleteMonitorHistory(days);
+    }
 }

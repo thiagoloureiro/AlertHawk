@@ -20,5 +20,12 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorService.GetMonitorHistory(id);
             return Ok(result);
         }
+        
+        [HttpDelete]
+        public async Task<IActionResult> DeleteMonitorHistory(int days)
+        {
+            await _monitorService.DeleteMonitorHistory(days);
+            return Ok();
+        }
     }
 }
