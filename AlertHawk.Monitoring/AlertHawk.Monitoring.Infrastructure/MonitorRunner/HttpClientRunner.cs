@@ -24,7 +24,6 @@ public class HttpClientRunner : IHttpClientRunner
         _publishEndpoint = publishEndpoint;
     }
 
-   
 
     private async Task HandleFailedNotifications(MonitorHttp monitorHttp)
     {
@@ -68,6 +67,7 @@ public class HttpClientRunner : IHttpClientRunner
     {
         try
         {
+            /*
             var retryPolicy = Policy
                 .Handle<HttpRequestException>()
                 .Or<TimeoutException>()
@@ -92,6 +92,7 @@ public class HttpClientRunner : IHttpClientRunner
                         }
                     }
                 );
+            */
 
             using HttpClientHandler handler = new HttpClientHandler();
 
@@ -100,43 +101,16 @@ public class HttpClientRunner : IHttpClientRunner
 
             using HttpClient client = new HttpClient(handler);
             client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
+            
+            var sw = new Stopwatch();
+            sw.Start();
+            HttpResponseMessage response = await client.GetAsync(monitorHttp.UrlToCheck);
+            var elapsed = sw.ElapsedMilliseconds;
+            monitorHttp.ResponseTime = (int)elapsed;
+            sw.Stop();
 
-            var policyResult = await retryPolicy.ExecuteAndCaptureAsync(async () =>
-            {
-                var sw = new Stopwatch();
-                sw.Start();
-                HttpResponseMessage response = await client.GetAsync(monitorHttp.UrlToCheck);
-                var elapsed = sw.ElapsedMilliseconds;
-                monitorHttp.ResponseTime = (int)elapsed;
-                sw.Stop();
-                
-                // Check if the status code is 200 OK
-                if (response.IsSuccessStatusCode)
-                {
-                    //Console.WriteLine($"{monitorHttp.UrlToCheck} returned 200 OK");
-                    monitorHttp.ResponseStatusCode = response.StatusCode;
-                    return response;
-                }
-                else
-                {
-                    // Console.WriteLine($"{monitorHttp.UrlToCheck} returned {response.StatusCode}");
-                    monitorHttp.ResponseStatusCode = response.StatusCode;
-                    return response;
-                    // throw new HttpRequestException($"HTTP request failed with status code: {response.StatusCode}");
-                }
-            });
-
-            if (policyResult.Outcome == OutcomeType.Failure)
-            {
-                monitorHttp.ResponseStatusCode =
-                    policyResult.FinalHandledResult.StatusCode; // or another appropriate status code
-            }
-            else
-            {
-                // Update status code for successful responses
-                monitorHttp.ResponseStatusCode = policyResult.Result?.StatusCode ?? HttpStatusCode.OK;
-            }
-
+            monitorHttp.ResponseStatusCode = response.StatusCode;
+            
             var succeeded = ((int)monitorHttp.ResponseStatusCode >= 200) &&
                             ((int)monitorHttp.ResponseStatusCode <= 299);
 
@@ -172,6 +146,7 @@ public class HttpClientRunner : IHttpClientRunner
 
         catch (Exception e)
         {
+            await HandleFailedNotifications(monitorHttp);
             SentrySdk.CaptureException(e);
         }
 
