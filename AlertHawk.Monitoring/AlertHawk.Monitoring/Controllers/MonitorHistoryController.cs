@@ -14,7 +14,7 @@ namespace AlertHawk.Monitoring.Controllers
             _monitorService = monitorService;
         }
 
-        [HttpGet("{id}")]
+        [HttpGet]
         public async Task<IActionResult> GetMonitorHistory(int id)
         {
             var result = await _monitorService.GetMonitorHistory(id);
