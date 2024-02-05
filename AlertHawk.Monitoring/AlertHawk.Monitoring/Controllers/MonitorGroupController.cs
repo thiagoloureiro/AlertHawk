@@ -18,16 +18,16 @@ namespace AlertHawk.Monitoring.Controllers
         }
 
         [HttpGet("monitorGroupList")]
-        public IActionResult GetMonitorGroupList()
+        public async Task<IActionResult> GetMonitorGroupList()
         {
-            var result = _monitorGroupService.GetMonitorGroupList();
+            var result = await _monitorGroupService.GetMonitorGroupList();
             return Ok(result);
         }
         
         [HttpGet("monitorGroup/{id}")]
-        public IActionResult GetMonitorGroupById(int id)
+        public async Task<IActionResult> GetMonitorGroupById(int id)
         {
-            var result = _monitorGroupService.GetMonitorGroupById(id);
+            var result = await  _monitorGroupService.GetMonitorGroupById(id);
             return Ok(result);
         }
     }
