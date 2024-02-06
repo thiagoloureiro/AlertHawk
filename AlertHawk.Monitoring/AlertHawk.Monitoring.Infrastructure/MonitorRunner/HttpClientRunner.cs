@@ -63,7 +63,7 @@ public class HttpClientRunner : IHttpClientRunner
     {
         int retryCount = 0;
         int maxRetries = monitorHttp.Retries;
-        Console.WriteLine(maxRetries);
+
         while (retryCount < maxRetries)
         {
             try
@@ -132,6 +132,7 @@ public class HttpClientRunner : IHttpClientRunner
             }
             catch (TaskCanceledException err)
             {
+                Console.WriteLine($"Trying {retryCount} of {monitorHttp.UrlToCheck}");
                 retryCount++;
                 if (retryCount >= maxRetries)
                 {
@@ -150,6 +151,7 @@ public class HttpClientRunner : IHttpClientRunner
             }
             catch (Exception err)
             {
+                Console.WriteLine($"Trying {retryCount} of {monitorHttp.UrlToCheck}");
                 retryCount++;
                 if (retryCount >= maxRetries)
                 {
