@@ -61,96 +61,113 @@ public class HttpClientRunner : IHttpClientRunner
 
     public async Task CheckUrlsAsync(MonitorHttp monitorHttp)
     {
-        try
-        {
-            var notAfter = DateTime.UtcNow;
-            int daysToExpireCert = 0;
+        int retryCount = 0;
+        const int maxRetries = 3;
 
-            using HttpClientHandler handler = new HttpClientHandler();
-            if (monitorHttp.CheckCertExpiry)
+        while (retryCount < maxRetries)
+        {
+            try
             {
-                handler.ServerCertificateCustomValidationCallback = (request, cert, chain, policyErrors) =>
+                var notAfter = DateTime.UtcNow;
+                int daysToExpireCert = 0;
+
+                using HttpClientHandler handler = new HttpClientHandler();
+                if (monitorHttp.CheckCertExpiry)
                 {
-                    if (cert != null) notAfter = cert.NotAfter;
-                    daysToExpireCert = (notAfter - DateTime.UtcNow).Days;
-                    return true;
+                    handler.ServerCertificateCustomValidationCallback = (request, cert, chain, policyErrors) =>
+                    {
+                        if (cert != null) notAfter = cert.NotAfter;
+                        daysToExpireCert = (notAfter - DateTime.UtcNow).Days;
+                        return true;
+                    };
+                }
+
+                // Set the maximum number of automatic redirects
+                handler.MaxAutomaticRedirections = monitorHttp.MaxRedirects;
+
+                using HttpClient client = new HttpClient(handler);
+                client.DefaultRequestHeaders.Add("User-Agent", "PostmanRuntime/7.36.1");
+                client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
+                client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
+
+                var sw = new Stopwatch();
+                sw.Start();
+                var response = await client.GetAsync(monitorHttp.UrlToCheck);
+                var elapsed = sw.ElapsedMilliseconds;
+                monitorHttp.ResponseTime = (int)elapsed;
+                sw.Stop();
+
+                monitorHttp.ResponseStatusCode = response.StatusCode;
+
+                var succeeded = ((int)monitorHttp.ResponseStatusCode >= 200) &&
+                                ((int)monitorHttp.ResponseStatusCode <= 299);
+
+                if (succeeded)
+                {
+                    if (monitorHttp.LastStatus == false)
+                    {
+                        await HandleSuccessNotifications(monitorHttp);
+                    }
+                }
+                else
+                {
+                    if (monitorHttp
+                        .LastStatus) // only send notification when goes from online to offline to avoid flood
+                    {
+                        await HandleFailedNotifications(monitorHttp);
+                    }
+                }
+
+                await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded, daysToExpireCert);
+                var monitorHistory = new MonitorHistory
+                {
+                    MonitorId = monitorHttp.MonitorId,
+                    Status = succeeded,
+                    StatusCode = (int)monitorHttp.ResponseStatusCode,
+                    TimeStamp = DateTime.UtcNow,
+                    ResponseTime = monitorHttp.ResponseTime
                 };
+
+                await _monitorRepository.SaveMonitorHistory(monitorHistory);
+
+                break;
             }
-
-            // Set the maximum number of automatic redirects
-            handler.MaxAutomaticRedirections = monitorHttp.MaxRedirects;
-
-            using HttpClient client = new HttpClient(handler);
-            client.DefaultRequestHeaders.Add("User-Agent", "PostmanRuntime/7.36.1");
-            client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
-            client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
-
-            var sw = new Stopwatch();
-            sw.Start();
-            var response = await client.GetAsync(monitorHttp.UrlToCheck);
-            var elapsed = sw.ElapsedMilliseconds;
-            monitorHttp.ResponseTime = (int)elapsed;
-            sw.Stop();
-
-            monitorHttp.ResponseStatusCode = response.StatusCode;
-
-            var succeeded = ((int)monitorHttp.ResponseStatusCode >= 200) &&
-                            ((int)monitorHttp.ResponseStatusCode <= 299);
-
-            if (succeeded)
+            catch (TaskCanceledException err)
             {
-                if (monitorHttp.LastStatus == false)
+                retryCount++;
+                if (retryCount >= maxRetries)
                 {
-                    await HandleSuccessNotifications(monitorHttp);
+                    SentrySdk.CaptureException(err);
+                    var monitorHistory = new MonitorHistory
+                    {
+                        MonitorId = monitorHttp.MonitorId,
+                        Status = false,
+                        StatusCode = (int)HttpStatusCode.RequestTimeout,
+                        TimeStamp = DateTime.UtcNow,
+                        ResponseTime = monitorHttp.ResponseTime
+                    };
+
+                    await SaveFailedStatus(monitorHttp, monitorHistory);
                 }
             }
-            else
+            catch (Exception err)
             {
-                if (monitorHttp.LastStatus) // only send notification when goes from online to offline to avoid flood
+                retryCount++;
+                if (retryCount >= maxRetries)
                 {
-                    await HandleFailedNotifications(monitorHttp);
+                    SentrySdk.CaptureException(err);
+                    var monitorHistory = new MonitorHistory
+                    {
+                        MonitorId = monitorHttp.MonitorId,
+                        Status = false,
+                        StatusCode = (int)monitorHttp.ResponseStatusCode,
+                        TimeStamp = DateTime.UtcNow,
+                        ResponseTime = monitorHttp.ResponseTime
+                    };
+
+                    await SaveFailedStatus(monitorHttp, monitorHistory);
                 }
             }
-
-            await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded, daysToExpireCert);
-            var monitorHistory = new MonitorHistory
-            {
-                MonitorId = monitorHttp.MonitorId,
-                Status = succeeded,
-                StatusCode = (int)monitorHttp.ResponseStatusCode,
-                TimeStamp = DateTime.UtcNow,
-                ResponseTime = monitorHttp.ResponseTime
-            };
-
-            await _monitorRepository.SaveMonitorHistory(monitorHistory);
-        }
-        catch (TaskCanceledException err)
-        {
-            SentrySdk.CaptureException(err);
-            var monitorHistory = new MonitorHistory
-            {
-                MonitorId = monitorHttp.MonitorId,
-                Status = false,
-                StatusCode = (int)HttpStatusCode.RequestTimeout,
-                TimeStamp = DateTime.UtcNow,
-                ResponseTime = monitorHttp.ResponseTime
-            };
-
-            await SaveFailedStatus(monitorHttp, monitorHistory);
-        }
-        catch (Exception err)
-        {
-            SentrySdk.CaptureException(err);
-            var monitorHistory = new MonitorHistory
-            {
-                MonitorId = monitorHttp.MonitorId,
-                Status = false,
-                StatusCode = (int)monitorHttp.ResponseStatusCode,
-                TimeStamp = DateTime.UtcNow,
-                ResponseTime = monitorHttp.ResponseTime
-            };
-
-            await SaveFailedStatus(monitorHttp, monitorHistory);
         }
     }
 
