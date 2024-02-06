@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using MassTransit;
@@ -123,11 +124,21 @@ public class HttpClientRunner : IHttpClientRunner
 
             await _monitorRepository.SaveMonitorHistory(monitorHistory);
         }
-
-        catch (Exception e)
+        catch (TaskCanceledException)
         {
-            await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, false, 0);
+            var monitorHistory = new MonitorHistory
+            {
+                MonitorId = monitorHttp.MonitorId,
+                Status = false,
+                StatusCode = (int)HttpStatusCode.RequestTimeout,
+                TimeStamp = DateTime.UtcNow,
+                ResponseTime = monitorHttp.ResponseTime
+            };
 
+            await SaveFailedStatus(monitorHttp, monitorHistory);
+        }
+        catch (Exception)
+        {
             var monitorHistory = new MonitorHistory
             {
                 MonitorId = monitorHttp.MonitorId,
@@ -137,12 +148,19 @@ public class HttpClientRunner : IHttpClientRunner
                 ResponseTime = monitorHttp.ResponseTime
             };
 
-            await _monitorRepository.SaveMonitorHistory(monitorHistory);
+            await SaveFailedStatus(monitorHttp, monitorHistory);
+        }
+    }
 
-            if (monitorHttp.LastStatus) // only send notification when goes from online to offline to avoid flood
-            {
-                await HandleFailedNotifications(monitorHttp);
-            }
+    private async Task SaveFailedStatus(MonitorHttp monitorHttp, MonitorHistory monitorHistory)
+    {
+        await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, false, 0);
+
+        await _monitorRepository.SaveMonitorHistory(monitorHistory);
+
+        if (monitorHttp.LastStatus) // only send notification when goes from online to offline to avoid flood
+        {
+            await HandleFailedNotifications(monitorHttp);
         }
     }
 }
