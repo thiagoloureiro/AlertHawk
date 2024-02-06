@@ -20,7 +20,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     public async Task<IEnumerable<Monitor>> GetMonitorList()
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status FROM [Monitor]";
+        string sql = @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert FROM [Monitor]";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
 
@@ -30,7 +30,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string whereClause = $"WHERE Id IN ({string.Join(",", ids)})";
 
         string sql =
-            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status FROM [Monitor] {whereClause}";
+            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert FROM [Monitor] {whereClause}";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
 
