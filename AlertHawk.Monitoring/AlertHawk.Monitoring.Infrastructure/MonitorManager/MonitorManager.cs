@@ -43,7 +43,8 @@ public class MonitorManager : IMonitorManager
                     monitorHttp.LastStatus =
                         monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Status;
                     monitorHttp.Name = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Name;
-
+                    monitorHttp.Retries = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Retries;
+                    
                     string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
                     lstStringsToAdd.Add(jobId);
                 }
