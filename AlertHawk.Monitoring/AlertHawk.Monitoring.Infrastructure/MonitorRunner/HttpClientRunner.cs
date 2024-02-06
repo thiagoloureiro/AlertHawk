@@ -61,8 +61,8 @@ public class HttpClientRunner : IHttpClientRunner
 
     public async Task CheckUrlsAsync(MonitorHttp monitorHttp)
     {
-        int retryCount = 0;
-        const int maxRetries = 3;
+        int retryCount = 0; 
+        int maxRetries = monitorHttp.Retries;
 
         while (retryCount < maxRetries)
         {
@@ -135,6 +135,7 @@ public class HttpClientRunner : IHttpClientRunner
             catch (TaskCanceledException err)
             {
                 retryCount++;
+                Thread.Sleep(5000);
                 if (retryCount >= maxRetries)
                 {
                     SentrySdk.CaptureException(err);
@@ -153,6 +154,7 @@ public class HttpClientRunner : IHttpClientRunner
             catch (Exception err)
             {
                 retryCount++;
+                Thread.Sleep(5000);
                 if (retryCount >= maxRetries)
                 {
                     SentrySdk.CaptureException(err);
