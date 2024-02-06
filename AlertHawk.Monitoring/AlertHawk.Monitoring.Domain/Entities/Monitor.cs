@@ -9,4 +9,5 @@ public class Monitor
     public required int HeartBeatInterval { get; set; }
     public required int Retries { get; set; }
     public bool Status { get; set; }
+    public int DaysToExpireCert { get; set; }
 }

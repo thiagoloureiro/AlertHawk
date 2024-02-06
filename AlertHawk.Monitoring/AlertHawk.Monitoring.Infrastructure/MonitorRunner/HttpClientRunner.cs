@@ -1,10 +1,7 @@
 using System.Diagnostics;
-using System.Net;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using MassTransit;
-using Polly;
-using Sentry;
 using SharedModels;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
@@ -65,7 +62,19 @@ public class HttpClientRunner : IHttpClientRunner
     {
         try
         {
+            var notAfter = DateTime.UtcNow;
+            int daysToExpireCert = 0;
+
             using HttpClientHandler handler = new HttpClientHandler();
+            if (monitorHttp.CheckCertExpiry)
+            {
+                handler.ServerCertificateCustomValidationCallback = (request, cert, chain, policyErrors) =>
+                {
+                    if (cert != null) notAfter = cert.NotAfter;
+                    daysToExpireCert = (notAfter - DateTime.UtcNow).Days;
+                    return true;
+                };
+            }
 
             // Set the maximum number of automatic redirects
             handler.MaxAutomaticRedirections = monitorHttp.MaxRedirects;
@@ -77,7 +86,7 @@ public class HttpClientRunner : IHttpClientRunner
 
             var sw = new Stopwatch();
             sw.Start();
-            HttpResponseMessage response = await client.GetAsync(monitorHttp.UrlToCheck);
+            var response = await client.GetAsync(monitorHttp.UrlToCheck);
             var elapsed = sw.ElapsedMilliseconds;
             monitorHttp.ResponseTime = (int)elapsed;
             sw.Stop();
@@ -102,7 +111,7 @@ public class HttpClientRunner : IHttpClientRunner
                 }
             }
 
-            await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded);
+            await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded, daysToExpireCert);
             var monitorHistory = new MonitorHistory
             {
                 MonitorId = monitorHttp.MonitorId,
@@ -117,7 +126,7 @@ public class HttpClientRunner : IHttpClientRunner
 
         catch (Exception e)
         {
-            await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, false);
+            await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, false, 0);
 
             var monitorHistory = new MonitorHistory
             {

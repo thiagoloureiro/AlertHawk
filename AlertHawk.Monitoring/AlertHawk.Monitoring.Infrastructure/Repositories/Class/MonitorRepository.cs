@@ -41,11 +41,11 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return await db.QueryAsync<MonitorNotification>(sql, new { id }, commandType: CommandType.Text);
     }
 
-    public async Task UpdateMonitorStatus(int id, bool status)
+    public async Task UpdateMonitorStatus(int id, bool status, int daysToExpireCert)
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = @"UPDATE [Monitor] SET Status=@status WHERE Id=@id";
-        await db.ExecuteAsync(sql, new { id, status }, commandType: CommandType.Text);
+        string sql = @"UPDATE [Monitor] SET Status=@status, DaysToExpireCert=@daysToExpireCert WHERE Id=@id";
+        await db.ExecuteAsync(sql, new { id, status, daysToExpireCert }, commandType: CommandType.Text);
     }
 
     public async Task SaveMonitorHistory(MonitorHistory monitorHistory)
