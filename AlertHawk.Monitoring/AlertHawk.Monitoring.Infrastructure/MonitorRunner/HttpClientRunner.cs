@@ -124,8 +124,9 @@ public class HttpClientRunner : IHttpClientRunner
 
             await _monitorRepository.SaveMonitorHistory(monitorHistory);
         }
-        catch (TaskCanceledException)
+        catch (TaskCanceledException err)
         {
+            SentrySdk.CaptureException(err);
             var monitorHistory = new MonitorHistory
             {
                 MonitorId = monitorHttp.MonitorId,
@@ -137,8 +138,9 @@ public class HttpClientRunner : IHttpClientRunner
 
             await SaveFailedStatus(monitorHttp, monitorHistory);
         }
-        catch (Exception)
+        catch (Exception err)
         {
+            SentrySdk.CaptureException(err);
             var monitorHistory = new MonitorHistory
             {
                 MonitorId = monitorHttp.MonitorId,
