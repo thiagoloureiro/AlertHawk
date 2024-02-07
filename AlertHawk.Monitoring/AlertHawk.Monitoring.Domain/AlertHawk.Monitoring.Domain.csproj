@@ -10,7 +10,16 @@
         <PackageLicenseUrl>https://github.com/thiagoloureiro/AlertHawk/blob/main/LICENSE</PackageLicenseUrl>
         <RepositoryUrl>https://github.com/thiagoloureiro/AlertHawk</RepositoryUrl>
         <Version>1.0.1</Version>
+        <Icon>https://raw.githubusercontent.com/thiagoloureiro/AlertHawk/main/AlertHawk.Monitoring/monitoring.png</Icon>
+        <PackageIcon>monitoring.png</PackageIcon>
     </PropertyGroup>
+
+    <ItemGroup>
+      <None Update="monitoring.png">
+        <Pack>True</Pack>
+        <PackagePath></PackagePath>
+      </None>
+    </ItemGroup>
 
 
 </Project>
