@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-02-07T09:42:04.614Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="eVs2E8wbcY4IAlEyuzQV" version="23.1.1" type="github">
+<mxfile host="app.diagrams.net" modified="2024-02-07T09:48:09.827Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="ESozYW5ngvZX16hRntS1" version="23.1.1" type="github">
   <diagram name="Página-1" id="EC5-yDx1gmlKd79TGFPl">
     <mxGraphModel dx="2571" dy="2044" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -231,19 +231,19 @@
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-22" value="Monitor Master" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF9999;" vertex="1" parent="1">
           <mxGeometry x="1860" y="230" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="URw1oCdvZ4ZULjiAWeCE-23" value="Monitor Child 1" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="URw1oCdvZ4ZULjiAWeCE-23" value="Monitor Child 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" vertex="1" parent="1">
           <mxGeometry x="1711" y="400" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="URw1oCdvZ4ZULjiAWeCE-24" value="Monitor Child 2" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="URw1oCdvZ4ZULjiAWeCE-24" value="Monitor Child 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" vertex="1" parent="1">
           <mxGeometry x="1711" y="480" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="URw1oCdvZ4ZULjiAWeCE-25" value="Monitor Child 3" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="URw1oCdvZ4ZULjiAWeCE-25" value="Monitor Child 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" vertex="1" parent="1">
           <mxGeometry x="1861" y="400" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="URw1oCdvZ4ZULjiAWeCE-27" value="Monitor Child 4" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="URw1oCdvZ4ZULjiAWeCE-27" value="Monitor Child 4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" vertex="1" parent="1">
           <mxGeometry x="2009" y="400" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="URw1oCdvZ4ZULjiAWeCE-28" value="Monitor Child 5" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="URw1oCdvZ4ZULjiAWeCE-28" value="Monitor Child 5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" vertex="1" parent="1">
           <mxGeometry x="2009" y="480" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-29" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6c8ebf;" vertex="1" parent="1">
@@ -257,6 +257,12 @@
         </mxCell>
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-42" value="&lt;h1&gt;Monitor Manager&lt;/h1&gt;&lt;p&gt;Scenario with 600 items to monitor the Monitor Master will fetch the list, check which monitors are online, and distribute the tasks with them like:&lt;/p&gt;&lt;p&gt;- Monitor Master: 100 tasks&lt;/p&gt;&lt;p&gt;- Monitor Child 1: 100 tasks&lt;/p&gt;&lt;p&gt;- Monitor Child 2: 100 tasks&lt;/p&gt;&lt;p&gt;- Monitor Child 3: 100 tasks&lt;/p&gt;&lt;p&gt;- Monitor Child 4: 100 tasks&lt;/p&gt;&lt;p&gt;- Monitor Child 5: 100 tasks&lt;/p&gt;&lt;p&gt;- Monitor Child 6: 100 tasks&lt;/p&gt;&lt;p&gt;If the master monitor goes offline one of the Child assumes.&lt;/p&gt;&lt;p&gt;If one Child monitor goes offline the 600 tasks are redistributed back to the left agents alive.&lt;/p&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="2190" y="225" width="270" height="425" as="geometry" />
+        </mxCell>
+        <mxCell id="URw1oCdvZ4ZULjiAWeCE-43" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1680" y="600" width="480" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="URw1oCdvZ4ZULjiAWeCE-44" value="&lt;h1&gt;Monitor Jobs - Hangfire&lt;/h1&gt;&lt;p&gt;Each monitor runs 3 main jobs at startup and X jobs at running state, which will be described here:&lt;/p&gt;&lt;p&gt;&lt;b&gt;1 - StartMonitorHeartBeatManager:&lt;/b&gt;&lt;/p&gt;&lt;p&gt;This job is responsible for saving monitor heartbeats and also setting the monitor as a master, this job runs on all monitors including the master.&lt;/p&gt;&lt;p&gt;&lt;b&gt;2 - StartMasterMonitorAgentTaskManager&lt;/b&gt;&amp;nbsp;&lt;/p&gt;&lt;p&gt;This job only runs on the master monitor and is the job that distributes the tasks between the monitors.&lt;/p&gt;&lt;p&gt;&lt;b&gt;3 - StartRunnerManager&lt;/b&gt;&lt;/p&gt;&lt;p&gt;This job is responsible for fetching the tasks assigned to his own and creating a new set of hangfire jobs to start the scanning, for example, this monitor has 10 tasks to run, 10 hangfire jobs&amp;nbsp;&lt;/p&gt;&lt;p&gt;&lt;b&gt;StartRunnerManager_CheckUrlsAsync_JobId_XX&amp;nbsp;&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Where XX is the jobId. The frequency and parameter for each job are set on the monitor configuration.&lt;/p&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1711" y="620" width="419" height="360" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
