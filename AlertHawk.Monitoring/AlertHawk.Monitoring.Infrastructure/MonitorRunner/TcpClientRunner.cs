@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Net;
 using System.Net.Sockets;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
@@ -9,7 +7,7 @@ using SharedModels;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
-public class TcpClientRunner: ITcpClientRunner
+public class TcpClientRunner : ITcpClientRunner
 {
     private readonly IMonitorRepository _monitorRepository;
 
@@ -21,23 +19,29 @@ public class TcpClientRunner: ITcpClientRunner
         _publishEndpoint = publishEndpoint;
     }
 
-    public async Task<bool> CheckTcpAsync(string ipAddress, int port, int maxRetries, int retryIntervalMilliseconds)
+    public async Task<bool> CheckTcpAsync(MonitorTcp monitorTcp)
     {
         bool isConnected = false;
         int retries = 0;
+        int retryIntervalMilliseconds = 3000;
 
-        while (!isConnected && retries < maxRetries)
+        while (!isConnected && retries < monitorTcp.Retries)
         {
             try
             {
                 using TcpClient client = new TcpClient();
                 // Set a short timeout for the connection attempt
-                client.ReceiveTimeout = 1000;
-                client.SendTimeout = 1000;
+                client.ReceiveTimeout = monitorTcp.Timeout;
+                client.SendTimeout = monitorTcp.Timeout;
 
                 // Attempt to connect to the IP address and port
-                await client.ConnectAsync(ipAddress, port);
+                await client.ConnectAsync(monitorTcp.IP, monitorTcp.Port);
                 isConnected = true;
+
+                if (!monitorTcp.LastStatus)
+                {
+                    await HandleSuccessNotifications(monitorTcp);
+                }
             }
             catch (SocketException err)
             {
@@ -51,9 +55,53 @@ public class TcpClientRunner: ITcpClientRunner
 
         if (!isConnected)
         {
-            throw new Exception($"Failed to establish a connection to {ipAddress}:{port} after {maxRetries} retries.");
+            if (monitorTcp.LastStatus)
+            {
+                await HandleFailedNotifications(monitorTcp);
+            }
+
+            throw new Exception(
+                $"Failed to establish a connection to {monitorTcp.IP}:{monitorTcp.Port} after {monitorTcp.Retries} retries.");
         }
 
         return isConnected;
+    }
+
+    private async Task HandleSuccessNotifications(MonitorTcp monitorTcp)
+    {
+        var notificationIdList = await _monitorRepository.GetMonitorNotifications(monitorTcp.MonitorId);
+
+        Console.WriteLine(
+            $"sending success notification calling {monitorTcp.IP} Port: {monitorTcp.Port},");
+
+        foreach (var item in notificationIdList)
+        {
+            await _publishEndpoint.Publish<NotificationAlert>(new
+            {
+                NotificationId = item.NotificationId,
+                TimeStamp = DateTime.UtcNow,
+                Message =
+                    $"Success calling {monitorTcp.Name}, Response StatusCode: {monitorTcp.Response}"
+            });
+        }
+    }
+
+    private async Task HandleFailedNotifications(MonitorTcp monitorTcp)
+    {
+        var notificationIdList = await _monitorRepository.GetMonitorNotifications(monitorTcp.MonitorId);
+
+        Console.WriteLine(
+            $"sending notification Error calling {monitorTcp.IP} Port: {monitorTcp.Port}, Response: {monitorTcp.Response}");
+
+        foreach (var item in notificationIdList)
+        {
+            await _publishEndpoint.Publish<NotificationAlert>(new
+            {
+                NotificationId = item.NotificationId,
+                TimeStamp = DateTime.UtcNow,
+                Message =
+                    $"Error calling {monitorTcp.Name}, Response StatusCode: {monitorTcp.Response}"
+            });
+        }
     }
 }
