@@ -9,10 +9,19 @@
     <PackageProjectUrl>https://github.com/thiagoloureiro/alerthawk</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/thiagoloureiro/AlertHawk/blob/main/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/thiagoloureiro/alerthawk</RepositoryUrl>
+    <Version>1.0.1</Version>
+    <PackageIcon>notification.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Telegram.Bot" Version="19.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="notification.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
