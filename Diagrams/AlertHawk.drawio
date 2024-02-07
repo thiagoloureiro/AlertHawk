@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-02-07T09:29:28.366Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="RtluehDPl9E_ijTUMB49" version="23.1.1" type="github">
+<mxfile host="app.diagrams.net" modified="2024-02-07T09:29:52.214Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="dznHsCsdgbsTomk-Vt8M" version="23.1.1" type="github">
   <diagram name="Página-1" id="EC5-yDx1gmlKd79TGFPl">
     <mxGraphModel dx="2571" dy="2044" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -28,7 +28,7 @@
           <mxGeometry x="95" y="50" width="50" height="50" as="geometry" />
         </mxCell>
         <mxCell id="1MhiarmOQ1BAu21N2S9K-5" value="Monitoring DB" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/databases/SQL_Server.svg;" parent="1" vertex="1">
-          <mxGeometry x="550" y="80" width="50" height="50" as="geometry" />
+          <mxGeometry x="550" y="52" width="50" height="50" as="geometry" />
         </mxCell>
         <mxCell id="1MhiarmOQ1BAu21N2S9K-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=none;startArrow=classic;startFill=1;" parent="1" source="1MhiarmOQ1BAu21N2S9K-6" target="1MhiarmOQ1BAu21N2S9K-3" edge="1">
           <mxGeometry relative="1" as="geometry" />
