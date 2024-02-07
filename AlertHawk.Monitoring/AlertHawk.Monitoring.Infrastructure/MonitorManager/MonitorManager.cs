@@ -1,4 +1,5 @@
 using AlertHawk.Monitoring.Domain.Entities;
+using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Hangfire;
 using Hangfire.Storage;
