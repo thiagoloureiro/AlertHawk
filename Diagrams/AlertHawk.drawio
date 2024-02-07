@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-02-07T09:28:58.605Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="Ovn1Ry1osf8x1JZztLpm" version="23.1.1" type="github">
+<mxfile host="app.diagrams.net" modified="2024-02-07T09:29:28.366Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="RtluehDPl9E_ijTUMB49" version="23.1.1" type="github">
   <diagram name="Página-1" id="EC5-yDx1gmlKd79TGFPl">
     <mxGraphModel dx="2571" dy="2044" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -161,16 +161,16 @@
         <mxCell id="3SRxAJepO2drZo_YEwSj-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="1MhiarmOQ1BAu21N2S9K-22" target="3SRxAJepO2drZo_YEwSj-2" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="Ju5GTjr9HhfrLoD8wo_W-1" value="smtp.office365.com&lt;br&gt;Email Notification" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+        <mxCell id="Ju5GTjr9HhfrLoD8wo_W-1" value="smtp.office365.com&lt;br&gt;Email Notification" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFCC;" parent="1" vertex="1">
           <mxGeometry x="-100" y="120" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="Ju5GTjr9HhfrLoD8wo_W-3" value="Slack Notification&lt;br&gt;web hooks" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+        <mxCell id="Ju5GTjr9HhfrLoD8wo_W-3" value="Slack Notification&lt;br&gt;web hooks" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFCC;" parent="1" vertex="1">
           <mxGeometry x="-280" y="120" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="Ju5GTjr9HhfrLoD8wo_W-5" value="Teams Notification&lt;br&gt;web hooks" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+        <mxCell id="Ju5GTjr9HhfrLoD8wo_W-5" value="Teams Notification&lt;br&gt;web hooks" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFCC;" parent="1" vertex="1">
           <mxGeometry x="-450" y="120" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="Ju5GTjr9HhfrLoD8wo_W-7" value="Telegram Notification&lt;br&gt;web hooks" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+        <mxCell id="Ju5GTjr9HhfrLoD8wo_W-7" value="Telegram Notification&lt;br&gt;web hooks" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFCC;" parent="1" vertex="1">
           <mxGeometry x="-600" y="120" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-6" value="Sentry" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/monitor/SAP_Azure_Monitor.svg;" vertex="1" parent="1">
@@ -180,7 +180,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-7" value="*All Services" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
-          <mxGeometry x="1271.25" y="220" width="80" height="40" as="geometry" />
+          <mxGeometry x="1271.25" y="240" width="80" height="40" as="geometry" />
         </mxCell>
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="1MhiarmOQ1BAu21N2S9K-22" target="bWFMUhMA222-z3urMpEF-7">
           <mxGeometry relative="1" as="geometry">
