@@ -139,7 +139,6 @@ public class HttpClientRunner : IHttpClientRunner
                 Thread.Sleep(5000);
                 if (retryCount >= maxRetries)
                 {
-                    SentrySdk.CaptureException(err);
                     var monitorHistory = new MonitorHistory
                     {
                         MonitorId = monitorHttp.MonitorId,
@@ -158,7 +157,6 @@ public class HttpClientRunner : IHttpClientRunner
                 Thread.Sleep(5000);
                 if (retryCount >= maxRetries)
                 {
-                    SentrySdk.CaptureException(err);
                     var monitorHistory = new MonitorHistory
                     {
                         MonitorId = monitorHttp.MonitorId,
