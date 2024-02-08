@@ -8,7 +8,10 @@ CREATE TABLE [dbo].[Users](
     [Email] [nvarchar](255) NOT NULL,
     [Password] [nvarchar](255) NOT NULL,
     [Salt] [nvarchar](255) NOT NULL,
-    [IsAdmin] [bit] NOT NULL
+    [IsAdmin] [bit] NOT NULL,
+    [CreatedAt] [datetime] NOT NULL,
+	[UpdatedAt] [datetime] NULL,
+	[LastLogon] [datetime] NULL,
     ) ON [PRIMARY]
     GO
 ALTER TABLE [dbo].[Users] ADD PRIMARY KEY CLUSTERED

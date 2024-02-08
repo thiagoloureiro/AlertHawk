@@ -1,6 +1,6 @@
 using AlertHawk.Authentication.Domain.Dto;
 
-namespace AlertHawk.Application.Interfaces;
+namespace AlertHawk.Authentication.Application.Interfaces;
 
 public interface IJwtTokenService
 {

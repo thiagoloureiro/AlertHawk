@@ -1,9 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
-using AlertHawk.Application.Interfaces;
-using AlertHawk.Application.Services;
+using AlertHawk.Authentication.Application.Interfaces;
+using AlertHawk.Authentication.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace AlertHawk.Application.Config;
+namespace AlertHawk.Authentication.Application.Config;
 
 [ExcludeFromCodeCoverage]
 public static class DependencyInjection

@@ -1,10 +1,10 @@
-using AlertHawk.Application.Interfaces;
+using AlertHawk.Authentication.Application.Interfaces;
 using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Authentication.Infrastructure.EmailSender;
 using AlertHawk.Authentication.Infrastructure.Interfaces;
 
-namespace AlertHawk.Application.Services;
+namespace AlertHawk.Authentication.Application.Services;
 
 public class UserService : IUserService
 {
@@ -44,6 +44,11 @@ public class UserService : IUserService
     public async Task<UserDto?> Get(Guid id)
     {
         return await _userRepository.Get(id);
+    }
+
+    public Task<IEnumerable<UserDto>?> GetAll()
+    {
+        return _userRepository.GetAll();
     }
 
     public async Task<UserDto?> GetByEmail(string email)

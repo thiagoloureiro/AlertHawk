@@ -3,15 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34511.84
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Authentication", "AlertHawk.Authentication\AlertHawk.Authentication.csproj", "{438C3A2A-C82C-4899-B2FE-F250791FCB85}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AlertHawk.Authentication", "AlertHawk.Authentication\AlertHawk.Authentication.csproj", "{438C3A2A-C82C-4899-B2FE-F250791FCB85}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Authentication.Domain", "AlertHawk.Authentication.Domain\AlertHawk.Authentication.Domain.csproj", "{279D2DCE-90A6-428B-B801-7D2662E44B42}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AlertHawk.Authentication.Domain", "AlertHawk.Authentication.Domain\AlertHawk.Authentication.Domain.csproj", "{279D2DCE-90A6-428B-B801-7D2662E44B42}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Authentication.Infrastructure", "AlertHawk.Authentication.Infrastructure\AlertHawk.Authentication.Infrastructure.csproj", "{CC33936D-9824-4106-95E5-541751C85200}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AlertHawk.Authentication.Infrastructure", "AlertHawk.Authentication.Infrastructure\AlertHawk.Authentication.Infrastructure.csproj", "{CC33936D-9824-4106-95E5-541751C85200}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Authentication.Tests", "AlertHawk.Authentication.Tests\AlertHawk.Authentication.Tests.csproj", "{D54BAFD6-3D26-48BB-AEE3-09D84E832B49}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AlertHawk.Authentication.Tests", "AlertHawk.Authentication.Tests\AlertHawk.Authentication.Tests.csproj", "{D54BAFD6-3D26-48BB-AEE3-09D84E832B49}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Application", "AlertHawk.Application\AlertHawk.Application.csproj", "{F23A77B9-03E7-4FD8-AB08-A06620888900}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AlertHawk.Authentication.Application", "AlertHawk.Authentication.Application\AlertHawk.Authentication.Application.csproj", "{42F119D4-6926-4F57-B91D-7094CC39B92D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,10 +35,10 @@ Global
 		{D54BAFD6-3D26-48BB-AEE3-09D84E832B49}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D54BAFD6-3D26-48BB-AEE3-09D84E832B49}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D54BAFD6-3D26-48BB-AEE3-09D84E832B49}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F23A77B9-03E7-4FD8-AB08-A06620888900}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F23A77B9-03E7-4FD8-AB08-A06620888900}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F23A77B9-03E7-4FD8-AB08-A06620888900}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F23A77B9-03E7-4FD8-AB08-A06620888900}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42F119D4-6926-4F57-B91D-7094CC39B92D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42F119D4-6926-4F57-B91D-7094CC39B92D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42F119D4-6926-4F57-B91D-7094CC39B92D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42F119D4-6926-4F57-B91D-7094CC39B92D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

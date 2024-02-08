@@ -1,6 +1,4 @@
-using AlertHawk.Application.Config;
 using AlertHawk.Authentication.Helpers;
-using AlertHawk.Authentication.Infrastructure.Config;
 using AutoMapper.EquivalencyExpression;
 using EasyMemoryCache.Configuration;
 using Microsoft.AspNetCore.Authorization;
@@ -9,6 +7,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
+using AlertHawk.Authentication.Application.Config;
+using AlertHawk.Authentication.Infrastructure.Config;
 
 var builder = WebApplication.CreateBuilder(args);
 

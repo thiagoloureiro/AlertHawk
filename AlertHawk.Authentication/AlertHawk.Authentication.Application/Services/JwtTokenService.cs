@@ -1,12 +1,12 @@
-using AlertHawk.Authentication.Domain.Dto;
-using AlertHawk.Application.Interfaces;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using AlertHawk.Authentication.Application.Interfaces;
+using AlertHawk.Authentication.Domain.Dto;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 
-namespace AlertHawk.Application.Services;
+namespace AlertHawk.Authentication.Application.Services;
 
 public class JwtTokenService : IJwtTokenService
 {

@@ -23,8 +23,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AlertHawk.Application\AlertHawk.Application.csproj" />
+    <ProjectReference Include="..\AlertHawk.Authentication.Application\AlertHawk.Authentication.Application.csproj" />
     <ProjectReference Include="..\AlertHawk.Authentication.Domain\AlertHawk.Authentication.Domain.csproj" />
+    <ProjectReference Include="..\AlertHawk.Authentication.Infrastructure\AlertHawk.Authentication.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

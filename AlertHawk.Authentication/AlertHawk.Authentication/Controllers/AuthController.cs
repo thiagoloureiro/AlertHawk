@@ -1,4 +1,4 @@
-﻿using AlertHawk.Application.Interfaces;
+﻿using AlertHawk.Authentication.Application.Interfaces;
 using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
