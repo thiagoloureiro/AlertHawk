@@ -1,6 +1,5 @@
 ﻿using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
-using AlertHawk.Notification.Domain.Entities;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using SharedModels;
@@ -13,11 +12,13 @@ namespace AlertHawk.Monitoring.Controllers
     {
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly IMonitorService _monitorService;
+        private readonly IMonitorAgentService _monitorAgentService;
 
-        public MonitorController(IPublishEndpoint publishEndpoint, IMonitorService monitorService)
+        public MonitorController(IPublishEndpoint publishEndpoint, IMonitorService monitorService, IMonitorAgentService monitorAgentService)
         {
             _publishEndpoint = publishEndpoint;
             _monitorService = monitorService;
+            _monitorAgentService = monitorAgentService;
         }
 
         [HttpGet("monitorStatus")]
@@ -31,6 +32,13 @@ namespace AlertHawk.Monitoring.Controllers
         public async Task<IActionResult> GetMonitorList()
         {
             var result = await _monitorService.GetMonitorList();
+            return Ok(result);
+        }
+        
+        [HttpGet("allMonitorAgents")]
+        public async Task<IActionResult> GetAllMonitorAgents()
+        {
+            var result = await _monitorAgentService.GetAllMonitorAgents();
             return Ok(result);
         }
 
