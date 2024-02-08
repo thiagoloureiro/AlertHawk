@@ -20,7 +20,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     public async Task<IEnumerable<Monitor>> GetMonitorList()
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert FROM [Monitor]";
+        string sql = @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused FROM [Monitor]";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
 
@@ -30,7 +30,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string whereClause = $"WHERE Id IN ({string.Join(",", ids)})";
 
         string sql =
-            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert FROM [Monitor] {whereClause}";
+            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused FROM [Monitor] {whereClause}";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
 
@@ -46,6 +46,13 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
         string sql = @"UPDATE [Monitor] SET Status=@status, DaysToExpireCert=@daysToExpireCert WHERE Id=@id";
         await db.ExecuteAsync(sql, new { id, status, daysToExpireCert }, commandType: CommandType.Text);
+    }
+    
+    public async Task PauseMonitor(int id, bool paused)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = @"UPDATE [Monitor] SET paused=@paused WHERE Id=@id";
+        await db.ExecuteAsync(sql, new { id, paused }, commandType: CommandType.Text);
     }
 
     public async Task SaveMonitorHistory(MonitorHistory monitorHistory)

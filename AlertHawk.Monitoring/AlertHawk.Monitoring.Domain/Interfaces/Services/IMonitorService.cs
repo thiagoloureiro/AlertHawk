@@ -9,4 +9,5 @@ public interface IMonitorService
     Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id);
     Task<IEnumerable<Monitor>> GetMonitorList();
     Task DeleteMonitorHistory(int days);
+    Task PauseMonitor(int id, bool paused);
 }

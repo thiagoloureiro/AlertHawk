@@ -33,4 +33,9 @@ public class MonitorService : IMonitorService
     {
         await _monitorRepository.DeleteMonitorHistory(days);
     }
+
+    public async Task PauseMonitor(int id, bool paused)
+    {
+        await _monitorRepository.PauseMonitor(id, paused);
+    }
 }

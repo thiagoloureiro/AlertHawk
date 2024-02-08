@@ -1,5 +1,6 @@
 ﻿using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
+using AlertHawk.Notification.Domain.Entities;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using SharedModels;
@@ -22,21 +23,29 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpGet("monitorStatus")]
         public IActionResult MonitorStatus()
         {
-            return Ok($"Master Node: {GlobalVariables.MasterNode}, MonitorId: {GlobalVariables.NodeId}, TasksList Count: {GlobalVariables.TaskList?.Count()}");
+            return Ok(
+                $"Master Node: {GlobalVariables.MasterNode}, MonitorId: {GlobalVariables.NodeId}, TasksList Count: {GlobalVariables.TaskList?.Count()}");
         }
-        
+
         [HttpGet("monitorList")]
         public async Task<IActionResult> GetMonitorList()
         {
             var result = await _monitorService.GetMonitorList();
             return Ok(result);
         }
-        
+
         [HttpGet("monitorNotifications/{id}")]
         public async Task<IActionResult> GetMonitorNotification(int id)
         {
             var result = await _monitorService.GetMonitorNotifications(id);
             return Ok(result);
+        }
+
+        [HttpPut("pauseMonitor/{id}/{paused}")]
+        public async Task<IActionResult> PauseMonitor(int id, bool paused)
+        {
+            await _monitorService.PauseMonitor(id, paused);
+            return Ok();
         }
 
         [HttpPost]

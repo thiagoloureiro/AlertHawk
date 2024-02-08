@@ -10,4 +10,5 @@ public class Monitor
     public required int Retries { get; set; }
     public bool Status { get; set; }
     public int DaysToExpireCert { get; set; }
+    public bool Paused { get; set; }
 }
