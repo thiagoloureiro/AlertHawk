@@ -1,3 +1,4 @@
+using System.Globalization;
 using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Authentication.Infrastructure.Helpers;
@@ -27,21 +28,21 @@ public class UserRepository : BaseRepository, IUserRepository
     public async Task<UserDto?> GetByEmail(string email)
     {
         const string sql = "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon FROM Users WHERE LOWER(Email) = LOWER(@Email)";
-        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { Email = email.ToLower() });
+        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { Email = email.ToLower(CultureInfo.InvariantCulture) });
         return _mapper.Map<UserDto>(user);
     }
 
     public async Task<UserDto?> GetByUsername(string username)
     {
         const string sql = "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon FROM Users WHERE LOWER(Username) = LOWER(@Username)";
-        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { Username = username.ToLower() });
+        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { Username = username.ToLower(CultureInfo.InvariantCulture) });
         return _mapper.Map<UserDto>(user);
     }
 
     public async Task<IEnumerable<UserDto>?> GetAll()
     {
         const string sql = "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon FROM Users";
-        var user = await ExecuteQueryAsync<User>(sql, null);
+        var user = await ExecuteQueryAsync<User>(sql);
         return _mapper.Map<List<UserDto>?>(user.ToList());
     }
 
@@ -50,8 +51,8 @@ public class UserRepository : BaseRepository, IUserRepository
         const string checkExistingUserSql = "SELECT Id FROM Users WHERE LOWER(Email) = @Email OR LOWER(Username) = @Username";
         var existingUser = await ExecuteQueryFirstOrDefaultAsync<Guid?>(checkExistingUserSql, new
         {
-            Username = userCreation.Username.ToLower(),
-            Email = userCreation.UserEmail.ToLower()
+            Username = userCreation.Username.ToLower(CultureInfo.InvariantCulture),
+            Email = userCreation.UserEmail.ToLower(CultureInfo.InvariantCulture)
         });
 
         if (existingUser.HasValue)
@@ -69,7 +70,7 @@ public class UserRepository : BaseRepository, IUserRepository
         await ExecuteNonQueryAsync(insertUserSql, new
         {
             Username = userCreation.Username,
-            Email = userCreation.UserEmail.ToLower(),
+            Email = userCreation.UserEmail.ToLower(CultureInfo.InvariantCulture),
             Password = hashedPassword,
             Salt = salt,
             IsAdmin = userCreation.IsAdmin,
@@ -99,7 +100,7 @@ public class UserRepository : BaseRepository, IUserRepository
             if (updateEmail)
             {
                 conditions.Add("LOWER(Email) = LOWER(@Email)");
-                parameters.Add("Email", userUpdate.UserEmail?.ToLower());
+                parameters.Add("Email", userUpdate.UserEmail?.ToLower(CultureInfo.InvariantCulture));
             }
 
             var checkUserSql = $@"
@@ -125,7 +126,7 @@ public class UserRepository : BaseRepository, IUserRepository
         if (updateEmail)
         {
             updateFields.Add("Email = @Email");
-            parameters.Add("Email", userUpdate.UserEmail?.ToLower());
+            parameters.Add("Email", userUpdate.UserEmail?.ToLower(CultureInfo.InvariantCulture));
         }
 
         if (!string.IsNullOrWhiteSpace(userUpdate.NewPassword))
@@ -158,7 +159,7 @@ public class UserRepository : BaseRepository, IUserRepository
 
         await ExecuteNonQueryAsync(insertUserSql, new
         {
-            Username = username.ToLower(),
+            Username = username.ToLower(CultureInfo.InvariantCulture),
             Password = hashedPassword,
             Salt = salt,
             UpdatedAt = DateTime.UtcNow
@@ -169,7 +170,7 @@ public class UserRepository : BaseRepository, IUserRepository
     public async Task<UserDto?> Login(string username, string password)
     {
         const string sql = "SELECT Id, Email, Username, IsAdmin, Password, Salt, CreatedAt, UpdatedAt, LastLogon FROM Users WHERE LOWER(Username) = LOWER(@username)";
-        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { username = username.ToLower() });
+        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { username = username.ToLower(CultureInfo.InvariantCulture) });
 
         if (user is null || !PasswordHasher.VerifyPassword(password, user.Password, user.Salt))
         {

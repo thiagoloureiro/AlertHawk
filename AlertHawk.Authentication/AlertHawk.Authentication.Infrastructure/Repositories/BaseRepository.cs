@@ -14,18 +14,18 @@ public abstract class BaseRepository
         ConnectionString = configuration.GetConnectionString("SqlConnectionString")
                             ?? throw new InvalidOperationException("Connection string 'SqlConnectionString' not found.");
     }
-    public async Task<T?> ExecuteQueryFirstOrDefaultAsync<T>(string sql, object? parameters = null)
+    public async Task<T?> ExecuteQueryFirstOrDefaultAsync<T>(string sql, object parameters)
     {
         await using var connection = new SqlConnection(ConnectionString);
-        return await connection.QueryFirstOrDefaultAsync<T>(sql, parameters);
+        return await connection.QueryFirstOrDefaultAsync<T>(sql);
     }
-    public async Task<IEnumerable<T>?> ExecuteQueryAsync<T>(string sql, object? parameters = null)
+    public async Task<IEnumerable<T>?> ExecuteQueryAsync<T>(string sql)
     {
         await using var connection = new SqlConnection(ConnectionString);
-        return await connection.QueryAsync<T>(sql, parameters);
+        return await connection.QueryAsync<T>(sql);
     }
 
-    public async Task ExecuteNonQueryAsync(string sql, object? parameters = null)
+    public async Task ExecuteNonQueryAsync(string sql, object parameters)
     {
         await using var connection = new SqlConnection(ConnectionString);
         await connection.ExecuteAsync(sql, parameters);
