@@ -51,6 +51,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
 
         if (monitorToUpdate != null)
         {
+            monitorToUpdate.Location = monitorAgent.Location;
             GlobalVariables.NodeId = monitorToUpdate.Id;
             await UpdateExistingMonitor(db, monitorToUpdate);
         }
