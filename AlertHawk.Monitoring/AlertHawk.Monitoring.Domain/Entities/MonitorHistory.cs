@@ -8,4 +8,5 @@ public class MonitorHistory
     public DateTime TimeStamp { get; set; }
     public int StatusCode { get; set; }
     public int ResponseTime { get; set; }
+    public string HttpVersion { get; set; }
 }

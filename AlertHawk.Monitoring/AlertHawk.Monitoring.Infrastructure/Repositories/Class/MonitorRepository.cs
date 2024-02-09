@@ -59,12 +59,12 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @"INSERT INTO [MonitorHistory] (MonitorId, Status, TimeStamp, StatusCode, ResponseTime) VALUES (@MonitorId, @Status, @TimeStamp, @StatusCode, @ResponseTime)";
+            @"INSERT INTO [MonitorHistory] (MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion) VALUES (@MonitorId, @Status, @TimeStamp, @StatusCode, @ResponseTime, @HttpVersion)";
         await db.ExecuteAsync(sql,
             new
             {
                 monitorHistory.MonitorId, monitorHistory.Status, monitorHistory.TimeStamp, monitorHistory.StatusCode,
-                monitorHistory.ResponseTime
+                monitorHistory.ResponseTime, monitorHistory.HttpVersion
             }, commandType: CommandType.Text);
     }
 
@@ -72,7 +72,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime FROM [MonitorHistory] WHERE MonitorId=@id ORDER BY TimeStamp ASC";
+            @"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion FROM [MonitorHistory] WHERE MonitorId=@id ORDER BY TimeStamp ASC";
         return await db.QueryAsync<MonitorHistory>(sql, new { id }, commandType: CommandType.Text);
     }
 

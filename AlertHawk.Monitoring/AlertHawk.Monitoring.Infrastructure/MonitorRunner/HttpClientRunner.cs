@@ -97,7 +97,8 @@ public class HttpClientRunner : IHttpClientRunner
                 var elapsed = sw.ElapsedMilliseconds;
                 monitorHttp.ResponseTime = (int)elapsed;
                 sw.Stop();
-
+                
+                monitorHttp.HttpVersion = response.Version.ToString();
                 monitorHttp.ResponseStatusCode = response.StatusCode;
 
                 var succeeded = ((int)monitorHttp.ResponseStatusCode >= 200) &&
@@ -126,7 +127,8 @@ public class HttpClientRunner : IHttpClientRunner
                     Status = succeeded,
                     StatusCode = (int)monitorHttp.ResponseStatusCode,
                     TimeStamp = DateTime.UtcNow,
-                    ResponseTime = monitorHttp.ResponseTime
+                    ResponseTime = monitorHttp.ResponseTime,
+                    HttpVersion = monitorHttp.HttpVersion
                 };
 
                 await _monitorRepository.SaveMonitorHistory(monitorHistory);
@@ -145,7 +147,8 @@ public class HttpClientRunner : IHttpClientRunner
                         Status = false,
                         StatusCode = (int)HttpStatusCode.RequestTimeout,
                         TimeStamp = DateTime.UtcNow,
-                        ResponseTime = monitorHttp.ResponseTime
+                        ResponseTime = monitorHttp.ResponseTime,
+                        HttpVersion = monitorHttp.HttpVersion
                     };
 
                     await SaveFailedStatus(monitorHttp, monitorHistory);
@@ -163,7 +166,8 @@ public class HttpClientRunner : IHttpClientRunner
                         Status = false,
                         StatusCode = (int)monitorHttp.ResponseStatusCode,
                         TimeStamp = DateTime.UtcNow,
-                        ResponseTime = monitorHttp.ResponseTime
+                        ResponseTime = monitorHttp.ResponseTime,
+                        HttpVersion = monitorHttp.HttpVersion
                     };
 
                     await SaveFailedStatus(monitorHttp, monitorHistory);
