@@ -14,4 +14,5 @@ public interface IMonitorRepository
     Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id);
     Task DeleteMonitorHistory(int days);
     Task PauseMonitor(int id, bool paused);
+    Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days);
 }

@@ -7,7 +7,9 @@ public interface IMonitorService
 {
     Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id);
     Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id);
+    Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days);
     Task<IEnumerable<Monitor>> GetMonitorList();
     Task DeleteMonitorHistory(int days);
     Task PauseMonitor(int id, bool paused);
+    Task<MonitorDashboard> GetMonitorDashboardData(int id);
 }

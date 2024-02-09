@@ -1,8 +1,5 @@
 ﻿using AlertHawk.Monitoring.Domain.Interfaces.Services;
-using AlertHawk.Monitoring.Infrastructure.MonitorManager;
-using MassTransit;
 using Microsoft.AspNetCore.Mvc;
-using SharedModels;
 
 namespace AlertHawk.Monitoring.Controllers
 {

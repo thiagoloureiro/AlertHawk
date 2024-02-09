@@ -14,10 +14,25 @@ namespace AlertHawk.Monitoring.Controllers
             _monitorService = monitorService;
         }
 
-        [HttpGet]
+        // This will return only the last 10k rows of the monitor history
+        [HttpGet("MonitorHistory/{id}")]
         public async Task<IActionResult> GetMonitorHistory(int id)
         {
             var result = await _monitorService.GetMonitorHistory(id);
+            return Ok(result);
+        }
+        
+        [HttpGet("MonitorHistoryByIdDays/{id}/{days}")]
+        public async Task<IActionResult> GetMonitorHistory(int id, int days)
+        {
+            var result = await _monitorService.GetMonitorHistory(id, days);
+            return Ok(result);
+        }
+        
+        [HttpGet("MonitorDashboardData/{id}")]
+        public async Task<IActionResult> GetMonitorDashboardData(int id)
+        {
+            var result = await _monitorService.GetMonitorDashboardData(id);
             return Ok(result);
         }
         
