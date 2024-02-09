@@ -7,4 +7,5 @@ public class MonitorAgent
     public required DateTime TimeStamp { get; set; }
     public bool IsMaster { get; set; }
     public int ListTasks { get; set; }
+    public LocationDetails? Location { get; set; }
 }

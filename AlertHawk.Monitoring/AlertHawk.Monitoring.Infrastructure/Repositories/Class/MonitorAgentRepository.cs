@@ -143,14 +143,16 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         MonitorAgent monitorToUpdate)
     {
         string sqlInsertMaster =
-            @"UPDATE [MonitorAgent] SET TimeStamp = @TimeStamp, IsMaster = @IsMaster WHERE Id = @id";
+            @"UPDATE [MonitorAgent] SET TimeStamp = @TimeStamp, IsMaster = @IsMaster, Country = @Country, Continent = @Continent WHERE Id = @id";
 
         await db.ExecuteAsync(sqlInsertMaster,
             new
             {
                 Id = monitorToUpdate.Id,
                 TimeStamp = DateTime.UtcNow,
-                IsMaster = monitorToUpdate.IsMaster
+                IsMaster = monitorToUpdate.IsMaster,
+                Country = monitorToUpdate.Location?.Country,
+                Continent = monitorToUpdate.Location?.Continent
             }, commandType: CommandType.Text);
     }
 
@@ -160,13 +162,15 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         monitorAgent.IsMaster = isMaster;
         // Insert
         string sqlInsertMaster =
-            @"INSERT INTO [MonitorAgent] (Hostname, TimeStamp, IsMaster) VALUES (@Hostname, @TimeStamp, @IsMaster)";
+            @"INSERT INTO [MonitorAgent] (Hostname, TimeStamp, IsMaster, Country, Continent) VALUES (@Hostname, @TimeStamp, @IsMaster, @Country, @Continent)";
         await db.ExecuteAsync(sqlInsertMaster,
             new
             {
                 HostName = monitorAgent.Hostname,
                 TimeStamp = monitorAgent.TimeStamp,
-                IsMaster = monitorAgent.IsMaster
+                IsMaster = monitorAgent.IsMaster,
+                Country = monitorAgent.Location?.Country,
+                Continent = monitorAgent.Location?.Continent
             }, commandType: CommandType.Text);
     }
 

@@ -1,9 +1,10 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using AlertHawk.Monitoring.Infrastructure.Utils;
+using EasyMemoryCache;
 using Hangfire;
 using Hangfire.Storage;
-using Sentry;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorManager;
 
@@ -11,11 +12,14 @@ public class MonitorManager : IMonitorManager
 {
     private readonly IMonitorAgentRepository _monitorAgentRepository;
     private readonly IMonitorRepository _monitorRepository;
+    private readonly ICaching _caching;
 
-    public MonitorManager(IMonitorAgentRepository monitorAgentRepository, IMonitorRepository monitorRepository)
+    public MonitorManager(IMonitorAgentRepository monitorAgentRepository, IMonitorRepository monitorRepository,
+        ICaching caching)
     {
         _monitorAgentRepository = monitorAgentRepository;
         _monitorRepository = monitorRepository;
+        _caching = caching;
     }
 
     public async Task StartRunnerManager()
@@ -45,7 +49,7 @@ public class MonitorManager : IMonitorManager
                         monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Status;
                     monitorHttp.Name = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Name;
                     monitorHttp.Retries = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Retries;
-                    
+
                     string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
                     lstStringsToAdd.Add(jobId);
                 }
@@ -78,11 +82,32 @@ public class MonitorManager : IMonitorManager
     {
         try
         {
-            var monitorAgent = new MonitorAgent
+            var agentLocationEnabled = GetEnableLocationApi();
+            MonitorAgent monitorAgent;
+
+            if (agentLocationEnabled)
             {
-                Hostname = Environment.MachineName,
-                TimeStamp = DateTime.UtcNow
-            };
+                var locationData = _caching.GetOrSetObjectFromCache("locationData", 60, IPAddressUtils.GetLocation);
+
+                monitorAgent = new MonitorAgent
+                {
+                    Hostname = Environment.MachineName,
+                    TimeStamp = DateTime.UtcNow,
+                    Location = new LocationDetails
+                    {
+                        Country = locationData.Country,
+                        Continent = locationData.Continent
+                    }
+                };
+            }
+            else
+            {
+                monitorAgent = new MonitorAgent
+                {
+                    Hostname = Environment.MachineName,
+                    TimeStamp = DateTime.UtcNow
+                };
+            }
 
             await _monitorAgentRepository.ManageMonitorStatus(monitorAgent);
         }
@@ -90,6 +115,17 @@ public class MonitorManager : IMonitorManager
         {
             SentrySdk.CaptureException(e);
         }
+    }
+    
+    static bool GetEnableLocationApi()
+    {
+        string enableLocationApiValue = Environment.GetEnvironmentVariable("enable_location_api");
+        if (!string.IsNullOrEmpty(enableLocationApiValue) && bool.TryParse(enableLocationApiValue, out bool result))
+        {
+            return result;
+        }
+        // Default value if environment variable is not set or not a valid boolean
+        return false;
     }
 
     public async Task StartMasterMonitorAgentTaskManager()
