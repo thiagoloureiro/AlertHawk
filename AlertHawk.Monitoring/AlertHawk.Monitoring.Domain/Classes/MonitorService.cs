@@ -1,6 +1,7 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
+using EasyMemoryCache;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
@@ -8,10 +9,12 @@ namespace AlertHawk.Monitoring.Domain.Classes;
 public class MonitorService : IMonitorService
 {
     private readonly IMonitorRepository _monitorRepository;
-
-    public MonitorService(IMonitorRepository monitorRepository)
+    private readonly ICaching _caching;
+    
+    public MonitorService(IMonitorRepository monitorRepository, ICaching caching)
     {
         _monitorRepository = monitorRepository;
+        _caching = caching;
     }
 
     public async Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id)
@@ -46,8 +49,10 @@ public class MonitorService : IMonitorService
 
     public async Task<MonitorDashboard> GetMonitorDashboardData(int id)
     {
-        var result = await _monitorRepository.GetMonitorHistory(id, 90);
-        // exp cert is on the monitor table, just fetch from there.
+        var result = await _caching.GetOrSetObjectFromCacheAsync($"GroupHistory_{id}_90", 20,
+            () => _monitorRepository.GetMonitorHistory(id, 90));
+        
+        var monitor = await _monitorRepository.GetMonitorById(id);
 
         var lst24Hrs = result.Where(x => x.TimeStamp > DateTime.Now.AddDays(-1)).ToList();
         var lst7Days = result.Where(x => x.TimeStamp > DateTime.Now.AddDays(-7)).ToList();
@@ -61,7 +66,6 @@ public class MonitorService : IMonitorService
         double uptime3Months = (double)lst3Months.Count(item => item.Status) / lst3Months.Count * 100;
         double uptime6Months = (double)lst6Months.Count(item => item.Status) / lst6Months.Count * 100;
 
-
         var monitorDashboard = new MonitorDashboard
         {
             ResponseTime = result.Average(x => x.ResponseTime),
@@ -69,7 +73,8 @@ public class MonitorService : IMonitorService
             Uptime7Days = upTime7Days,
             Uptime30Days = uptime30Days,
             Uptime3Months = uptime3Months,
-            Uptime6Months = uptime6Months
+            Uptime6Months = uptime6Months,
+            CertExpDays = monitor.DaysToExpireCert
         };
         return monitorDashboard;
     }

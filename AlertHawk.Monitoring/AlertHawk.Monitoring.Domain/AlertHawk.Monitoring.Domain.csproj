@@ -23,6 +23,7 @@
 
     <ItemGroup>
       <PackageReference Include="AlertHawk.Notification.Domain" Version="1.0.1" />
+      <PackageReference Include="EasyMemoryCache" Version="2.0.2" />
     </ItemGroup>
 
 

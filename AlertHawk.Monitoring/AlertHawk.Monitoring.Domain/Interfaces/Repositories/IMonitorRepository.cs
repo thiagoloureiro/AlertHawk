@@ -8,6 +8,7 @@ public interface IMonitorRepository
     Task<IEnumerable<Monitor>> GetMonitorList();
     Task<IEnumerable<MonitorHttp>> GetHttpMonitorByIds(List<int> ids);
     Task<IEnumerable<Monitor>> GetMonitorListByIds(List<int> ids);
+    Task<Monitor> GetMonitorById(int id);
     Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id);
     Task UpdateMonitorStatus(int id, bool status, int daysToExpireCert);
     Task SaveMonitorHistory(MonitorHistory monitorHistory);
