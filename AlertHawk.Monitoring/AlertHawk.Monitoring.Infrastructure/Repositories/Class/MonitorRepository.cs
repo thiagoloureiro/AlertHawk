@@ -20,7 +20,8 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     public async Task<IEnumerable<Monitor>> GetMonitorList()
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused FROM [Monitor]";
+        string sql =
+            @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused FROM [Monitor]";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
 
@@ -40,7 +41,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
 
         string sql =
             $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused FROM [Monitor] WHERE Id=@id";
-        return await db.QueryFirstOrDefaultAsync<Monitor>(sql, commandType: CommandType.Text);
+        return await db.QueryFirstOrDefaultAsync<Monitor>(sql, new { id }, commandType: CommandType.Text);
     }
 
     public async Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id)
@@ -56,7 +57,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string sql = @"UPDATE [Monitor] SET Status=@status, DaysToExpireCert=@daysToExpireCert WHERE Id=@id";
         await db.ExecuteAsync(sql, new { id, status, daysToExpireCert }, commandType: CommandType.Text);
     }
-    
+
     public async Task PauseMonitor(int id, bool paused)
     {
         await using var db = new SqlConnection(_connstring);
