@@ -53,6 +53,7 @@ public class MonitorService : IMonitorService
             () => _monitorRepository.GetMonitorHistory(id, 90));
         
         var monitor = await _monitorRepository.GetMonitorById(id);
+        if(monitor == null) return null;
 
         var lst24Hrs = result.Where(x => x.TimeStamp > DateTime.Now.AddDays(-1)).ToList();
         var lst7Days = result.Where(x => x.TimeStamp > DateTime.Now.AddDays(-7)).ToList();
