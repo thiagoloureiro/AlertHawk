@@ -87,7 +87,7 @@ public class MonitorManager : IMonitorManager
 
             if (agentLocationEnabled)
             {
-                var locationData = _caching.GetOrSetObjectFromCache("locationData", 60, IPAddressUtils.GetLocation);
+                var locationData = _caching.GetOrSetObjectFromCache("locationData", 600, IPAddressUtils.GetLocation);
 
                 monitorAgent = new MonitorAgent
                 {
