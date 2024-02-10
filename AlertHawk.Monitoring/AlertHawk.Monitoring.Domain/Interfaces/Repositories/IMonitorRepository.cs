@@ -7,13 +7,15 @@ public interface IMonitorRepository
 {
     Task<IEnumerable<Monitor>> GetMonitorList();
     Task<IEnumerable<MonitorHttp>> GetHttpMonitorByIds(List<int> ids);
+    Task<IEnumerable<MonitorTcp>> GetTcpMonitorByIds(List<int> ids);
     Task<IEnumerable<Monitor>> GetMonitorListByIds(List<int> ids);
     Task<Monitor> GetMonitorById(int id);
     Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id);
     Task UpdateMonitorStatus(int id, bool status, int daysToExpireCert);
     Task SaveMonitorHistory(MonitorHistory monitorHistory);
     Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id);
+    Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days);
     Task DeleteMonitorHistory(int days);
     Task PauseMonitor(int id, bool paused);
-    Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days);
+
 }

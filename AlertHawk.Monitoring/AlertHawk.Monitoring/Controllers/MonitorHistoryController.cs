@@ -1,5 +1,7 @@
-﻿using AlertHawk.Monitoring.Domain.Interfaces.Services;
+﻿using AlertHawk.Monitoring.Domain.Entities;
+using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace AlertHawk.Monitoring.Controllers
 {
@@ -14,7 +16,8 @@ namespace AlertHawk.Monitoring.Controllers
             _monitorService = monitorService;
         }
 
-        // This will return only the last 10k rows of the monitor history
+        [SwaggerOperation(Summary = "Retrieves the history of the Monitor, limited to 10k rows")]
+        [ProducesResponseType(typeof(IEnumerable<MonitorHistory>), StatusCodes.Status200OK)]
         [HttpGet("MonitorHistory/{id}")]
         public async Task<IActionResult> GetMonitorHistory(int id)
         {
@@ -22,20 +25,25 @@ namespace AlertHawk.Monitoring.Controllers
             return Ok(result);
         }
         
+        [SwaggerOperation(Summary = "Retrieves the history of the Monitor, by Id and Number of Days")]
+        [ProducesResponseType(typeof(IEnumerable<MonitorHistory>), StatusCodes.Status200OK)]
         [HttpGet("MonitorHistoryByIdDays/{id}/{days}")]
         public async Task<IActionResult> GetMonitorHistory(int id, int days)
         {
             var result = await _monitorService.GetMonitorHistory(id, days);
             return Ok(result);
         }
-        
+
+        [SwaggerOperation(Summary = "Retrieves dashboard details like uptime % and cert information")]
+        [ProducesResponseType(typeof(MonitorDashboard), StatusCodes.Status200OK)]
         [HttpGet("MonitorDashboardData/{id}")]
         public async Task<IActionResult> GetMonitorDashboardData(int id)
         {
             var result = await _monitorService.GetMonitorDashboardData(id);
             return Ok(result);
         }
-        
+
+        [SwaggerOperation(Summary = "Delete all monitor History by number of days - this operation is irreversible!")]
         [HttpDelete]
         public async Task<IActionResult> DeleteMonitorHistory(int days)
         {

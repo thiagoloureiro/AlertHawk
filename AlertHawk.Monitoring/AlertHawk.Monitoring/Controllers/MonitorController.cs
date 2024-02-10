@@ -1,8 +1,8 @@
-﻿using AlertHawk.Monitoring.Domain.Interfaces.Services;
+﻿using AlertHawk.Monitoring.Domain.Entities;
+using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
-using MassTransit;
 using Microsoft.AspNetCore.Mvc;
-using SharedModels;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace AlertHawk.Monitoring.Controllers
 {
@@ -10,31 +10,35 @@ namespace AlertHawk.Monitoring.Controllers
     [ApiController]
     public class MonitorController : ControllerBase
     {
-        private readonly IPublishEndpoint _publishEndpoint;
         private readonly IMonitorService _monitorService;
         private readonly IMonitorAgentService _monitorAgentService;
 
-        public MonitorController(IPublishEndpoint publishEndpoint, IMonitorService monitorService, IMonitorAgentService monitorAgentService)
+        public MonitorController(IMonitorService monitorService, IMonitorAgentService monitorAgentService)
         {
-            _publishEndpoint = publishEndpoint;
             _monitorService = monitorService;
             _monitorAgentService = monitorAgentService;
         }
 
+        [SwaggerOperation(Summary = "Retrieves detailed status for the current monitor Agent")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [HttpGet("monitorStatus")]
         public IActionResult MonitorStatus()
         {
             return Ok(
-                $"Master Node: {GlobalVariables.MasterNode}, MonitorId: {GlobalVariables.NodeId}, TasksList Count: {GlobalVariables.TaskList?.Count()}");
+                $"Master Node: {GlobalVariables.MasterNode}, MonitorId: {GlobalVariables.NodeId}, HttpTasksList Count: {GlobalVariables.HttpTaskList?.Count()}, TcpTasksList Count: {GlobalVariables.TcpTaskList?.Count()}");
         }
 
+        [SwaggerOperation(Summary = "Retrieves a List of items to be Monitored")]
+        [ProducesResponseType(typeof(IEnumerable<Domain.Entities.Monitor>), StatusCodes.Status200OK)]
         [HttpGet("monitorList")]
         public async Task<IActionResult> GetMonitorList()
         {
             var result = await _monitorService.GetMonitorList();
             return Ok(result);
         }
-        
+
+        [SwaggerOperation(Summary = "Retrieves a List of all Monitor Agents")]
+        [ProducesResponseType(typeof(IEnumerable<MonitorAgent>), StatusCodes.Status200OK)]
         [HttpGet("allMonitorAgents")]
         public async Task<IActionResult> GetAllMonitorAgents()
         {
@@ -42,6 +46,8 @@ namespace AlertHawk.Monitoring.Controllers
             return Ok(result);
         }
 
+        [SwaggerOperation(Summary = "Retrieves a List of all Notifications by Monitor")]
+        [ProducesResponseType(typeof(IEnumerable<MonitorNotification>), StatusCodes.Status200OK)]
         [HttpGet("monitorNotifications/{id}")]
         public async Task<IActionResult> GetMonitorNotification(int id)
         {
@@ -49,32 +55,12 @@ namespace AlertHawk.Monitoring.Controllers
             return Ok(result);
         }
 
+        [SwaggerOperation(Summary = "Pause or resume the monitoring for the specified monitorId")]
         [HttpPut("pauseMonitor/{id}/{paused}")]
         public async Task<IActionResult> PauseMonitor(int id, bool paused)
         {
             await _monitorService.PauseMonitor(id, paused);
             return Ok();
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> ProduceNotification(int notificationId, string message, int messageQuantity)
-        {
-            if (messageQuantity > 50)
-            {
-                messageQuantity = 50;
-            }
-
-            for (int i = 0; i < messageQuantity; i++)
-            {
-                await _publishEndpoint.Publish<NotificationAlert>(new
-                {
-                    NotificationId = notificationId,
-                    TimeStamp = DateTime.UtcNow,
-                    Message = message + "_" + i
-                });
-            }
-
-            return Ok($"{messageQuantity} Messages sent");
         }
     }
 }

@@ -25,6 +25,18 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
 
+    public async Task<IEnumerable<MonitorTcp>> GetTcpMonitorByIds(List<int> ids)
+    {
+        await using var db = new SqlConnection(_connstring);
+
+        string whereClause = $"WHERE MonitorId IN ({string.Join(",", ids)})";
+
+        string sql =
+            $@"SELECT MonitorId, Port, IP, Timeout, LastStatus  FROM [MonitorTcp] {whereClause}";
+
+        return await db.QueryAsync<MonitorTcp>(sql, commandType: CommandType.Text);
+    }
+
     public async Task<IEnumerable<Monitor>> GetMonitorListByIds(List<int> ids)
     {
         await using var db = new SqlConnection(_connstring);

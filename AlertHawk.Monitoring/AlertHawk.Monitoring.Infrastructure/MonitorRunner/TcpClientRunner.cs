@@ -10,7 +10,6 @@ namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 public class TcpClientRunner : ITcpClientRunner
 {
     private readonly IMonitorRepository _monitorRepository;
-
     private readonly IPublishEndpoint _publishEndpoint;
 
     public TcpClientRunner(IMonitorRepository monitorRepository, IPublishEndpoint publishEndpoint)

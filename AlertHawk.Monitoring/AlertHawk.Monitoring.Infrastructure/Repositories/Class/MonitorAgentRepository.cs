@@ -81,7 +81,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
     public async Task<List<MonitorAgent>> GetAllMonitorAgents()
     {
         await using var db = new SqlConnection(_connstring);
-        string sqlAllMonitors = @"SELECT Id, Hostname, TimeStamp, IsMaster FROM [MonitorAgent]";
+        string sqlAllMonitors = @"SELECT Id, Hostname, TimeStamp, IsMaster, Country, Continent FROM [MonitorAgent]";
         var result = await db.QueryAsync<MonitorAgent>(sqlAllMonitors, commandType: CommandType.Text);
         return result.ToList();
     }

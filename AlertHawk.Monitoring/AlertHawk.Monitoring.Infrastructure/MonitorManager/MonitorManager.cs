@@ -5,6 +5,7 @@ using AlertHawk.Monitoring.Infrastructure.Utils;
 using EasyMemoryCache;
 using Hangfire;
 using Hangfire.Storage;
+using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorManager;
 
@@ -30,50 +31,103 @@ public class MonitorManager : IMonitorManager
             var monitorIds = tasksToMonitor.Select(x => x.MonitorId).ToList();
             var monitorListByIds = await _monitorRepository.GetMonitorListByIds(monitorIds);
 
-            // HTTP
-            var lstMonitorByHttpType = monitorListByIds.Where(x => x.MonitorTypeId == 1);
-            var monitorByHttpType = lstMonitorByHttpType.ToList();
-            if (monitorByHttpType.Any())
+            await StartHttpMonitorJobs(monitorListByIds);
+            await StartTcpMonitorJobs(monitorListByIds);
+        }
+    }
+
+    private async Task StartHttpMonitorJobs(IEnumerable<Monitor> monitorListByIds)
+    {
+        var lstMonitorByHttpType = monitorListByIds.Where(x => x.MonitorTypeId == 1);
+        var monitorByHttpType = lstMonitorByHttpType.ToList();
+        if (monitorByHttpType.Any())
+        {
+            var httpMonitorIds = monitorByHttpType.Select(x => x.Id).ToList();
+            var lstMonitors = await _monitorRepository.GetHttpMonitorByIds(httpMonitorIds);
+
+            GlobalVariables.HttpTaskList = httpMonitorIds;
+
+            var lstStringsToAdd = new List<string>();
+            var monitorHttps = lstMonitors.ToList();
+
+            foreach (var monitorHttp in monitorHttps)
             {
-                var httpMonitorIds = monitorByHttpType.Select(x => x.Id).ToList();
-                var lstMonitors = await _monitorRepository.GetHttpMonitorByIds(httpMonitorIds);
+                monitorHttp.LastStatus =
+                    monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Status;
+                monitorHttp.Name = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Name;
+                monitorHttp.Retries = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Retries;
 
-                GlobalVariables.TaskList = httpMonitorIds;
+                string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
+                lstStringsToAdd.Add(jobId);
+            }
 
-                var lstStringsToAdd = new List<string>();
-                var monitorHttps = lstMonitors.ToList();
+            IEnumerable<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
+            recurringJobs = recurringJobs.Where(x => x.Id.StartsWith("StartRunnerManager_CheckUrlsAsync_JobId"))
+                .ToList();
 
-                foreach (var monitorHttp in monitorHttps)
+            foreach (var job in recurringJobs)
+            {
+                if (!lstStringsToAdd.Contains(job.Id))
                 {
-                    monitorHttp.LastStatus =
-                        monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Status;
-                    monitorHttp.Name = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Name;
-                    monitorHttp.Retries = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Retries;
-
-                    string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
-                    lstStringsToAdd.Add(jobId);
+                    RecurringJob.RemoveIfExists(job.Id);
                 }
+            }
 
-                IEnumerable<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
-                recurringJobs = recurringJobs.Where(x => x.Id.StartsWith("StartRunnerManager_CheckUrlsAsync_JobId"))
-                    .ToList();
+            foreach (var monitorHttp in monitorHttps)
+            {
+                string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
+                Thread.Sleep(50);
+                var monitor = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
+                RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, x => x.CheckUrlsAsync(monitorHttp),
+                    $"*/{monitor?.HeartBeatInterval} * * * *");
+            }
+        }
+    }
+    
+     private async Task StartTcpMonitorJobs(IEnumerable<Monitor> monitorListByIds)
+    {
+        var lstMonitorByTcpType = monitorListByIds.Where(x => x.MonitorTypeId == 3);
+        var monitorByTcpType = lstMonitorByTcpType.ToList();
+        if (monitorByTcpType.Any())
+        {
+            var tcpMonitorIds = monitorByTcpType.Select(x => x.Id).ToList();
+            var lstMonitors = await _monitorRepository.GetTcpMonitorByIds(tcpMonitorIds);
 
-                foreach (var job in recurringJobs)
+            GlobalVariables.TcpTaskList = tcpMonitorIds;
+
+            var lstStringsToAdd = new List<string>();
+            var monitorTcpList = lstMonitors.ToList();
+
+            foreach (var monitorTcp in monitorTcpList)
+            {
+                monitorTcp.LastStatus =
+                    monitorByTcpType.FirstOrDefault(x => x.Id == monitorTcp.MonitorId).Status;
+                monitorTcp.Name = monitorByTcpType.FirstOrDefault(x => x.Id == monitorTcp.MonitorId).Name;
+                monitorTcp.Retries = monitorByTcpType.FirstOrDefault(x => x.Id == monitorTcp.MonitorId).Retries;
+
+                string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorTcp.MonitorId}";
+                lstStringsToAdd.Add(jobId);
+            }
+
+            IEnumerable<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
+            recurringJobs = recurringJobs.Where(x => x.Id.StartsWith("StartRunnerManager_CheckUrlsAsync_JobId"))
+                .ToList();
+
+            foreach (var job in recurringJobs)
+            {
+                if (!lstStringsToAdd.Contains(job.Id))
                 {
-                    if (!lstStringsToAdd.Contains(job.Id))
-                    {
-                        RecurringJob.RemoveIfExists(job.Id);
-                    }
+                    RecurringJob.RemoveIfExists(job.Id);
                 }
+            }
 
-                foreach (var monitorHttp in monitorHttps)
-                {
-                    string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
-                    Thread.Sleep(50);
-                    var monitor = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
-                    RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, x => x.CheckUrlsAsync(monitorHttp),
-                        $"*/{monitor?.HeartBeatInterval} * * * *");
-                }
+            foreach (var monitorTcp in monitorTcpList)
+            {
+                string jobId = $"StartRunnerManager_CheckTcpAsync_JobId_{monitorTcp.MonitorId}";
+                Thread.Sleep(50);
+                var monitor = monitorByTcpType.FirstOrDefault(x => x.Id == monitorTcp.MonitorId);
+                RecurringJob.AddOrUpdate<ITcpClientRunner>(jobId, x => x.CheckTcpAsync(monitorTcp),
+                    $"*/{monitor?.HeartBeatInterval} * * * *");
             }
         }
     }
@@ -174,22 +228,7 @@ public class MonitorManager : IMonitorManager
                     indexAgent += 1;
                     currentIndex += tasksToTake;
                 }
-
-                if (GlobalVariables.TaskList != null)
-                {
-                    GlobalVariables.TaskList.Clear();
-                }
-
-                GlobalVariables.TaskList = new List<int>();
-
-                foreach (var item in lstMonitorAgentTasks)
-                {
-                    if (item.MonitorAgentId == GlobalVariables.NodeId)
-                    {
-                        GlobalVariables.TaskList.Add(item.MonitorId);
-                    }
-                }
-
+                
                 await _monitorAgentRepository.UpsertMonitorAgentTasks(lstMonitorAgentTasks);
             }
         }
