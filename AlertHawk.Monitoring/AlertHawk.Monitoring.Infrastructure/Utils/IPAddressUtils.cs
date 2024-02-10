@@ -26,6 +26,8 @@ public static class IPAddressUtils
                 Continent = data.continent_name
             };
 
+            locationDetails.Continent = locationDetails.Continent.Trim().Replace(" ", "");
+
             return locationDetails;
         }
         catch (WebException ex)
