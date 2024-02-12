@@ -95,6 +95,7 @@ public class MonitorService : IMonitorService
             var sw = new Stopwatch();
             var lstMonitorDashboard = new List<MonitorDashboard>();
             var lstMonitor = await GetMonitorList();
+            Console.WriteLine(lstMonitor.Count());
             foreach (var monitor in lstMonitor)
             {
                 var monitorData = await GetMonitorDashboardData(monitor.Id);
