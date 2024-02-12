@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
@@ -10,7 +11,8 @@ public class MonitorService : IMonitorService
 {
     private readonly IMonitorRepository _monitorRepository;
     private readonly ICaching _caching;
-    
+    private string _cacheKeyDashboardList = "MonitorDashboardList";
+
     public MonitorService(IMonitorRepository monitorRepository, ICaching caching)
     {
         _monitorRepository = monitorRepository;
@@ -45,15 +47,19 @@ public class MonitorService : IMonitorService
     public async Task PauseMonitor(int id, bool paused)
     {
         await _monitorRepository.PauseMonitor(id, paused);
+        _caching.Invalidate($"Monitor_{id}");
     }
 
     public async Task<MonitorDashboard> GetMonitorDashboardData(int id)
     {
         var result = await _caching.GetOrSetObjectFromCacheAsync($"GroupHistory_{id}_90", 20,
             () => _monitorRepository.GetMonitorHistory(id, 90));
-        
-        var monitor = await _monitorRepository.GetMonitorById(id);
-        if(monitor == null) return null;
+
+        var monitor =
+            await _caching.GetOrSetObjectFromCacheAsync($"Monitor_{id}", 20,
+                () => _monitorRepository.GetMonitorById(id));
+
+        if (monitor == null) return null;
 
         var lst24Hrs = result.Where(x => x.TimeStamp > DateTime.Now.AddDays(-1)).ToList();
         var lst7Days = result.Where(x => x.TimeStamp > DateTime.Now.AddDays(-7)).ToList();
@@ -75,8 +81,42 @@ public class MonitorService : IMonitorService
             Uptime30Days = uptime30Days,
             Uptime3Months = uptime3Months,
             Uptime6Months = uptime6Months,
-            CertExpDays = monitor.DaysToExpireCert
+            CertExpDays = monitor.DaysToExpireCert,
+            MonitorId = id
         };
         return monitorDashboard;
+    }
+
+    public async Task SetMonitorDashboardDataCacheList()
+    {
+        try
+        {
+            Console.WriteLine("Started SetMonitorDashboardDataCacheList");
+            var sw = new Stopwatch();
+            var lstMonitorDashboard = new List<MonitorDashboard>();
+            var lstMonitor = await GetMonitorList();
+            foreach (var monitor in lstMonitor)
+            {
+                var monitorData = await GetMonitorDashboardData(monitor.Id);
+                lstMonitorDashboard.Add(monitorData);
+            }
+
+            await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20);
+            Console.WriteLine($"Ended SetMonitorDashboardDataCacheList {sw.Elapsed}");
+            sw.Stop();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            throw;
+        }
+    }
+
+    public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
+    {
+        var data = _caching.GetValueFromCache<List<MonitorDashboard>>(_cacheKeyDashboardList);
+
+        var dataToReturn = data.Where(x => ids.Contains(x.MonitorId)).ToList();
+        return dataToReturn;
     }
 }

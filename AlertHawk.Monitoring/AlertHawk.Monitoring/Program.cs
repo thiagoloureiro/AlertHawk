@@ -68,6 +68,15 @@ RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMonitorHeartBeatManager(),
 RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
 RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartRunnerManager(), "*/25 * * * * *");
 
+RecurringJob.AddOrUpdate<IMonitorService>(x => x.SetMonitorDashboardDataCacheList(), "*/3 * * * *");
+// Resolve the service and run the method immediately
+using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
+{
+    var monitorService = serviceScope.ServiceProvider.GetService<IMonitorService>();
+    monitorService?.SetMonitorDashboardDataCacheList();
+}
+
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

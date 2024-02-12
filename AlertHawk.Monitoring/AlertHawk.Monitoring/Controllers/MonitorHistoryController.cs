@@ -24,7 +24,7 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorService.GetMonitorHistory(id);
             return Ok(result);
         }
-        
+
         [SwaggerOperation(Summary = "Retrieves the history of the Monitor, by Id and Number of Days")]
         [ProducesResponseType(typeof(IEnumerable<MonitorHistory>), StatusCodes.Status200OK)]
         [HttpGet("MonitorHistoryByIdDays/{id}/{days}")]
@@ -40,6 +40,16 @@ namespace AlertHawk.Monitoring.Controllers
         public async Task<IActionResult> GetMonitorDashboardData(int id)
         {
             var result = await _monitorService.GetMonitorDashboardData(id);
+            return Ok(result);
+        }
+
+        [SwaggerOperation(Summary =
+            "Retrieves dashboard details like uptime % and cert information for a list of monitors")]
+        [ProducesResponseType(typeof(MonitorDashboard), StatusCodes.Status200OK)]
+        [HttpGet("MonitorDashboardData/{id}")]
+        public IActionResult GetMonitorDashboardDataList(List<int> ids)
+        {
+            var result = _monitorService.GetMonitorDashboardDataList(ids);
             return Ok(result);
         }
 

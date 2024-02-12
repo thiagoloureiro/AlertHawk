@@ -12,4 +12,6 @@ public interface IMonitorService
     Task DeleteMonitorHistory(int days);
     Task PauseMonitor(int id, bool paused);
     Task<MonitorDashboard> GetMonitorDashboardData(int id);
+    IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids);
+    Task SetMonitorDashboardDataCacheList();
 }
