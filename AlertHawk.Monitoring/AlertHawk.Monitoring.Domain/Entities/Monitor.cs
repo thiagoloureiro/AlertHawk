@@ -11,4 +11,5 @@ public class Monitor
     public bool Status { get; set; }
     public int DaysToExpireCert { get; set; }
     public bool Paused { get; set; }
+    public MonitorRegion MonitorRegion { get; set; }
 }
