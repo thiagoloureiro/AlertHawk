@@ -45,7 +45,7 @@ namespace AlertHawk.Monitoring.Controllers
 
         [SwaggerOperation(Summary =
             "Retrieves dashboard details like uptime % and cert information for a list of monitors")]
-        [ProducesResponseType(typeof(MonitorDashboard), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(List<MonitorDashboard>), StatusCodes.Status200OK)]
         [HttpPost("MonitorDashboardDataList")]
         public IActionResult GetMonitorDashboardDataList([FromBody] List<int> ids)
         {
