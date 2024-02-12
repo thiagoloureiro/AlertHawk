@@ -7,7 +7,7 @@ public interface IUserService
 {
     Task Create(UserCreation userCreation);
     
-    Task Update(Guid id, UserUpdate userUpdate);
+    Task Update(UserDto userUpdate);
     
     Task ResetPassword(string username);
 
@@ -18,4 +18,6 @@ public interface IUserService
     Task<UserDto?> GetByEmail(string email);
     
     Task<UserDto?> GetByUsername(string username);
+    Task<IEnumerable<UserDto>?> GetAll();
+
 }

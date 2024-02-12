@@ -7,7 +7,7 @@ public interface IUserRepository
 {
     Task Create(UserCreation userCreation);
     
-    Task Update(Guid id, UserUpdate userUpdate);
+    Task Update(UserDto userUpdate);
     
     Task<string> ResetPassword(string username);
 
@@ -17,4 +17,5 @@ public interface IUserRepository
 
     Task<UserDto?> GetByEmail(string email);
     Task<UserDto?> GetByUsername(string username);
+    Task<IEnumerable<UserDto>?> GetAll();
 }

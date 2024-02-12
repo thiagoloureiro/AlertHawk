@@ -20,9 +20,9 @@ public class UserService : IUserService
         await _userRepository.Create(userCreation);
     }
     
-    public async Task Update(Guid id, UserUpdate userUpdate)
+    public async Task Update(UserDto userUpdate)
     {
-        await _userRepository.Update(id, userUpdate);
+        await _userRepository.Update(userUpdate);
     }
 
     public async Task ResetPassword(string username)
@@ -54,5 +54,9 @@ public class UserService : IUserService
     public async Task<UserDto?> GetByUsername(string username)
     {
         return await _userRepository.GetByUsername(username);
+    }
+    public Task<IEnumerable<UserDto>?> GetAll()
+    {
+        return _userRepository.GetAll();
     }
 }
