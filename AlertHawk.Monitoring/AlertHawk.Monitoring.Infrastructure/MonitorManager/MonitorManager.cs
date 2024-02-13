@@ -141,7 +141,7 @@ public class MonitorManager : IMonitorManager
 
             if (agentLocationEnabled)
             {
-                var region = await _caching.GetOrSetObjectFromCacheAsync("locationData", 600, IPAddressUtils.GetLocation);
+                var region = await _caching.GetOrSetObjectFromCacheAsync("locationDataKey", 600, IPAddressUtils.GetLocation);
                 
                 monitorAgent = new MonitorAgent
                 {
