@@ -20,9 +20,18 @@ namespace AlertHawk.Monitoring.Controllers
         }
 
         [SwaggerOperation(Summary = "Retrieves detailed status for the current monitor Agent")]
+        [ProducesResponseType(typeof(MonitorStatusDashboard), StatusCodes.Status200OK)]
+        [HttpGet("monitorStatusDashboard")]
+        public async Task<IActionResult> GetMonitorStatusDashboard()
+        {
+            var result = await _monitorService.GetMonitorStatusDashboard();
+            return Ok(result);
+        }
+
+        [SwaggerOperation(Summary = "Retrieves detailed status for the current monitor Agent")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-        [HttpGet("monitorStatus")]
-        public IActionResult MonitorStatus()
+        [HttpGet("monitorAgentStatus")]
+        public IActionResult GetMonitorAgentStatus()
         {
             return Ok(
                 $"Master Node: {GlobalVariables.MasterNode}, MonitorId: {GlobalVariables.NodeId}, HttpTasksList Count: {GlobalVariables.HttpTaskList?.Count()}, TcpTasksList Count: {GlobalVariables.TcpTaskList?.Count()}");

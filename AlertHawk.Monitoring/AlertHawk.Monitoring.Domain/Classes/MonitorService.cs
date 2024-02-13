@@ -113,6 +113,18 @@ public class MonitorService : IMonitorService
         }
     }
 
+    public async Task<MonitorStatusDashboard> GetMonitorStatusDashboard()
+    {
+        var monitorList = await GetMonitorList();
+        var monitorDashboard = new MonitorStatusDashboard
+        {
+            MonitorUp = monitorList.Count(x => x.Status),
+            MonitorDown = monitorList.Count(x => !x.Status),
+            MonitorPaused = monitorList.Count(x => x.Paused)
+        };
+        return monitorDashboard;
+    }
+
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
     {
         var data = _caching.GetValueFromCache<List<MonitorDashboard>>(_cacheKeyDashboardList);

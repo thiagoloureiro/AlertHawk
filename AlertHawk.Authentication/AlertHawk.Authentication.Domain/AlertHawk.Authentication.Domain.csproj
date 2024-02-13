@@ -11,6 +11,7 @@
         <PackageIcon>authentication.png</PackageIcon>
         <RepositoryUrl>https://github.com/thiagoloureiro/AlertHawk</RepositoryUrl>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Version>1.0.1</Version>
     </PropertyGroup>
 
     <ItemGroup>
