@@ -67,7 +67,7 @@ namespace AlertHawk.Monitoring.Controllers
 
         [SwaggerOperation(Summary = "Create a new monitor Http")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-        [HttpGet("createMonitorHttp")]
+        [HttpPost("createMonitorHttp")]
         public async Task<IActionResult> CreateMonitor([FromBody] MonitorHttp monitorHttp)
         {
             await _monitorService.CreateMonitor(monitorHttp);
