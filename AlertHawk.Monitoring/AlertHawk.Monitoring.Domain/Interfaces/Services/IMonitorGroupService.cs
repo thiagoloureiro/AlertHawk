@@ -6,4 +6,6 @@ public interface IMonitorGroupService
 {
     Task<IEnumerable<MonitorGroup>> GetMonitorGroupList();
     Task<MonitorGroup> GetMonitorGroupById(int id);
+    Task AddMonitorToGroup(MonitorGroupItems monitorGroupItems);
+    Task RemoveMonitorFromGroup(MonitorGroupItems monitorGroupItems);
 }

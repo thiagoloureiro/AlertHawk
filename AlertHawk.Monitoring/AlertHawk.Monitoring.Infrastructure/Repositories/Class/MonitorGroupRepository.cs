@@ -37,4 +37,22 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
         monitor.Monitors = lstMonitors;
         return monitor;
     }
+
+    public async Task AddMonitorToGroup(MonitorGroupItems monitorGroupItems)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlInsert =
+            @"INSERT INTO [monitorGroupItems] (MonitorId, MonitorGroupId) VALUES (@MonitorId, @MonitorGroupId)";
+        await db.QueryAsync<MonitorGroup>(sqlInsert,
+            new { monitorGroupItems.MonitorId, monitorGroupItems.MonitorGroupId }, commandType: CommandType.Text);
+    }
+    
+    public async Task RemoveMonitorFromGroup(MonitorGroupItems monitorGroupItems)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @"DELETE FROM [MonitorGroupItems] WHERE MonitorId = @MonitorId AND MonitorGroupId = @MonitorGroupId";
+        await db.QueryAsync<MonitorGroup>(sql,
+            new { monitorGroupItems.MonitorId, monitorGroupItems.MonitorGroupId }, commandType: CommandType.Text);
+    }
 }

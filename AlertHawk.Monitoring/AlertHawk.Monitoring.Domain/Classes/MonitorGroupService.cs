@@ -22,4 +22,14 @@ public class MonitorGroupService : IMonitorGroupService
     {
         return await _monitorGroupRepository.GetMonitorGroupById(id);
     }
+
+    public async Task AddMonitorToGroup(MonitorGroupItems monitorGroupItems)
+    {
+        await _monitorGroupRepository.AddMonitorToGroup(monitorGroupItems);
+    }
+
+    public async Task RemoveMonitorFromGroup(MonitorGroupItems monitorGroupItems)
+    {
+        await _monitorGroupRepository.RemoveMonitorFromGroup(monitorGroupItems);
+    }
 }
