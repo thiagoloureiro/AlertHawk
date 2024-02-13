@@ -169,7 +169,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
                 HostName = monitorAgent.Hostname,
                 TimeStamp = monitorAgent.TimeStamp,
                 IsMaster = monitorAgent.IsMaster,
-                Country = monitorAgent.MonitorRegion
+                MonitorRegion = monitorAgent.MonitorRegion
             }, commandType: CommandType.Text);
     }
 
