@@ -6,29 +6,41 @@ namespace AlertHawk.Monitoring.Infrastructure.Utils;
 
 public static class IPAddressUtils
 {
-    public static LocationDetails GetLocation()
+    public static async Task<MonitorRegion> GetLocation()
     {
-        string ipAddress = GetIPAddress();
+        var ipAddress = await GetIPAddress();
 
-        string apikey = Environment.GetEnvironmentVariable("ipgeo_apikey");
+        var apikey = Environment.GetEnvironmentVariable("ipgeo_apikey");
 
-        string apiUrl = $"https://api.ipgeolocation.io/ipgeo?apiKey={apikey}&ip={ipAddress}";
+        var apiUrl = $"https://api.ipgeolocation.io/ipgeo?apiKey={apikey}&ip={ipAddress}";
 
-        using WebClient client = new WebClient();
+        using var client = new HttpClient();
         try
         {
-            string json = client.DownloadString(apiUrl);
+            MonitorRegion region = MonitorRegion.Europe;
+            var json = await client.GetStringAsync(apiUrl);
             dynamic data = JObject.Parse(json);
 
-            var locationDetails = new LocationDetails
+            switch (data.continent_name)
             {
-                Country = data.country_name,
-                Continent = data.continent_name
-            };
+                case "Europe":
+                    region = MonitorRegion.Europe;
+                    break;
+                case "Asia":
+                    region = MonitorRegion.Asia;
+                    break;
+                case "North America":
+                    region = MonitorRegion.NorthAmerica;
+                    break;
+                case "South America":
+                    region = MonitorRegion.SouthAmerica;
+                    break;
+                case "Oceania":
+                    region = MonitorRegion.Oceania;
+                    break;
+            }
 
-            locationDetails.Continent = locationDetails.Continent.Trim().Replace(" ", "");
-
-            return locationDetails;
+            return region;
         }
         catch (WebException ex)
         {
@@ -37,12 +49,12 @@ public static class IPAddressUtils
         }
     }
 
-    private static string GetIPAddress()
+    private static async Task<string> GetIPAddress()
     {
         try
         {
-            using var ipAddress = new WebClient();
-            var ip = ipAddress.DownloadString("http://icanhazip.com");
+            using var ipAddress = new HttpClient();
+            var ip = await ipAddress.GetStringAsync("http://icanhazip.com");
             return ip.Trim();
         }
         catch (Exception ex)

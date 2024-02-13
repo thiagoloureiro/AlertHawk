@@ -139,30 +139,10 @@ public class MonitorManager : IMonitorManager
             var agentLocationEnabled = GetEnableLocationApi();
             MonitorAgent monitorAgent;
 
-            if (agentLocationEnabled)
+            if (!agentLocationEnabled)
             {
-                var locationData = _caching.GetOrSetObjectFromCache("locationData", 600, IPAddressUtils.GetLocation);
-                MonitorRegion region = MonitorRegion.Europe;
+                var region = await _caching.GetOrSetObjectFromCacheAsync("locationData", 600, IPAddressUtils.GetLocation);
                 
-                switch (locationData.Continent)
-                {
-                    case "Europe":
-                        region = MonitorRegion.Europe;
-                        break;
-                    case "Asia":
-                        region = MonitorRegion.Asia;
-                        break;
-                    case "North America":
-                        region = MonitorRegion.NorthAmerica;
-                        break;
-                    case "South America":
-                        region = MonitorRegion.SouthAmerica;
-                        break;
-                    case "Oceania":
-                        region = MonitorRegion.Oceania;
-                        break;
-                }
-
                 monitorAgent = new MonitorAgent
                 {
                     Hostname = Environment.MachineName,

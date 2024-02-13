@@ -50,7 +50,7 @@ public class MonitorService : IMonitorService
         _caching.Invalidate($"Monitor_{id}");
     }
 
-    public async Task<MonitorDashboard> GetMonitorDashboardData(int id)
+    public async Task<MonitorDashboard?> GetMonitorDashboardData(int id)
     {
         var result = await _caching.GetOrSetObjectFromCacheAsync($"GroupHistory_{id}_90", 20,
             () => _monitorRepository.GetMonitorHistory(id, 90));
@@ -91,11 +91,9 @@ public class MonitorService : IMonitorService
     {
         try
         {
-            Console.WriteLine("Started SetMonitorDashboardDataCacheList");
-            var sw = new Stopwatch();
-            var lstMonitorDashboard = new List<MonitorDashboard>();
+            var lstMonitorDashboard = new List<MonitorDashboard?>();
             var lstMonitor = await GetMonitorList();
-            Console.WriteLine(lstMonitor.Count());
+
             foreach (var monitor in lstMonitor)
             {
                 var monitorData = await GetMonitorDashboardData(monitor.Id);
@@ -103,8 +101,6 @@ public class MonitorService : IMonitorService
             }
 
             await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20);
-            Console.WriteLine($"Ended SetMonitorDashboardDataCacheList {sw.Elapsed}");
-            sw.Stop();
         }
         catch (Exception e)
         {
