@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
@@ -11,7 +10,7 @@ public class MonitorService : IMonitorService
 {
     private readonly IMonitorRepository _monitorRepository;
     private readonly ICaching _caching;
-    private string _cacheKeyDashboardList = "MonitorDashboardList";
+    private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
 
     public MonitorService(IMonitorRepository monitorRepository, ICaching caching)
     {
@@ -112,13 +111,19 @@ public class MonitorService : IMonitorService
     public async Task<MonitorStatusDashboard> GetMonitorStatusDashboard()
     {
         var monitorList = await GetMonitorList();
+        var enumerable = monitorList.ToList();
         var monitorDashboard = new MonitorStatusDashboard
         {
-            MonitorUp = monitorList.Count(x => x.Status),
-            MonitorDown = monitorList.Count(x => !x.Status),
-            MonitorPaused = monitorList.Count(x => x.Paused)
+            MonitorUp = enumerable.Count(x => x.Status),
+            MonitorDown = enumerable.Count(x => !x.Status),
+            MonitorPaused = enumerable.Count(x => x.Paused)
         };
         return monitorDashboard;
+    }
+
+    public async Task CreateMonitor(MonitorHttp monitorHttp)
+    {
+        await _monitorRepository.CreateMonitor(monitorHttp);
     }
 
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)

@@ -77,6 +77,29 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sql, new { id, paused }, commandType: CommandType.Text);
     }
 
+    public async Task CreateMonitor(MonitorHttp monitorHttp)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlMonitor =
+            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion) VALUES (@Name, @MonitorTypeId, @HeartBeatInterval, @Retries, @Status, @DaysToExpireCert, @Paused, @MonitorRegion); SELECT CAST(SCOPE_IDENTITY() as int)";
+        var id = await db.ExecuteScalarAsync<int>(sqlMonitor,
+            new
+            {
+                monitorHttp.Name, monitorHttp.MonitorTypeId, monitorHttp.HeartBeatInterval, monitorHttp.Retries,
+                monitorHttp.Status,
+                monitorHttp.DaysToExpireCert, monitorHttp.Paused, monitorHttp.MonitorRegion
+            }, commandType: CommandType.Text);
+
+        string sqlMonitorHttp =
+            @"INSERT INTO [MonitorHttp] (MonitorId, CheckCertExpiry, IgnoreTlsSsl, UpsideDownMode, MaxRedirects, UrlToCheck, Timeout) VALUES (@MonitorId, @CheckCertExpiry, @IgnoreTlsSsl, @UpsideDownMode, @MaxRedirects, @UrlToCheck, @Timeout)";
+        await db.ExecuteAsync(sqlMonitorHttp,
+            new
+            {
+                MonitorId = id, monitorHttp.CheckCertExpiry, monitorHttp.IgnoreTlsSsl,
+                monitorHttp.UpsideDownMode, monitorHttp.MaxRedirects,
+            }, commandType: CommandType.Text);
+    }
+
     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days)
     {
         await using var db = new SqlConnection(_connstring);

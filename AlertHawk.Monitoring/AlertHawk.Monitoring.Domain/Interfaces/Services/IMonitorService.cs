@@ -15,4 +15,5 @@ public interface IMonitorService
     IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids);
     Task SetMonitorDashboardDataCacheList();
     Task<MonitorStatusDashboard> GetMonitorStatusDashboard();
+    Task CreateMonitor(MonitorHttp monitorHttp);
 }

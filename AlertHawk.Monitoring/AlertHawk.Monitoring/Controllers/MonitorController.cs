@@ -3,6 +3,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Controllers
 {
@@ -62,6 +63,15 @@ namespace AlertHawk.Monitoring.Controllers
         {
             var result = await _monitorService.GetMonitorNotifications(id);
             return Ok(result);
+        }
+
+        [SwaggerOperation(Summary = "Create a new monitor Http")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [HttpGet("createMonitorHttp")]
+        public async Task<IActionResult> CreateMonitor([FromBody] MonitorHttp monitorHttp)
+        {
+            await _monitorService.CreateMonitor(monitorHttp);
+            return Ok();
         }
 
         [SwaggerOperation(Summary = "Pause or resume the monitoring for the specified monitorId")]
