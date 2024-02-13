@@ -51,7 +51,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
 
         if (monitorToUpdate != null)
         {
-            monitorToUpdate.Location = monitorAgent.Location;
+            monitorToUpdate.MonitorRegion = monitorAgent.MonitorRegion;
             GlobalVariables.NodeId = monitorToUpdate.Id;
             await UpdateExistingMonitor(db, monitorToUpdate);
         }
@@ -81,7 +81,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
     public async Task<List<MonitorAgent>> GetAllMonitorAgents()
     {
         await using var db = new SqlConnection(_connstring);
-        string sqlAllMonitors = @"SELECT Id, Hostname, TimeStamp, IsMaster, Country, Continent FROM [MonitorAgent]";
+        string sqlAllMonitors = @"SELECT Id, Hostname, TimeStamp, IsMaster, MonitorRegion FROM [MonitorAgent]";
         var result = await db.QueryAsync<MonitorAgent>(sqlAllMonitors, commandType: CommandType.Text);
         return result.ToList();
     }
@@ -144,7 +144,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         MonitorAgent monitorToUpdate)
     {
         string sqlInsertMaster =
-            @"UPDATE [MonitorAgent] SET TimeStamp = @TimeStamp, IsMaster = @IsMaster, Country = @Country, Continent = @Continent WHERE Id = @id";
+            @"UPDATE [MonitorAgent] SET TimeStamp = @TimeStamp, IsMaster = @IsMaster, MonitorRegion = @MonitorRegion WHERE Id = @id";
 
         await db.ExecuteAsync(sqlInsertMaster,
             new
@@ -152,8 +152,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
                 Id = monitorToUpdate.Id,
                 TimeStamp = DateTime.UtcNow,
                 IsMaster = monitorToUpdate.IsMaster,
-                Country = monitorToUpdate.Location?.Country,
-                Continent = monitorToUpdate.Location?.Continent
+                MonitorRegion = monitorToUpdate.MonitorRegion
             }, commandType: CommandType.Text);
     }
 
@@ -163,15 +162,14 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         monitorAgent.IsMaster = isMaster;
         // Insert
         string sqlInsertMaster =
-            @"INSERT INTO [MonitorAgent] (Hostname, TimeStamp, IsMaster, Country, Continent) VALUES (@Hostname, @TimeStamp, @IsMaster, @Country, @Continent)";
+            @"INSERT INTO [MonitorAgent] (Hostname, TimeStamp, IsMaster, MonitorRegion) VALUES (@Hostname, @TimeStamp, @IsMaster, @MonitorRegion)";
         await db.ExecuteAsync(sqlInsertMaster,
             new
             {
                 HostName = monitorAgent.Hostname,
                 TimeStamp = monitorAgent.TimeStamp,
                 IsMaster = monitorAgent.IsMaster,
-                Country = monitorAgent.Location?.Country,
-                Continent = monitorAgent.Location?.Continent
+                Country = monitorAgent.MonitorRegion
             }, commandType: CommandType.Text);
     }
 

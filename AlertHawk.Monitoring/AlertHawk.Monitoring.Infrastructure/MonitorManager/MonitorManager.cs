@@ -83,8 +83,8 @@ public class MonitorManager : IMonitorManager
             }
         }
     }
-    
-     private async Task StartTcpMonitorJobs(IEnumerable<Monitor> monitorListByIds)
+
+    private async Task StartTcpMonitorJobs(IEnumerable<Monitor> monitorListByIds)
     {
         var lstMonitorByTcpType = monitorListByIds.Where(x => x.MonitorTypeId == 3);
         var monitorByTcpType = lstMonitorByTcpType.ToList();
@@ -142,16 +142,32 @@ public class MonitorManager : IMonitorManager
             if (agentLocationEnabled)
             {
                 var locationData = _caching.GetOrSetObjectFromCache("locationData", 600, IPAddressUtils.GetLocation);
+                MonitorRegion region = MonitorRegion.Europe;
+                
+                switch (locationData.Continent)
+                {
+                    case "Europe":
+                        region = MonitorRegion.Europe;
+                        break;
+                    case "Asia":
+                        region = MonitorRegion.Asia;
+                        break;
+                    case "North America":
+                        region = MonitorRegion.NorthAmerica;
+                        break;
+                    case "South America":
+                        region = MonitorRegion.SouthAmerica;
+                        break;
+                    case "Oceania":
+                        region = MonitorRegion.Oceania;
+                        break;
+                }
 
                 monitorAgent = new MonitorAgent
                 {
                     Hostname = Environment.MachineName,
                     TimeStamp = DateTime.UtcNow,
-                    Location = new LocationDetails
-                    {
-                        Country = locationData.Country,
-                        Continent = locationData.Continent
-                    }
+                    MonitorRegion = region
                 };
             }
             else
@@ -170,7 +186,7 @@ public class MonitorManager : IMonitorManager
             SentrySdk.CaptureException(e);
         }
     }
-    
+
     static bool GetEnableLocationApi()
     {
         string enableLocationApiValue = Environment.GetEnvironmentVariable("enable_location_api");
@@ -178,6 +194,7 @@ public class MonitorManager : IMonitorManager
         {
             return result;
         }
+
         // Default value if environment variable is not set or not a valid boolean
         return false;
     }
@@ -228,7 +245,7 @@ public class MonitorManager : IMonitorManager
                     indexAgent += 1;
                     currentIndex += tasksToTake;
                 }
-                
+
                 await _monitorAgentRepository.UpsertMonitorAgentTasks(lstMonitorAgentTasks);
             }
         }
