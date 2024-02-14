@@ -98,6 +98,7 @@ public class HttpClientRunner : IHttpClientRunner
                 sw.Stop();
 
                 monitorHttp.ResponseStatusCode = response.StatusCode;
+                monitorHttp.HttpVersion = response.Version.ToString();
 
                 var succeeded = ((int)monitorHttp.ResponseStatusCode >= 200) &&
                                 ((int)monitorHttp.ResponseStatusCode <= 299);
