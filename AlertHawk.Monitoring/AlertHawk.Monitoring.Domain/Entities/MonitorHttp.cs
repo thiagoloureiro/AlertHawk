@@ -15,4 +15,7 @@ public class MonitorHttp : Monitor
     public bool LastStatus { get; set; }
     public int ResponseTime { get; set; }
     public string HttpVersion { get; set; }
+    public MonitorHttpMethod MonitorHttpMethod { get; set; }
+    public string Body { get; set; }
+    public Tuple<string,string> Headers { get; set; }
 }
