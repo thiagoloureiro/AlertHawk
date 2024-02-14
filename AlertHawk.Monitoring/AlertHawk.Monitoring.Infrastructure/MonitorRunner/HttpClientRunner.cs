@@ -61,7 +61,7 @@ public class HttpClientRunner : IHttpClientRunner
 
     public async Task CheckUrlsAsync(MonitorHttp monitorHttp)
     {
-        int maxRetries = 3;
+        int maxRetries = monitorHttp.Retries;
         int retryCount = 0;
 
         while (retryCount < maxRetries)
@@ -121,6 +121,7 @@ public class HttpClientRunner : IHttpClientRunner
                     {
                         await HandleSuccessNotifications(monitorHttp);
                     }
+                    break;
                 }
                 else
                 {
@@ -136,10 +137,10 @@ public class HttpClientRunner : IHttpClientRunner
                             .LastStatus) // only send notification when goes from online to offline to avoid flood
                         {
                             await HandleFailedNotifications(monitorHttp);
+                            break;
                         }
                     }
                 }
-                break;
             }
 
             catch (Exception)
@@ -167,6 +168,7 @@ public class HttpClientRunner : IHttpClientRunner
                     {
                         await HandleFailedNotifications(monitorHttp);
                     }
+                    break;
                 }
             }
         }
