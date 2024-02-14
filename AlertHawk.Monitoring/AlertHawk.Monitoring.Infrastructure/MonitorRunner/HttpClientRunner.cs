@@ -108,7 +108,8 @@ public class HttpClientRunner : IHttpClientRunner
                     Status = succeeded,
                     StatusCode = (int)monitorHttp.ResponseStatusCode,
                     TimeStamp = DateTime.UtcNow,
-                    ResponseTime = monitorHttp.ResponseTime
+                    ResponseTime = monitorHttp.ResponseTime,
+                    HttpVersion = monitorHttp.HttpVersion
                 };
 
                 if (succeeded)
