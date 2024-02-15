@@ -141,8 +141,9 @@ public class MonitorManager : IMonitorManager
 
             if (agentLocationEnabled)
             {
-                var region = await _caching.GetOrSetObjectFromCacheAsync("locationDataKey", 600, IPAddressUtils.GetLocation);
-                
+                var region =
+                    await _caching.GetOrSetObjectFromCacheAsync("locationDataKey", 600, IPAddressUtils.GetLocation);
+
                 monitorAgent = new MonitorAgent
                 {
                     Hostname = Environment.MachineName,
@@ -194,39 +195,42 @@ public class MonitorManager : IMonitorManager
                 var countMonitor = monitorList.Count();
                 var countAgents = monitorAgents.Count();
 
-                int tasksPerMonitor = countMonitor / countAgents;
-                int extraTasks = countMonitor % countAgents;
-
-                int currentIndex = 0;
-                int indexAgent = 0;
-
-                for (int i = 0; i < countMonitor; i++)
+                if (countAgents > 0)
                 {
-                    int tasksToTake = tasksPerMonitor + (i < extraTasks ? 1 : 0);
+                    int tasksPerMonitor = countMonitor / countAgents;
+                    int extraTasks = countMonitor % countAgents;
 
-                    var tasksForMonitor = monitorList.Skip(currentIndex).Take(tasksToTake).ToList();
+                    int currentIndex = 0;
+                    int indexAgent = 0;
 
-                    if (!tasksForMonitor.Any())
+                    for (int i = 0; i < countMonitor; i++)
                     {
-                        break;
-                    }
+                        int tasksToTake = tasksPerMonitor + (i < extraTasks ? 1 : 0);
 
-                    var agent = monitorAgents.ElementAt(indexAgent);
+                        var tasksForMonitor = monitorList.Skip(currentIndex).Take(tasksToTake).ToList();
 
-                    foreach (var task in tasksForMonitor)
-                    {
-                        lstMonitorAgentTasks.Add(new MonitorAgentTasks
+                        if (!tasksForMonitor.Any())
                         {
-                            MonitorId = task.Id,
-                            MonitorAgentId = agent.Id
-                        });
+                            break;
+                        }
+
+                        var agent = monitorAgents.ElementAt(indexAgent);
+
+                        foreach (var task in tasksForMonitor)
+                        {
+                            lstMonitorAgentTasks.Add(new MonitorAgentTasks
+                            {
+                                MonitorId = task.Id,
+                                MonitorAgentId = agent.Id
+                            });
+                        }
+
+                        indexAgent += 1;
+                        currentIndex += tasksToTake;
                     }
 
-                    indexAgent += 1;
-                    currentIndex += tasksToTake;
+                    await _monitorAgentRepository.UpsertMonitorAgentTasks(lstMonitorAgentTasks);
                 }
-
-                await _monitorAgentRepository.UpsertMonitorAgentTasks(lstMonitorAgentTasks);
             }
         }
         catch (Exception e)
