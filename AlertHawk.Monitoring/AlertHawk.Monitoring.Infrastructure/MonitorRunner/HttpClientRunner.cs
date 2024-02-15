@@ -98,7 +98,12 @@ public class HttpClientRunner : IHttpClientRunner
                     }
                 }
 
-                var content = new StringContent(monitorHttp.Body, System.Text.Encoding.UTF8, "application/json");
+                StringContent content = null;
+
+                if (monitorHttp.Body != null)
+                {
+                    content = new StringContent(monitorHttp.Body, System.Text.Encoding.UTF8, "application/json");
+                }
 
                 client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
 
@@ -164,8 +169,10 @@ public class HttpClientRunner : IHttpClientRunner
                 }
             }
 
-            catch (Exception)
+            catch (Exception err)
             {
+                Console.WriteLine(err.Message);
+                SentrySdk.CaptureException(err);
                 retryCount++;
                 Thread.Sleep(2000);
                 // If max retries reached, update status and save history

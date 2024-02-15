@@ -15,7 +15,7 @@ public class MonitorHttp : Monitor
     public int ResponseTime { get; set; }
     public string HttpVersion { get; set; }
     public MonitorHttpMethod MonitorHttpMethod { get; set; }
-    public string Body { get; set; }
-    public string HeadersJson { get; set; }
-    public List<Tuple<string,string>> Headers { get; set; }
+    public string? Body { get; set; }
+    public string? HeadersJson { get; set; }
+    public List<Tuple<string,string>>? Headers { get; set; }
 }
