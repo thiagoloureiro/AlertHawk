@@ -88,11 +88,31 @@ public class HttpClientRunner : IHttpClientRunner
                 using HttpClient client = new HttpClient(handler);
                 client.DefaultRequestHeaders.Add("User-Agent", "PostmanRuntime/7.36.1");
                 client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
+
+                if (monitorHttp.Headers != null)
+                {
+                    var newHeaders = monitorHttp.Headers;
+                    foreach (var header in newHeaders)
+                    {
+                        client.DefaultRequestHeaders.Add(header.Item1, header.Item2);
+                    }
+                }
+
+                var content = new StringContent(monitorHttp.Body, System.Text.Encoding.UTF8, "application/json");
+
                 client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
 
                 var sw = new Stopwatch();
                 sw.Start();
-                var response = await client.GetAsync(monitorHttp.UrlToCheck);
+
+                HttpResponseMessage response = monitorHttp.MonitorHttpMethod switch
+                {
+                    MonitorHttpMethod.Get => await client.GetAsync(monitorHttp.UrlToCheck),
+                    MonitorHttpMethod.Post => await client.PostAsync(monitorHttp.UrlToCheck, content),
+                    MonitorHttpMethod.Put => await client.PutAsync(monitorHttp.UrlToCheck, content),
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
                 var elapsed = sw.ElapsedMilliseconds;
                 monitorHttp.ResponseTime = (int)elapsed;
                 sw.Stop();
@@ -121,6 +141,7 @@ public class HttpClientRunner : IHttpClientRunner
                     {
                         await HandleSuccessNotifications(monitorHttp);
                     }
+
                     break;
                 }
                 else
@@ -168,6 +189,7 @@ public class HttpClientRunner : IHttpClientRunner
                     {
                         await HandleFailedNotifications(monitorHttp);
                     }
+
                     break;
                 }
             }

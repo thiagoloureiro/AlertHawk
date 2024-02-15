@@ -91,12 +91,13 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             }, commandType: CommandType.Text);
 
         string sqlMonitorHttp =
-            @"INSERT INTO [MonitorHttp] (MonitorId, CheckCertExpiry, IgnoreTlsSsl, UpsideDownMode, MaxRedirects, UrlToCheck, Timeout) VALUES (@MonitorId, @CheckCertExpiry, @IgnoreTlsSsl, @UpsideDownMode, @MaxRedirects, @UrlToCheck, @Timeout)";
+            @"INSERT INTO [MonitorHttp] (MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson) VALUES (@MonitorId, @CheckCertExpiry, @IgnoreTlsSsl, @MaxRedirects, @UrlToCheck, @Timeout, @MonitorHttpMethod, @Body, @HeadersJson)";
         await db.ExecuteAsync(sqlMonitorHttp,
             new
             {
                 MonitorId = id, monitorHttp.CheckCertExpiry, monitorHttp.IgnoreTlsSsl,
-                monitorHttp.UpsideDownMode, monitorHttp.MaxRedirects,
+                monitorHttp.MaxRedirects,
+                monitorHttp.MonitorHttpMethod, monitorHttp.Body, monitorHttp.HeadersJson
             }, commandType: CommandType.Text);
     }
 
@@ -143,7 +144,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string whereClause = $"WHERE MonitorId IN ({string.Join(",", ids)})";
 
         string sql =
-            $@"SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, UpsideDownMode, MaxRedirects, UrlToCheck, Timeout FROM [MonitorHttp] {whereClause}";
+            $@"SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, LastStatus, ResponseTime, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp] {whereClause}";
 
         return await db.QueryAsync<MonitorHttp>(sql, commandType: CommandType.Text);
     }

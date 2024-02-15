@@ -7,7 +7,6 @@ public class MonitorHttp : Monitor
     public int MonitorId { get; set; }
     public bool CheckCertExpiry { get; set; }
     public bool IgnoreTlsSsl { get; set; }
-    public bool UpsideDownMode { get; set; }
     public required int MaxRedirects{ get; set; }
     public required string UrlToCheck { get; set; }
     public HttpStatusCode ResponseStatusCode { get; set; }
@@ -17,5 +16,6 @@ public class MonitorHttp : Monitor
     public string HttpVersion { get; set; }
     public MonitorHttpMethod MonitorHttpMethod { get; set; }
     public string Body { get; set; }
-    public Tuple<string,string> Headers { get; set; }
+    public string HeadersJson { get; set; }
+    public List<Tuple<string,string>> Headers { get; set; }
 }
