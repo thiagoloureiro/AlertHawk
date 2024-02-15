@@ -171,8 +171,6 @@ public class HttpClientRunner : IHttpClientRunner
 
             catch (Exception err)
             {
-                Console.WriteLine(err.Message);
-                SentrySdk.CaptureException(err);
                 retryCount++;
                 Thread.Sleep(2000);
                 // If max retries reached, update status and save history
