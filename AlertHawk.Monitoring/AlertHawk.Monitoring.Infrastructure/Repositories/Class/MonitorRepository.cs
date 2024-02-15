@@ -144,7 +144,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string whereClause = $"WHERE MonitorId IN ({string.Join(",", ids)})";
 
         string sql =
-            $@"SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, LastStatus, ResponseTime, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp] {whereClause}";
+            $@"SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, ResponseTime, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp] {whereClause}";
 
         return await db.QueryAsync<MonitorHttp>(sql, commandType: CommandType.Text);
     }
