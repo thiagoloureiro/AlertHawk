@@ -88,6 +88,8 @@ public class HttpClientRunner : IHttpClientRunner
                 using HttpClient client = new HttpClient(handler);
                 client.DefaultRequestHeaders.Add("User-Agent", "PostmanRuntime/7.36.1");
                 client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
+                client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+                client.DefaultRequestHeaders.Add("Accept", "*/*");
 
                 if (monitorHttp.Headers != null)
                 {
