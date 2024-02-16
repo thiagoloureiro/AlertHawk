@@ -82,6 +82,19 @@ public class UserRepository : BaseRepository, IUserRepository
 
         });
     }
+    public async Task CreateFromAzure(UserCreationFromAzure userCreation)
+    {
+        const string insertUserSql = @"
+            INSERT INTO Users (Id, Username, Email,  IsAdmin, CreatedAt) 
+            VALUES (NEWID(), @Username, @Email, 0, @CreatedAt)";
+
+        await ExecuteNonQueryAsync(insertUserSql, new
+        {
+            userCreation.Username,
+            Email = userCreation.Email.ToLower(),
+            CreatedAt = DateTime.UtcNow
+        });
+    }
 
     public async Task Update(UserDto userUpdate)
     {
@@ -90,7 +103,6 @@ public class UserRepository : BaseRepository, IUserRepository
 
         var parameters = new DynamicParameters();
         parameters.Add("Id", userUpdate.Id);
-        parameters.Add("IsAdmin", userUpdate.IsAdmin);
 
         // Check if the new username or email is already taken by another user
         if (updateUsername || updateEmail)
@@ -142,7 +154,9 @@ public class UserRepository : BaseRepository, IUserRepository
         if (updateFields.Any())
         {
             updateFields.Add("UpdatedAt = @UpdatedAt");
+            updateFields.Add("IsAdmin = @IsAdmin");
             parameters.Add("UpdatedAt", DateTime.UtcNow);
+            parameters.Add("IsAdmin", userUpdate.IsAdmin);
 
             var updateSql = $"UPDATE Users SET {string.Join(", ", updateFields)} WHERE Id = @Id";
             await ExecuteNonQueryAsync(updateSql, parameters);

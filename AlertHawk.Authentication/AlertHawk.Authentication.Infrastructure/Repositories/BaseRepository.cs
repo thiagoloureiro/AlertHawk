@@ -1,6 +1,5 @@
 using System.Data.SqlClient;
 using System.Diagnostics.CodeAnalysis;
-using AutoMapper;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 

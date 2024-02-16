@@ -19,7 +19,12 @@ public class UserService : IUserService
     {
         await _userRepository.Create(userCreation);
     }
-    
+
+    public async Task CreateFromAzure(UserCreationFromAzure userCreation)
+    {
+        await _userRepository.CreateFromAzure(userCreation);
+    }
+
     public async Task Update(UserDto userUpdate)
     {
         await _userRepository.Update(userUpdate);
