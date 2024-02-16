@@ -6,7 +6,7 @@ namespace AlertHawk.Application.Interfaces;
 public interface IUserService
 {
     Task Create(UserCreation userCreation);
-    
+    Task CreateFromAzure(UserCreationFromAzure userCreation);
     Task Update(UserDto userUpdate);
     
     Task ResetPassword(string username);

@@ -6,7 +6,7 @@ namespace AlertHawk.Authentication.Infrastructure.Interfaces;
 public interface IUserRepository
 {
     Task Create(UserCreation userCreation);
-    
+    Task CreateFromAzure(UserCreationFromAzure userCreation);
     Task Update(UserDto userUpdate);
     
     Task<string> ResetPassword(string username);

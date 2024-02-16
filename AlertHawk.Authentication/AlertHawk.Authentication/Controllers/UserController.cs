@@ -3,10 +3,9 @@ using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using Sentry;
 using Swashbuckle.AspNetCore.Annotations;
-using System.Security.Claims;
 using AlertHawk.Authentication.Domain.Dto;
+using AlertHawk.Authentication.Helpers;
 
 namespace AlertHawk.Authentication.Controllers;
 
@@ -15,10 +14,12 @@ namespace AlertHawk.Authentication.Controllers;
 public class UserController : Controller
 {
     private readonly IUserService _userService;
-
+    private readonly GetOrCreateUserHelper _getOrCreateUserHelper;
     public UserController(IUserService userService)
     {
         _userService = userService;
+        _getOrCreateUserHelper = new GetOrCreateUserHelper(_userService);
+
     }
 
     [HttpPost("create")]
@@ -27,6 +28,8 @@ public class UserController : Controller
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> PostUserCreation([FromBody] UserCreation userCreation)
     {
+        await IsUserAdmin();
+        
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
@@ -61,11 +64,12 @@ public class UserController : Controller
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> PutUserUpdate([FromBody] UserDto userUpdate)
     {
+        await IsUserAdmin();
+
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
-
 
         try
         {
@@ -97,10 +101,24 @@ public class UserController : Controller
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [Authorize()]
     public async Task<IActionResult> GetAll()
     {
-        return Ok(await _userService.GetAll());
+        var usrAdmin = await IsUserAdmin();
+        return usrAdmin ?? Ok(await _userService.GetAll());
     }
+
+    private async Task<ObjectResult?> IsUserAdmin()
+    {
+        var usr = await _getOrCreateUserHelper.GetUserOrCreateUser(User);
+        if (!usr.IsAdmin)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new Message("This user is not authorized to do this operation"));
+        }
+        return null; // or return a default value if needed
+    }
+
     [HttpGet("GetById/{userId}")]
     [SwaggerOperation(Summary = "Get User by Id")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -127,5 +145,15 @@ public class UserController : Controller
     public async Task<IActionResult> GetByUsername(string userName)
     {
         return Ok(await _userService.GetByUsername(userName));
+    }
+    [HttpGet("{email}")]
+    [Authorize]
+    [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
+    public async Task<ActionResult> Get(string email)
+    {
+        var result = await _userService.GetByEmail(email);
+        if (ReferenceEquals(result, null))
+            result = await _getOrCreateUserHelper.GetUserOrCreateUser(User);
+        return Ok(result);
     }
 }

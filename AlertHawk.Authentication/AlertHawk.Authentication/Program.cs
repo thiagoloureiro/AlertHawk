@@ -9,6 +9,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Identity.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,45 +34,36 @@ builder.Services.AddAutoMapper((_, config) =>
     config.AddCollectionMappers();
 }, AppDomain.CurrentDomain.GetAssemblies());
 
-var issuer = configuration["Jwt:Issuer"] ?? throw new ArgumentException("Configuration value for 'Jwt:Issuer' not found.");
-var audience = configuration["Jwt:Audience"] ?? throw new ArgumentException("Configuration value for 'Jwt:Audience' not found.");
-var key = configuration["Jwt:Key"] ?? throw new ArgumentException("Configuration value for 'Jwt:Key' not found.");
+//var issuer = configuration["Jwt:Issuer"] ?? throw new ArgumentException("Configuration value for 'Jwt:Issuer' not found.");
+//var issuers = configuration["Jwt:Issuers"] ?? throw new ArgumentException("Configuration value for 'Jwt:Issuers' not found.");
+//var audience = configuration["Jwt:Audience"] ?? throw new ArgumentException("Configuration value for 'Jwt:Audience' not found.");
+//var audiences = configuration["Jwt:Audiences"] ?? throw new ArgumentException("Configuration value for 'Jwt:Audiences' not found.");
+//var key = configuration["Jwt:Key"] ?? throw new ArgumentException("Configuration value for 'Jwt:Key' not found.");
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = issuer,
-            ValidateAudience = true,
-            ValidAudience = audience,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
-            RequireExpirationTime = true,
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero,
-        };
-        options.UseSecurityTokenValidators = true;
-        options.MapInboundClaims = false;
-    });
+//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//    .AddJwtBearer(options =>
+//    {
+//        options.TokenValidationParameters = new TokenValidationParameters
+//        {
+//            ValidateIssuer = true,
+//            ValidIssuers = issuers.Split(","),
+//            //ValidIssuer = issuer,
+//            ValidateAudience = true,
+//            ValidAudiences = audiences.Split(","),
+//            //ValidAudience = audience,
+//            ValidateIssuerSigningKey = true,
+//            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+//            RequireExpirationTime = true,
+//            ValidateLifetime = true,
+//            ClockSkew = TimeSpan.Zero,
+//        };
+//        options.UseSecurityTokenValidators = true;
+//        options.MapInboundClaims = false;
+//        options.Audience = audience;
+//    });
 
-builder.Services.AddAuthorizationBuilder()
-    .SetDefaultPolicy(new AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .RequireClaim("id")
-        .RequireClaim("email")
-        .RequireClaim("username")
-        .RequireClaim("isAdmin")
-        .Build())
-    .AddPolicy("AdminPolicy", policy =>
-    {
-        policy.RequireClaim("id");
-        policy.RequireClaim("email");
-        policy.RequireClaim("username");
-        policy.RequireClaim("isAdmin", "true");
-        policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
-    });
+builder.Services.AddMicrosoftIdentityWebApiAuthentication(configuration, jwtBearerScheme: "AzureAd");
+
 
 builder.Services.AddSwaggerGen(c =>
 {
