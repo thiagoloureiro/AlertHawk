@@ -153,6 +153,7 @@ public class HttpClientRunner : IHttpClientRunner
                 }
                 else
                 {
+                    monitorHistory.ResponseMessage = response.ReasonPhrase;
                     retryCount++;
                     Thread.Sleep(2000);
 
@@ -186,7 +187,8 @@ public class HttpClientRunner : IHttpClientRunner
                         Status = false,
                         StatusCode = (int)monitorHttp.ResponseStatusCode,
                         TimeStamp = DateTime.UtcNow,
-                        ResponseTime = monitorHttp.ResponseTime
+                        ResponseTime = monitorHttp.ResponseTime,
+                        ResponseMessage = err.Message
                     };
 
                     await _monitorRepository.SaveMonitorHistory(monitorHistory);
