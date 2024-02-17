@@ -197,7 +197,7 @@ public class MonitorManager : IMonitorManager
                 var countMonitor = monitorList.Count();
                 var countAgents = monitorAgents.Count();
 
-                if (countAgents > 0)
+                if (countAgents > 0 && countMonitor > 0)
                 {
                     int tasksPerMonitor = countMonitor / countAgents;
                     int extraTasks = countMonitor % countAgents;
