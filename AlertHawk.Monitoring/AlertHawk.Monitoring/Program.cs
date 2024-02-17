@@ -10,7 +10,9 @@ using EasyMemoryCache.Configuration;
 using Hangfire;
 using Hangfire.MemoryStorage;
 using MassTransit;
+using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseSentry();
@@ -35,6 +37,7 @@ builder.Services.AddMassTransit(x =>
         });
     });
 });
+builder.Services.AddMicrosoftIdentityWebApiAuthentication(configuration, jwtBearerScheme: "AzureAd");
 
 builder.Services.AddHangfire(config => config.UseMemoryStorage());
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
@@ -57,8 +60,22 @@ builder.Services.AddTransient<ITcpClientRunner, TcpClientRunner>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
+builder.Services.AddSwaggerGen(c =>
+{
+    c.EnableAnnotations();
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "AlertHawk Monitoring API", Version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description =
+            "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 1safsfsdfdfd\"",
+    });
+    c.OperationFilter<SecurityRequirementsOperationFilter>();
+});
 var app = builder.Build();
 
 app.UseHangfireDashboard();
