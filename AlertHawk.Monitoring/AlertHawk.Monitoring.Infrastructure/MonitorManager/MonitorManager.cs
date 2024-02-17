@@ -188,14 +188,16 @@ public class MonitorManager : IMonitorManager
             if (GlobalVariables.MasterNode)
             {
                 var lstMonitorAgentTasks = new List<MonitorAgentTasks>();
-                var iEnumerable = await _monitorRepository.GetMonitorList();
-                var monitorList = iEnumerable.ToList();
+                var monitors = await _monitorRepository.GetMonitorList();
+             
                 var monitorAgents = await _monitorAgentRepository.GetAllMonitorAgents();
 
+                var monitorList = monitors.Where(x => x.Paused == false).ToList();
+                
                 var countMonitor = monitorList.Count();
                 var countAgents = monitorAgents.Count();
 
-                if (countAgents > 0)
+                if (countAgents > 0 && countMonitor > 0)
                 {
                     int tasksPerMonitor = countMonitor / countAgents;
                     int extraTasks = countMonitor % countAgents;

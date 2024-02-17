@@ -9,4 +9,5 @@ public class MonitorHistory
     public int StatusCode { get; set; }
     public int ResponseTime { get; set; }
     public string HttpVersion { get; set; }
+    public string? ResponseMessage { get; set; }
 }

@@ -21,7 +21,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion FROM [Monitor]";
+            @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor]";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
 
@@ -43,7 +43,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string whereClause = $"WHERE Id IN ({string.Join(",", ids)})";
 
         string sql =
-            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion FROM [Monitor] {whereClause}";
+            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor] {whereClause}";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
 
@@ -52,7 +52,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
 
         string sql =
-            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion  FROM [Monitor] WHERE Id=@id";
+            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment  FROM [Monitor] WHERE Id=@id";
         return await db.QueryFirstOrDefaultAsync<Monitor>(sql, new { id }, commandType: CommandType.Text);
     }
 
@@ -81,13 +81,14 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sqlMonitor =
-            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion) VALUES (@Name, @MonitorTypeId, @HeartBeatInterval, @Retries, @Status, @DaysToExpireCert, @Paused, @MonitorRegion); SELECT CAST(SCOPE_IDENTITY() as int)";
+            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment) VALUES (@Name, @MonitorTypeId, @HeartBeatInterval, @Retries, @Status, @DaysToExpireCert, @Paused, @MonitorRegion, @MonitorEnvironment); SELECT CAST(SCOPE_IDENTITY() as int)";
         var id = await db.ExecuteScalarAsync<int>(sqlMonitor,
             new
             {
                 monitorHttp.Name, monitorHttp.MonitorTypeId, monitorHttp.HeartBeatInterval, monitorHttp.Retries,
                 monitorHttp.Status,
-                monitorHttp.DaysToExpireCert, monitorHttp.Paused, monitorHttp.MonitorRegion
+                monitorHttp.DaysToExpireCert, monitorHttp.Paused, monitorHttp.MonitorRegion,
+                monitorHttp.MonitorEnvironment
             }, commandType: CommandType.Text);
 
         string sqlMonitorHttp =
@@ -113,12 +114,12 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @"INSERT INTO [MonitorHistory] (MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion) VALUES (@MonitorId, @Status, @TimeStamp, @StatusCode, @ResponseTime, @HttpVersion)";
+            @"INSERT INTO [MonitorHistory] (MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion, ResponseMessage) VALUES (@MonitorId, @Status, @TimeStamp, @StatusCode, @ResponseTime, @HttpVersion, @ResponseMessage)";
         await db.ExecuteAsync(sql,
             new
             {
                 monitorHistory.MonitorId, monitorHistory.Status, monitorHistory.TimeStamp, monitorHistory.StatusCode,
-                monitorHistory.ResponseTime, monitorHistory.HttpVersion
+                monitorHistory.ResponseTime, monitorHistory.HttpVersion, monitorHistory.ResponseMessage
             }, commandType: CommandType.Text);
     }
 
@@ -126,7 +127,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @"SELECT TOP 10000 MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion FROM [MonitorHistory] WHERE MonitorId=@id ORDER BY TimeStamp DESC";
+            @"SELECT TOP 10000 MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion, ResponseMessage FROM [MonitorHistory] WHERE MonitorId=@id ORDER BY TimeStamp DESC";
         return await db.QueryAsync<MonitorHistory>(sql, new { id }, commandType: CommandType.Text);
     }
 
@@ -147,5 +148,29 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             $@"SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp] {whereClause}";
 
         return await db.QueryAsync<MonitorHttp>(sql, commandType: CommandType.Text);
+    }
+    
+    public async Task SaveMonitorAlert(MonitorHistory monitorHistory)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @"INSERT INTO [MonitorAlert] (MonitorId, TimeStamp, Status, Message) VALUES (@MonitorId, @TimeStamp, @Status, @Message)";
+        await db.ExecuteAsync(sql,
+            new
+            {
+                monitorHistory.MonitorId, monitorHistory.TimeStamp, monitorHistory.Status, Message = monitorHistory.ResponseMessage
+            }, commandType: CommandType.Text);
+    }
+    
+    public async Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @$"SELECT MonitorId, COUNT(Status) AS FailureCount
+            FROM MonitorAlert
+            WHERE Status = 'false' AND TimeStamp >= DATEADD(DAY, -{days}, GETDATE())
+            GROUP BY MonitorId;";
+        
+        return await db.QueryAsync<MonitorFailureCount>(sql, new { days }, commandType: CommandType.Text);
     }
 }

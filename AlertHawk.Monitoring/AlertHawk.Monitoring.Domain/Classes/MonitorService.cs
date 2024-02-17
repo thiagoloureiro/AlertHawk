@@ -112,11 +112,15 @@ public class MonitorService : IMonitorService
     {
         var monitorList = await GetMonitorList();
         var enumerable = monitorList.ToList();
+        var paused = enumerable.Count(x => x.Paused);
+
+        enumerable.RemoveAll(x => x.Paused);
+
         var monitorDashboard = new MonitorStatusDashboard
         {
             MonitorUp = enumerable.Count(x => x.Status),
             MonitorDown = enumerable.Count(x => !x.Status),
-            MonitorPaused = enumerable.Count(x => x.Paused)
+            MonitorPaused = paused
         };
         return monitorDashboard;
     }
@@ -124,6 +128,22 @@ public class MonitorService : IMonitorService
     public async Task CreateMonitor(MonitorHttp monitorHttp)
     {
         await _monitorRepository.CreateMonitor(monitorHttp);
+    }
+
+    public async Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days)
+    {
+        var result = await _monitorRepository.GetMonitorFailureCount(days);
+        var monitor = await _monitorRepository.GetMonitorList();
+        var monitorList = monitor.ToList();
+
+        var monitorFailureCounts = result.ToList();
+
+        foreach (var item in monitorFailureCounts)
+        {
+            item.Monitor = monitorList?.FirstOrDefault(x => x.Id == item.MonitorId);
+        }
+
+        return monitorFailureCounts;
     }
 
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)

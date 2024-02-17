@@ -88,6 +88,8 @@ public class HttpClientRunner : IHttpClientRunner
                 using HttpClient client = new HttpClient(handler);
                 client.DefaultRequestHeaders.Add("User-Agent", "PostmanRuntime/7.36.1");
                 client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
+                client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+                client.DefaultRequestHeaders.Add("Accept", "*/*");
 
                 if (monitorHttp.Headers != null)
                 {
@@ -135,7 +137,8 @@ public class HttpClientRunner : IHttpClientRunner
                     StatusCode = (int)monitorHttp.ResponseStatusCode,
                     TimeStamp = DateTime.UtcNow,
                     ResponseTime = monitorHttp.ResponseTime,
-                    HttpVersion = monitorHttp.HttpVersion
+                    HttpVersion = monitorHttp.HttpVersion,
+                    ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}"
                 };
 
                 if (succeeded)
@@ -145,12 +148,14 @@ public class HttpClientRunner : IHttpClientRunner
                     if (monitorHttp.LastStatus == false)
                     {
                         await HandleSuccessNotifications(monitorHttp);
+                        await _monitorRepository.SaveMonitorAlert(monitorHistory);
                     }
 
                     break;
                 }
                 else
                 {
+                    monitorHistory.ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}";
                     retryCount++;
                     Thread.Sleep(2000);
 
@@ -163,6 +168,7 @@ public class HttpClientRunner : IHttpClientRunner
                             .LastStatus) // only send notification when goes from online to offline to avoid flood
                         {
                             await HandleFailedNotifications(monitorHttp);
+                            await _monitorRepository.SaveMonitorAlert(monitorHistory);
                             break;
                         }
                     }
@@ -184,7 +190,8 @@ public class HttpClientRunner : IHttpClientRunner
                         Status = false,
                         StatusCode = (int)monitorHttp.ResponseStatusCode,
                         TimeStamp = DateTime.UtcNow,
-                        ResponseTime = monitorHttp.ResponseTime
+                        ResponseTime = monitorHttp.ResponseTime,
+                        ResponseMessage = err.Message
                     };
 
                     await _monitorRepository.SaveMonitorHistory(monitorHistory);
