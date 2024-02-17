@@ -81,5 +81,14 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorService.PauseMonitor(id, paused);
             return Ok();
         }
+        
+        [SwaggerOperation(Summary = "Retrieves Failure Count")]
+        [ProducesResponseType(typeof(IEnumerable<MonitorAgent>), StatusCodes.Status200OK)]
+        [HttpGet("getMonitorFailureCount/{days}")]
+        public async Task<IActionResult> GetMonitorFailureCount(int days)
+        {
+            var result = await _monitorService.GetMonitorFailureCount(days);
+            return Ok(result);
+        }
     }
 }

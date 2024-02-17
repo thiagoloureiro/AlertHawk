@@ -161,4 +161,16 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 monitorHistory.MonitorId, monitorHistory.TimeStamp, monitorHistory.Status, Message = monitorHistory.ResponseMessage
             }, commandType: CommandType.Text);
     }
+    
+    public async Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @$"SELECT MonitorId, COUNT(Status) AS FailureCount
+            FROM MonitorAlert
+            WHERE Status = 'false' AND TimeStamp >= DATEADD(DAY, -{days}, GETDATE())
+            GROUP BY MonitorId;";
+        
+        return await db.QueryAsync<MonitorFailureCount>(sql, new { days }, commandType: CommandType.Text);
+    }
 }

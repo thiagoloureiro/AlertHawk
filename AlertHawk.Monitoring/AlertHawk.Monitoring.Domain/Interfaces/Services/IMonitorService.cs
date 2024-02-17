@@ -16,4 +16,5 @@ public interface IMonitorService
     Task SetMonitorDashboardDataCacheList();
     Task<MonitorStatusDashboard> GetMonitorStatusDashboard();
     Task CreateMonitor(MonitorHttp monitorHttp);
+    Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days);
 }

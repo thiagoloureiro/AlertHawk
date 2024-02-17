@@ -126,6 +126,22 @@ public class MonitorService : IMonitorService
         await _monitorRepository.CreateMonitor(monitorHttp);
     }
 
+    public async Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days)
+    {
+        var result = await _monitorRepository.GetMonitorFailureCount(days);
+        var monitor = await _monitorRepository.GetMonitorList();
+        var monitorList = monitor.ToList();
+
+        var monitorFailureCounts = result.ToList();
+        
+        foreach (var item in monitorFailureCounts)
+        {
+            item.Monitor = monitorList?.FirstOrDefault(x => x.Id == item.MonitorId);
+        }
+        
+        return monitorFailureCounts;
+    }
+
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
     {
         var data = _caching.GetValueFromCache<List<MonitorDashboard>>(_cacheKeyDashboardList);

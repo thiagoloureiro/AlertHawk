@@ -19,4 +19,5 @@ public interface IMonitorRepository
     Task PauseMonitor(int id, bool paused);
     Task CreateMonitor(MonitorHttp monitorHttp);
     Task SaveMonitorAlert(MonitorHistory monitorHistory);
+    Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days);
 }
