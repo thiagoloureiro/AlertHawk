@@ -149,4 +149,16 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
 
         return await db.QueryAsync<MonitorHttp>(sql, commandType: CommandType.Text);
     }
+    
+    public async Task SaveMonitorAlert(MonitorHistory monitorHistory)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @"INSERT INTO [MonitorAlert] (MonitorId, TimeStamp, Status, Message) VALUES (@MonitorId, @TimeStamp, @Status, @Message)";
+        await db.ExecuteAsync(sql,
+            new
+            {
+                monitorHistory.MonitorId, monitorHistory.TimeStamp, monitorHistory.Status, Message = monitorHistory.ResponseMessage
+            }, commandType: CommandType.Text);
+    }
 }

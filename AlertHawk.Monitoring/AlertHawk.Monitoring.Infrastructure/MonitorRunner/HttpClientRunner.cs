@@ -147,6 +147,7 @@ public class HttpClientRunner : IHttpClientRunner
                     if (monitorHttp.LastStatus == false)
                     {
                         await HandleSuccessNotifications(monitorHttp);
+                        await _monitorRepository.SaveMonitorAlert(monitorHistory);
                     }
 
                     break;
@@ -166,6 +167,7 @@ public class HttpClientRunner : IHttpClientRunner
                             .LastStatus) // only send notification when goes from online to offline to avoid flood
                         {
                             await HandleFailedNotifications(monitorHttp);
+                            await _monitorRepository.SaveMonitorAlert(monitorHistory);
                             break;
                         }
                     }
