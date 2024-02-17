@@ -113,11 +113,13 @@ public class MonitorService : IMonitorService
         var monitorList = await GetMonitorList();
         var enumerable = monitorList.ToList();
         var paused = enumerable.Count(x => x.Paused);
-        
+
+        enumerable.RemoveAll(x => x.Paused);
+
         var monitorDashboard = new MonitorStatusDashboard
         {
-            MonitorUp = enumerable.Count(x => x.Status) - paused,
-            MonitorDown = enumerable.Count(x => !x.Status) - paused,
+            MonitorUp = enumerable.Count(x => x.Status),
+            MonitorDown = enumerable.Count(x => !x.Status),
             MonitorPaused = paused
         };
         return monitorDashboard;
@@ -135,12 +137,12 @@ public class MonitorService : IMonitorService
         var monitorList = monitor.ToList();
 
         var monitorFailureCounts = result.ToList();
-        
+
         foreach (var item in monitorFailureCounts)
         {
             item.Monitor = monitorList?.FirstOrDefault(x => x.Id == item.MonitorId);
         }
-        
+
         return monitorFailureCounts;
     }
 
