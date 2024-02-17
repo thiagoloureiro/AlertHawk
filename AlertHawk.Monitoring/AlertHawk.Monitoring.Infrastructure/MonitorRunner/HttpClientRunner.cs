@@ -138,7 +138,7 @@ public class HttpClientRunner : IHttpClientRunner
                     TimeStamp = DateTime.UtcNow,
                     ResponseTime = monitorHttp.ResponseTime,
                     HttpVersion = monitorHttp.HttpVersion,
-                    ResponseMessage = $"{response.StatusCode} - {response.ReasonPhrase}"
+                    ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}"
                 };
 
                 if (succeeded)
@@ -155,7 +155,7 @@ public class HttpClientRunner : IHttpClientRunner
                 }
                 else
                 {
-                    monitorHistory.ResponseMessage = $"{response.StatusCode} - {response.ReasonPhrase}";
+                    monitorHistory.ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}";
                     retryCount++;
                     Thread.Sleep(2000);
 
