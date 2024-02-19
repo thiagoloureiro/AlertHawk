@@ -29,6 +29,7 @@ namespace AlertHawk.Notification.Domain.Classes
             switch (notificationSend.NotificationTypeId)
             {
                 case 1: // Email SMTP
+                    notificationSend.NotificationEmail.Body += notificationSend.Message;
                     var result = await _mailNotifier.Send(notificationSend.NotificationEmail);
                     return result;
 
