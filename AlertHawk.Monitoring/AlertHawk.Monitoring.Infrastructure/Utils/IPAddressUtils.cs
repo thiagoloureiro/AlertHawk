@@ -38,6 +38,9 @@ public static class IPAddressUtils
                 case "Oceania":
                     region = MonitorRegion.Oceania;
                     break;
+                case "Africa":
+                    region = MonitorRegion.Africa;
+                    break;
             }
 
             return region;
