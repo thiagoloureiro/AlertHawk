@@ -24,7 +24,11 @@ public abstract class BaseRepository
         await using var connection = new SqlConnection(ConnectionString);
         return await connection.QueryAsync<T>(sql);
     }
-
+    public async Task<IEnumerable<T>?> ExecuteQueryAsyncWithParameters<T>(string sql, object parameters)
+    {
+        await using var connection = new SqlConnection(ConnectionString);
+        return await connection.QueryAsync<T>(sql, parameters);
+    }
     public async Task ExecuteNonQueryAsync(string sql, object parameters)
     {
         await using var connection = new SqlConnection(ConnectionString);
