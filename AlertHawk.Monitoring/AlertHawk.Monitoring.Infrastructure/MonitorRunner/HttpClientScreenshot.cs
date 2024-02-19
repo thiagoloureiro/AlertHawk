@@ -8,36 +8,53 @@ public class HttpClientScreenshot : IHttpClientScreenshot
 {
     public async Task TakeScreenshotAsync(string url, int monitorId)
     {
-        // Set the path to the directory where you want to save the screenshot
-        string screenshotDirectory = @"/screenshots";
-        // Ensure the directory exists, create it if necessary
-        Directory.CreateDirectory(screenshotDirectory);
+        var screenshotEnabled = GetScreenShotEnabledVariable();
 
-        // Set Chrome options
-        ChromeOptions options = new ChromeOptions();
-        options.AddArguments("--no-sandbox");
-        options.AddArguments("--disable-dev-shm-usage");
-        options.AddArgument("--headless");
-        options.AddArgument("--window-size=1280,780");
+        if (screenshotEnabled)
+        {
+            // Set the path to the directory where you want to save the screenshot
+            string screenshotDirectory = @"/screenshots";
+            // Ensure the directory exists, create it if necessary
+            Directory.CreateDirectory(screenshotDirectory);
 
-        // Initialize ChromeDriver
-        using var driver = new ChromeDriver(options);
+            // Set Chrome options
+            ChromeOptions options = new ChromeOptions();
+            options.AddArguments("--no-sandbox");
+            options.AddArguments("--disable-dev-shm-usage");
+            options.AddArgument("--headless");
+            options.AddArgument("--window-size=1280,780");
 
-        driver.Navigate().GoToUrl(url);
+            // Initialize ChromeDriver
+            using var driver = new ChromeDriver(options);
 
-        // Wait for the page to load (adjust the wait time as needed)
-        Thread.Sleep(2000);
+            driver.Navigate().GoToUrl(url);
 
-        // Take screenshot
-        Screenshot screenshot = ((ITakesScreenshot)driver).GetScreenshot();
+            // Wait for the page to load (adjust the wait time as needed)
+            Thread.Sleep(2000);
 
-        // Generate file name
-        string fileName = $"screenshot_monitorId_{monitorId}_{DateTime.Now:yyyyMMdd_HHmmss}.png";
+            // Take screenshot
+            Screenshot screenshot = ((ITakesScreenshot)driver).GetScreenshot();
 
-        // Save the screenshot
-        string filePath = Path.Combine(screenshotDirectory, fileName);
-        screenshot.SaveAsFile(filePath);
+            // Generate file name
+            string fileName = $"screenshot_monitorId_{monitorId}_{DateTime.Now:yyyyMMdd_HHmmss}.png";
 
-        Console.WriteLine($"Screenshot saved: {filePath}");
+            // Save the screenshot
+            string filePath = Path.Combine(screenshotDirectory, fileName);
+            screenshot.SaveAsFile(filePath);
+
+            Console.WriteLine($"Screenshot saved: {filePath}");
+        }
+    }
+
+    static bool GetScreenShotEnabledVariable()
+    {
+        string enableScreenshot = Environment.GetEnvironmentVariable("enable_screenshot");
+        if (!string.IsNullOrEmpty(enableScreenshot) && bool.TryParse(enableScreenshot, out bool result))
+        {
+            return result;
+        }
+
+        // Default value if environment variable is not set or not a valid boolean
+        return false;
     }
 }
