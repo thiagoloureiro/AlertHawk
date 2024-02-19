@@ -188,60 +188,67 @@ public class MonitorManager : IMonitorManager
             // Only MasterNode is responsible for Managing Tasks
             if (GlobalVariables.MasterNode)
             {
-                var lstMonitorAgentTasks = new List<MonitorAgentTasks>();
-                var monitors = await _monitorRepository.GetMonitorList();
-
-                var monitorAgents = await _monitorAgentRepository.GetAllMonitorAgents();
-
-                var monitorList = monitors.Where(x => x.Paused == false).ToList();
-
-                var countMonitor = monitorList.Count();
-                var countAgents = monitorAgents.Count();
-
-                if (countAgents > 0 && countMonitor > 0)
+                foreach (var day in Enum.GetValues(typeof(MonitorRegion)))
                 {
-                    int tasksPerMonitor = countMonitor / countAgents;
-                    int extraTasks = countMonitor % countAgents;
-
-                    int currentIndex = 0;
-                    int indexAgent = 0;
-
-                    for (int i = 0; i < countMonitor; i++)
-                    {
-                        int tasksToTake = tasksPerMonitor + (i < extraTasks ? 1 : 0);
-
-                        var tasksForMonitor = monitorList.Skip(currentIndex).Take(tasksToTake).ToList();
-
-                        if (!tasksForMonitor.Any())
-                        {
-                            break;
-                        }
-
-                        var agent = monitorAgents.ElementAt(indexAgent);
-
-                        foreach (var task in tasksForMonitor)
-                        {
-                            if (task.MonitorRegion == agent.MonitorRegion)
-                            {
-                                lstMonitorAgentTasks.Add(new MonitorAgentTasks
-                                {
-                                    MonitorId = task.Id,
-                                    MonitorAgentId = agent.Id
-                                });
-                            }
-                        }
-
-                        indexAgent += 1;
-                        currentIndex += tasksToTake;
-                    }
-
-                    await _monitorAgentRepository.UpsertMonitorAgentTasks(lstMonitorAgentTasks);
+                    await SetAgentTasksPerMonitorPerRegion((int)day);
                 }
             }
         }
         catch (Exception e)
         {
             SentrySdk.CaptureException(e);
+        }
+    }
+
+    private async Task SetAgentTasksPerMonitorPerRegion(int region)
+    {
+        var lstMonitorAgentTasks = new List<MonitorAgentTasks>();
+        var monitors = await _monitorRepository.GetMonitorList();
+        monitors = monitors.Where(x => (int)x.MonitorRegion == region);
+
+        var monitorAgents = await _monitorAgentRepository.GetAllMonitorAgents();
+        monitorAgents = monitorAgents.Where(x => (int)x.MonitorRegion == region).ToList();
+
+        var monitorList = monitors.Where(x => x.Paused == false).ToList();
+
+        var countMonitor = monitorList.Count();
+        var countAgents = monitorAgents.Count();
+
+        if (countAgents > 0 && countMonitor > 0)
+        {
+            int tasksPerMonitor = countMonitor / countAgents;
+            int extraTasks = countMonitor % countAgents;
+
+            int currentIndex = 0;
+            int indexAgent = 0;
+
+            for (int i = 0; i < countMonitor; i++)
+            {
+                int tasksToTake = tasksPerMonitor + (i < extraTasks ? 1 : 0);
+
+                var tasksForMonitor = monitorList.Skip(currentIndex).Take(tasksToTake).ToList();
+
+                if (!tasksForMonitor.Any())
+                {
+                    break;
+                }
+
+                var agent = monitorAgents.ElementAt(indexAgent);
+
+                foreach (var task in tasksForMonitor)
+                {
+                    lstMonitorAgentTasks.Add(new MonitorAgentTasks
+                    {
+                        MonitorId = task.Id,
+                        MonitorAgentId = agent.Id
+                    });
+                }
+
+                indexAgent += 1;
+                currentIndex += tasksToTake;
+            }
+
+            await _monitorAgentRepository.UpsertMonitorAgentTasks(lstMonitorAgentTasks);
         }
     }
 
