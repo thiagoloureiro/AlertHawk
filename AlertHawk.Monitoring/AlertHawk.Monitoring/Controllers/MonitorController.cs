@@ -46,6 +46,27 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorService.GetMonitorList();
             return Ok(result);
         }
+        
+        [SwaggerOperation(Summary = "Retrieves a List of items to be Monitored by Monitor Group Ids (JWT Token required)")]
+        [ProducesResponseType(typeof(IEnumerable<Domain.Entities.Monitor>), StatusCodes.Status200OK)]
+        [HttpGet("monitorListByMonitorGroupIds")]
+        public async Task<IActionResult> GetMonitorListByMonitorGroupIds()
+        {
+            // Retrieve the JWT token from the request headers
+            string token = Request.Headers["Authorization"].ToString();
+
+            // Extract the actual token value (assuming it's in the format "Bearer {token}")
+            string[] tokenParts = token.Split(' ');
+            if (tokenParts.Length != 2 || !tokenParts[0].Equals("Bearer", StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest("Invalid token format");
+            }
+
+            string jwtToken = tokenParts[1];
+            
+            var result = await _monitorService.GetMonitorListByMonitorGroupIds(jwtToken);
+            return Ok(result);
+        }
 
         [SwaggerOperation(Summary = "Retrieves a List of all Monitor Agents")]
         [ProducesResponseType(typeof(IEnumerable<MonitorAgent>), StatusCodes.Status200OK)]

@@ -8,7 +8,7 @@ public interface IMonitorService
     Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id);
     Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id);
     Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days);
-    Task<IEnumerable<Monitor>> GetMonitorList();
+    Task<IEnumerable<Monitor?>> GetMonitorList();
     Task DeleteMonitorHistory(int days);
     Task PauseMonitor(int id, bool paused);
     Task<MonitorDashboard?> GetMonitorDashboardData(int id);
@@ -17,4 +17,5 @@ public interface IMonitorService
     Task<MonitorStatusDashboard> GetMonitorStatusDashboard();
     Task CreateMonitor(MonitorHttp monitorHttp);
     Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days);
+    Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(string token);
 }

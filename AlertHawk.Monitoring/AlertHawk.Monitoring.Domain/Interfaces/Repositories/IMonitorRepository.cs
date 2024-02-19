@@ -5,7 +5,7 @@ namespace AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 
 public interface IMonitorRepository
 {
-    Task<IEnumerable<Monitor>> GetMonitorList();
+    Task<IEnumerable<Monitor?>> GetMonitorList();
     Task<IEnumerable<MonitorHttp>> GetHttpMonitorByIds(List<int> ids);
     Task<IEnumerable<MonitorTcp>> GetTcpMonitorByIds(List<int> ids);
     Task<IEnumerable<Monitor>> GetMonitorListByIds(List<int> ids);
@@ -20,4 +20,5 @@ public interface IMonitorRepository
     Task CreateMonitor(MonitorHttp monitorHttp);
     Task SaveMonitorAlert(MonitorHistory monitorHistory);
     Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days);
+    Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(List<int> groupMonitorIds);
 }

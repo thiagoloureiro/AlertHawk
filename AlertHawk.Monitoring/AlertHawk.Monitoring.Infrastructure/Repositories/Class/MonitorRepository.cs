@@ -17,12 +17,21 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         _connstring = GetConnectionString();
     }
 
-    public async Task<IEnumerable<Monitor>> GetMonitorList()
+    public async Task<IEnumerable<Monitor?>> GetMonitorList()
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
             @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor]";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
+    }
+
+    public async Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(List<int> groupMonitorIds)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor] M
+            INNER JOIN MonitorGroupItems MGI ON MGI.MonitorId = M.Id WHERE MGI.MonitorGroupId IN (@MonitorGroupId)";
+        return await db.QueryAsync<Monitor>(sql, new { MonitorGroupId = groupMonitorIds }, commandType: CommandType.Text);
     }
 
     public async Task<IEnumerable<MonitorTcp>> GetTcpMonitorByIds(List<int> ids)
@@ -149,7 +158,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
 
         return await db.QueryAsync<MonitorHttp>(sql, commandType: CommandType.Text);
     }
-    
+
     public async Task SaveMonitorAlert(MonitorHistory monitorHistory)
     {
         await using var db = new SqlConnection(_connstring);
@@ -158,10 +167,11 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sql,
             new
             {
-                monitorHistory.MonitorId, monitorHistory.TimeStamp, monitorHistory.Status, Message = monitorHistory.ResponseMessage
+                monitorHistory.MonitorId, monitorHistory.TimeStamp, monitorHistory.Status,
+                Message = monitorHistory.ResponseMessage
             }, commandType: CommandType.Text);
     }
-    
+
     public async Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days)
     {
         await using var db = new SqlConnection(_connstring);
@@ -170,7 +180,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             FROM MonitorAlert
             WHERE Status = 'false' AND TimeStamp >= DATEADD(DAY, -{days}, GETDATE())
             GROUP BY MonitorId;";
-        
+
         return await db.QueryAsync<MonitorFailureCount>(sql, new { days }, commandType: CommandType.Text);
     }
 }

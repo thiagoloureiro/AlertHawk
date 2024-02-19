@@ -1,7 +1,10 @@
+using System.Net.Http.Headers;
+using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using EasyMemoryCache;
+using Newtonsoft.Json;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
@@ -33,7 +36,7 @@ public class MonitorService : IMonitorService
         return await _monitorRepository.GetMonitorHistory(id, days);
     }
 
-    public async Task<IEnumerable<Monitor>> GetMonitorList()
+    public async Task<IEnumerable<Monitor?>> GetMonitorList()
     {
         return await _monitorRepository.GetMonitorList();
     }
@@ -144,6 +147,21 @@ public class MonitorService : IMonitorService
         }
 
         return monitorFailureCounts;
+    }
+
+    public async Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(string token)
+    {
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var content = await client.GetAsync("https://dev.api.alerthawk.tech/auth/api/UsersMonitorGroup/GetAll");
+        var result = await content.Content.ReadAsStringAsync();
+        var groupMonitorIds = JsonConvert.DeserializeObject<List<UsersMonitorGroup>>(result);
+        var listGroupMonitorIds = groupMonitorIds?.Select(x => x.GroupMonitorId).ToList();
+
+        if (listGroupMonitorIds != null)
+            return await _monitorRepository.GetMonitorListByMonitorGroupIds(listGroupMonitorIds);
+        
+        return null;
     }
 
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
