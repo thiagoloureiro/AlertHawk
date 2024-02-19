@@ -221,11 +221,14 @@ public class MonitorManager : IMonitorManager
 
                         foreach (var task in tasksForMonitor)
                         {
-                            lstMonitorAgentTasks.Add(new MonitorAgentTasks
+                            if (task.MonitorRegion == agent.MonitorRegion)
                             {
-                                MonitorId = task.Id,
-                                MonitorAgentId = agent.Id
-                            });
+                                lstMonitorAgentTasks.Add(new MonitorAgentTasks
+                                {
+                                    MonitorId = task.Id,
+                                    MonitorAgentId = agent.Id
+                                });
+                            }
                         }
 
                         indexAgent += 1;
