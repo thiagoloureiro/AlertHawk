@@ -1,5 +1,6 @@
 ﻿using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -19,6 +20,7 @@ namespace AlertHawk.Monitoring.Controllers
         [SwaggerOperation(Summary = "Retrieves a List of all Monitor Groups")]
         [ProducesResponseType(typeof(IEnumerable<MonitorGroup>), StatusCodes.Status200OK)]
         [HttpGet("monitorGroupList")]
+        [Authorize]
         public async Task<IActionResult> GetMonitorGroupList()
         {
             var result = await _monitorGroupService.GetMonitorGroupList();
