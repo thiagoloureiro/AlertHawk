@@ -99,7 +99,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
 
         if (!areEqual)
         {
-            await DeleteAllMonitorAgentTasks();
+            await DeleteAllMonitorAgentTasks(lstMonitorAgentTasks.Select(x => x.MonitorAgentId).ToList());
 
             string sqlInsertMaster =
                 @"INSERT INTO [MonitorAgentTasks] (MonitorId, MonitorAgentId) VALUES (@MonitorId, @MonitorAgentId)";
@@ -117,11 +117,11 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         }
     }
 
-    private async Task DeleteAllMonitorAgentTasks()
+    private async Task DeleteAllMonitorAgentTasks(List<int> ids)
     {
         await using var db = new SqlConnection(_connstring);
-        string sqlAllMonitors = @"DELETE FROM [MonitorAgentTasks] WHERE 1=1";
-        await db.ExecuteAsync(sqlAllMonitors, commandType: CommandType.Text);
+        string sqlAllMonitors = @"DELETE FROM [MonitorAgentTasks] WHERE MonitorAgentId IN @ids";
+        await db.ExecuteAsync(sqlAllMonitors, new { ids }, commandType: CommandType.Text);
     }
 
     public async Task<List<MonitorAgentTasks>> GetAllMonitorAgentTasks()
