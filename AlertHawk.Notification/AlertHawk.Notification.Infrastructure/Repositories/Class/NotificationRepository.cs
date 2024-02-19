@@ -265,7 +265,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @"SELECT NotificationId, FromEmail, ToEmail, HostName, Port, Username, Password, ToCCEmail, ToBCCEmail, EnableSSL, Subject, Body, IsHtmlBody FROM [NotificationEmailSmtp]";
+            @"SELECT NotificationId, FromEmail, ToEmail, HostName, Port, Username, ToCCEmail, ToBCCEmail, EnableSSL, Subject, Body, IsHtmlBody FROM [NotificationEmailSmtp]";
 
         var resultList = await db.QueryAsync<NotificationEmail>(sql, commandType: CommandType.Text);
         return resultList.ToList();
