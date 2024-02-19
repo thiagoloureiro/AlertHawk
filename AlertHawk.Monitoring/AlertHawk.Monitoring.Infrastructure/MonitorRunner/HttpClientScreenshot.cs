@@ -30,13 +30,13 @@ public class HttpClientScreenshot : IHttpClientScreenshot
             driver.Navigate().GoToUrl(url);
 
             // Wait for the page to load (adjust the wait time as needed)
-            Thread.Sleep(2000);
+            Thread.Sleep(GetScreenShotWaitTime());
 
             // Take screenshot
             Screenshot screenshot = ((ITakesScreenshot)driver).GetScreenshot();
 
             // Generate file name
-            string fileName = $"screenshot_monitorId_{monitorId}_{DateTime.Now:yyyyMMdd_HHmmss}.png";
+            string fileName = $"screenshot_monitorId_{monitorId}_{DateTime.UtcNow:yyyy-MM-dd_HH:mm:ss}.png";
 
             // Save the screenshot
             string filePath = Path.Combine(screenshotDirectory, fileName);
@@ -56,5 +56,17 @@ public class HttpClientScreenshot : IHttpClientScreenshot
 
         // Default value if environment variable is not set or not a valid boolean
         return false;
+    }
+    
+    static int GetScreenShotWaitTime()
+    {
+        string enableScreenshot = Environment.GetEnvironmentVariable("screenshot_wait_time_ms");
+        if (!string.IsNullOrEmpty(enableScreenshot) && int.TryParse(enableScreenshot, out int result))
+        {
+            return result;
+        }
+
+        // Default value if environment variable is not set or not a valid boolean
+        return 3000;
     }
 }
