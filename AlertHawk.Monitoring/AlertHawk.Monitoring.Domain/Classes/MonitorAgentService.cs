@@ -16,10 +16,10 @@ public class MonitorAgentService: IMonitorAgentService
     public async Task<IEnumerable<MonitorAgent>> GetAllMonitorAgents()
     {
         var agents = await _monitorAgentRepository.GetAllMonitorAgents();
-        var agentTasks = await _monitorAgentRepository.GetAllMonitorAgentTasks();
         
         foreach (var agent in agents)
         {
+            var agentTasks = await _monitorAgentRepository.GetAllMonitorAgentTasks((int)agent.MonitorRegion);
             agent.ListTasks = agentTasks.Count(x => x.MonitorAgentId == agent.Id);
         }
 

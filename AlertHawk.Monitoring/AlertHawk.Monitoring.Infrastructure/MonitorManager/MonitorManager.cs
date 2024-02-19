@@ -200,14 +200,14 @@ public class MonitorManager : IMonitorManager
         }
     }
 
-    private async Task SetAgentTasksPerMonitorPerRegion(int region)
+    private async Task SetAgentTasksPerMonitorPerRegion(int monitorRegion)
     {
         var lstMonitorAgentTasks = new List<MonitorAgentTasks>();
         var monitors = await _monitorRepository.GetMonitorList();
-        monitors = monitors.Where(x => (int)x.MonitorRegion == region);
+        monitors = monitors.Where(x => (int)x.MonitorRegion == monitorRegion);
 
         var monitorAgents = await _monitorAgentRepository.GetAllMonitorAgents();
-        monitorAgents = monitorAgents.Where(x => (int)x.MonitorRegion == region).ToList();
+        monitorAgents = monitorAgents.Where(x => (int)x.MonitorRegion == monitorRegion).ToList();
 
         var monitorList = monitors.Where(x => x.Paused == false).ToList();
 
@@ -248,7 +248,7 @@ public class MonitorManager : IMonitorManager
                 currentIndex += tasksToTake;
             }
 
-            await _monitorAgentRepository.UpsertMonitorAgentTasks(lstMonitorAgentTasks);
+            await _monitorAgentRepository.UpsertMonitorAgentTasks(lstMonitorAgentTasks, monitorRegion);
         }
     }
 

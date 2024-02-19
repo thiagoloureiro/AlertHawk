@@ -87,9 +87,9 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
     }
 
 
-    public async Task UpsertMonitorAgentTasks(List<MonitorAgentTasks> lstMonitorAgentTasks)
+    public async Task UpsertMonitorAgentTasks(List<MonitorAgentTasks> lstMonitorAgentTasks, int monitorRegion)
     {
-        var lstCurrentMonitorAgentTasks = await GetAllMonitorAgentTasks();
+        var lstCurrentMonitorAgentTasks = await GetAllMonitorAgentTasks(monitorRegion);
 
         bool areEqual = lstMonitorAgentTasks.OrderBy(x => x.MonitorId)
             .ThenBy(x => x.MonitorAgentId)
@@ -124,11 +124,14 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         await db.ExecuteAsync(sqlAllMonitors, new { ids }, commandType: CommandType.Text);
     }
 
-    public async Task<List<MonitorAgentTasks>> GetAllMonitorAgentTasks()
+    public async Task<List<MonitorAgentTasks>> GetAllMonitorAgentTasks(int monitorRegion)
     {
         await using var db = new SqlConnection(_connstring);
-        string sqlAllMonitors = @"SELECT MonitorId, MonitorAgentId FROM [MonitorAgentTasks]";
-        var result = await db.QueryAsync<MonitorAgentTasks>(sqlAllMonitors, commandType: CommandType.Text);
+        string sqlAllMonitors = @"SELECT MonitorId, MonitorAgentId FROM [MonitorAgentTasks] MAT
+                                INNER JOIN Monitor M on M.Id = MAT.MonitorId WHERE M.MonitorRegion = @monitorRegion";
+        var result =
+            await db.QueryAsync<MonitorAgentTasks>(sqlAllMonitors, new { monitorRegion },
+                commandType: CommandType.Text);
         return result.ToList();
     }
 
