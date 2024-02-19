@@ -53,6 +53,8 @@ builder.Services.AddTransient<IMonitorGroupRepository, MonitorGroupRepository>()
 
 builder.Services.AddTransient<IHttpClientRunner, HttpClientRunner>();
 builder.Services.AddTransient<ITcpClientRunner, TcpClientRunner>();
+builder.Services.AddTransient<IHttpClientScreenshot, HttpClientScreenshot>();
+
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

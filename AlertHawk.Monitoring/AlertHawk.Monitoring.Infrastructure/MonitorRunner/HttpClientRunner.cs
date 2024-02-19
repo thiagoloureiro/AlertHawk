@@ -10,14 +10,15 @@ namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 public class HttpClientRunner : IHttpClientRunner
 {
     private readonly IMonitorRepository _monitorRepository;
-
     private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IHttpClientScreenshot _httpClientScreenshot;
 
     public HttpClientRunner(IMonitorRepository monitorRepository,
-        IPublishEndpoint publishEndpoint)
+        IPublishEndpoint publishEndpoint, IHttpClientScreenshot httpClientScreenshot)
     {
         _monitorRepository = monitorRepository;
         _publishEndpoint = publishEndpoint;
+        _httpClientScreenshot = httpClientScreenshot;
     }
 
 
@@ -164,11 +165,14 @@ public class HttpClientRunner : IHttpClientRunner
                         await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded,
                             daysToExpireCert);
                         await _monitorRepository.SaveMonitorHistory(monitorHistory);
-                        if (monitorHttp
-                            .LastStatus) // only send notification when goes from online to offline to avoid flood
+
+                        // only send notification when goes from online to offline to avoid flood
+                        if (monitorHttp.LastStatus)
                         {
                             await HandleFailedNotifications(monitorHttp);
                             await _monitorRepository.SaveMonitorAlert(monitorHistory);
+                            await _httpClientScreenshot.TakeScreenshotAsync(monitorHttp.UrlToCheck,
+                                monitorHttp.MonitorId);
                             break;
                         }
                     }
@@ -200,6 +204,9 @@ public class HttpClientRunner : IHttpClientRunner
                         .LastStatus) // only send notification when goes from online to offline to avoid flood
                     {
                         await HandleFailedNotifications(monitorHttp);
+                        await _monitorRepository.SaveMonitorAlert(monitorHistory);
+                        await _httpClientScreenshot.TakeScreenshotAsync(monitorHttp.UrlToCheck,
+                            monitorHttp.MonitorId);
                     }
 
                     break;
