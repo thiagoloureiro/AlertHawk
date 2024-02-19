@@ -49,8 +49,31 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
             mailMessage.Body = emailNotification.Body;
             mailMessage.IsBodyHtml = emailNotification.IsHtmlBody;
 
-            await smtpClient.SendMailAsync(mailMessage);
-            return true;
+            const int maxRetries = 3;
+            const int retryIntervalSeconds = 3;
+            int retryCount = 0;
+
+            while (retryCount < maxRetries)
+            {
+                try
+                {
+                    await smtpClient.SendMailAsync(mailMessage);
+                    return true; // Email sent successfully, exit method
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to send email (attempt {retryCount + 1}/{maxRetries}): {ex.Message}");
+                    if (retryCount < maxRetries - 1)
+                    {
+                        Console.WriteLine($"Retrying in {retryIntervalSeconds} seconds...");
+                        await Task.Delay(TimeSpan.FromSeconds(retryIntervalSeconds));
+                    }
+                }
+                retryCount++;
+            }
+
+            Console.WriteLine("Failed to send email after retries.");
+            return false; 
         }
     }
 }

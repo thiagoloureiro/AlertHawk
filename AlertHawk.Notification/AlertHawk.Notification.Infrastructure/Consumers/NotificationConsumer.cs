@@ -29,8 +29,6 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
 
         if (notificationItem?.NotificationEmail != null)
         {
-            // In case of many emails to be sent to avoid spamming the email server
-            Thread.Sleep(2000);
             Console.WriteLine("Sending Email notification");
             var notificationSend = new NotificationSend
             {
