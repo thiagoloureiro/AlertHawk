@@ -37,7 +37,14 @@ builder.Services.AddMassTransit(x =>
         });
     });
 });
-builder.Services.AddMicrosoftIdentityWebApiAuthentication(configuration, jwtBearerScheme: "AzureAd");
+
+var azureEnabled = Environment.GetEnvironmentVariable("AZURE_AD_AUTH_ENABLED", EnvironmentVariableTarget.Process) ??
+                   "false";
+if (azureEnabled == "true")
+{
+    builder.Services.AddMicrosoftIdentityWebApiAuthentication(configuration, jwtBearerScheme: "AzureAd");
+}
+
 
 builder.Services.AddHangfire(config => config.UseMemoryStorage());
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
@@ -65,7 +72,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.EnableAnnotations();
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "AlertHawk Monitoring API", Version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() });
+    c.SwaggerDoc("v1",
+        new OpenApiInfo
+        {
+            Title = "AlertHawk Monitoring API", Version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
+        });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -106,7 +117,8 @@ if (app.Environment.IsDevelopment())
         c.RouteTemplate = "swagger/{documentName}/swagger.json";
         c.PreSerializeFilters.Add((swaggerDoc, httpReq) =>
         {
-            swaggerDoc.Servers = new List<OpenApiServer> { new OpenApiServer { Url = $"https://{httpReq.Host.Value}{basePath}" } };
+            swaggerDoc.Servers = new List<OpenApiServer>
+                { new OpenApiServer { Url = $"https://{httpReq.Host.Value}{basePath}" } };
         });
     });
     app.UseSwaggerUI();
@@ -120,4 +132,3 @@ app.UseSentryTracing();
 app.MapControllers();
 
 app.Run();
-
