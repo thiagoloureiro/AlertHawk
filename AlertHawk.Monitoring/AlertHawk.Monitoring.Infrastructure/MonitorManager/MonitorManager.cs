@@ -156,7 +156,8 @@ public class MonitorManager : IMonitorManager
                 monitorAgent = new MonitorAgent
                 {
                     Hostname = Environment.MachineName,
-                    TimeStamp = DateTime.UtcNow
+                    TimeStamp = DateTime.UtcNow,
+                    MonitorRegion = GetMonitorRegionVariable()
                 };
             }
 
@@ -189,11 +190,11 @@ public class MonitorManager : IMonitorManager
             {
                 var lstMonitorAgentTasks = new List<MonitorAgentTasks>();
                 var monitors = await _monitorRepository.GetMonitorList();
-             
+
                 var monitorAgents = await _monitorAgentRepository.GetAllMonitorAgents();
 
                 var monitorList = monitors.Where(x => x.Paused == false).ToList();
-                
+
                 var countMonitor = monitorList.Count();
                 var countAgents = monitorAgents.Count();
 
@@ -239,5 +240,18 @@ public class MonitorManager : IMonitorManager
         {
             SentrySdk.CaptureException(e);
         }
+    }
+
+    static MonitorRegion GetMonitorRegionVariable()
+    {
+        string monitorRegion = Environment.GetEnvironmentVariable("monitor_region");
+        if (!string.IsNullOrEmpty(monitorRegion) && int.TryParse(monitorRegion, out int result))
+        {
+            MonitorRegion value = (MonitorRegion)result;
+            return value;
+        }
+
+        // Default value if environment variable is not set or not a valid boolean
+        return MonitorRegion.Custom;
     }
 }

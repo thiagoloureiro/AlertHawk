@@ -8,5 +8,5 @@ public class MonitorAgent
     public bool IsMaster { get; set; }
     public int ListTasks { get; set; }
 
-    public MonitorRegion MonitorRegion { get; set; }
+    public MonitorRegion? MonitorRegion { get; set; }
 }
