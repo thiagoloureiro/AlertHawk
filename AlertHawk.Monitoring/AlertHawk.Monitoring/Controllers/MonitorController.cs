@@ -1,6 +1,7 @@
 ﻿using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
+using AlertHawk.Monitoring.Infrastructure.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
@@ -46,23 +47,15 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorService.GetMonitorList();
             return Ok(result);
         }
-        
-        [SwaggerOperation(Summary = "Retrieves a List of items to be Monitored by Monitor Group Ids (JWT Token required)")]
+
+        [SwaggerOperation(Summary =
+            "Retrieves a List of items to be Monitored by Monitor Group Ids (JWT Token required)")]
         [ProducesResponseType(typeof(IEnumerable<Domain.Entities.Monitor>), StatusCodes.Status200OK)]
         [HttpGet("monitorListByMonitorGroupIds")]
         public async Task<IActionResult> GetMonitorListByMonitorGroupIds()
         {
-            // Retrieve the JWT token from the request headers
-            string token = Request.Headers["Authorization"].ToString();
-
-            // Extract the actual token value (assuming it's in the format "Bearer {token}")
-            string[] tokenParts = token.Split(' ');
-            if (tokenParts.Length != 2 || !tokenParts[0].Equals("Bearer", StringComparison.OrdinalIgnoreCase))
-            {
-                return BadRequest("Invalid token format");
-            }
-
-            string jwtToken = tokenParts[1];
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (jwtToken == null) return BadRequest("Invalid Token");
             
             var result = await _monitorService.GetMonitorListByMonitorGroupIds(jwtToken);
             return Ok(result);
@@ -102,7 +95,7 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorService.PauseMonitor(id, paused);
             return Ok();
         }
-        
+
         [SwaggerOperation(Summary = "Retrieves Failure Count")]
         [ProducesResponseType(typeof(IEnumerable<MonitorAgent>), StatusCodes.Status200OK)]
         [HttpGet("getMonitorFailureCount/{days}")]
