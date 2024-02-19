@@ -11,7 +11,7 @@ namespace AlertHawk.Authentication.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UsersMonitorGroupController: Controller
+    public class UsersMonitorGroupController : Controller
     {
         private readonly IUserService _userService;
         private readonly GetOrCreateUserHelper _getOrCreateUserHelper;
@@ -69,6 +69,23 @@ namespace AlertHawk.Authentication.Controllers
         {
             var usrAdmin = await GetUserByToken();
             return Ok(await _usersMonitorGroupService.GetAsync(usrAdmin.Id));
+        }
+
+        [HttpGet("GetAllByUserId/{userId}")]
+        [SwaggerOperation(Summary = "Get All Monitor Group Id By UserId")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [Authorize()]
+        public async Task<IActionResult> GetAllByUserId(Guid userId)
+        {
+            var usrAdmin = await GetUserByToken();
+            if (!usrAdmin.IsAdmin)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
+            }
+            return Ok(await _usersMonitorGroupService.GetAsync(userId));
         }
         private async Task<UserDto?> GetUserByToken()
         {
