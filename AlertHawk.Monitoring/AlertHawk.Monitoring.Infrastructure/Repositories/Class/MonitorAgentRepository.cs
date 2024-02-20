@@ -99,6 +99,8 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
 
         if (!areEqual)
         {
+            Console.WriteLine($"Different Lists {lstMonitorAgentTasks.Count} - {lstCurrentMonitorAgentTasks.Count}");
+            
             await DeleteAllMonitorAgentTasks(lstMonitorAgentTasks.Select(x => x.MonitorId).ToList());
 
             string sqlInsertMaster =
