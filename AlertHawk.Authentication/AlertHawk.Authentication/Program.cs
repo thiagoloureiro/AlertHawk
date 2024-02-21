@@ -3,13 +3,9 @@ using AlertHawk.Authentication.Helpers;
 using AlertHawk.Authentication.Infrastructure.Config;
 using AutoMapper.EquivalencyExpression;
 using EasyMemoryCache.Configuration;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
-using System.Text;
-using Microsoft.Extensions.Configuration;
+using AlertHawk.Authentication;
 using Microsoft.Identity.Web;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -83,7 +79,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
-builder.WebHost.UseSentry();
+builder.WebHost.UseSentry(options => options.AddEventProcessor(new CustomEventProcessor()));
 
 var app = builder.Build();
 
