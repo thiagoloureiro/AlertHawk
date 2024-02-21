@@ -23,4 +23,6 @@ public interface IMonitorRepository
     Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(List<int> groupMonitorIds);
     Task UpdateMonitorHttp(MonitorHttp monitorHttp);
     Task DeleteMonitor(int id);
+    Task CreateMonitorTcp(MonitorTcp monitorTcp);
+    Task UpdateMonitorTcp(MonitorTcp monitorTcp);
 }

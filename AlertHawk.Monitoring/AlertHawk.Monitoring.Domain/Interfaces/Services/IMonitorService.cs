@@ -20,4 +20,6 @@ public interface IMonitorService
     Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(string token);
     Task UpdateMonitorHttp(MonitorHttp monitorHttp);
     Task DeleteMonitor(int id);
+    Task CreateMonitorTcp(MonitorTcp monitorTcp);
+    Task UpdateMonitorTcp(MonitorTcp monitorTcp);
 }

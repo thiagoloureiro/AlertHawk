@@ -57,12 +57,49 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
         string sql = @"DELETE FROM [Monitor] WHERE Id=@id";
         await db.ExecuteAsync(sql, new { id }, commandType: CommandType.Text);
-        
+
         string sqlHttp = @"DELETE FROM [MonitorHttp] WHERE MonitorId=@id";
         await db.ExecuteAsync(sqlHttp, new { id }, commandType: CommandType.Text);
-        
+
         string sqlTcp = @"DELETE FROM [MonitorTcp] WHERE MonitorId=@id";
         await db.ExecuteAsync(sqlTcp, new { id }, commandType: CommandType.Text);
+    }
+
+    public async Task CreateMonitorTcp(MonitorTcp monitorTcp)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlMonitor =
+            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment) 
+            VALUES (@Name, @MonitorTypeId, @HeartBeatInterval, @Retries, @Status, @DaysToExpireCert, @Paused, @MonitorRegion, @MonitorEnvironment); SELECT CAST(SCOPE_IDENTITY() as int)";
+        var id = await db.ExecuteScalarAsync<int>(sqlMonitor,
+            new
+            {
+                monitorTcp.Name, monitorTcp.MonitorTypeId, monitorTcp.HeartBeatInterval, monitorTcp.Retries,
+                monitorTcp.Status,
+                monitorTcp.DaysToExpireCert, monitorTcp.Paused, monitorTcp.MonitorRegion,
+                monitorTcp.MonitorEnvironment
+            }, commandType: CommandType.Text);
+
+        string sqlMonitorTcp =
+            @"INSERT INTO [MonitorTcp] (MonitorId, Port, IP, Timeout, LastStatus) VALUES (@MonitorId, @Port, @IP, @Timeout, @LastStatus)";
+        await db.ExecuteAsync(sqlMonitorTcp,
+            new
+            {
+                MonitorId = id, monitorTcp.Port, monitorTcp.IP, monitorTcp.Timeout, monitorTcp.LastStatus
+            }, commandType: CommandType.Text);
+    }
+
+    public async Task UpdateMonitorTcp(MonitorTcp monitorTcp)
+    {
+        await using var db = new SqlConnection(_connstring);
+
+        string sqlMonitorTcp =
+            @"UPDATE [MonitorTcp] SET MonitorId = @MonitorId, Port = @Port, IP = @IP, Timeout = @Timeout, LastStatus = @LastStatus WHERE MonitorId = @MonitorId";
+        await db.ExecuteAsync(sqlMonitorTcp,
+            new
+            {
+                monitorTcp.MonitorId, monitorTcp.Port, monitorTcp.IP, monitorTcp.Timeout, monitorTcp.LastStatus
+            }, commandType: CommandType.Text);
     }
 
     public async Task<IEnumerable<MonitorTcp>> GetTcpMonitorByIds(List<int> ids)

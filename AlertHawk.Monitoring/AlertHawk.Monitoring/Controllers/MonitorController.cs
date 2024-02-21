@@ -91,9 +91,27 @@ namespace AlertHawk.Monitoring.Controllers
         [SwaggerOperation(Summary = "Update monitor Http")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [HttpPost("updateMonitorHttp")]
-        public async Task<IActionResult> UpdateMonitor([FromBody] MonitorHttp monitorHttp)
+        public async Task<IActionResult> UpdateMonitorHttp([FromBody] MonitorHttp monitorHttp)
         {
             await _monitorService.UpdateMonitorHttp(monitorHttp);
+            return Ok();
+        }
+        
+        [SwaggerOperation(Summary = "Create a new monitor TCP")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [HttpPost("createMonitorTcp")]
+        public async Task<IActionResult> CreateMonitorTcp([FromBody] MonitorTcp monitorTcp)
+        {
+            await _monitorService.CreateMonitorTcp(monitorTcp);
+            return Ok();
+        }
+
+        [SwaggerOperation(Summary = "Update monitor TCP")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [HttpPost("updateMonitorTcp")]
+        public async Task<IActionResult> UpdateMonitorTcp([FromBody] MonitorTcp monitorTcp)
+        {
+            await _monitorService.UpdateMonitorTcp(monitorTcp);
             return Ok();
         }
 
