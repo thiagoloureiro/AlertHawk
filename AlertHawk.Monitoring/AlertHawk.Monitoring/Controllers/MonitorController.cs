@@ -56,7 +56,7 @@ namespace AlertHawk.Monitoring.Controllers
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
             if (jwtToken == null) return BadRequest("Invalid Token");
-            
+
             var result = await _monitorService.GetMonitorListByMonitorGroupIds(jwtToken);
             return Ok(result);
         }
@@ -82,9 +82,27 @@ namespace AlertHawk.Monitoring.Controllers
         [SwaggerOperation(Summary = "Create a new monitor Http")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [HttpPost("createMonitorHttp")]
-        public async Task<IActionResult> CreateMonitor([FromBody] MonitorHttp monitorHttp)
+        public async Task<IActionResult> CreateMonitorHttp([FromBody] MonitorHttp monitorHttp)
         {
-            await _monitorService.CreateMonitor(monitorHttp);
+            await _monitorService.CreateMonitorHttp(monitorHttp);
+            return Ok();
+        }
+
+        [SwaggerOperation(Summary = "Update monitor Http")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [HttpPost("updateMonitorHttp")]
+        public async Task<IActionResult> UpdateMonitor([FromBody] MonitorHttp monitorHttp)
+        {
+            await _monitorService.UpdateMonitorHttp(monitorHttp);
+            return Ok();
+        }
+
+        [SwaggerOperation(Summary = "Delete Monitor")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [HttpDelete("deleteMonitor/{id}")]
+        public async Task<IActionResult> DeleteMonitor(int id)
+        {
+            await _monitorService.DeleteMonitor(id);
             return Ok();
         }
 

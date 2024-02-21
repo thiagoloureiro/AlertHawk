@@ -128,9 +128,9 @@ public class MonitorService : IMonitorService
         return monitorDashboard;
     }
 
-    public async Task CreateMonitor(MonitorHttp monitorHttp)
+    public async Task CreateMonitorHttp(MonitorHttp monitorHttp)
     {
-        await _monitorRepository.CreateMonitor(monitorHttp);
+        await _monitorRepository.CreateMonitorHttp(monitorHttp);
     }
 
     public async Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days)
@@ -162,6 +162,16 @@ public class MonitorService : IMonitorService
             return await _monitorRepository.GetMonitorListByMonitorGroupIds(listGroupMonitorIds);
         
         return null;
+    }
+
+    public async Task UpdateMonitorHttp(MonitorHttp monitorHttp)
+    {
+        await _monitorRepository.UpdateMonitorHttp(monitorHttp);
+    }
+
+    public async Task DeleteMonitor(int id)
+    {
+        await _monitorRepository.DeleteMonitor(id);
     }
 
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)

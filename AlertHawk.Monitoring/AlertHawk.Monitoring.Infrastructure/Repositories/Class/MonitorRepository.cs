@@ -31,7 +31,38 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string sql =
             @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor] M
             INNER JOIN MonitorGroupItems MGI ON MGI.MonitorId = M.Id WHERE MGI.MonitorGroupId IN (@MonitorGroupId)";
-        return await db.QueryAsync<Monitor>(sql, new { MonitorGroupId = groupMonitorIds }, commandType: CommandType.Text);
+        return await db.QueryAsync<Monitor>(sql, new { MonitorGroupId = groupMonitorIds },
+            commandType: CommandType.Text);
+    }
+
+    public async Task UpdateMonitorHttp(MonitorHttp monitorHttp)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlMonitorHttp =
+            @"UPDATE [MonitorHttp] SET CheckCertExpiry = @CheckCertExpiry, IgnoreTlsSsl = @IgnoreTlsSsl, 
+            MaxRedirects = @MaxRedirects, UrlToCheck = @UrlToCheck, Timeout = @Timeout, MonitorHttpMethod = @MonitorHttpMethod, 
+            Body = @Body, HeadersJson = @HeadersJson WHERE MonitorId = @monitorId";
+
+        await db.ExecuteAsync(sqlMonitorHttp,
+            new
+            {
+                MonitorId = monitorHttp.MonitorId, monitorHttp.CheckCertExpiry, monitorHttp.IgnoreTlsSsl,
+                monitorHttp.MaxRedirects,
+                monitorHttp.MonitorHttpMethod, monitorHttp.Body, monitorHttp.HeadersJson
+            }, commandType: CommandType.Text);
+    }
+
+    public async Task DeleteMonitor(int id)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = @"DELETE FROM [Monitor] WHERE Id=@id";
+        await db.ExecuteAsync(sql, new { id }, commandType: CommandType.Text);
+        
+        string sqlHttp = @"DELETE FROM [MonitorHttp] WHERE MonitorId=@id";
+        await db.ExecuteAsync(sqlHttp, new { id }, commandType: CommandType.Text);
+        
+        string sqlTcp = @"DELETE FROM [MonitorTcp] WHERE MonitorId=@id";
+        await db.ExecuteAsync(sqlTcp, new { id }, commandType: CommandType.Text);
     }
 
     public async Task<IEnumerable<MonitorTcp>> GetTcpMonitorByIds(List<int> ids)
@@ -86,7 +117,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sql, new { id, paused }, commandType: CommandType.Text);
     }
 
-    public async Task CreateMonitor(MonitorHttp monitorHttp)
+    public async Task CreateMonitorHttp(MonitorHttp monitorHttp)
     {
         await using var db = new SqlConnection(_connstring);
         string sqlMonitor =
