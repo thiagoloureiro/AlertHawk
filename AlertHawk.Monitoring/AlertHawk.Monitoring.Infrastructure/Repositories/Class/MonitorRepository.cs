@@ -48,7 +48,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             {
                 MonitorId = monitorHttp.MonitorId, monitorHttp.CheckCertExpiry, monitorHttp.IgnoreTlsSsl,
                 monitorHttp.MaxRedirects,
-                monitorHttp.MonitorHttpMethod, monitorHttp.Body, monitorHttp.HeadersJson
+                monitorHttp.MonitorHttpMethod, monitorHttp.Body, monitorHttp.HeadersJson, monitorHttp.UrlToCheck, monitorHttp.Timeout
             }, commandType: CommandType.Text);
     }
 
@@ -169,13 +169,15 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             }, commandType: CommandType.Text);
 
         string sqlMonitorHttp =
-            @"INSERT INTO [MonitorHttp] (MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson) VALUES (@MonitorId, @CheckCertExpiry, @IgnoreTlsSsl, @MaxRedirects, @UrlToCheck, @Timeout, @MonitorHttpMethod, @Body, @HeadersJson)";
+            @"INSERT INTO [MonitorHttp] (MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson) 
+        VALUES (@MonitorId, @CheckCertExpiry, @IgnoreTlsSsl, @MaxRedirects, @UrlToCheck, @Timeout, @MonitorHttpMethod, @Body, @HeadersJson)";
         await db.ExecuteAsync(sqlMonitorHttp,
             new
             {
                 MonitorId = id, monitorHttp.CheckCertExpiry, monitorHttp.IgnoreTlsSsl,
                 monitorHttp.MaxRedirects,
-                monitorHttp.MonitorHttpMethod, monitorHttp.Body, monitorHttp.HeadersJson
+                monitorHttp.MonitorHttpMethod, monitorHttp.Body, monitorHttp.HeadersJson, monitorHttp.UrlToCheck,
+                monitorHttp.Timeout
             }, commandType: CommandType.Text);
     }
 
