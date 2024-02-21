@@ -5,6 +5,7 @@ using AlertHawk.Notification.Infrastructure.Repositories.Class;
 using EasyMemoryCache.Configuration;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using AlertHawk.Notification;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Helpers;
 using AlertHawk.Notification.Infrastructure.Notifiers;
@@ -59,7 +60,7 @@ builder.Services.AddTransient<ISlackNotifier, SlackNotifier>();
 builder.Services.AddTransient<ITeamsNotifier, TeamsNotifier>();
 builder.Services.AddTransient<ITelegramNotifier, TelegramNotifier>();
 
-builder.WebHost.UseSentry();
+builder.WebHost.UseSentry(options => options.AddEventProcessor(new CustomEventProcessor()));
 
 var app = builder.Build();
 
