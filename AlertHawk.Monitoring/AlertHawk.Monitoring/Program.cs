@@ -13,9 +13,11 @@ using MassTransit;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
+using AlertHawk.Monitoring;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.WebHost.UseSentry();
+builder.WebHost.UseSentry(options => options.AddEventProcessor(new CustomEventProcessor()));
+
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json", true, false)
@@ -91,7 +93,6 @@ builder.Services.AddSwaggerGen(c =>
 });
 var app = builder.Build();
 
-app.UseHangfireDashboard();
 app.UseHangfireServer();
 
 RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMonitorHeartBeatManager(), "*/6 * * * * *");
