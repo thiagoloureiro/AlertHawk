@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-02-22T11:37:23.195Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="9seIgkSOTOwg85ntVM0U" version="23.1.5" type="github">
+<mxfile host="app.diagrams.net" modified="2024-02-22T14:02:32.752Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="qi3OpLcVo158BiDCO9Qm" version="23.1.5" type="github">
   <diagram name="Página-1" id="EC5-yDx1gmlKd79TGFPl">
     <mxGraphModel dx="2261" dy="2084" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -211,11 +211,17 @@
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-36" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="URw1oCdvZ4ZULjiAWeCE-20" target="URw1oCdvZ4ZULjiAWeCE-21" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="URw1oCdvZ4ZULjiAWeCE-20" target="0GfC3lX6S0VPZCZiWhWO-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="URw1oCdvZ4ZULjiAWeCE-20" target="0GfC3lX6S0VPZCZiWhWO-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-20" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
           <mxGeometry x="1680" y="210" width="480" height="360" as="geometry" />
         </mxCell>
-        <mxCell id="URw1oCdvZ4ZULjiAWeCE-21" value="Applications (URLS)&lt;br&gt;Servers" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="1860" y="70" width="120" height="60" as="geometry" />
+        <mxCell id="URw1oCdvZ4ZULjiAWeCE-21" value="Applications (URLS)&lt;br&gt;Servers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+          <mxGeometry x="1700" y="70" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-30" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="URw1oCdvZ4ZULjiAWeCE-22" target="URw1oCdvZ4ZULjiAWeCE-27" edge="1">
           <mxGeometry relative="1" as="geometry" />
@@ -251,13 +257,13 @@
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-24" value="Monitor Child 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" parent="1" vertex="1">
           <mxGeometry x="1711" y="480" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="URw1oCdvZ4ZULjiAWeCE-25" value="Monitor Child 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" parent="1" vertex="1">
+        <mxCell id="URw1oCdvZ4ZULjiAWeCE-25" value="Monitor Child 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
           <mxGeometry x="1860" y="400" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="URw1oCdvZ4ZULjiAWeCE-27" value="Monitor Child 4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" parent="1" vertex="1">
+        <mxCell id="URw1oCdvZ4ZULjiAWeCE-27" value="Monitor Child 4" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
           <mxGeometry x="2009" y="400" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="URw1oCdvZ4ZULjiAWeCE-28" value="Monitor Child 5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" parent="1" vertex="1">
+        <mxCell id="URw1oCdvZ4ZULjiAWeCE-28" value="Monitor Child 5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
           <mxGeometry x="2009" y="480" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-29" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6c8ebf;" parent="1" vertex="1">
@@ -289,6 +295,30 @@
         </mxCell>
         <mxCell id="0GfC3lX6S0VPZCZiWhWO-1" value="Generic HTTP WebHook Notification" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFCC;" vertex="1" parent="1">
           <mxGeometry x="-760" y="120" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-4" value="Applications (URLS)&lt;br&gt;Servers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1860.5" y="70" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-5" value="Applications (URLS)&lt;br&gt;Servers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="2030" y="70" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-8" value="Monitor Region Asia" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1870" y="470" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-9" value="Application(s) Asia" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1870" y="40" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-10" value="Application(s) North America" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="2040" y="40" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-11" value="Application(s) Europe" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1710" y="40" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-12" value="Monitor Region Europe" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1717" y="540" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-13" value="Application(s) North America" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="2018" y="540" width="100" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
