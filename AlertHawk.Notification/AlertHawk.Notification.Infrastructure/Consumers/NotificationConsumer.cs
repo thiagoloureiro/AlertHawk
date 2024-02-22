@@ -34,7 +34,7 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
             {
                 NotificationEmail = notificationItem.NotificationEmail,
                 Message = context.Message.Message,
-                NotificationTypeId = notificationItem.NotificationTypeId
+                NotificationTypeId = notificationItem.NotificationTypeId,
             };
             await _notificationService.Send(notificationSend);
         }

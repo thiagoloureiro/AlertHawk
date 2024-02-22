@@ -22,7 +22,7 @@ public class HttpClientRunner : IHttpClientRunner
     }
 
 
-    private async Task HandleFailedNotifications(MonitorHttp monitorHttp)
+    private async Task HandleFailedNotifications(MonitorHttp monitorHttp, string reasonPhrase)
     {
         var notificationIdList = await _monitorRepository.GetMonitorNotifications(monitorHttp.MonitorId);
 
@@ -36,12 +36,14 @@ public class HttpClientRunner : IHttpClientRunner
                 NotificationId = item.NotificationId,
                 TimeStamp = DateTime.UtcNow,
                 Message =
-                    $"Error calling {monitorHttp.Name}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
+                    $"Error calling {monitorHttp.Name}, Response StatusCode: {monitorHttp.ResponseStatusCode}",
+                ReasonPhrase = reasonPhrase,
+                StatusCode = (int)monitorHttp.ResponseStatusCode
             });
         }
     }
 
-    private async Task HandleSuccessNotifications(MonitorHttp monitorHttp)
+    private async Task HandleSuccessNotifications(MonitorHttp monitorHttp, string reasonPhrase)
     {
         var notificationIdList = await _monitorRepository.GetMonitorNotifications(monitorHttp.MonitorId);
 
@@ -55,7 +57,8 @@ public class HttpClientRunner : IHttpClientRunner
                 NotificationId = item.NotificationId,
                 TimeStamp = DateTime.UtcNow,
                 Message =
-                    $"Success calling {monitorHttp.Name}, Response StatusCode: {monitorHttp.ResponseStatusCode}"
+                    $"Success calling {monitorHttp.Name}, Response StatusCode: {monitorHttp.ResponseStatusCode}",
+                StatusCode = (int)monitorHttp.ResponseStatusCode
             });
         }
     }
@@ -148,7 +151,7 @@ public class HttpClientRunner : IHttpClientRunner
                     await _monitorRepository.SaveMonitorHistory(monitorHistory);
                     if (monitorHttp.LastStatus == false)
                     {
-                        await HandleSuccessNotifications(monitorHttp);
+                        await HandleSuccessNotifications(monitorHttp, response.ReasonPhrase);
                         await _monitorRepository.SaveMonitorAlert(monitorHistory);
                     }
 
@@ -169,7 +172,7 @@ public class HttpClientRunner : IHttpClientRunner
                         // only send notification when goes from online to offline to avoid flood
                         if (monitorHttp.LastStatus)
                         {
-                            await HandleFailedNotifications(monitorHttp);
+                            await HandleFailedNotifications(monitorHttp, response.ReasonPhrase);
                             await _monitorRepository.SaveMonitorAlert(monitorHistory);
                             await _httpClientScreenshot.TakeScreenshotAsync(monitorHttp.UrlToCheck,
                                 monitorHttp.MonitorId);
@@ -203,7 +206,7 @@ public class HttpClientRunner : IHttpClientRunner
                     if (monitorHttp
                         .LastStatus) // only send notification when goes from online to offline to avoid flood
                     {
-                        await HandleFailedNotifications(monitorHttp);
+                        await HandleFailedNotifications(monitorHttp, err.Message);
                         await _monitorRepository.SaveMonitorAlert(monitorHistory);
                         await _httpClientScreenshot.TakeScreenshotAsync(monitorHttp.UrlToCheck,
                             monitorHttp.MonitorId);

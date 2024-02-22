@@ -159,15 +159,15 @@ public class NotifierTests : IClassFixture<NotificationController>
         Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
         Assert.Equal(true, result.Value);
     }
-    /*
+    
     [Fact]
     public async Task Should_Send_WebHook_Notification()
     {
         // Arrange
         var body =
-            "{\n    \"message\": \"An example alert message2\",\n    \"alias\": \"Life is too short for no alias2\",\n    \"description\":\"Every alert needs a description2\",\n    \"actions\": [\"Restart\", \"AnExampleAction\"],\n    \"tags\": [\"OverwriteQuietHours\",\"Critical\"],\n    \"details\":{\"key1\":\"value1\",\"key2\":\"value2\"},\n    \"entity\":\"An example entity\",\n    \"priority\":\"P2\"\n}";
-
-        var headers = "";
+            "{\n    \"message\": \"Error: #statuscode - #responsemessage\",\n    \"alias\": \"Life is too short for no alias2\",\n    \"description\":\"Every alert needs a description2\",\n    \"actions\": [\"Restart\", \"AnExampleAction\"],\n    \"tags\": [\"OverwriteQuietHours\",\"Critical\"],\n    \"details\":{\"key1\":\"value1\",\"key2\":\"value2\"},\n    \"entity\":\"An example entity\",\n    \"priority\":\"P2\"\n}";
+        
+        var headers = "{\"Authorization\": \"GenieKey d6d191e5-f671-4768-af7c-868c2046f13d\"}";
         
         var notificationSend = new NotificationSend
         {
@@ -191,5 +191,5 @@ public class NotifierTests : IClassFixture<NotificationController>
         Assert.NotNull(result);
         Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
         Assert.Equal(true, result.Value);
-    }*/
+    }
 }
