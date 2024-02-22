@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-02-19T10:27:27.920Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="-Z6GC3NjJF5rqVKFqVFT" version="23.1.4" type="github">
+<mxfile host="app.diagrams.net" modified="2024-02-22T10:58:08.596Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="Y0FAfbGYGohRL01dLAHr" version="23.1.5" type="github">
   <diagram name="Página-1" id="EC5-yDx1gmlKd79TGFPl">
     <mxGraphModel dx="2261" dy="2084" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -15,7 +15,7 @@
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="1MhiarmOQ1BAu21N2S9K-2" target="URw1oCdvZ4ZULjiAWeCE-16" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="vqQ0VsHs9EydCFRSuEvc-1" value="HTTP(s)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="URw1oCdvZ4ZULjiAWeCE-17">
+        <mxCell id="vqQ0VsHs9EydCFRSuEvc-1" value="HTTP(s)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="URw1oCdvZ4ZULjiAWeCE-17" vertex="1" connectable="0">
           <mxGeometry x="0.2692" y="1" relative="1" as="geometry">
             <mxPoint x="1" y="-61" as="offset" />
           </mxGeometry>
@@ -31,10 +31,10 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="vqQ0VsHs9EydCFRSuEvc-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="1MhiarmOQ1BAu21N2S9K-2" target="vqQ0VsHs9EydCFRSuEvc-2">
+        <mxCell id="vqQ0VsHs9EydCFRSuEvc-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" parent="1" source="1MhiarmOQ1BAu21N2S9K-2" target="vqQ0VsHs9EydCFRSuEvc-2" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="vqQ0VsHs9EydCFRSuEvc-4" value="Selenium WebDriver - Chrome&amp;nbsp;&lt;br&gt;Screenshot feature" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="vqQ0VsHs9EydCFRSuEvc-3">
+        <mxCell id="vqQ0VsHs9EydCFRSuEvc-4" value="Selenium WebDriver - Chrome&amp;nbsp;&lt;br&gt;Screenshot feature" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="vqQ0VsHs9EydCFRSuEvc-3" vertex="1" connectable="0">
           <mxGeometry x="0.6941" y="-3" relative="1" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
@@ -161,6 +161,14 @@
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="1MhiarmOQ1BAu21N2S9K-1" target="0GfC3lX6S0VPZCZiWhWO-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-3" value="HTTPS" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="0GfC3lX6S0VPZCZiWhWO-2">
+          <mxGeometry x="0.9286" y="4" relative="1" as="geometry">
+            <mxPoint x="4" y="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="1MhiarmOQ1BAu21N2S9K-1" value="Notification Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
           <mxGeometry x="60" y="230" width="120" height="60" as="geometry" />
         </mxCell>
@@ -273,11 +281,14 @@
         <mxCell id="I3jezIKi--hEiTG_am1P-1" value="Redis Cache&lt;br&gt;Historical Data" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/Cache_Redis_Product.svg;" parent="1" vertex="1">
           <mxGeometry x="310" y="61" width="50" height="42" as="geometry" />
         </mxCell>
-        <mxCell id="vqQ0VsHs9EydCFRSuEvc-2" value="Applications (URLS)&lt;br&gt;Servers" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="vqQ0VsHs9EydCFRSuEvc-2" value="Applications (URLS)&lt;br&gt;Servers" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="480" y="-90" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="vqQ0VsHs9EydCFRSuEvc-7" value="" style="shape=image;html=1;verticalAlign=top;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;imageAspect=0;aspect=fixed;image=https://cdn2.iconfinder.com/data/icons/social-media-2189/48/17-Google_chrome-128.png" vertex="1" parent="1">
+        <mxCell id="vqQ0VsHs9EydCFRSuEvc-7" value="" style="shape=image;html=1;verticalAlign=top;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;imageAspect=0;aspect=fixed;image=https://cdn2.iconfinder.com/data/icons/social-media-2189/48/17-Google_chrome-128.png" parent="1" vertex="1">
           <mxGeometry x="500" y="-20" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-1" value="Generic HTTP WebHook Notification" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFCC;" vertex="1" parent="1">
+          <mxGeometry x="-760" y="120" width="120" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
