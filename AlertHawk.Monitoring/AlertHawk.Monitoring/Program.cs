@@ -16,7 +16,24 @@ using System.Reflection;
 using AlertHawk.Monitoring;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.WebHost.UseSentry(options => options.AddEventProcessor(new CustomEventProcessor()));
+builder.WebHost.UseSentry(options =>
+    {
+        options.SetBeforeSend(
+            (sentryEvent, _) =>
+            {
+                if (
+                    sentryEvent.Level == SentryLevel.Error
+                    && sentryEvent.Logger?.Equals("Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter", StringComparison.Ordinal) == true
+                    && sentryEvent.Message?.Message?.Contains("IDX10223", StringComparison.Ordinal) == true
+                )
+                {   // Do not log 'IDX10223: Lifetime validation failed. The token is expired.'
+                    return null;
+                }
+                return sentryEvent;
+            }
+        );
+    }
+);
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
