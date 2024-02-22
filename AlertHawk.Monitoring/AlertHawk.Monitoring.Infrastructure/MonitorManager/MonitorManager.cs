@@ -59,7 +59,7 @@ public class MonitorManager : IMonitorManager
                 monitorHttp.Name = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Name;
                 monitorHttp.Retries = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Retries;
 
-                ConvertJsonToTuple(monitorHttp);
+                JsonUtils.ConvertJsonToTuple(monitorHttp);
 
                 string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
                 lstStringsToAdd.Add(jobId);
@@ -88,30 +88,7 @@ public class MonitorManager : IMonitorManager
         }
     }
 
-    private static void ConvertJsonToTuple(MonitorHttp monitorHttp)
-    {
-        try
-        {
-            if (monitorHttp.HeadersJson != null)
-            {
-                JObject jsonObj = JObject.Parse(monitorHttp.HeadersJson);
-
-                // Extract values and create Tuple
-                List<Tuple<string, string>> properties = new List<Tuple<string, string>>();
-
-                foreach (var property in jsonObj.Properties())
-                {
-                    properties.Add(Tuple.Create(property.Name, property.Value.ToString()));
-                }
-
-                monitorHttp.Headers = properties;
-            }
-        }
-        catch (Exception e)
-        {
-            SentrySdk.CaptureException(e);
-        }
-    }
+  
 
     private async Task StartTcpMonitorJobs(IEnumerable<Monitor> monitorListByIds)
     {

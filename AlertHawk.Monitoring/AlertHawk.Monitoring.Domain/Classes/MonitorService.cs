@@ -3,6 +3,7 @@ using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
+using AlertHawk.Monitoring.Domain.Utils;
 using EasyMemoryCache;
 using Newtonsoft.Json;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
@@ -130,6 +131,11 @@ public class MonitorService : IMonitorService
 
     public async Task CreateMonitorHttp(MonitorHttp monitorHttp)
     {
+        if (monitorHttp!.Headers != null)
+        {
+            monitorHttp.HeadersJson = JsonUtils.ConvertTupleToJson(monitorHttp.Headers);
+        }
+
         await _monitorRepository.CreateMonitorHttp(monitorHttp);
     }
 
@@ -160,12 +166,16 @@ public class MonitorService : IMonitorService
 
         if (listGroupMonitorIds != null)
             return await _monitorRepository.GetMonitorListByMonitorGroupIds(listGroupMonitorIds);
-        
+
         return null;
     }
 
     public async Task UpdateMonitorHttp(MonitorHttp monitorHttp)
     {
+        if (monitorHttp!.Headers != null)
+        {
+            monitorHttp.HeadersJson = JsonUtils.ConvertTupleToJson(monitorHttp.Headers);
+        }
         await _monitorRepository.UpdateMonitorHttp(monitorHttp);
     }
 
