@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
+using Polly;
 using StringContent = System.Net.Http.StringContent;
 
 namespace AlertHawk.Notification.Infrastructure.Notifiers
@@ -27,9 +28,17 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
                 }
             }
 
-            var response = await httpClient.PostAsync(webHookUrl, content);
-            
-            response.EnsureSuccessStatusCode();
+            var policy = Policy
+                .Handle<HttpRequestException>()
+                .OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
+                .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+
+            await policy.ExecuteAsync(async () =>
+            {
+                var response = await httpClient.PostAsync(webHookUrl, content);
+                response.EnsureSuccessStatusCode();
+                return response;
+            });
         }
     }
 }
