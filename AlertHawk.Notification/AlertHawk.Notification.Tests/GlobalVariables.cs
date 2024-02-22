@@ -9,5 +9,6 @@
         public static string SlackWebHookUrl { get; set; } = "slackwebhookurl-replace";
         
         public static string TeamsWebHookUrl { get; set; } = "teamswebhookurl-replace";
+        public static string WebHookUrl { get; set; } = "https://api.opsgenie.com/v2/alerts";
     }
 }

@@ -5,6 +5,7 @@ using AlertHawk.Monitoring.Infrastructure.Utils;
 using EasyMemoryCache;
 using Hangfire;
 using Hangfire.Storage;
+using Newtonsoft.Json.Linq;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorManager;
@@ -45,6 +46,7 @@ public class MonitorManager : IMonitorManager
             var httpMonitorIds = monitorByHttpType.Select(x => x.Id).ToList();
             var lstMonitors = await _monitorRepository.GetHttpMonitorByIds(httpMonitorIds);
 
+
             GlobalVariables.HttpTaskList = httpMonitorIds;
 
             var lstStringsToAdd = new List<string>();
@@ -56,6 +58,8 @@ public class MonitorManager : IMonitorManager
                     monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Status;
                 monitorHttp.Name = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Name;
                 monitorHttp.Retries = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Retries;
+
+                ConvertJsonToTuple(monitorHttp);
 
                 string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
                 lstStringsToAdd.Add(jobId);
@@ -81,6 +85,31 @@ public class MonitorManager : IMonitorManager
                 RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, x => x.CheckUrlsAsync(monitorHttp),
                     $"*/{monitor?.HeartBeatInterval} * * * *");
             }
+        }
+    }
+
+    private static void ConvertJsonToTuple(MonitorHttp monitorHttp)
+    {
+        try
+        {
+            if (monitorHttp.HeadersJson != null)
+            {
+                JObject jsonObj = JObject.Parse(monitorHttp.HeadersJson);
+
+                // Extract values and create Tuple
+                List<Tuple<string, string>> properties = new List<Tuple<string, string>>();
+
+                foreach (var property in jsonObj.Properties())
+                {
+                    properties.Add(Tuple.Create(property.Name, property.Value.ToString()));
+                }
+
+                monitorHttp.Headers = properties;
+            }
+        }
+        catch (Exception e)
+        {
+            SentrySdk.CaptureException(e);
         }
     }
 

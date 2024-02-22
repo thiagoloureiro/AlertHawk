@@ -30,5 +30,6 @@ public class Startup
         services.AddTransient<ISlackNotifier, SlackNotifier>();
         services.AddTransient<ITeamsNotifier, TeamsNotifier>();
         services.AddTransient<ITelegramNotifier, TelegramNotifier>();
+        services.AddTransient<IWebHookNotifier, WebHookNotifier>();
     }
 }

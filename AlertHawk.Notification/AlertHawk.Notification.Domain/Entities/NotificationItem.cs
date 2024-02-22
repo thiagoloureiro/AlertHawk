@@ -10,4 +10,5 @@ public class NotificationItem
     public NotificationEmail? NotificationEmail { get; set; }
     public NotificationTeams? NotificationTeams { get; set; }
     public NotificationTelegram? NotificationTelegram { get; set; }
+    public NotificationWebHook? NotificationWebHook { get; set; }
 }

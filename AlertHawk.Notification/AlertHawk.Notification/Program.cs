@@ -59,6 +59,7 @@ builder.Services.AddTransient<IMailNotifier, MailNotifier>();
 builder.Services.AddTransient<ISlackNotifier, SlackNotifier>();
 builder.Services.AddTransient<ITeamsNotifier, TeamsNotifier>();
 builder.Services.AddTransient<ITelegramNotifier, TelegramNotifier>();
+builder.Services.AddTransient<IWebHookNotifier, WebHookNotifier>();
 
 builder.WebHost.UseSentry(options => options.AddEventProcessor(new CustomEventProcessor()));
 

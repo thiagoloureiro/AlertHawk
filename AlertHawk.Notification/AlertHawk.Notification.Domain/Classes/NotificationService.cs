@@ -2,6 +2,7 @@
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Domain.Interfaces.Repositories;
 using AlertHawk.Notification.Domain.Interfaces.Services;
+using Newtonsoft.Json.Linq;
 
 namespace AlertHawk.Notification.Domain.Classes
 {
@@ -12,16 +13,18 @@ namespace AlertHawk.Notification.Domain.Classes
         private readonly ITeamsNotifier _teamsNotifier;
         private readonly ITelegramNotifier _telegramNotifier;
         private readonly INotificationRepository _notificationRepository;
+        private readonly IWebHookNotifier _webHookNotifier;
 
         public NotificationService(IMailNotifier mailNotifier, ISlackNotifier slackNotifier,
             ITeamsNotifier teamsNotifier, ITelegramNotifier telegramNotifier,
-            INotificationRepository notificationRepository)
+            INotificationRepository notificationRepository, IWebHookNotifier webHookNotifier)
         {
             _mailNotifier = mailNotifier;
             _slackNotifier = slackNotifier;
             _teamsNotifier = teamsNotifier;
             _telegramNotifier = telegramNotifier;
             _notificationRepository = notificationRepository;
+            _webHookNotifier = webHookNotifier;
         }
 
         public async Task<bool> Send(NotificationSend notificationSend)
@@ -48,6 +51,13 @@ namespace AlertHawk.Notification.Domain.Classes
                     await _slackNotifier.SendNotification(notificationSend.NotificationSlack.Channel,
                         notificationSend.Message, notificationSend.NotificationSlack.WebHookUrl);
                     return true;
+
+                case 5: // WebHook
+                    ConvertJsonToTuple(notificationSend.NotificationWebHook);
+                    await _webHookNotifier.SendNotification(notificationSend.NotificationWebHook.Message,
+                        notificationSend.NotificationWebHook.WebHookUrl,
+                        notificationSend.NotificationWebHook.Body, notificationSend.NotificationWebHook.Headers);
+                    return true;
                 default:
                     Console.WriteLine($"Not found NotificationTypeId: {notificationSend.NotificationTypeId}");
                     break;
@@ -71,6 +81,9 @@ namespace AlertHawk.Notification.Domain.Classes
                     break;
                 case 4: // Slack
                     await _notificationRepository.InsertNotificationItemSlack(notificationItem);
+                    break;
+                case 5: // WebHook
+                    await _notificationRepository.InsertNotificationItemWebHook(notificationItem);
                     break;
             }
         }
@@ -99,6 +112,31 @@ namespace AlertHawk.Notification.Domain.Classes
         public async Task<NotificationItem?> SelectNotificationItemById(int id)
         {
             return await _notificationRepository.SelectNotificationItemById(id);
+        }
+
+        private static void ConvertJsonToTuple(NotificationWebHook webHook)
+        {
+            try
+            {
+                if (webHook.HeadersJson != null)
+                {
+                    JObject jsonObj = JObject.Parse(webHook.HeadersJson);
+
+                    // Extract values and create Tuple
+                    List<Tuple<string, string>> properties = new List<Tuple<string, string>>();
+
+                    foreach (var property in jsonObj.Properties())
+                    {
+                        properties.Add(Tuple.Create(property.Name, property.Value.ToString()));
+                    }
+
+                    webHook.Headers = properties;
+                }
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+            }
         }
     }
 }
