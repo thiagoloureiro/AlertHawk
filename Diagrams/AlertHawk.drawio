@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-02-22T14:09:43.693Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="1uj-T7HVDgAGVABA8-XI" version="23.1.5" type="github">
+<mxfile host="app.diagrams.net" modified="2024-02-22T14:11:26.888Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="iHhId_kqnB95brYKgti5" version="23.1.5" type="github">
   <diagram name="Página-1" id="EC5-yDx1gmlKd79TGFPl">
     <mxGraphModel dx="2261" dy="2084" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -267,7 +267,7 @@
           <mxGeometry x="2009" y="480" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-29" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6c8ebf;" parent="1" vertex="1">
-          <mxGeometry x="2180" y="210" width="290" height="410" as="geometry" />
+          <mxGeometry x="2180" y="210" width="290" height="590" as="geometry" />
         </mxCell>
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-40" value="Monitoring Tasks" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="2080" y="290" width="70" height="30" as="geometry" />
@@ -322,6 +322,9 @@
         </mxCell>
         <mxCell id="0GfC3lX6S0VPZCZiWhWO-16" value="Connection from monitor to URLs" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="1918" y="170" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-17" value="&lt;h1&gt;Monitor Region&lt;/h1&gt;&lt;div&gt;Each monitor has the configuration to run on a specific region, then the monitor fetch the tasks and query the URLs for the region,&lt;/div&gt;&lt;div&gt;For example, Monitor 3 (green) only queries Asian URLs, the Salmon (4 and 5) North America, and the others, Europe.&lt;/div&gt;&lt;div&gt;A Custom option also is available in case of internal network.&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="2190" y="610" width="270" height="180" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
