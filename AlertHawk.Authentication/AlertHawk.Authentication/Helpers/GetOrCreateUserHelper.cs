@@ -27,7 +27,7 @@ public class GetOrCreateUserHelper(IUserService userService)
             await userService.CreateFromAzure(newUser);
             return (await userService.GetByEmail(userEmail))!;
         }
-        else
-            return user;
+
+        return user;
     }
 }

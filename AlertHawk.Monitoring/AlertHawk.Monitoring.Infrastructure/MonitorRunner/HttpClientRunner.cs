@@ -80,7 +80,11 @@ public class HttpClientRunner : IHttpClientRunner
                 {
                     handler.ServerCertificateCustomValidationCallback = (request, cert, chain, policyErrors) =>
                     {
-                        if (cert != null) notAfter = cert.NotAfter;
+                        if (cert != null)
+                        {
+                            notAfter = cert.NotAfter;
+                        }
+
                         daysToExpireCert = (notAfter - DateTime.UtcNow).Days;
                         return true;
                     };

@@ -5,42 +5,37 @@ namespace AlertHawk.Authentication.Infrastructure.EmailSender;
 
 public static class EmailSender
 {
-    private static string? _smtpServer;
-    private static int _port;
-    private static string? _username;
-    private static string? _password;
-    private static bool _useSsl;
-    
     public static void SendEmail(string to, string subject, string body)
     {
-        if (!int.TryParse(Environment.GetEnvironmentVariable("SmtpPort"), out _port))
+        if (!int.TryParse(Environment.GetEnvironmentVariable("SmtpPort"), out int port))
         {
-            _port = 587;
+            port = 587;
         }
 
-        if (!bool.TryParse(Environment.GetEnvironmentVariable("enableSsl"), out _useSsl))
+        if (!bool.TryParse(Environment.GetEnvironmentVariable("enableSsl"), out bool useSsl))
         {
-            _useSsl = false;
+            useSsl = false;
         }
 
         // Initialize your static fields here if needed
-        _smtpServer = Environment.GetEnvironmentVariable("smtpHost") ?? "smtp.office365.com";
-        _username = Environment.GetEnvironmentVariable("username") ?? string.Empty;
-        _password = Environment.GetEnvironmentVariable("password") ?? string.Empty;
+        var smtpServer = Environment.GetEnvironmentVariable("smtpHost") ?? "smtp.office365.com";
+        var username = Environment.GetEnvironmentVariable("username") ?? string.Empty;
+        var password = Environment.GetEnvironmentVariable("password") ?? string.Empty;
+        
         try
         {
             using (MailMessage mail = new MailMessage())
             {
-                mail.From = new MailAddress(_username);
+                mail.From = new MailAddress(username);
                 mail.To.Add(to);
                 mail.Subject = subject;
                 mail.Body = body;
                 mail.IsBodyHtml = true;
 
-                using (SmtpClient smtp = new SmtpClient(_smtpServer, _port))
+                using (SmtpClient smtp = new SmtpClient(smtpServer, port))
                 {
-                    smtp.Credentials = new NetworkCredential(_username, _password);
-                    smtp.EnableSsl = _useSsl;
+                    smtp.Credentials = new NetworkCredential(username, password);
+                    smtp.EnableSsl = useSsl;
 
                     smtp.Send(mail);
                 }

@@ -55,7 +55,10 @@ namespace AlertHawk.Monitoring.Controllers
         public async Task<IActionResult> GetMonitorListByMonitorGroupIds()
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
-            if (jwtToken == null) return BadRequest("Invalid Token");
+            if (jwtToken == null)
+            {
+                return BadRequest("Invalid Token");
+            }
 
             var result = await _monitorService.GetMonitorListByMonitorGroupIds(jwtToken);
             return Ok(result);
@@ -96,7 +99,7 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorService.UpdateMonitorHttp(monitorHttp);
             return Ok();
         }
-        
+
         [SwaggerOperation(Summary = "Create a new monitor TCP")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [HttpPost("createMonitorTcp")]

@@ -62,13 +62,17 @@ public class MonitorService : IMonitorService
             await _caching.GetOrSetObjectFromCacheAsync($"Monitor_{id}", 20,
                 () => _monitorRepository.GetMonitorById(id));
 
-        if (monitor == null) return null;
+        if (monitor == null)
+        {
+            return null;
+        }
 
-        var lst24Hrs = result.Where(x => x.TimeStamp > DateTime.Now.AddDays(-1)).ToList();
-        var lst7Days = result.Where(x => x.TimeStamp > DateTime.Now.AddDays(-7)).ToList();
-        var lst30Days = result.Where(x => x.TimeStamp > DateTime.Now.AddDays(-30)).ToList();
-        var lst3Months = result.Where(x => x.TimeStamp > DateTime.Now.AddDays(-90)).ToList();
-        var lst6Months = result.Where(x => x.TimeStamp > DateTime.Now.AddDays(-180)).ToList();
+        var monitorHistories = result.ToList();
+        var lst24Hrs = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-1)).ToList();
+        var lst7Days = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-7)).ToList();
+        var lst30Days = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-30)).ToList();
+        var lst3Months = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-90)).ToList();
+        var lst6Months = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-180)).ToList();
 
         double uptime24Hrs = (double)lst24Hrs.Count(item => item.Status) / lst24Hrs.Count * 100;
         double upTime7Days = (double)lst7Days.Count(item => item.Status) / lst7Days.Count * 100;
@@ -78,7 +82,7 @@ public class MonitorService : IMonitorService
 
         var monitorDashboard = new MonitorDashboard
         {
-            ResponseTime = result.Average(x => x.ResponseTime),
+            ResponseTime = monitorHistories.Average(x => x.ResponseTime),
             Uptime24Hrs = uptime24Hrs,
             Uptime7Days = upTime7Days,
             Uptime30Days = uptime30Days,
@@ -99,8 +103,11 @@ public class MonitorService : IMonitorService
 
             foreach (var monitor in lstMonitor)
             {
-                var monitorData = await GetMonitorDashboardData(monitor.Id);
-                lstMonitorDashboard.Add(monitorData);
+                if (monitor != null)
+                {
+                    var monitorData = await GetMonitorDashboardData(monitor.Id);
+                    lstMonitorDashboard.Add(monitorData);
+                }
             }
 
             await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20);
@@ -165,7 +172,9 @@ public class MonitorService : IMonitorService
         var listGroupMonitorIds = groupMonitorIds?.Select(x => x.GroupMonitorId).ToList();
 
         if (listGroupMonitorIds != null)
+        {
             return await _monitorRepository.GetMonitorListByMonitorGroupIds(listGroupMonitorIds);
+        }
 
         return null;
     }
@@ -176,6 +185,7 @@ public class MonitorService : IMonitorService
         {
             monitorHttp.HeadersJson = JsonUtils.ConvertTupleToJson(monitorHttp.Headers);
         }
+
         await _monitorRepository.UpdateMonitorHttp(monitorHttp);
     }
 

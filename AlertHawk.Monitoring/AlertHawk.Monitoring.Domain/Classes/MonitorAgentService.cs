@@ -6,7 +6,7 @@ namespace AlertHawk.Monitoring.Domain.Classes;
 
 public class MonitorAgentService: IMonitorAgentService
 {
-    private IMonitorAgentRepository _monitorAgentRepository;
+    private readonly IMonitorAgentRepository _monitorAgentRepository;
 
     public MonitorAgentService(IMonitorAgentRepository monitorAgentRepository)
     {
