@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Notification.Domain.Entities;
-using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Domain.Interfaces.Services;
 using MassTransit;
 
@@ -9,12 +8,10 @@ namespace SharedModels;
 [ExcludeFromCodeCoverage]
 public class NotificationConsumer : IConsumer<NotificationAlert>
 {
-    private readonly ISlackNotifier _slackNotifier;
     private readonly INotificationService _notificationService;
 
-    public NotificationConsumer(ISlackNotifier slackNotifier, INotificationService notificationService)
+    public NotificationConsumer(INotificationService notificationService)
     {
-        _slackNotifier = slackNotifier;
         _notificationService = notificationService;
     }
 
