@@ -97,12 +97,9 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
                     .ThenBy(x => x.MonitorAgentId),
                 new MonitorAgentTasksEqualityComparer());
 
-        Console.WriteLine($"Checking Lists {lstMonitorAgentTasks.Count} - {lstCurrentMonitorAgentTasks.Count}");
-        
+
         if (!areEqual)
         {
-            Console.WriteLine($"Different Lists {lstMonitorAgentTasks.Count} - {lstCurrentMonitorAgentTasks.Count}");
-            
             await DeleteAllMonitorAgentTasks(lstMonitorAgentTasks.Select(x => x.MonitorId).ToList());
 
             string sqlInsertMaster =
@@ -124,7 +121,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
     private async Task DeleteAllMonitorAgentTasks(List<int> ids)
     {
         Console.WriteLine($"Deleting MonitorAgentTasks {string.Join(",", ids)}");
-        
+
         await using var db = new SqlConnection(_connstring);
         string sqlAllMonitors = @"DELETE FROM [MonitorAgentTasks] WHERE MonitorId IN @ids";
         await db.ExecuteAsync(sqlAllMonitors, new { ids }, commandType: CommandType.Text);
