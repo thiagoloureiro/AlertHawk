@@ -22,7 +22,7 @@ public class HttpClientRunner : IHttpClientRunner
     }
 
 
-    private async Task HandleFailedNotifications(MonitorHttp monitorHttp, string reasonPhrase)
+    private async Task HandleFailedNotifications(MonitorHttp monitorHttp, string? reasonPhrase)
     {
         var notificationIdList = await _monitorRepository.GetMonitorNotifications(monitorHttp.MonitorId);
 
@@ -43,7 +43,7 @@ public class HttpClientRunner : IHttpClientRunner
         }
     }
 
-    private async Task HandleSuccessNotifications(MonitorHttp monitorHttp, string reasonPhrase)
+    private async Task HandleSuccessNotifications(MonitorHttp monitorHttp, string? reasonPhrase)
     {
         var notificationIdList = await _monitorRepository.GetMonitorNotifications(monitorHttp.MonitorId);
 
@@ -58,7 +58,8 @@ public class HttpClientRunner : IHttpClientRunner
                 TimeStamp = DateTime.UtcNow,
                 Message =
                     $"Success calling {monitorHttp.Name}, Response StatusCode: {monitorHttp.ResponseStatusCode}",
-                StatusCode = (int)monitorHttp.ResponseStatusCode
+                StatusCode = (int)monitorHttp.ResponseStatusCode,
+                ReasonPhrase = reasonPhrase
             });
         }
     }

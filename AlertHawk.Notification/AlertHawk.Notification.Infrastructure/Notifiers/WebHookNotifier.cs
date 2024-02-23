@@ -8,7 +8,7 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
     public class WebHookNotifier : IWebHookNotifier
     {
         public async Task SendNotification(string message, string webHookUrl, string? body,
-            List<Tuple<string, string>> headers)
+            List<Tuple<string, string>>? headers)
         {
             using HttpClient httpClient = new HttpClient();
 

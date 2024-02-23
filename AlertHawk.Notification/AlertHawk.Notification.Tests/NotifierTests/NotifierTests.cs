@@ -167,7 +167,7 @@ public class NotifierTests : IClassFixture<NotificationController>
         var body =
             "{\n    \"message\": \"Error: #statuscode - #responsemessage\",\n    \"alias\": \"Life is too short for no alias2\",\n    \"description\":\"Every alert needs a description2\",\n    \"actions\": [\"Restart\", \"AnExampleAction\"],\n    \"tags\": [\"OverwriteQuietHours\",\"Critical\"],\n    \"details\":{\"key1\":\"value1\",\"key2\":\"value2\"},\n    \"entity\":\"An example entity\",\n    \"priority\":\"P2\"\n}";
         
-        var headers = "{\"Authorization\": \"GenieKey d6d191e5-f671-4768-af7c-868c2046f13d\"}";
+        var headers = "{\"Authorization\": \"x x1\"}";
         
         var notificationSend = new NotificationSend
         {
