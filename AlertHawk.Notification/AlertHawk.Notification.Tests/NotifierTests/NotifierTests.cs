@@ -168,7 +168,7 @@ public class NotifierTests : IClassFixture<NotificationController>
         var channel = "alerthawk-test";
         
         var body = $"{{\"channel\": \"{channel}\", \"text\": \"{message}\"}}";
-        var headers = "";
+        var headers = "{User-Agent: \"Mozilla/5.0\"}";
 
         var notificationSend = new NotificationSend
         {
