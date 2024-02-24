@@ -20,7 +20,7 @@ public class NotificationServiceTests
         // Assert
         await notificationRepository.Received(1).InsertNotificationItemEmailSmtp(Arg.Is(notificationItem));
     }
-    
+
     [Fact]
     public async Task InsertNotificationItemTelegram_Calls_Correct_Method()
     {
@@ -33,7 +33,7 @@ public class NotificationServiceTests
         // Assert
         await notificationRepository.Received(1).InsertNotificationItemTelegram(Arg.Is(notificationItem));
     }
-    
+
     [Fact]
     public async Task InsertNotificationItemSlack_Calls_Correct_Method()
     {
@@ -46,7 +46,7 @@ public class NotificationServiceTests
         // Assert
         await notificationRepository.Received(1).InsertNotificationItemSlack(Arg.Is(notificationItem));
     }
-    
+
     [Fact]
     public async Task InsertNotificationItemMSTeams_Calls_Correct_Method()
     {
@@ -59,7 +59,7 @@ public class NotificationServiceTests
         // Assert
         await notificationRepository.Received(1).InsertNotificationItemMsTeams(Arg.Is(notificationItem));
     }
-    
+
     [Fact]
     public async Task InsertNotificationItemWebHook_Calls_Correct_Method()
     {
@@ -76,7 +76,53 @@ public class NotificationServiceTests
     private static NotificationItem CreateMock(out INotificationRepository notificationRepository,
         out NotificationService notificationService, int typeId = 1)
     {
-        var notificationItem = new NotificationItem { NotificationTypeId = typeId }; // Example notification type
+        var notificationItem = new NotificationItem
+        {
+            NotificationTypeId = typeId, Description = "Description", Name = "Notification Name",
+            NotificationEmail = new NotificationEmail
+            {
+                FromEmail = "user@email.com",
+                ToEmail = "user@email.com",
+                ToBCCEmail = "bcc@email.com",
+                ToCCEmail = "cc@email.com",
+                Hostname = "smtp.office365.com",
+                Username = "username",
+                Password = "password",
+                IsHtmlBody = true,
+                Subject = "Subject",
+                Body = "Body",
+                Port = 587,
+                EnableSsl = true,
+                NotificationId = 1
+            },
+            NotificationSlack = new NotificationSlack
+            {
+                Channel = "channel",
+                WebHookUrl = "webhook",
+                NotificationId = 1
+            },
+            NotificationTeams = new NotificationTeams
+            {
+                NotificationId = 1,
+                WebHookUrl = "webhook"
+            },
+            NotificationWebHook = new NotificationWebHook
+            {
+                NotificationId = 1,
+                WebHookUrl = "webhook",
+                Message = "message",
+                Body = "body",
+                Headers = new List<Tuple<string, string>>(),
+                HeadersJson = "headers"
+            },
+            NotificationTelegram = new NotificationTelegram
+            {
+                NotificationId = 1,
+                ChatId = 123123123123,
+                TelegramBotToken = "token"
+            }
+        }; // Example notification type
+
         var mailNotifier = Substitute.For<IMailNotifier>();
         var slackNotifier = Substitute.For<ISlackNotifier>();
         var teamsNotifier = Substitute.For<ITeamsNotifier>();
@@ -107,7 +153,7 @@ public class NotificationServiceTests
         // Assert
         await notificationRepository.Received(1).UpdateNotificationItem(Arg.Is(notificationItem));
     }
-    
+
     [Fact]
     public async Task DeleteNotificationItem_Calls_Correct_Method()
     {
@@ -120,16 +166,16 @@ public class NotificationServiceTests
         // Assert
         await notificationRepository.Received(1).DeleteNotificationItem(Arg.Is(notificationItem.Id));
     }
-    
+
     [Fact]
     public async Task SelectNotificationItemList_Calls_Repository_Method()
     {
         // Arrange
-        var expectedNotificationList = new List<NotificationItem>(); 
+        var expectedNotificationList = new List<NotificationItem>();
         var notificationItem = CreateMock(out var notificationRepository, out var notificationService);
         expectedNotificationList.Add(notificationItem);
         notificationRepository.SelectNotificationItemList().Returns(expectedNotificationList);
-        
+
         // Act
         var result = await notificationService.SelectNotificationItemList();
 
@@ -137,17 +183,17 @@ public class NotificationServiceTests
         await notificationRepository.Received(1).SelectNotificationItemList();
         Assert.Same(expectedNotificationList, result);
     }
-    
+
     [Fact]
     public async Task SelectNotificationItemListByIds_Calls_Repository_Method()
     {
         // Arrange
         List<int> ids = new List<int> { 1, 2, 3 };
-        var expectedNotificationList = new List<NotificationItem>(); 
+        var expectedNotificationList = new List<NotificationItem>();
         var notificationItem = CreateMock(out var notificationRepository, out var notificationService);
         expectedNotificationList.Add(notificationItem);
         notificationRepository.SelectNotificationItemList(ids).Returns(expectedNotificationList);
-        
+
         // Act
         var result = await notificationService.SelectNotificationItemList(ids);
 
@@ -155,7 +201,7 @@ public class NotificationServiceTests
         await notificationRepository.Received(1).SelectNotificationItemList(ids);
         Assert.Same(expectedNotificationList, result);
     }
-    
+
     [Fact]
     public async Task SelectNotificationItemById_Calls_Repository_Method()
     {
@@ -163,7 +209,7 @@ public class NotificationServiceTests
         int id = 1;
         var notificationItem = CreateMock(out var notificationRepository, out var notificationService);
         notificationRepository.SelectNotificationItemById(id).Returns(notificationItem);
-        
+
         // Act
         var result = await notificationService.SelectNotificationItemById(id);
 
