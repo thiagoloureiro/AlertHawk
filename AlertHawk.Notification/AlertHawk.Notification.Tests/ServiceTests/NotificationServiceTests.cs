@@ -120,4 +120,55 @@ public class NotificationServiceTests
         // Assert
         await notificationRepository.Received(1).DeleteNotificationItem(Arg.Is(notificationItem.Id));
     }
+    
+    [Fact]
+    public async Task SelectNotificationItemList_Calls_Repository_Method()
+    {
+        // Arrange
+        var expectedNotificationList = new List<NotificationItem>(); 
+        var notificationItem = CreateMock(out var notificationRepository, out var notificationService);
+        expectedNotificationList.Add(notificationItem);
+        notificationRepository.SelectNotificationItemList().Returns(expectedNotificationList);
+        
+        // Act
+        var result = await notificationService.SelectNotificationItemList();
+
+        // Assert
+        await notificationRepository.Received(1).SelectNotificationItemList();
+        Assert.Same(expectedNotificationList, result);
+    }
+    
+    [Fact]
+    public async Task SelectNotificationItemListByIds_Calls_Repository_Method()
+    {
+        // Arrange
+        List<int> ids = new List<int> { 1, 2, 3 };
+        var expectedNotificationList = new List<NotificationItem>(); 
+        var notificationItem = CreateMock(out var notificationRepository, out var notificationService);
+        expectedNotificationList.Add(notificationItem);
+        notificationRepository.SelectNotificationItemList(ids).Returns(expectedNotificationList);
+        
+        // Act
+        var result = await notificationService.SelectNotificationItemList(ids);
+
+        // Assert
+        await notificationRepository.Received(1).SelectNotificationItemList(ids);
+        Assert.Same(expectedNotificationList, result);
+    }
+    
+    [Fact]
+    public async Task SelectNotificationItemById_Calls_Repository_Method()
+    {
+        // Arrange
+        int id = 1;
+        var notificationItem = CreateMock(out var notificationRepository, out var notificationService);
+        notificationRepository.SelectNotificationItemById(id).Returns(notificationItem);
+        
+        // Act
+        var result = await notificationService.SelectNotificationItemById(id);
+
+        // Assert
+        await notificationRepository.Received(1).SelectNotificationItemById(id);
+        Assert.Same(notificationItem, result);
+    }
 }
