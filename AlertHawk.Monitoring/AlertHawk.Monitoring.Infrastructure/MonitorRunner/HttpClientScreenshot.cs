@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -7,21 +6,16 @@ namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
 public class HttpClientScreenshot : IHttpClientScreenshot
 {
-    public async Task TakeScreenshotAsync(string url, int monitorId)
+    public async Task TakeScreenshotAsync(string url, int monitorId, string monitorName)
     {
         var screenshotEnabled = GetScreenShotEnabledVariable();
 
         if (screenshotEnabled)
         {
-            var screenshotBasePath = Environment.GetEnvironmentVariable("screenshot_path") ?? "/screenshots/";
             // Set the path to the directory where you want to save the screenshot
-
-            string result = Regex.Replace(url, @"[^\w\-]+", "");
-            
-            string screenshotDirectory = $@"{screenshotBasePath}{result.Replace("https://","").Replace("http://","").Replace("/","_")}";
-
+            string screenshotDirectory = $@"/screenshots/{monitorId}_{monitorName}";
             // Ensure the directory exists, create it if necessary
-            Directory.CreateDirectory(result);
+            Directory.CreateDirectory(screenshotDirectory);
 
             // Set Chrome options
             ChromeOptions options = new ChromeOptions();

@@ -78,7 +78,7 @@ public class HttpClientRunner : IHttpClientRunner
                             await _notificationProducer.HandleFailedNotifications(monitorHttp, response.ReasonPhrase);
                             await _monitorRepository.SaveMonitorAlert(monitorHistory);
                             await _httpClientScreenshot.TakeScreenshotAsync(monitorHttp.UrlToCheck,
-                                monitorHttp.MonitorId);
+                                monitorHttp.MonitorId, monitorHttp.Name);
                             break;
                         }
                     }
@@ -112,7 +112,7 @@ public class HttpClientRunner : IHttpClientRunner
                         await _notificationProducer.HandleFailedNotifications(monitorHttp, err.Message);
                         await _monitorRepository.SaveMonitorAlert(monitorHistory);
                         await _httpClientScreenshot.TakeScreenshotAsync(monitorHttp.UrlToCheck,
-                            monitorHttp.MonitorId);
+                            monitorHttp.MonitorId, monitorHttp.Name);
                     }
 
                     break;
