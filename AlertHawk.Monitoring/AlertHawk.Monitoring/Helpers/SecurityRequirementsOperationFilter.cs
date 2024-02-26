@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring.Helpers;
 
-
 [ExcludeFromCodeCoverage]
 public class SecurityRequirementsOperationFilter : IOperationFilter
 {

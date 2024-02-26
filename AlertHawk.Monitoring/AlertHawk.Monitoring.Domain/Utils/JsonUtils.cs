@@ -11,28 +11,22 @@ namespace AlertHawk.Monitoring.Domain.Utils
             var dict = headers.ToDictionary(t => t.Item1, t => t.Item2);
             return JsonConvert.SerializeObject(dict, Formatting.Indented);
         }
+
         public static void ConvertJsonToTuple(MonitorHttp monitorHttp)
         {
-            try
+            if (monitorHttp.HeadersJson != null)
             {
-                if (monitorHttp.HeadersJson != null)
+                JObject jsonObj = JObject.Parse(monitorHttp.HeadersJson);
+
+                // Extract values and create Tuple
+                List<Tuple<string, string>> properties = new List<Tuple<string, string>>();
+
+                foreach (var property in jsonObj.Properties())
                 {
-                    JObject jsonObj = JObject.Parse(monitorHttp.HeadersJson);
-
-                    // Extract values and create Tuple
-                    List<Tuple<string, string>> properties = new List<Tuple<string, string>>();
-
-                    foreach (var property in jsonObj.Properties())
-                    {
-                        properties.Add(Tuple.Create(property.Name, property.Value.ToString()));
-                    }
-
-                    monitorHttp.Headers = properties;
+                    properties.Add(Tuple.Create(property.Name, property.Value.ToString()));
                 }
-            }
-            catch (Exception e)
-            {
-                SentrySdk.CaptureException(e);
+
+                monitorHttp.Headers = properties;
             }
         }
     }

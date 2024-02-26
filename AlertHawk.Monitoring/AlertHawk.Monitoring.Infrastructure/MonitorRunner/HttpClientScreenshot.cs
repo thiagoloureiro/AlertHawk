@@ -13,7 +13,7 @@ public class HttpClientScreenshot : IHttpClientScreenshot
         if (screenshotEnabled)
         {
             // Set the path to the directory where you want to save the screenshot
-            string screenshotDirectory = $@"/screenshots/{monitorId}";
+            string screenshotDirectory = $@"/screenshots/{url.Replace("https://","").Replace("http://","")}";
             // Ensure the directory exists, create it if necessary
             Directory.CreateDirectory(screenshotDirectory);
 

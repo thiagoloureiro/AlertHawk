@@ -1,6 +1,7 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using AlertHawk.Monitoring.Domain.Utils;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using EasyMemoryCache;
 using Hangfire;
