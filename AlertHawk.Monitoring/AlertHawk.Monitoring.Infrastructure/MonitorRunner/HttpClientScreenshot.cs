@@ -13,10 +13,13 @@ public class HttpClientScreenshot : IHttpClientScreenshot
 
         if (screenshotEnabled)
         {
+            var screenshotBasePath = Environment.GetEnvironmentVariable("screenshot_path") ?? "/screenshots/";
             // Set the path to the directory where you want to save the screenshot
-            string screenshotDirectory = $@"/screenshots/{url.Replace("https://","").Replace("http://","").Replace("/","_")}";
+
+            string result = Regex.Replace(url, @"[^\w\-]+", "");
             
-            string result = Regex.Replace(screenshotDirectory, @"[^\w\-]+", "");
+            string screenshotDirectory = $@"{screenshotBasePath}{url.Replace("https://","").Replace("http://","").Replace("/","_")}";
+
             // Ensure the directory exists, create it if necessary
             Directory.CreateDirectory(result);
 
