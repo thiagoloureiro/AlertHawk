@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -14,8 +15,10 @@ public class HttpClientScreenshot : IHttpClientScreenshot
         {
             // Set the path to the directory where you want to save the screenshot
             string screenshotDirectory = $@"/screenshots/{url.Replace("https://","").Replace("http://","").Replace("/","_")}";
+            
+            string result = Regex.Replace(screenshotDirectory, @"[^\w\-]+", "");
             // Ensure the directory exists, create it if necessary
-            Directory.CreateDirectory(screenshotDirectory);
+            Directory.CreateDirectory(result);
 
             // Set Chrome options
             ChromeOptions options = new ChromeOptions();
