@@ -18,7 +18,7 @@ public class HttpClientScreenshot : IHttpClientScreenshot
 
             string result = Regex.Replace(url, @"[^\w\-]+", "");
             
-            string screenshotDirectory = $@"{screenshotBasePath}{url.Replace("https://","").Replace("http://","").Replace("/","_")}";
+            string screenshotDirectory = $@"{screenshotBasePath}{result.Replace("https://","").Replace("http://","").Replace("/","_")}";
 
             // Ensure the directory exists, create it if necessary
             Directory.CreateDirectory(result);
