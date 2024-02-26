@@ -36,7 +36,7 @@ public class HttpClientScreenshot : IHttpClientScreenshot
             Screenshot screenshot = ((ITakesScreenshot)driver).GetScreenshot();
 
             // Generate file name
-            string fileName = $"screenshot_monitorId_{monitorId}_{DateTime.UtcNow:yyyy-MM-dd_HH:mm:ss}.png";
+            string fileName = $"screenshot_monitorId_{monitorId}_{DateTime.UtcNow:yyyy-MM-dd_HH_mm_ss}.png";
 
             // Save the screenshot
             string filePath = Path.Combine(screenshotDirectory, fileName);
