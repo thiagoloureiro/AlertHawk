@@ -46,7 +46,7 @@ public class HttpClientScreenshot : IHttpClientScreenshot
 
             if (GetStorageAccountEnabledVariable())
             {
-                screenshotUrl = await BlobUtils.UploadByteArrayToBlob($"{monitorId}-{monitorName}", screenshotAsByteArray);
+                screenshotUrl = await BlobUtils.UploadByteArrayToBlob($"{monitorId}-{monitorName}.jpg", screenshotAsByteArray);
             }
 
             Console.WriteLine($"Screenshot saved: {filePath}");
