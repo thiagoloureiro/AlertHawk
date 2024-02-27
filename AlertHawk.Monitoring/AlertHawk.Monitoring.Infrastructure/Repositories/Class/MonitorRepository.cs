@@ -235,12 +235,12 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @"INSERT INTO [MonitorAlert] (MonitorId, TimeStamp, Status, Message) VALUES (@MonitorId, @TimeStamp, @Status, @Message)";
+            @"INSERT INTO [MonitorAlert] (MonitorId, TimeStamp, Status, Message, ScreenShotUrl) VALUES (@MonitorId, @TimeStamp, @Status, @Message, @ScreenShotUrl)";
         await db.ExecuteAsync(sql,
             new
             {
                 monitorHistory.MonitorId, monitorHistory.TimeStamp, monitorHistory.Status,
-                Message = monitorHistory.ResponseMessage
+                Message = monitorHistory.ResponseMessage, monitorHistory.ScreenShotUrl
             }, commandType: CommandType.Text);
     }
 

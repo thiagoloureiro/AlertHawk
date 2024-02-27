@@ -1,4 +1,5 @@
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
+using AlertHawk.Monitoring.Infrastructure.Utils;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 
@@ -6,10 +7,10 @@ namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
 public class HttpClientScreenshot : IHttpClientScreenshot
 {
-    public async Task TakeScreenshotAsync(string url, int monitorId, string monitorName)
+    public async Task<string> TakeScreenshotAsync(string url, int monitorId, string monitorName)
     {
         var screenshotEnabled = GetScreenShotEnabledVariable();
-
+        string screenshotUrl = string.Empty;
         if (screenshotEnabled)
         {
             // Set the path to the directory where you want to save the screenshot
@@ -41,9 +42,30 @@ public class HttpClientScreenshot : IHttpClientScreenshot
             // Save the screenshot
             string filePath = Path.Combine(screenshotDirectory, fileName);
             screenshot.SaveAsFile(filePath);
+            var screenshotAsByteArray = screenshot.AsByteArray;
+
+            if (GetStorageAccountEnabledVariable())
+            {
+                screenshotUrl = await BlobUtils.UploadByteArrayToBlob($"{monitorId}-{monitorName}", screenshotAsByteArray);
+            }
 
             Console.WriteLine($"Screenshot saved: {filePath}");
         }
+
+        return screenshotUrl;
+    }
+
+    static bool GetStorageAccountEnabledVariable()
+    {
+        string enableScreenshotStorageAccount = Environment.GetEnvironmentVariable("enable_screenshot_storage_account");
+        if (!string.IsNullOrEmpty(enableScreenshotStorageAccount) &&
+            bool.TryParse(enableScreenshotStorageAccount, out bool result))
+        {
+            return result;
+        }
+
+        // Default value if environment variable is not set or not a valid boolean
+        return false;
     }
 
     static bool GetScreenShotEnabledVariable()
@@ -57,7 +79,7 @@ public class HttpClientScreenshot : IHttpClientScreenshot
         // Default value if environment variable is not set or not a valid boolean
         return false;
     }
-    
+
     static int GetScreenShotWaitTime()
     {
         string enableScreenshot = Environment.GetEnvironmentVariable("screenshot_wait_time_ms");

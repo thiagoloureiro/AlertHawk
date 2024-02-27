@@ -76,9 +76,11 @@ public class HttpClientRunner : IHttpClientRunner
                         if (monitorHttp.LastStatus)
                         {
                             await _notificationProducer.HandleFailedNotifications(monitorHttp, response.ReasonPhrase);
-                            await _monitorRepository.SaveMonitorAlert(monitorHistory);
-                            await _httpClientScreenshot.TakeScreenshotAsync(monitorHttp.UrlToCheck,
+                            var screenshotUrl = await _httpClientScreenshot.TakeScreenshotAsync(monitorHttp.UrlToCheck,
                                 monitorHttp.MonitorId, monitorHttp.Name);
+                            monitorHistory.ScreenShotUrl = screenshotUrl;
+                            await _monitorRepository.SaveMonitorAlert(monitorHistory);
+            
                             break;
                         }
                     }
