@@ -87,8 +87,7 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("createMonitorHttp")]
         public async Task<IActionResult> CreateMonitorHttp([FromBody] MonitorHttp monitorHttp)
         {
-            await _monitorService.CreateMonitorHttp(monitorHttp);
-            return Ok();
+            return Ok(await _monitorService.CreateMonitorHttp(monitorHttp));
         }
 
         [SwaggerOperation(Summary = "Update monitor Http")]
@@ -105,8 +104,7 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("createMonitorTcp")]
         public async Task<IActionResult> CreateMonitorTcp([FromBody] MonitorTcp monitorTcp)
         {
-            await _monitorService.CreateMonitorTcp(monitorTcp);
-            return Ok();
+            return Ok(await _monitorService.CreateMonitorTcp(monitorTcp));
         }
 
         [SwaggerOperation(Summary = "Update monitor TCP")]

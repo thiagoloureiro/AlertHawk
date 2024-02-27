@@ -136,14 +136,14 @@ public class MonitorService : IMonitorService
         return monitorDashboard;
     }
 
-    public async Task CreateMonitorHttp(MonitorHttp monitorHttp)
+    public async Task<int> CreateMonitorHttp(MonitorHttp monitorHttp)
     {
         if (monitorHttp!.Headers != null)
         {
             monitorHttp.HeadersJson = JsonUtils.ConvertTupleToJson(monitorHttp.Headers);
         }
 
-        await _monitorRepository.CreateMonitorHttp(monitorHttp);
+       return await _monitorRepository.CreateMonitorHttp(monitorHttp);
     }
 
     public async Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days)
@@ -194,9 +194,9 @@ public class MonitorService : IMonitorService
         await _monitorRepository.DeleteMonitor(id);
     }
 
-    public async Task CreateMonitorTcp(MonitorTcp monitorTcp)
+    public async Task<int> CreateMonitorTcp(MonitorTcp monitorTcp)
     {
-        await _monitorRepository.CreateMonitorTcp(monitorTcp);
+        return await _monitorRepository.CreateMonitorTcp(monitorTcp);
     }
 
     public async Task UpdateMonitorTcp(MonitorTcp monitorTcp)

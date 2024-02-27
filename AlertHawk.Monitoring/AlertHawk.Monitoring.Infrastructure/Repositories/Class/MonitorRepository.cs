@@ -67,7 +67,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sqlTcp, new { id }, commandType: CommandType.Text);
     }
 
-    public async Task CreateMonitorTcp(MonitorTcp monitorTcp)
+    public async Task<int> CreateMonitorTcp(MonitorTcp monitorTcp)
     {
         await using var db = new SqlConnection(_connstring);
         string sqlMonitor =
@@ -89,6 +89,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             {
                 MonitorId = id, monitorTcp.Port, monitorTcp.IP, monitorTcp.Timeout, monitorTcp.LastStatus
             }, commandType: CommandType.Text);
+        return id;
     }
 
     public async Task UpdateMonitorTcp(MonitorTcp monitorTcp)
@@ -156,7 +157,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sql, new { id, paused }, commandType: CommandType.Text);
     }
 
-    public async Task CreateMonitorHttp(MonitorHttp monitorHttp)
+    public async Task<int> CreateMonitorHttp(MonitorHttp monitorHttp)
     {
         await using var db = new SqlConnection(_connstring);
         string sqlMonitor =
@@ -181,6 +182,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 monitorHttp.MonitorHttpMethod, monitorHttp.Body, monitorHttp.HeadersJson, monitorHttp.UrlToCheck,
                 monitorHttp.Timeout
             }, commandType: CommandType.Text);
+        return id;
     }
 
     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days)
