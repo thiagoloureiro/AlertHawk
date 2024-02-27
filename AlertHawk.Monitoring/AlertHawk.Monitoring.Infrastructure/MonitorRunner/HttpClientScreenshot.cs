@@ -9,7 +9,7 @@ public class HttpClientScreenshot : IHttpClientScreenshot
 {
     public async Task<string> TakeScreenshotAsync(string url, int monitorId, string monitorName)
     {
-        var screenshotEnabled = GetScreenShotEnabledVariable();
+        var screenshotEnabled = VariableUtils.GetBoolEnvVariable("enable_screenshot");
         string screenshotUrl = string.Empty;
         if (screenshotEnabled)
         {
@@ -31,7 +31,7 @@ public class HttpClientScreenshot : IHttpClientScreenshot
             driver.Navigate().GoToUrl(url);
 
             // Wait for the page to load (adjust the wait time as needed)
-            Thread.Sleep(GetScreenShotWaitTime());
+            Thread.Sleep(VariableUtils.GetIntEnvVariable("screenshot_wait_time_ms") ?? 3000);
 
             // Take screenshot
             Screenshot screenshot = ((ITakesScreenshot)driver).GetScreenshot();
@@ -44,51 +44,15 @@ public class HttpClientScreenshot : IHttpClientScreenshot
             screenshot.SaveAsFile(filePath);
             var screenshotAsByteArray = screenshot.AsByteArray;
 
-            if (GetStorageAccountEnabledVariable())
+            if (VariableUtils.GetBoolEnvVariable("enable_screenshot_storage_account"))
             {
-                screenshotUrl = await BlobUtils.UploadByteArrayToBlob($"{monitorId}-{monitorName}.jpg", screenshotAsByteArray);
+                screenshotUrl =
+                    await BlobUtils.UploadByteArrayToBlob($"{monitorId}-{monitorName}.jpg", screenshotAsByteArray);
             }
 
             Console.WriteLine($"Screenshot saved: {filePath}");
         }
 
         return screenshotUrl;
-    }
-
-    static bool GetStorageAccountEnabledVariable()
-    {
-        string enableScreenshotStorageAccount = Environment.GetEnvironmentVariable("enable_screenshot_storage_account");
-        if (!string.IsNullOrEmpty(enableScreenshotStorageAccount) &&
-            bool.TryParse(enableScreenshotStorageAccount, out bool result))
-        {
-            return result;
-        }
-
-        // Default value if environment variable is not set or not a valid boolean
-        return false;
-    }
-
-    static bool GetScreenShotEnabledVariable()
-    {
-        string enableScreenshot = Environment.GetEnvironmentVariable("enable_screenshot");
-        if (!string.IsNullOrEmpty(enableScreenshot) && bool.TryParse(enableScreenshot, out bool result))
-        {
-            return result;
-        }
-
-        // Default value if environment variable is not set or not a valid boolean
-        return false;
-    }
-
-    static int GetScreenShotWaitTime()
-    {
-        string enableScreenshot = Environment.GetEnvironmentVariable("screenshot_wait_time_ms");
-        if (!string.IsNullOrEmpty(enableScreenshot) && int.TryParse(enableScreenshot, out int result))
-        {
-            return result;
-        }
-
-        // Default value if environment variable is not set or not a valid boolean
-        return 3000;
     }
 }
