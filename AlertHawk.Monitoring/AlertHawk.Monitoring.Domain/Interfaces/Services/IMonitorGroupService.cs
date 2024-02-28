@@ -8,4 +8,7 @@ public interface IMonitorGroupService
     Task<MonitorGroup> GetMonitorGroupById(int id);
     Task AddMonitorToGroup(MonitorGroupItems monitorGroupItems);
     Task RemoveMonitorFromGroup(MonitorGroupItems monitorGroupItems);
+    Task AddMonitorGroup(MonitorGroup monitorGroup);
+    Task UpdateMonitorGroup(MonitorGroup monitorGroup);
+    Task DeleteMonitorGroup(int id);
 }
