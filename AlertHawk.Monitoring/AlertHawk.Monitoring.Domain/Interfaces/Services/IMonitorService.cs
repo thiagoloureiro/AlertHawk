@@ -22,4 +22,6 @@ public interface IMonitorService
     Task DeleteMonitor(int id);
     Task<int> CreateMonitorTcp(MonitorTcp monitorTcp);
     Task UpdateMonitorTcp(MonitorTcp monitorTcp);
+    Task<MonitorHttp> GetHttpMonitorByMonitorId(int id);
+    Task<MonitorTcp> GetTcpMonitorByMonitorId(int id);
 }

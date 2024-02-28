@@ -141,5 +141,21 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorService.GetMonitorFailureCount(days);
             return Ok(result);
         }
+        [SwaggerOperation(Summary = "Retrieves monitor http by monitorId")]
+        [ProducesResponseType(typeof(IEnumerable<MonitorNotification>), StatusCodes.Status200OK)]
+        [HttpGet("getMonitorHttpByMonitorId/{monitorId}")]
+        public async Task<IActionResult> GetMonitorHttpByMonitorId(int monitorId)
+        {
+            var result = await _monitorService.GetHttpMonitorByMonitorId(monitorId);
+            return Ok(result);
+        }
+        [SwaggerOperation(Summary = "Retrieves monitor tcp by monitorId")]
+        [ProducesResponseType(typeof(IEnumerable<MonitorNotification>), StatusCodes.Status200OK)]
+        [HttpGet("getMonitorTcpByMonitorId/{monitorId}")]
+        public async Task<IActionResult> GetMonitorTcpByMonitorId(int monitorId)
+        {
+            var result = await _monitorService.GetTcpMonitorByMonitorId(monitorId);
+            return Ok(result);
+        }
     }
 }

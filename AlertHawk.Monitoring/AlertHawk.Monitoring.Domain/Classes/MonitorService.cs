@@ -204,6 +204,16 @@ public class MonitorService : IMonitorService
         await _monitorRepository.UpdateMonitorTcp(monitorTcp);
     }
 
+    public async Task<MonitorHttp> GetHttpMonitorByMonitorId(int id)
+    {
+        return await _monitorRepository.GetHttpMonitorByMonitorId(id);
+    }
+
+    public async Task<MonitorTcp> GetTcpMonitorByMonitorId(int id)
+    {
+        return await _monitorRepository.GetTcpMonitorByMonitorId(id);
+    }
+
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
     {
         var data = _caching.GetValueFromCache<List<MonitorDashboard>>(_cacheKeyDashboardList);

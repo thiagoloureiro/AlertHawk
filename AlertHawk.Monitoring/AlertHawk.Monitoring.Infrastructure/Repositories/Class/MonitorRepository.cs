@@ -136,6 +136,24 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return await db.QueryFirstOrDefaultAsync<Monitor>(sql, new { id }, commandType: CommandType.Text);
     }
 
+    public async Task<MonitorHttp> GetHttpMonitorByMonitorId(int monitorId)
+    {
+        await using var db = new SqlConnection(_connstring);
+
+        string sql =
+            $@"SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp] WHERE MonitorId = @monitorId";
+        return await db.QueryFirstOrDefaultAsync<MonitorHttp>(sql, new { monitorId }, commandType: CommandType.Text);
+    }
+
+    public async Task<MonitorTcp> GetTcpMonitorByMonitorId(int monitorId)
+    {
+        await using var db = new SqlConnection(_connstring);
+
+        string sql =
+            $@"SELECT MonitorId, Port, IP, Timeout, LastStatus  FROM [MonitorTcp] WHERE MonitorId = @monitorId";
+        return await db.QueryFirstOrDefaultAsync<MonitorTcp>(sql, new { monitorId }, commandType: CommandType.Text);
+    }
+
     public async Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id)
     {
         await using var db = new SqlConnection(_connstring);
