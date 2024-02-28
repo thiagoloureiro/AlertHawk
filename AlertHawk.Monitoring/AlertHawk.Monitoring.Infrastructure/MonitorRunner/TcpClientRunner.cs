@@ -41,6 +41,7 @@ public class TcpClientRunner : ITcpClientRunner
                 };
 
                 await _monitorRepository.SaveMonitorHistory(monitorHistory);
+                await _monitorRepository.UpdateMonitorStatus(monitorTcp.MonitorId, isConnected, 0);
 
                 if (!monitorTcp.LastStatus)
                 {
@@ -73,7 +74,7 @@ public class TcpClientRunner : ITcpClientRunner
                 };
 
                 await _monitorRepository.SaveMonitorHistory(monitorHistory);
-                
+                await _monitorRepository.UpdateMonitorStatus(monitorTcp.MonitorId, isConnected, 0);
                 await _notificationProducer.HandleFailedTcpNotifications(monitorTcp);
             }
 
