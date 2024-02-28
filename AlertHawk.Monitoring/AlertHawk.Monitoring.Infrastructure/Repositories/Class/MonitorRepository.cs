@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
@@ -8,6 +9,7 @@ using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 
+[ExcludeFromCodeCoverage]
 public class MonitorRepository : RepositoryBase, IMonitorRepository
 {
     private readonly string _connstring;
@@ -65,7 +67,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sqlTcp, new { id }, commandType: CommandType.Text);
     }
 
-    public async Task CreateMonitorTcp(MonitorTcp monitorTcp)
+    public async Task<int> CreateMonitorTcp(MonitorTcp monitorTcp)
     {
         await using var db = new SqlConnection(_connstring);
         string sqlMonitor =
@@ -87,6 +89,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             {
                 MonitorId = id, monitorTcp.Port, monitorTcp.IP, monitorTcp.Timeout, monitorTcp.LastStatus
             }, commandType: CommandType.Text);
+        return id;
     }
 
     public async Task UpdateMonitorTcp(MonitorTcp monitorTcp)
@@ -154,7 +157,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sql, new { id, paused }, commandType: CommandType.Text);
     }
 
-    public async Task CreateMonitorHttp(MonitorHttp monitorHttp)
+    public async Task<int> CreateMonitorHttp(MonitorHttp monitorHttp)
     {
         await using var db = new SqlConnection(_connstring);
         string sqlMonitor =
@@ -179,6 +182,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 monitorHttp.MonitorHttpMethod, monitorHttp.Body, monitorHttp.HeadersJson, monitorHttp.UrlToCheck,
                 monitorHttp.Timeout
             }, commandType: CommandType.Text);
+        return id;
     }
 
     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days)
@@ -233,12 +237,12 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @"INSERT INTO [MonitorAlert] (MonitorId, TimeStamp, Status, Message) VALUES (@MonitorId, @TimeStamp, @Status, @Message)";
+            @"INSERT INTO [MonitorAlert] (MonitorId, TimeStamp, Status, Message, ScreenShotUrl) VALUES (@MonitorId, @TimeStamp, @Status, @Message, @ScreenShotUrl)";
         await db.ExecuteAsync(sql,
             new
             {
                 monitorHistory.MonitorId, monitorHistory.TimeStamp, monitorHistory.Status,
-                Message = monitorHistory.ResponseMessage
+                Message = monitorHistory.ResponseMessage, monitorHistory.ScreenShotUrl
             }, commandType: CommandType.Text);
     }
 

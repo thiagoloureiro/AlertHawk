@@ -15,11 +15,11 @@ public interface IMonitorService
     IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids);
     Task SetMonitorDashboardDataCacheList();
     Task<MonitorStatusDashboard> GetMonitorStatusDashboard();
-    Task CreateMonitorHttp(MonitorHttp monitorHttp);
+    Task<int> CreateMonitorHttp(MonitorHttp monitorHttp);
     Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days);
     Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(string token);
     Task UpdateMonitorHttp(MonitorHttp monitorHttp);
     Task DeleteMonitor(int id);
-    Task CreateMonitorTcp(MonitorTcp monitorTcp);
+    Task<int> CreateMonitorTcp(MonitorTcp monitorTcp);
     Task UpdateMonitorTcp(MonitorTcp monitorTcp);
 }

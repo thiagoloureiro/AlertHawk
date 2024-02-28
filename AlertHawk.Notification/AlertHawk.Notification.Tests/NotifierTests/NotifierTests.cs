@@ -134,7 +134,7 @@ public class NotifierTests : IClassFixture<NotificationController>
         Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
         Assert.Equal(true, result.Value);
     }
-    
+
     [Fact]
     public async Task Should_Send_Teams_Notification()
     {
@@ -159,16 +159,17 @@ public class NotifierTests : IClassFixture<NotificationController>
         Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
         Assert.Equal(true, result.Value);
     }
-    
+
     [Fact]
     public async Task Should_Send_WebHook_Notification()
     {
         // Arrange
-        var body =
-            "{\n    \"message\": \"Error: #statuscode - #responsemessage\",\n    \"alias\": \"Life is too short for no alias2\",\n    \"description\":\"Every alert needs a description2\",\n    \"actions\": [\"Restart\", \"AnExampleAction\"],\n    \"tags\": [\"OverwriteQuietHours\",\"Critical\"],\n    \"details\":{\"key1\":\"value1\",\"key2\":\"value2\"},\n    \"entity\":\"An example entity\",\n    \"priority\":\"P2\"\n}";
+        var message = "Message Details from Webhook";
+        var channel = "alerthawk-test";
         
-        var headers = "{\"Authorization\": \"GenieKey d6d191e5-f671-4768-af7c-868c2046f13d\"}";
-        
+        var body = $"{{\"channel\": \"{channel}\", \"text\": \"{message}\"}}";
+        var headers = "{User-Agent: \"Mozilla/5.0\"}";
+
         var notificationSend = new NotificationSend
         {
             Message = "Message",
@@ -176,7 +177,7 @@ public class NotifierTests : IClassFixture<NotificationController>
             NotificationWebHook = new NotificationWebHook()
             {
                 NotificationId = 1,
-                WebHookUrl = GlobalVariables.WebHookUrl,
+                WebHookUrl = GlobalVariables.SlackWebHookUrl,
                 Message = "test",
                 Body = body,
                 HeadersJson = headers

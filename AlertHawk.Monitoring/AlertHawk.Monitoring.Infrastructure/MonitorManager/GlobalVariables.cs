@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace AlertHawk.Monitoring.Infrastructure.MonitorManager;
 
+[ExcludeFromCodeCoverage]
 public static class GlobalVariables
 {
     public static bool MasterNode { get; set; }

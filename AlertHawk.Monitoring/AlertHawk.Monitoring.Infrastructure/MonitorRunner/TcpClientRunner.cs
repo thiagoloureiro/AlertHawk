@@ -1,21 +1,18 @@
 using System.Net.Sockets;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
+using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
-using MassTransit;
-using SharedModels;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
 public class TcpClientRunner : ITcpClientRunner
 {
-    private readonly IMonitorRepository _monitorRepository;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly INotificationProducer _notificationProducer;
 
-    public TcpClientRunner(IMonitorRepository monitorRepository, IPublishEndpoint publishEndpoint)
+    public TcpClientRunner(IMonitorRepository monitorRepository, INotificationProducer notificationProducer)
     {
-        _monitorRepository = monitorRepository;
-        _publishEndpoint = publishEndpoint;
+        _notificationProducer = notificationProducer;
     }
 
     public async Task<bool> CheckTcpAsync(MonitorTcp monitorTcp)
@@ -28,18 +25,11 @@ public class TcpClientRunner : ITcpClientRunner
         {
             try
             {
-                using TcpClient client = new TcpClient();
-                // Set a short timeout for the connection attempt
-                client.ReceiveTimeout = monitorTcp.Timeout;
-                client.SendTimeout = monitorTcp.Timeout;
-
-                // Attempt to connect to the IP address and port
-                await client.ConnectAsync(monitorTcp.IP, monitorTcp.Port);
-                isConnected = true;
+                isConnected = await MakeTcpCall(monitorTcp);
 
                 if (!monitorTcp.LastStatus)
                 {
-                    await HandleSuccessNotifications(monitorTcp);
+                    await _notificationProducer.HandleSuccessTcpNotifications(monitorTcp);
                 }
             }
             catch (SocketException err)
@@ -56,7 +46,7 @@ public class TcpClientRunner : ITcpClientRunner
         {
             if (monitorTcp.LastStatus)
             {
-                await HandleFailedNotifications(monitorTcp);
+                await _notificationProducer.HandleFailedTcpNotifications(monitorTcp);
             }
 
             throw new Exception(
@@ -66,41 +56,22 @@ public class TcpClientRunner : ITcpClientRunner
         return isConnected;
     }
 
-    private async Task HandleSuccessNotifications(MonitorTcp monitorTcp)
+    public async Task<bool> MakeTcpCall(MonitorTcp monitorTcp)
     {
-        var notificationIdList = await _monitorRepository.GetMonitorNotifications(monitorTcp.MonitorId);
-
-        Console.WriteLine(
-            $"sending success notification calling {monitorTcp.IP} Port: {monitorTcp.Port},");
-
-        foreach (var item in notificationIdList)
+        try
         {
-            await _publishEndpoint.Publish<NotificationAlert>(new
-            {
-                NotificationId = item.NotificationId,
-                TimeStamp = DateTime.UtcNow,
-                Message =
-                    $"Success calling {monitorTcp.Name}, Response StatusCode: {monitorTcp.Response}"
-            });
+            CancellationToken cancellationToken = new CancellationToken();
+            using var client = new TcpClient();
+            var connectTask = client.ConnectAsync(monitorTcp.IP, monitorTcp.Port, cancellationToken);
+            await connectTask.AsTask().WaitAsync(TimeSpan.FromSeconds(monitorTcp.Timeout), cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var isConnected = true;
+            return isConnected;
         }
-    }
-
-    private async Task HandleFailedNotifications(MonitorTcp monitorTcp)
-    {
-        var notificationIdList = await _monitorRepository.GetMonitorNotifications(monitorTcp.MonitorId);
-
-        Console.WriteLine(
-            $"sending notification Error calling {monitorTcp.IP} Port: {monitorTcp.Port}, Response: {monitorTcp.Response}");
-
-        foreach (var item in notificationIdList)
+        catch (Exception)
         {
-            await _publishEndpoint.Publish<NotificationAlert>(new
-            {
-                NotificationId = item.NotificationId,
-                TimeStamp = DateTime.UtcNow,
-                Message =
-                    $"Error calling {monitorTcp.Name}, Response StatusCode: {monitorTcp.Response}"
-            });
+            return false;
         }
     }
 }

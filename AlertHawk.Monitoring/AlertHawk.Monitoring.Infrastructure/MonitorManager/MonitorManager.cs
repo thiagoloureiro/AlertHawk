@@ -1,11 +1,11 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using AlertHawk.Monitoring.Domain.Utils;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using EasyMemoryCache;
 using Hangfire;
 using Hangfire.Storage;
-using Newtonsoft.Json.Linq;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorManager;
@@ -59,7 +59,7 @@ public class MonitorManager : IMonitorManager
                 monitorHttp.Name = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Name;
                 monitorHttp.Retries = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Retries;
 
-                ConvertJsonToTuple(monitorHttp);
+                JsonUtils.ConvertJsonToTuple(monitorHttp);
 
                 string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
                 lstStringsToAdd.Add(jobId);
@@ -88,30 +88,7 @@ public class MonitorManager : IMonitorManager
         }
     }
 
-    private static void ConvertJsonToTuple(MonitorHttp monitorHttp)
-    {
-        try
-        {
-            if (monitorHttp.HeadersJson != null)
-            {
-                JObject jsonObj = JObject.Parse(monitorHttp.HeadersJson);
-
-                // Extract values and create Tuple
-                List<Tuple<string, string>> properties = new List<Tuple<string, string>>();
-
-                foreach (var property in jsonObj.Properties())
-                {
-                    properties.Add(Tuple.Create(property.Name, property.Value.ToString()));
-                }
-
-                monitorHttp.Headers = properties;
-            }
-        }
-        catch (Exception e)
-        {
-            SentrySdk.CaptureException(e);
-        }
-    }
+  
 
     private async Task StartTcpMonitorJobs(IEnumerable<Monitor> monitorListByIds)
     {
@@ -165,7 +142,7 @@ public class MonitorManager : IMonitorManager
     {
         try
         {
-            var agentLocationEnabled = GetEnableLocationApi();
+            var agentLocationEnabled = VariableUtils.GetBoolEnvVariable("enable_location_api");
             MonitorAgent monitorAgent;
 
             if (agentLocationEnabled)
@@ -198,18 +175,6 @@ public class MonitorManager : IMonitorManager
         }
     }
 
-    static bool GetEnableLocationApi()
-    {
-        string enableLocationApiValue = Environment.GetEnvironmentVariable("enable_location_api");
-        if (!string.IsNullOrEmpty(enableLocationApiValue) && bool.TryParse(enableLocationApiValue, out bool result))
-        {
-            return result;
-        }
-
-        // Default value if environment variable is not set or not a valid boolean
-        return false;
-    }
-
     public async Task StartMasterMonitorAgentTaskManager()
     {
         try
@@ -238,10 +203,10 @@ public class MonitorManager : IMonitorManager
         var monitorAgents = await _monitorAgentRepository.GetAllMonitorAgents();
         monitorAgents = monitorAgents.Where(x => (int)x.MonitorRegion == monitorRegion).ToList();
 
-        var monitorList = monitors.Where(x => x.Paused == false).ToList();
+        var monitorList = monitors.Where(x => x?.Paused == false).ToList();
 
-        var countMonitor = monitorList.Count();
-        var countAgents = monitorAgents.Count();
+        var countMonitor = monitorList.Count;
+        var countAgents = monitorAgents.Count;
 
         if (countAgents > 0 && countMonitor > 0)
         {
@@ -283,7 +248,7 @@ public class MonitorManager : IMonitorManager
 
     static MonitorRegion GetMonitorRegionVariable()
     {
-        string monitorRegion = Environment.GetEnvironmentVariable("monitor_region");
+        string? monitorRegion = Environment.GetEnvironmentVariable("monitor_region");
         if (!string.IsNullOrEmpty(monitorRegion) && int.TryParse(monitorRegion, out int result))
         {
             MonitorRegion value = (MonitorRegion)result;

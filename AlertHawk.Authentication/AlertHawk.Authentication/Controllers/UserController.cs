@@ -15,11 +15,11 @@ public class UserController : Controller
 {
     private readonly IUserService _userService;
     private readonly GetOrCreateUserHelper _getOrCreateUserHelper;
+
     public UserController(IUserService userService)
     {
         _userService = userService;
         _getOrCreateUserHelper = new GetOrCreateUserHelper(_userService);
-
     }
 
     [HttpPost("create")]
@@ -29,7 +29,7 @@ public class UserController : Controller
     public async Task<IActionResult> PostUserCreation([FromBody] UserCreation userCreation)
     {
         await IsUserAdmin();
-        
+
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
@@ -96,6 +96,7 @@ public class UserController : Controller
         await _userService.ResetPassword(username);
         return Ok();
     }
+
     [HttpGet("GetAll")]
     [SwaggerOperation(Summary = "Get All Users")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -116,6 +117,7 @@ public class UserController : Controller
             return StatusCode(StatusCodes.Status403Forbidden,
                 new Message("This user is not authorized to do this operation"));
         }
+
         return null; // or return a default value if needed
     }
 
@@ -128,6 +130,7 @@ public class UserController : Controller
     {
         return Ok(await _userService.Get(userId));
     }
+
     [HttpGet("GetByEmail/{userEmail}")]
     [SwaggerOperation(Summary = "Get User by Id")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -137,6 +140,7 @@ public class UserController : Controller
     {
         return Ok(await _userService.GetByEmail(userEmail));
     }
+
     [HttpGet("GetByUserName/{userName}")]
     [SwaggerOperation(Summary = "Get User by Id")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -146,6 +150,7 @@ public class UserController : Controller
     {
         return Ok(await _userService.GetByUsername(userName));
     }
+
     [HttpGet("{email}")]
     [Authorize]
     [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
@@ -153,7 +158,10 @@ public class UserController : Controller
     {
         var result = await _userService.GetByEmail(email);
         if (ReferenceEquals(result, null))
+        {
             result = await _getOrCreateUserHelper.GetUserOrCreateUser(User);
+        }
+
         return Ok(result);
     }
 }

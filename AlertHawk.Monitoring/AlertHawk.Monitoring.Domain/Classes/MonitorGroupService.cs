@@ -32,4 +32,19 @@ public class MonitorGroupService : IMonitorGroupService
     {
         await _monitorGroupRepository.RemoveMonitorFromGroup(monitorGroupItems);
     }
+
+    public async Task AddMonitorGroup(MonitorGroup monitorGroup)
+    {
+        await _monitorGroupRepository.AddMonitorGroup(monitorGroup);
+    }
+
+    public async Task UpdateMonitorGroup(MonitorGroup monitorGroup)
+    {
+        await _monitorGroupRepository.UpdateMonitorGroup(monitorGroup);
+    }
+
+    public async Task DeleteMonitorGroup(int id)
+    {
+        await _monitorGroupRepository.DeleteMonitorGroup(id);
+    }
 }

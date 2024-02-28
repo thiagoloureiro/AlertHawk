@@ -13,14 +13,12 @@ namespace AlertHawk.Authentication.Controllers
     [ApiController]
     public class UsersMonitorGroupController : Controller
     {
-        private readonly IUserService _userService;
         private readonly GetOrCreateUserHelper _getOrCreateUserHelper;
         private readonly IUsersMonitorGroupService _usersMonitorGroupService;
 
         public UsersMonitorGroupController(IUserService userService, IUsersMonitorGroupService usersMonitorGroupService)
         {
-            _userService = userService;
-            _getOrCreateUserHelper = new GetOrCreateUserHelper(_userService);
+            _getOrCreateUserHelper = new GetOrCreateUserHelper(userService);
             _usersMonitorGroupService = usersMonitorGroupService;
         }
 
@@ -32,7 +30,7 @@ namespace AlertHawk.Authentication.Controllers
         {
             var usr = await GetUserByToken();
 
-            if (!usr.IsAdmin)
+            if (usr != null && !usr.IsAdmin)
             {
                 return StatusCode(StatusCodes.Status403Forbidden,
                     new Message("This user is not authorized to do this operation"));
@@ -59,6 +57,7 @@ namespace AlertHawk.Authentication.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new Message("Something went wrong."));
             }
         }
+
         [HttpGet("GetAll")]
         [SwaggerOperation(Summary = "Get All Monitor Group Id By UserId Inside User Token")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -68,7 +67,12 @@ namespace AlertHawk.Authentication.Controllers
         public async Task<IActionResult> GetAll()
         {
             var usrAdmin = await GetUserByToken();
-            return Ok(await _usersMonitorGroupService.GetAsync(usrAdmin.Id));
+            if (usrAdmin != null)
+            {
+                return Ok(await _usersMonitorGroupService.GetAsync(usrAdmin.Id));
+            }
+
+            return Ok();
         }
 
         [HttpGet("GetAllByUserId/{userId}")]
@@ -80,13 +84,15 @@ namespace AlertHawk.Authentication.Controllers
         public async Task<IActionResult> GetAllByUserId(Guid userId)
         {
             var usrAdmin = await GetUserByToken();
-            if (!usrAdmin.IsAdmin)
+            if (usrAdmin != null && !usrAdmin.IsAdmin)
             {
                 return StatusCode(StatusCodes.Status403Forbidden,
                     new Message("This user is not authorized to do this operation"));
             }
+
             return Ok(await _usersMonitorGroupService.GetAsync(userId));
         }
+
         private async Task<UserDto?> GetUserByToken()
         {
             return await _getOrCreateUserHelper.GetUserOrCreateUser(User);

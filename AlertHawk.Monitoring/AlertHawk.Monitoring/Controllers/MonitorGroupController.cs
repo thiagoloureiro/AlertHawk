@@ -45,6 +45,34 @@ namespace AlertHawk.Monitoring.Controllers
             return Ok();
         }
         
+        [SwaggerOperation(Summary = "Create a Monitor Group")]
+        [ProducesResponseType(typeof(MonitorGroup), StatusCodes.Status200OK)]
+        [HttpPost("addMonitorGroup")]
+        public async Task<IActionResult> AddMonitorGroup([FromBody] MonitorGroup monitorGroup)
+        {
+            await _monitorGroupService.AddMonitorGroup(monitorGroup);
+            return Ok();
+        }
+        
+          
+        [SwaggerOperation(Summary = "Update a Monitor Group")]
+        [ProducesResponseType(typeof(MonitorGroup), StatusCodes.Status200OK)]
+        [HttpPost("updateMonitorGroup")]
+        public async Task<IActionResult> UpdateMonitorGroup([FromBody] MonitorGroup monitorGroup)
+        {
+            await _monitorGroupService.UpdateMonitorGroup(monitorGroup);
+            return Ok();
+        }
+        
+        [SwaggerOperation(Summary = "Delete a Monitor Group")]
+        [ProducesResponseType(typeof(MonitorGroup), StatusCodes.Status200OK)]
+        [HttpDelete("deleteMonitorGroup/{id}")]
+        public async Task<IActionResult> DeleteMonitorGroup(int id)
+        {
+            await _monitorGroupService.DeleteMonitorGroup(id);
+            return Ok();
+        }
+        
         [SwaggerOperation(Summary = "Remove Monitors from the Group")]
         [ProducesResponseType(typeof(MonitorGroup), StatusCodes.Status200OK)]
         [HttpDelete("removeMonitorFromGroup")]

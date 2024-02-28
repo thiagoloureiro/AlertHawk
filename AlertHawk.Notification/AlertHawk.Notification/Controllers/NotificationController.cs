@@ -58,13 +58,18 @@ namespace AlertHawk.Notification.Controllers
         public async Task<IActionResult> SelectNotificationItemList()
         {
             var result = await _notificationService.SelectNotificationItemList();
+
             foreach (var item in result)
             {
-                if (item.NotificationEmail != null) item.NotificationEmail.Password = "";
+                if (item.NotificationEmail != null)
+                {
+                    item.NotificationEmail.Password = "";
+                }
             }
+
             return Ok(result);
         }
-        
+
         [HttpPost("SelectNotificationItemListByIds")]
         [SwaggerOperation(Summary = "Select Notification Item List By List of Ids")]
         [ProducesResponseType(typeof(List<NotificationItem>), StatusCodes.Status200OK)]
@@ -73,8 +78,12 @@ namespace AlertHawk.Notification.Controllers
             var result = await _notificationService.SelectNotificationItemList(ids);
             foreach (var item in result)
             {
-                if (item.NotificationEmail != null) item.NotificationEmail.Password = "";
+                if (item.NotificationEmail != null)
+                {
+                    item.NotificationEmail.Password = "";
+                }
             }
+
             return Ok(result);
         }
 
@@ -84,8 +93,13 @@ namespace AlertHawk.Notification.Controllers
         public async Task<IActionResult> SelectNotificationItemList(int id)
         {
             var result = await _notificationService.SelectNotificationItemById(id);
-            if (result?.NotificationEmail != null) result.NotificationEmail.Password = "";
-            return Ok(result);
+            if (result?.NotificationEmail != null)
+            {
+                result.NotificationEmail.Password = "";
+                return Ok(result);
+            }
+
+            return Ok();
         }
     }
 }

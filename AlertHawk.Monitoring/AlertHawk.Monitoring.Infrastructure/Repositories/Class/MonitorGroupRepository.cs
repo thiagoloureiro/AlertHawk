@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
@@ -8,6 +9,7 @@ using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 
+[ExcludeFromCodeCoverage]
 public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
 {
     private readonly string _connstring;
@@ -46,7 +48,7 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
         await db.QueryAsync<MonitorGroup>(sqlInsert,
             new { monitorGroupItems.MonitorId, monitorGroupItems.MonitorGroupId }, commandType: CommandType.Text);
     }
-    
+
     public async Task RemoveMonitorFromGroup(MonitorGroupItems monitorGroupItems)
     {
         await using var db = new SqlConnection(_connstring);
@@ -54,5 +56,34 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
             @"DELETE FROM [MonitorGroupItems] WHERE MonitorId = @MonitorId AND MonitorGroupId = @MonitorGroupId";
         await db.QueryAsync<MonitorGroup>(sql,
             new { monitorGroupItems.MonitorId, monitorGroupItems.MonitorGroupId }, commandType: CommandType.Text);
+    }
+
+    public async Task AddMonitorGroup(MonitorGroup monitorGroup)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlInsert =
+            @"INSERT INTO [MonitorGroup] (Name) VALUES (@Name)";
+        await db.QueryAsync<MonitorGroup>(sqlInsert,
+            new { monitorGroup.Name }, commandType: CommandType.Text);
+    }
+
+    public async Task UpdateMonitorGroup(MonitorGroup monitorGroup)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlUpdate =
+            @"UPDATE [MonitorGroup] SET [Name] = @Name WHERE Id = @Id";
+        await db.QueryAsync<MonitorGroup>(sqlUpdate,
+            new { monitorGroup.Name, monitorGroup.Id }, commandType: CommandType.Text);
+    }
+
+    public async Task DeleteMonitorGroup(int id)
+    {
+        await using var db = new SqlConnection(_connstring);
+
+        string sqlDeleteGroupItems = @"DELETE FROM [MonitorGroupItems] WHERE MonitorGroupId = @id";
+        await db.QueryAsync<MonitorGroup>(sqlDeleteGroupItems, new { id }, commandType: CommandType.Text);
+
+        string sqlDeleteGroup = @"DELETE FROM [MonitorGroup] WHERE id = @id";
+        await db.QueryAsync<MonitorGroup>(sqlDeleteGroup, new { id }, commandType: CommandType.Text);
     }
 }

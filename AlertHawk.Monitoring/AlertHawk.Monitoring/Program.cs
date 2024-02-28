@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
@@ -13,7 +14,10 @@ using MassTransit;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
-using AlertHawk.Monitoring;
+using AlertHawk.Monitoring.Domain.Interfaces.Producers;
+using AlertHawk.Monitoring.Infrastructure.Producers;
+
+[assembly: ExcludeFromCodeCoverage]
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseSentry(options =>
@@ -84,6 +88,7 @@ builder.Services.AddTransient<IHttpClientRunner, HttpClientRunner>();
 builder.Services.AddTransient<ITcpClientRunner, TcpClientRunner>();
 builder.Services.AddTransient<IHttpClientScreenshot, HttpClientScreenshot>();
 
+builder.Services.AddTransient<INotificationProducer, NotificationProducer>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using AlertHawk.Monitoring.Domain.Entities;
 using Newtonsoft.Json.Linq;
 
 namespace AlertHawk.Monitoring.Infrastructure.Utils;
 
+[ExcludeFromCodeCoverage]
 public static class IPAddressUtils
 {
     public static async Task<MonitorRegion> GetLocation()

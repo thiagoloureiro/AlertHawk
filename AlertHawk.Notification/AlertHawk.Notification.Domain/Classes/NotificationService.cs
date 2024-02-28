@@ -123,7 +123,7 @@ namespace AlertHawk.Notification.Domain.Classes
                     JObject jsonObj = JObject.Parse(webHook.HeadersJson);
 
                     // Extract values and create Tuple
-                    List<Tuple<string, string>> properties = new List<Tuple<string, string>>();
+                    List<Tuple<string, string>>? properties = new List<Tuple<string, string>>();
 
                     foreach (var property in jsonObj.Properties())
                     {
