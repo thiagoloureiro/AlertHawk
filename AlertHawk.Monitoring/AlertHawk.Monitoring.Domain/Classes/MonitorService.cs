@@ -55,43 +55,57 @@ public class MonitorService : IMonitorService
 
     public async Task<MonitorDashboard?> GetMonitorDashboardData(int id)
     {
-        var result = await _caching.GetOrSetObjectFromCacheAsync($"GroupHistory_{id}_90", 20,
-            () => _monitorRepository.GetMonitorHistory(id, 90));
-
-        var monitor =
-            await _caching.GetOrSetObjectFromCacheAsync($"Monitor_{id}", 20,
-                () => _monitorRepository.GetMonitorById(id));
-
-        if (monitor == null)
+        try
         {
-            return null;
+            var result = await _caching.GetOrSetObjectFromCacheAsync($"GroupHistory_{id}_90", 20,
+                () => _monitorRepository.GetMonitorHistory(id, 90));
+            
+            if (result == null)
+            {
+                return null;
+            }
+
+            var monitor =
+                await _caching.GetOrSetObjectFromCacheAsync($"Monitor_{id}", 20,
+                    () => _monitorRepository.GetMonitorById(id));
+
+            if (monitor == null)
+            {
+                return null;
+            }
+
+            var monitorHistories = result.ToList();
+            var lst24Hrs = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-1)).ToList();
+            var lst7Days = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-7)).ToList();
+            var lst30Days = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-30)).ToList();
+            var lst3Months = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-90)).ToList();
+            var lst6Months = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-180)).ToList();
+
+            double uptime24Hrs = (double)lst24Hrs.Count(item => item.Status) / lst24Hrs.Count * 100;
+            double upTime7Days = (double)lst7Days.Count(item => item.Status) / lst7Days.Count * 100;
+            double uptime30Days = (double)lst30Days.Count(item => item.Status) / lst30Days.Count * 100;
+            double uptime3Months = (double)lst3Months.Count(item => item.Status) / lst3Months.Count * 100;
+            double uptime6Months = (double)lst6Months.Count(item => item.Status) / lst6Months.Count * 100;
+
+            var monitorDashboard = new MonitorDashboard
+            {
+                ResponseTime = monitorHistories.Average(x => x.ResponseTime),
+                Uptime24Hrs = uptime24Hrs,
+                Uptime7Days = upTime7Days,
+                Uptime30Days = uptime30Days,
+                Uptime3Months = uptime3Months,
+                Uptime6Months = uptime6Months,
+                CertExpDays = monitor.DaysToExpireCert,
+                MonitorId = id
+            };
+            return monitorDashboard;
+        }
+        catch (Exception e)
+        {
+            SentrySdk.CaptureException(e);
         }
 
-        var monitorHistories = result.ToList();
-        var lst24Hrs = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-1)).ToList();
-        var lst7Days = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-7)).ToList();
-        var lst30Days = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-30)).ToList();
-        var lst3Months = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-90)).ToList();
-        var lst6Months = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-180)).ToList();
-
-        double uptime24Hrs = (double)lst24Hrs.Count(item => item.Status) / lst24Hrs.Count * 100;
-        double upTime7Days = (double)lst7Days.Count(item => item.Status) / lst7Days.Count * 100;
-        double uptime30Days = (double)lst30Days.Count(item => item.Status) / lst30Days.Count * 100;
-        double uptime3Months = (double)lst3Months.Count(item => item.Status) / lst3Months.Count * 100;
-        double uptime6Months = (double)lst6Months.Count(item => item.Status) / lst6Months.Count * 100;
-
-        var monitorDashboard = new MonitorDashboard
-        {
-            ResponseTime = monitorHistories.Average(x => x.ResponseTime),
-            Uptime24Hrs = uptime24Hrs,
-            Uptime7Days = upTime7Days,
-            Uptime30Days = uptime30Days,
-            Uptime3Months = uptime3Months,
-            Uptime6Months = uptime6Months,
-            CertExpDays = monitor.DaysToExpireCert,
-            MonitorId = id
-        };
-        return monitorDashboard;
+        return null;
     }
 
     public async Task SetMonitorDashboardDataCacheList()
@@ -143,7 +157,7 @@ public class MonitorService : IMonitorService
             monitorHttp.HeadersJson = JsonUtils.ConvertTupleToJson(monitorHttp.Headers);
         }
 
-       return await _monitorRepository.CreateMonitorHttp(monitorHttp);
+        return await _monitorRepository.CreateMonitorHttp(monitorHttp);
     }
 
     public async Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days)
