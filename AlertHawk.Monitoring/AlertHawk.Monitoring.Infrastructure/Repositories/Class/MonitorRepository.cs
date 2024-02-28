@@ -73,9 +73,15 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sqlMonitorHttp,
             new
             {
-                monitorHttp.MonitorId, monitorHttp.CheckCertExpiry, monitorHttp.IgnoreTlsSsl,
+                monitorHttp.MonitorId,
+                monitorHttp.CheckCertExpiry,
+                monitorHttp.IgnoreTlsSsl,
                 monitorHttp.MaxRedirects,
-                monitorHttp.MonitorHttpMethod, monitorHttp.Body, monitorHttp.HeadersJson, monitorHttp.UrlToCheck, monitorHttp.Timeout
+                monitorHttp.MonitorHttpMethod,
+                monitorHttp.Body,
+                monitorHttp.HeadersJson,
+                monitorHttp.UrlToCheck,
+                monitorHttp.Timeout
             }, commandType: CommandType.Text);
     }
 
@@ -101,9 +107,14 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         var id = await db.ExecuteScalarAsync<int>(sqlMonitor,
             new
             {
-                monitorTcp.Name, monitorTcp.MonitorTypeId, monitorTcp.HeartBeatInterval, monitorTcp.Retries,
+                monitorTcp.Name,
+                monitorTcp.MonitorTypeId,
+                monitorTcp.HeartBeatInterval,
+                monitorTcp.Retries,
                 monitorTcp.Status,
-                monitorTcp.DaysToExpireCert, monitorTcp.Paused, monitorTcp.MonitorRegion,
+                monitorTcp.DaysToExpireCert,
+                monitorTcp.Paused,
+                monitorTcp.MonitorRegion,
                 monitorTcp.MonitorEnvironment
             }, commandType: CommandType.Text);
 
@@ -112,7 +123,11 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sqlMonitorTcp,
             new
             {
-                MonitorId = id, monitorTcp.Port, monitorTcp.IP, monitorTcp.Timeout, monitorTcp.LastStatus
+                MonitorId = id,
+                monitorTcp.Port,
+                monitorTcp.IP,
+                monitorTcp.Timeout,
+                monitorTcp.LastStatus
             }, commandType: CommandType.Text);
         return id;
     }
@@ -150,7 +165,11 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sqlMonitorTcp,
             new
             {
-                monitorTcp.MonitorId, monitorTcp.Port, monitorTcp.IP, monitorTcp.Timeout, monitorTcp.LastStatus
+                monitorTcp.MonitorId,
+                monitorTcp.Port,
+                monitorTcp.IP,
+                monitorTcp.Timeout,
+                monitorTcp.LastStatus
             }, commandType: CommandType.Text);
     }
 
@@ -190,7 +209,11 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
 
         string sql =
-            $@"SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp] WHERE MonitorId = @monitorId";
+            $@"SELECT a.Id, a.Name, a.MonitorTypeId, a.HeartBeatInterval, a.Retries, a.Status, a.DaysToExpireCert, a.Paused, a.MonitorRegion, a.MonitorEnvironment, 
+               b.MonitorId, b.CheckCertExpiry, b.IgnoreTlsSsl, b.MaxRedirects, b.UrlToCheck, b.Timeout, b.MonitorHttpMethod, b.Body, b.HeadersJson  
+                FROM [Monitor] a inner join
+                [MonitorHttp] b on a.Id = b.MonitorId
+             WHERE MonitorId = @monitorId";
         return await db.QueryFirstOrDefaultAsync<MonitorHttp>(sql, new { monitorId }, commandType: CommandType.Text);
     }
 
@@ -199,7 +222,11 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
 
         string sql =
-            $@"SELECT MonitorId, Port, IP, Timeout, LastStatus  FROM [MonitorTcp] WHERE MonitorId = @monitorId";
+            $@"SELECT a.Id, a.Name, a.MonitorTypeId, a.HeartBeatInterval, a.Retries, a.Status, a.DaysToExpireCert, a.Paused, a.MonitorRegion, a.MonitorEnvironment, 
+               b.MonitorId, b.Port, b.IP, b.Timeout, b.LastStatus                  
+                FROM [Monitor] a inner join
+                [MonitorTcp] b on a.Id = b.MonitorId
+            WHERE MonitorId = @monitorId";
         return await db.QueryFirstOrDefaultAsync<MonitorTcp>(sql, new { monitorId }, commandType: CommandType.Text);
     }
 
@@ -232,9 +259,14 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         var id = await db.ExecuteScalarAsync<int>(sqlMonitor,
             new
             {
-                monitorHttp.Name, monitorHttp.MonitorTypeId, monitorHttp.HeartBeatInterval, monitorHttp.Retries,
+                monitorHttp.Name,
+                monitorHttp.MonitorTypeId,
+                monitorHttp.HeartBeatInterval,
+                monitorHttp.Retries,
                 monitorHttp.Status,
-                monitorHttp.DaysToExpireCert, monitorHttp.Paused, monitorHttp.MonitorRegion,
+                monitorHttp.DaysToExpireCert,
+                monitorHttp.Paused,
+                monitorHttp.MonitorRegion,
                 monitorHttp.MonitorEnvironment
             }, commandType: CommandType.Text);
 
@@ -244,9 +276,14 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sqlMonitorHttp,
             new
             {
-                MonitorId = id, monitorHttp.CheckCertExpiry, monitorHttp.IgnoreTlsSsl,
+                MonitorId = id,
+                monitorHttp.CheckCertExpiry,
+                monitorHttp.IgnoreTlsSsl,
                 monitorHttp.MaxRedirects,
-                monitorHttp.MonitorHttpMethod, monitorHttp.Body, monitorHttp.HeadersJson, monitorHttp.UrlToCheck,
+                monitorHttp.MonitorHttpMethod,
+                monitorHttp.Body,
+                monitorHttp.HeadersJson,
+                monitorHttp.UrlToCheck,
                 monitorHttp.Timeout
             }, commandType: CommandType.Text);
         return id;
@@ -268,8 +305,13 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sql,
             new
             {
-                monitorHistory.MonitorId, monitorHistory.Status, monitorHistory.TimeStamp, monitorHistory.StatusCode,
-                monitorHistory.ResponseTime, monitorHistory.HttpVersion, monitorHistory.ResponseMessage
+                monitorHistory.MonitorId,
+                monitorHistory.Status,
+                monitorHistory.TimeStamp,
+                monitorHistory.StatusCode,
+                monitorHistory.ResponseTime,
+                monitorHistory.HttpVersion,
+                monitorHistory.ResponseMessage
             }, commandType: CommandType.Text);
     }
 
@@ -308,8 +350,11 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sql,
             new
             {
-                monitorHistory.MonitorId, monitorHistory.TimeStamp, monitorHistory.Status,
-                Message = monitorHistory.ResponseMessage, monitorHistory.ScreenShotUrl
+                monitorHistory.MonitorId,
+                monitorHistory.TimeStamp,
+                monitorHistory.Status,
+                Message = monitorHistory.ResponseMessage,
+                monitorHistory.ScreenShotUrl
             }, commandType: CommandType.Text);
     }
 
