@@ -9,9 +9,11 @@ namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 public class TcpClientRunner : ITcpClientRunner
 {
     private readonly INotificationProducer _notificationProducer;
+    private readonly IMonitorRepository _monitorRepository;
 
     public TcpClientRunner(IMonitorRepository monitorRepository, INotificationProducer notificationProducer)
     {
+        _monitorRepository = monitorRepository;
         _notificationProducer = notificationProducer;
     }
 
@@ -26,6 +28,19 @@ public class TcpClientRunner : ITcpClientRunner
             try
             {
                 isConnected = await MakeTcpCall(monitorTcp);
+
+                var monitorHistory = new MonitorHistory
+                {
+                    MonitorId = monitorTcp.MonitorId,
+                    Status = isConnected,
+                    TimeStamp = DateTime.UtcNow,
+                    StatusCode = 0,
+                    ResponseMessage = $"Success to establish a connection to {monitorTcp.IP}:{monitorTcp.Port}",
+                    ResponseTime = 0,
+                    HttpVersion = ""
+                };
+
+                await _monitorRepository.SaveMonitorHistory(monitorHistory);
 
                 if (!monitorTcp.LastStatus)
                 {
@@ -46,6 +61,19 @@ public class TcpClientRunner : ITcpClientRunner
         {
             if (monitorTcp.LastStatus)
             {
+                var monitorHistory = new MonitorHistory
+                {
+                    MonitorId = monitorTcp.MonitorId,
+                    Status = isConnected,
+                    TimeStamp = DateTime.UtcNow,
+                    StatusCode = 0,
+                    ResponseMessage = $"Failed to establish a connection to {monitorTcp.IP}:{monitorTcp.Port} after {monitorTcp.Retries} retries.",
+                    ResponseTime = 0,
+                    HttpVersion = ""
+                };
+
+                await _monitorRepository.SaveMonitorHistory(monitorHistory);
+                
                 await _notificationProducer.HandleFailedTcpNotifications(monitorTcp);
             }
 
