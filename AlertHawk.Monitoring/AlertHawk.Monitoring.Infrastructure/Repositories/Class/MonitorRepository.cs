@@ -40,6 +40,31 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     public async Task UpdateMonitorHttp(MonitorHttp monitorHttp)
     {
         await using var db = new SqlConnection(_connstring);
+
+        string sqlMonitor = @"UPDATE [dbo].[Monitor]
+                    SET [Name] = @Name
+                    ,[HeartBeatInterval] = @HeartBeatInterval
+                    ,[Retries] = @Retries
+                    ,[Status] = @Status
+                    ,[DaysToExpireCert] = @DaysToExpireCert
+                    ,[Paused] = @Paused
+                    ,[MonitorRegion] = @MonitorRegion
+                    ,[MonitorEnvironment] = @MonitorEnvironment
+                    WHERE Id = @Id";
+        await db.ExecuteAsync(sqlMonitor,
+            new
+            {
+                monitorHttp.MonitorId,
+                monitorHttp.Name,
+                monitorHttp.HeartBeatInterval,
+                monitorHttp.Retries,
+                monitorHttp.Status,
+                monitorHttp.DaysToExpireCert,
+                monitorHttp.Paused,
+                monitorHttp.MonitorRegion,
+                monitorHttp.MonitorEnvironment
+            }, commandType: CommandType.Text);
+
         string sqlMonitorHttp =
             @"UPDATE [MonitorHttp] SET CheckCertExpiry = @CheckCertExpiry, IgnoreTlsSsl = @IgnoreTlsSsl, 
             MaxRedirects = @MaxRedirects, UrlToCheck = @UrlToCheck, Timeout = @Timeout, MonitorHttpMethod = @MonitorHttpMethod, 
@@ -48,7 +73,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sqlMonitorHttp,
             new
             {
-                MonitorId = monitorHttp.MonitorId, monitorHttp.CheckCertExpiry, monitorHttp.IgnoreTlsSsl,
+                monitorHttp.MonitorId, monitorHttp.CheckCertExpiry, monitorHttp.IgnoreTlsSsl,
                 monitorHttp.MaxRedirects,
                 monitorHttp.MonitorHttpMethod, monitorHttp.Body, monitorHttp.HeadersJson, monitorHttp.UrlToCheck, monitorHttp.Timeout
             }, commandType: CommandType.Text);
@@ -95,6 +120,30 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     public async Task UpdateMonitorTcp(MonitorTcp monitorTcp)
     {
         await using var db = new SqlConnection(_connstring);
+
+        string sqlMonitor = @"UPDATE [dbo].[Monitor]
+                    SET [Name] = @Name
+                    ,[HeartBeatInterval] = @HeartBeatInterval
+                    ,[Retries] = @Retries
+                    ,[Status] = @Status
+                    ,[DaysToExpireCert] = @DaysToExpireCert
+                    ,[Paused] = @Paused
+                    ,[MonitorRegion] = @MonitorRegion
+                    ,[MonitorEnvironment] = @MonitorEnvironment
+                    WHERE Id = @Id";
+        await db.ExecuteAsync(sqlMonitor,
+            new
+            {
+                monitorTcp.MonitorId,
+                monitorTcp.Name,
+                monitorTcp.HeartBeatInterval,
+                monitorTcp.Retries,
+                monitorTcp.Status,
+                monitorTcp.DaysToExpireCert,
+                monitorTcp.Paused,
+                monitorTcp.MonitorRegion,
+                monitorTcp.MonitorEnvironment
+            }, commandType: CommandType.Text);
 
         string sqlMonitorTcp =
             @"UPDATE [MonitorTcp] SET MonitorId = @MonitorId, Port = @Port, IP = @IP, Timeout = @Timeout, LastStatus = @LastStatus WHERE MonitorId = @MonitorId";
