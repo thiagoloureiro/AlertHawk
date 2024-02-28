@@ -59,7 +59,7 @@ public class MonitorService : IMonitorService
         {
             var result = await _caching.GetOrSetObjectFromCacheAsync($"GroupHistory_{id}_90", 20,
                 () => _monitorRepository.GetMonitorHistory(id, 90));
-            
+
             if (result == null)
             {
                 return null;
@@ -87,18 +87,23 @@ public class MonitorService : IMonitorService
             double uptime3Months = (double)lst3Months.Count(item => item.Status) / lst3Months.Count * 100;
             double uptime6Months = (double)lst6Months.Count(item => item.Status) / lst6Months.Count * 100;
 
-            var monitorDashboard = new MonitorDashboard
+            if (monitorHistories.Any())
             {
-                ResponseTime = monitorHistories.Average(x => x.ResponseTime),
-                Uptime24Hrs = uptime24Hrs,
-                Uptime7Days = upTime7Days,
-                Uptime30Days = uptime30Days,
-                Uptime3Months = uptime3Months,
-                Uptime6Months = uptime6Months,
-                CertExpDays = monitor.DaysToExpireCert,
-                MonitorId = id
-            };
-            return monitorDashboard;
+                var monitorDashboard = new MonitorDashboard
+                {
+                    ResponseTime = monitorHistories.Average(x => x.ResponseTime),
+                    Uptime24Hrs = uptime24Hrs,
+                    Uptime7Days = upTime7Days,
+                    Uptime30Days = uptime30Days,
+                    Uptime3Months = uptime3Months,
+                    Uptime6Months = uptime6Months,
+                    CertExpDays = monitor.DaysToExpireCert,
+                    MonitorId = id
+                };
+                return monitorDashboard;
+            }
+
+            return null;
         }
         catch (Exception e)
         {
@@ -230,9 +235,16 @@ public class MonitorService : IMonitorService
 
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
     {
-        var data = _caching.GetValueFromCache<List<MonitorDashboard>>(_cacheKeyDashboardList);
+        var data = _caching.GetValueFromCache<List<MonitorDashboard?>>(_cacheKeyDashboardList);
 
-        var dataToReturn = data.Where(x => ids.Contains(x.MonitorId)).ToList();
-        return dataToReturn;
+        if (data != null)
+        {
+            var items = data.Where(item => item != null).ToList();
+
+            var dataToReturn = items.Where(x => ids.Contains(x.MonitorId)).ToList();
+            return dataToReturn;
+        }
+
+        return new List<MonitorDashboard>();
     }
 }
