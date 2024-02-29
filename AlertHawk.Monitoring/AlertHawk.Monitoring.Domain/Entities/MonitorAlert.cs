@@ -7,5 +7,6 @@ public class MonitorAlert
     public DateTime TimeStamp { get; set; }
     public bool Status { get; set; }
     public string? Message { get; set; }
+    public string ScreenShotUrl { get; set; }
     public string MonitorName { get; set; }
 }
