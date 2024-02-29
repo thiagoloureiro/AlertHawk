@@ -82,16 +82,13 @@ public class MonitorManager : IMonitorManager
                 string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
                 Thread.Sleep(50);
                 var monitor = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
-                
-                Console.WriteLine($"Registering {jobId}");
+
                 RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, x => x.CheckUrlsAsync(monitorHttp),
                     $"*/{monitor?.HeartBeatInterval} * * * *");
             }
         }
     }
-
-  
-
+    
     private async Task StartTcpMonitorJobs(IEnumerable<Monitor> monitorListByIds)
     {
         var lstMonitorByTcpType = monitorListByIds.Where(x => x.MonitorTypeId == 3);
@@ -165,8 +162,8 @@ public class MonitorManager : IMonitorManager
                 {
                     Hostname = Environment.MachineName,
                     TimeStamp = DateTime.UtcNow,
-                   // MonitorRegion = GetMonitorRegionVariable()
-                   MonitorRegion = MonitorRegion.Europe
+                    // MonitorRegion = GetMonitorRegionVariable()
+                    MonitorRegion = MonitorRegion.Europe
                 };
             }
 

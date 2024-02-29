@@ -29,12 +29,15 @@ builder.WebHost.UseSentry(options =>
             {
                 if (
                     sentryEvent.Level == SentryLevel.Error
-                    && sentryEvent.Logger?.Equals("Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter", StringComparison.Ordinal) == true
+                    && sentryEvent.Logger?.Equals("Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter",
+                        StringComparison.Ordinal) == true
                     && sentryEvent.Message?.Message?.Contains("IDX10223", StringComparison.Ordinal) == true
                 )
-                {   // Do not log 'IDX10223: Lifetime validation failed. The token is expired.'
+                {
+                    // Do not log 'IDX10223: Lifetime validation failed. The token is expired.'
                     return null;
                 }
+
                 return sentryEvent;
             }
         );
@@ -78,13 +81,14 @@ builder.Services.AddTransient<IMonitorTypeService, MonitorTypeService>();
 builder.Services.AddTransient<IMonitorService, MonitorService>();
 builder.Services.AddTransient<IMonitorGroupService, MonitorGroupService>();
 builder.Services.AddTransient<IMonitorAgentService, MonitorAgentService>();
-
+builder.Services.AddTransient<IMonitorAlertService, MonitorAlertService>();
 
 builder.Services.AddTransient<IMonitorTypeRepository, MonitorTypeRepository>();
 builder.Services.AddTransient<IMonitorRepository, MonitorRepository>();
 builder.Services.AddTransient<IMonitorAgentRepository, MonitorAgentRepository>();
 builder.Services.AddTransient<IMonitorManager, MonitorManager>();
 builder.Services.AddTransient<IMonitorGroupRepository, MonitorGroupRepository>();
+builder.Services.AddTransient<IMonitorAlertRepository, MonitorAlertRepository>();
 
 builder.Services.AddTransient<IHttpClientRunner, HttpClientRunner>();
 builder.Services.AddTransient<ITcpClientRunner, TcpClientRunner>();
@@ -94,7 +98,8 @@ builder.Services.AddTransient<INotificationProducer, NotificationProducer>();
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
-    options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    options.JsonSerializerOptions.DefaultIgnoreCondition =
+        System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals;
 });
