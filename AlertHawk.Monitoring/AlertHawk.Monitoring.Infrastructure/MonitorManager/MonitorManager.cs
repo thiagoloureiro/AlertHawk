@@ -82,6 +82,8 @@ public class MonitorManager : IMonitorManager
                 string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
                 Thread.Sleep(50);
                 var monitor = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
+                
+                Console.WriteLine($"Registering {jobId}");
                 RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, x => x.CheckUrlsAsync(monitorHttp),
                     $"*/{monitor?.HeartBeatInterval} * * * *");
             }
@@ -116,7 +118,7 @@ public class MonitorManager : IMonitorManager
             }
 
             IEnumerable<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
-            recurringJobs = recurringJobs.Where(x => x.Id.StartsWith("StartRunnerManager_CheckUrlsAsync_JobId"))
+            recurringJobs = recurringJobs.Where(x => x.Id.StartsWith("StartRunnerManager_CheckTcpAsync_JobId"))
                 .ToList();
 
             foreach (var job in recurringJobs)
@@ -163,7 +165,8 @@ public class MonitorManager : IMonitorManager
                 {
                     Hostname = Environment.MachineName,
                     TimeStamp = DateTime.UtcNow,
-                    MonitorRegion = GetMonitorRegionVariable()
+                   // MonitorRegion = GetMonitorRegionVariable()
+                   MonitorRegion = MonitorRegion.Europe
                 };
             }
 

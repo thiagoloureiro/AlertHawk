@@ -14,6 +14,8 @@ using MassTransit;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Infrastructure.Producers;
 
@@ -90,7 +92,12 @@ builder.Services.AddTransient<IHttpClientScreenshot, HttpClientScreenshot>();
 
 builder.Services.AddTransient<INotificationProducer, NotificationProducer>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals;
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>

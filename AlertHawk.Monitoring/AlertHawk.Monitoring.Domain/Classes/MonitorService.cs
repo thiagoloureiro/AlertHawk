@@ -81,11 +81,35 @@ public class MonitorService : IMonitorService
             var lst3Months = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-90)).ToList();
             var lst6Months = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-180)).ToList();
 
-            double uptime24Hrs = (double)lst24Hrs.Count(item => item.Status) / lst24Hrs.Count * 100;
-            double upTime7Days = (double)lst7Days.Count(item => item.Status) / lst7Days.Count * 100;
-            double uptime30Days = (double)lst30Days.Count(item => item.Status) / lst30Days.Count * 100;
-            double uptime3Months = (double)lst3Months.Count(item => item.Status) / lst3Months.Count * 100;
-            double uptime6Months = (double)lst6Months.Count(item => item.Status) / lst6Months.Count * 100;
+            double uptime24Hrs = 0.0;
+            if (lst24Hrs.Count > 0)
+            {
+                uptime24Hrs = (double)lst24Hrs.Count(item => item.Status) / lst24Hrs.Count * 100;
+            }
+
+            double upTime7Days = 0.0;
+            if (lst7Days.Count > 0)
+            {
+                upTime7Days = (double)lst7Days.Count(item => item.Status) / lst7Days.Count * 100;
+            }
+
+            double uptime30Days = 0.0;
+            if (lst30Days.Count > 0)
+            {
+                uptime30Days = (double)lst30Days.Count(item => item.Status) / lst30Days.Count * 100;
+            }
+
+            double uptime3Months = 0.0;
+            if (lst3Months.Count > 0)
+            {
+                uptime3Months = (double)lst3Months.Count(item => item.Status) / lst3Months.Count * 100;
+            }
+
+            double uptime6Months = 0.0;
+            if (lst6Months.Count > 0)
+            {
+                uptime6Months = (double)lst6Months.Count(item => item.Status) / lst6Months.Count * 100;
+            }
 
             if (monitorHistories.Any())
             {
