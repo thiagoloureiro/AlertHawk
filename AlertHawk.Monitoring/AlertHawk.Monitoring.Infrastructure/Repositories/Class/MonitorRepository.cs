@@ -50,7 +50,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                     ,[Paused] = @Paused
                     ,[MonitorRegion] = @MonitorRegion
                     ,[MonitorEnvironment] = @MonitorEnvironment
-                    WHERE Id = @Id";
+                    WHERE Id = @MonitorId";
         await db.ExecuteAsync(sqlMonitor,
             new
             {
@@ -145,7 +145,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                     ,[Paused] = @Paused
                     ,[MonitorRegion] = @MonitorRegion
                     ,[MonitorEnvironment] = @MonitorEnvironment
-                    WHERE Id = @Id";
+                    WHERE Id = @MonitorId";
         await db.ExecuteAsync(sqlMonitor,
             new
             {
