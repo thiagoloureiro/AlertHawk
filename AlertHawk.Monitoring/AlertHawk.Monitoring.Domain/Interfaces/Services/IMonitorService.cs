@@ -12,9 +12,9 @@ public interface IMonitorService
     Task DeleteMonitorHistory(int days);
     Task PauseMonitor(int id, bool paused);
     Task<MonitorDashboard?> GetMonitorDashboardData(int id);
-    IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids);
+    Task<IEnumerable<MonitorDashboard>> GetMonitorDashboardDataList(List<int> ids);
     Task SetMonitorDashboardDataCacheList();
-    Task<MonitorStatusDashboard> GetMonitorStatusDashboard();
+    Task<MonitorStatusDashboard> GetMonitorStatusDashboard(string jwtToken);
     Task<int> CreateMonitorHttp(MonitorHttp monitorHttp);
     Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days);
     Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(string token);

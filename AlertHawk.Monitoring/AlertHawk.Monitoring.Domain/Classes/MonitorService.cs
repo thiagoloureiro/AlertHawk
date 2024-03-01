@@ -194,9 +194,10 @@ public class MonitorService : IMonitorService
         await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20);
     }
 
-    public async Task<MonitorStatusDashboard> GetMonitorStatusDashboard()
+    public async Task<MonitorStatusDashboard> GetMonitorStatusDashboard(string jwtToken)
     {
-        var monitorList = await GetMonitorList();
+        var monitorList = await GetMonitorListByMonitorGroupIds(jwtToken);
+
         var enumerable = monitorList.ToList();
         var paused = enumerable.Count(x => x.Paused);
 
@@ -239,12 +240,7 @@ public class MonitorService : IMonitorService
 
     public async Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(string token)
     {
-        using var client = new HttpClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        var content = await client.GetAsync("https://dev.api.alerthawk.tech/auth/api/UsersMonitorGroup/GetAll");
-        var result = await content.Content.ReadAsStringAsync();
-        var groupMonitorIds = JsonConvert.DeserializeObject<List<UsersMonitorGroup>>(result);
-        var listGroupMonitorIds = groupMonitorIds?.Select(x => x.GroupMonitorId).ToList();
+        var listGroupMonitorIds = await GetUserGroupMonitorList(token);
 
         if (listGroupMonitorIds != null)
         {
@@ -252,6 +248,17 @@ public class MonitorService : IMonitorService
         }
 
         return null;
+    }
+
+    private static async Task<List<int>?> GetUserGroupMonitorList(string token)
+    {
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var content = await client.GetAsync("https://dev.api.alerthawk.tech/auth/api/UsersMonitorGroup/GetAll");
+        var result = await content.Content.ReadAsStringAsync();
+        var groupMonitorIds = JsonConvert.DeserializeObject<List<UsersMonitorGroup>>(result);
+        var listGroupMonitorIds = groupMonitorIds?.Select(x => x.GroupMonitorId).ToList();
+        return listGroupMonitorIds;
     }
 
     public async Task UpdateMonitorHttp(MonitorHttp monitorHttp)
@@ -289,7 +296,7 @@ public class MonitorService : IMonitorService
         return await _monitorRepository.GetTcpMonitorByMonitorId(id);
     }
 
-    public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
+    public async Task<IEnumerable<MonitorDashboard>> GetMonitorDashboardDataList(List<int> ids)
     {
         var data = _caching.GetValueFromCache<List<MonitorDashboard?>>(_cacheKeyDashboardList);
 
@@ -298,6 +305,7 @@ public class MonitorService : IMonitorService
             var items = data.Where(item => item != null).ToList();
 
             var dataToReturn = items.Where(x => ids.Contains(x.MonitorId)).ToList();
+
             return dataToReturn;
         }
 

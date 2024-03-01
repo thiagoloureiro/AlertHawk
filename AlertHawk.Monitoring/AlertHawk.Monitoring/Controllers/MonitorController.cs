@@ -26,7 +26,13 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpGet("monitorStatusDashboard")]
         public async Task<IActionResult> GetMonitorStatusDashboard()
         {
-            var result = await _monitorService.GetMonitorStatusDashboard();
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (jwtToken == null)
+            {
+                return BadRequest("Invalid Token");
+            }
+            
+            var result = await _monitorService.GetMonitorStatusDashboard(jwtToken);
             return Ok(result);
         }
 

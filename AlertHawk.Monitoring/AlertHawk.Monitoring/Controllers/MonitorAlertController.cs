@@ -19,7 +19,7 @@ namespace AlertHawk.Monitoring.Controllers
         [SwaggerOperation(Summary = "Retrieves a list of Monitor Alerts")]
         [ProducesResponseType(typeof(MonitorStatusDashboard), StatusCodes.Status200OK)]
         [HttpGet("monitorAlerts/{monitorId}/{days}")]
-        public async Task<IActionResult> GetMonitorStatusDashboard(int? monitorId = 0, int? days = 30)
+        public async Task<IActionResult> GetMonitorAlerts(int? monitorId = 0, int? days = 30)
         {
             var result = await _monitorAlertService.GetMonitorAlerts(monitorId, days);
             return Ok(result);
