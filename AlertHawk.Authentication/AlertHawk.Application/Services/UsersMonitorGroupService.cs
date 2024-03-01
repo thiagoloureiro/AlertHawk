@@ -1,4 +1,5 @@
-﻿using AlertHawk.Application.Interfaces;
+﻿using System.Runtime.InteropServices.ComTypes;
+using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Authentication.Infrastructure.Interfaces;
 
@@ -11,8 +12,11 @@ public class UsersMonitorGroupService(IUsersMonitorGroupRepository _repository) 
         await DeleteAllByUserIdAsync(usersMonitorGroup!.FirstOrDefault()!.UserId);
         foreach (var item in usersMonitorGroup)
         {
-            item.Id = Guid.NewGuid();
-            await _repository.CreateAsync(item);
+            if (item.GroupMonitorId > 0)
+            {
+                item.Id = Guid.NewGuid();
+                await _repository.CreateAsync(item);
+            }
         }
     }
 

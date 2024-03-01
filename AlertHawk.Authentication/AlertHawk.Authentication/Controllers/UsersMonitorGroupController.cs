@@ -44,7 +44,7 @@ namespace AlertHawk.Authentication.Controllers
             try
             {
                 await _usersMonitorGroupService.CreateOrUpdateAsync(usersMonitorGroup);
-                return Ok(new Message("Settings saved successfully."));
+                return Ok();
             }
             catch (InvalidOperationException ex)
             {
