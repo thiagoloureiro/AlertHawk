@@ -26,7 +26,7 @@ namespace AlertHawk.Authentication.Controllers
         [SwaggerOperation(Summary = "Create UsersMonitorGroupController")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> PostUserCreation([FromBody] List<UsersMonitorGroup> usersMonitorGroup)
+        public async Task<IActionResult> AssignUserToGroup([FromBody] List<UsersMonitorGroup> usersMonitorGroup)
         {
             var usr = await GetUserByToken();
 
@@ -44,7 +44,7 @@ namespace AlertHawk.Authentication.Controllers
             try
             {
                 await _usersMonitorGroupService.CreateOrUpdateAsync(usersMonitorGroup);
-                return Ok(new Message("User GroupManager created successfully."));
+                return Ok(new Message("Settings saved successfully."));
             }
             catch (InvalidOperationException ex)
             {
