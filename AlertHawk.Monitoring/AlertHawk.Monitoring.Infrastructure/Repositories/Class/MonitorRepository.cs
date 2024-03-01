@@ -31,10 +31,9 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor] M
-            INNER JOIN MonitorGroupItems MGI ON MGI.MonitorId = M.Id WHERE MGI.MonitorGroupId IN (@MonitorGroupId)";
-        return await db.QueryAsync<Monitor>(sql, new { MonitorGroupId = groupMonitorIds },
-            commandType: CommandType.Text);
+            @$"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor] M
+            INNER JOIN MonitorGroupItems MGI ON MGI.MonitorId = M.Id WHERE MGI.MonitorGroupId IN @groupMonitorIds";
+        return await db.QueryAsync<Monitor>(sql, new { groupMonitorIds }, commandType: CommandType.Text);
     }
 
     public async Task UpdateMonitorHttp(MonitorHttp monitorHttp)
