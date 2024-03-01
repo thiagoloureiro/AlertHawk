@@ -62,7 +62,17 @@ public class MonitorService : IMonitorService
 
             if (result == null)
             {
-                return null;
+                return new MonitorDashboard
+                {
+                    ResponseTime = 0,
+                    MonitorId = id,
+                    Uptime3Months = 0,
+                    Uptime6Months = 0,
+                    Uptime24Hrs = 0,
+                    Uptime30Days = 0,
+                    CertExpDays = 0,
+                    Uptime7Days = 0
+                };
             }
 
             var monitor =
@@ -71,7 +81,17 @@ public class MonitorService : IMonitorService
 
             if (monitor == null)
             {
-                return null;
+                return new MonitorDashboard
+                {
+                    ResponseTime = 0,
+                    MonitorId = id,
+                    Uptime3Months = 0,
+                    Uptime6Months = 0,
+                    Uptime24Hrs = 0,
+                    Uptime30Days = 0,
+                    CertExpDays = 0,
+                    Uptime7Days = 0
+                };
             }
 
             var monitorHistories = result.ToList();
@@ -127,39 +147,51 @@ public class MonitorService : IMonitorService
                 return monitorDashboard;
             }
 
-            return null;
+            return new MonitorDashboard
+            {
+                ResponseTime = 0,
+                MonitorId = id,
+                Uptime3Months = 0,
+                Uptime6Months = 0,
+                Uptime24Hrs = 0,
+                Uptime30Days = 0,
+                CertExpDays = 0,
+                Uptime7Days = 0
+            };
         }
         catch (Exception e)
         {
             SentrySdk.CaptureException(e);
         }
 
-        return null;
+        return new MonitorDashboard
+        {
+            ResponseTime = 0,
+            MonitorId = id,
+            Uptime3Months = 0,
+            Uptime6Months = 0,
+            Uptime24Hrs = 0,
+            Uptime30Days = 0,
+            CertExpDays = 0,
+            Uptime7Days = 0
+        };
     }
 
     public async Task SetMonitorDashboardDataCacheList()
     {
-        try
-        {
-            var lstMonitorDashboard = new List<MonitorDashboard?>();
-            var lstMonitor = await GetMonitorList();
+        var lstMonitorDashboard = new List<MonitorDashboard?>();
+        var lstMonitor = await GetMonitorList();
 
-            foreach (var monitor in lstMonitor)
+        foreach (var monitor in lstMonitor)
+        {
+            if (monitor != null)
             {
-                if (monitor != null)
-                {
-                    var monitorData = await GetMonitorDashboardData(monitor.Id);
-                    lstMonitorDashboard.Add(monitorData);
-                }
+                var monitorData = await GetMonitorDashboardData(monitor.Id);
+                lstMonitorDashboard.Add(monitorData);
             }
+        }
 
-            await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.Message);
-            throw;
-        }
+        await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20);
     }
 
     public async Task<MonitorStatusDashboard> GetMonitorStatusDashboard()
