@@ -68,7 +68,7 @@ public class TcpClientRunner : ITcpClientRunner
                     Status = isConnected,
                     TimeStamp = DateTime.UtcNow,
                     StatusCode = 0,
-                    ResponseMessage = $"Failed to establish a connection to {monitorTcp.IP}:{monitorTcp.Port} after {monitorTcp.Retries} retries.",
+                    ResponseMessage = $"Failed to establish a connection to {monitorTcp.IP}:{monitorTcp.Port} after {monitorTcp.Retries} retries. Response: {monitorTcp.Response}",
                     ResponseTime = 0,
                     HttpVersion = ""
                 };

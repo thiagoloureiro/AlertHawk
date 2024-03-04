@@ -6,6 +6,6 @@ public class MonitorTcp : Monitor
     public required int Port { get; set; }
     public required string IP { get; set; }
     public required int Timeout { get; set; }
-    public bool LastStatus { get; set; }
-    public string Response { get; set; }
+    public bool LastStatus { get; set; } 
+    public string? Response { get; set; }
 }
