@@ -68,7 +68,8 @@ public class TcpClientRunner : ITcpClientRunner
                     Status = isConnected,
                     TimeStamp = DateTime.UtcNow,
                     StatusCode = 0,
-                    ResponseMessage = $"Failed to establish a connection to {monitorTcp.IP}:{monitorTcp.Port} after {monitorTcp.Retries} retries. Response: {monitorTcp.Response}",
+                    ResponseMessage =
+                        $"Failed to establish a connection to {monitorTcp.IP}:{monitorTcp.Port} after {monitorTcp.Retries} retries. Response: {monitorTcp.Response}",
                     ResponseTime = 0,
                     HttpVersion = ""
                 };
@@ -87,20 +88,13 @@ public class TcpClientRunner : ITcpClientRunner
 
     public async Task<bool> MakeTcpCall(MonitorTcp monitorTcp)
     {
-        try
-        {
-            CancellationToken cancellationToken = new CancellationToken();
-            using var client = new TcpClient();
-            var connectTask = client.ConnectAsync(monitorTcp.IP, monitorTcp.Port, cancellationToken);
-            await connectTask.AsTask().WaitAsync(TimeSpan.FromSeconds(monitorTcp.Timeout), cancellationToken);
-            cancellationToken.ThrowIfCancellationRequested();
+        CancellationToken cancellationToken = new CancellationToken();
+        using var client = new TcpClient();
+        var connectTask = client.ConnectAsync(monitorTcp.IP, monitorTcp.Port, cancellationToken);
+        await connectTask.AsTask().WaitAsync(TimeSpan.FromSeconds(monitorTcp.Timeout), cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
 
-            var isConnected = true;
-            return isConnected;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
+        var isConnected = true;
+        return isConnected;
     }
 }
