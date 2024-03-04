@@ -16,7 +16,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
         _connstring = GetConnectionString();
     }
 
-    public async Task<IEnumerable<MonitorAlert>> GetMonitorAlerts(int? monitorId, int? days)
+    public async Task<IEnumerable<MonitorAlert>> GetMonitorAlerts(int? monitorId, int? days, Task<List<int>?> groupIds)
     {
         await using var db = new SqlConnection(_connstring);
         string sql;
@@ -33,10 +33,12 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
         }
 
         sql =
-            @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl 
-                FROM MonitorAlert MA 
-                INNER JOIN Monitor M on M.Id = MA.MonitorId 
+            @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl
+                FROM MonitorAlert MA
+                INNER JOIN Monitor M on M.Id = MA.MonitorId
+                INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id
                 WHERE MA.TimeStamp >= DATEADD(day, -{days}, GETDATE()) AND MA.[Status] = 0
+                AND MGI.MonitorGroupId in ({string.Join(",", groupIds)})
                 ORDER BY MA.TimeStamp DESC";
 
         return await db.QueryAsync<MonitorAlert>(sql, commandType: CommandType.Text);

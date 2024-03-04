@@ -4,5 +4,5 @@ namespace AlertHawk.Monitoring.Domain.Interfaces.Services;
 
 public interface IMonitorAlertService
 {
-    Task<IEnumerable<MonitorAlert>> GetMonitorAlerts(int? monitorId, int? days);
+    Task<IEnumerable<MonitorAlert>> GetMonitorAlerts(int? monitorId, int? days, string jwtToken);
 }

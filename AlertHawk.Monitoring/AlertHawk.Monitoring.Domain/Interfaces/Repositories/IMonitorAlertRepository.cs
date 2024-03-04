@@ -4,5 +4,5 @@ namespace AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 
 public interface IMonitorAlertRepository
 {
-    Task<IEnumerable<MonitorAlert>> GetMonitorAlerts(int? monitorId, int? days);
+    Task<IEnumerable<MonitorAlert>> GetMonitorAlerts(int? monitorId, int? days, Task<List<int>?> groupIds);
 }

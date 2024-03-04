@@ -1,5 +1,6 @@
 ﻿using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
+using AlertHawk.Monitoring.Infrastructure.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -21,7 +22,13 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpGet("monitorAlerts/{monitorId}/{days}")]
         public async Task<IActionResult> GetMonitorAlerts(int? monitorId = 0, int? days = 30)
         {
-            var result = await _monitorAlertService.GetMonitorAlerts(monitorId, days);
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (jwtToken == null)
+            {
+                return BadRequest("Invalid Token");
+            }
+
+            var result = await _monitorAlertService.GetMonitorAlerts(monitorId, days, jwtToken);
             return Ok(result);
         }
     }
