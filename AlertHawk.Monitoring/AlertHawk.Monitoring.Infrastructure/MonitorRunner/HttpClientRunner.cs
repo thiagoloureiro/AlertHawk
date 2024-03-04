@@ -15,7 +15,8 @@ public class HttpClientRunner : IHttpClientRunner
     private readonly INotificationProducer _notificationProducer;
     private int _daysToExpireCert = 0;
 
-    public HttpClientRunner(IMonitorRepository monitorRepository, IHttpClientScreenshot httpClientScreenshot, INotificationProducer notificationProducer)
+    public HttpClientRunner(IMonitorRepository monitorRepository, IHttpClientScreenshot httpClientScreenshot,
+        INotificationProducer notificationProducer)
     {
         _monitorRepository = monitorRepository;
         _httpClientScreenshot = httpClientScreenshot;
@@ -48,15 +49,24 @@ public class HttpClientRunner : IHttpClientRunner
                     ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}"
                 };
 
+                if (monitorHttp.CheckCertExpiry && _daysToExpireCert <= 0)
+                {
+                    succeeded = false;
+                    monitorHistory.ResponseMessage = "Certificate expired";
+                }
+
                 if (succeeded)
                 {
-                    await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded, _daysToExpireCert);
+                    await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded,
+                        _daysToExpireCert);
                     await _monitorRepository.SaveMonitorHistory(monitorHistory);
-                    if (monitorHttp.LastStatus == false)
+
+                    if (!monitorHttp.LastStatus)
                     {
                         await _notificationProducer.HandleSuccessNotifications(monitorHttp, response.ReasonPhrase);
                         await _monitorRepository.SaveMonitorAlert(monitorHistory);
                     }
+
 
                     break;
                 }
@@ -75,18 +85,19 @@ public class HttpClientRunner : IHttpClientRunner
                         // only send notification when goes from online to offline to avoid flood
                         if (monitorHttp.LastStatus)
                         {
-                            await _notificationProducer.HandleFailedNotifications(monitorHttp, response.ReasonPhrase);
-                            var screenshotUrl = await _httpClientScreenshot.TakeScreenshotAsync(monitorHttp.UrlToCheck,
+                            await _notificationProducer.HandleFailedNotifications(monitorHttp,
+                                response.ReasonPhrase);
+                            var screenshotUrl = await _httpClientScreenshot.TakeScreenshotAsync(
+                                monitorHttp.UrlToCheck,
                                 monitorHttp.MonitorId, monitorHttp.Name);
                             monitorHistory.ScreenShotUrl = screenshotUrl;
                             await _monitorRepository.SaveMonitorAlert(monitorHistory);
-            
+
                             break;
                         }
                     }
                 }
             }
-
             catch (Exception err)
             {
                 retryCount++;
