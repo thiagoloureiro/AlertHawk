@@ -16,7 +16,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
         _connstring = GetConnectionString();
     }
 
-    public async Task<IEnumerable<MonitorAlert>> GetMonitorAlerts(int? monitorId, int? days, Task<List<int>?> groupIds)
+    public async Task<IEnumerable<MonitorAlert>> GetMonitorAlerts(int? monitorId, int? days, List<int>? groupIds)
     {
         await using var db = new SqlConnection(_connstring);
         string sql;

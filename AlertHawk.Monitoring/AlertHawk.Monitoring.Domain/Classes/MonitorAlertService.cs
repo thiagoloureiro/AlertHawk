@@ -17,7 +17,7 @@ public class MonitorAlertService : IMonitorAlertService
 
     public async Task<IEnumerable<MonitorAlert>> GetMonitorAlerts(int? monitorId, int? days, string jwtToken)
     {
-        var groupIds = _monitorGroupService.GetUserGroupMonitorListIds(jwtToken);
+        var groupIds = await _monitorGroupService.GetUserGroupMonitorListIds(jwtToken);
         return await _monitorAlertRepository.GetMonitorAlerts(monitorId, days, groupIds);
     }
 }
