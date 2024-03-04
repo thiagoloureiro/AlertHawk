@@ -13,4 +13,5 @@ public interface IMonitorGroupService
     Task UpdateMonitorGroup(MonitorGroup monitorGroup);
     Task DeleteMonitorGroup(int id);
     Task<List<int>?> GetUserGroupMonitorListIds(string token);
+    Task<IEnumerable<MonitorGroup>> GetMonitorGroupList();
 }

@@ -24,6 +24,16 @@ namespace AlertHawk.Monitoring.Controllers
         [Authorize]
         public async Task<IActionResult> GetMonitorGroupList()
         {
+            var result = await _monitorGroupService.GetMonitorGroupList();
+            return Ok(result);
+        }
+        
+        [SwaggerOperation(Summary = "Retrieves a List of all Monitor Groups By User Token")]
+        [ProducesResponseType(typeof(IEnumerable<MonitorGroup>), StatusCodes.Status200OK)]
+        [HttpGet("monitorGroupListByUser")]
+        [Authorize]
+        public async Task<IActionResult> GetMonitorGroupListByUser()
+        {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
             if (jwtToken == null)
             {

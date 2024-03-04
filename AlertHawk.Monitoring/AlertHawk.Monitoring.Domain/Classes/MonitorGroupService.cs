@@ -16,6 +16,12 @@ public class MonitorGroupService : IMonitorGroupService
         _monitorGroupRepository = monitorGroupRepository;
     }
 
+    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList()
+    {
+        var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupList();
+        return monitorGroupList;
+    }
+
     public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList(string jwtToken)
     {
         var ids = await GetUserGroupMonitorListIds(jwtToken);
@@ -25,7 +31,7 @@ public class MonitorGroupService : IMonitorGroupService
         {
             return new List<MonitorGroup> { new MonitorGroup { Id = 0, Name = "No Groups Found" } };
         }
-        
+
         monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id));
         return monitorGroupList;
     }
