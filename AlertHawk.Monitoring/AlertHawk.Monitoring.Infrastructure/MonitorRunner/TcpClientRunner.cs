@@ -40,15 +40,17 @@ public class TcpClientRunner : ITcpClientRunner
                     HttpVersion = ""
                 };
 
-                await _monitorRepository.SaveMonitorHistory(monitorHistory);
-                await _monitorRepository.UpdateMonitorStatus(monitorTcp.MonitorId, isConnected, 0);
-
-                if (!monitorTcp.LastStatus)
+                if (isConnected)
                 {
-                    await _notificationProducer.HandleSuccessTcpNotifications(monitorTcp);
+                    await _monitorRepository.SaveMonitorHistory(monitorHistory);
+                    await _monitorRepository.UpdateMonitorStatus(monitorTcp.MonitorId, isConnected, 0);
+
+                    if (!monitorTcp.LastStatus)
+                    {
+                        await _notificationProducer.HandleSuccessTcpNotifications(monitorTcp);
+                    }
                 }
-                
-                if (!isConnected)
+                else
                 {
                     retries++;
                     continue;
@@ -66,21 +68,23 @@ public class TcpClientRunner : ITcpClientRunner
 
         if (!isConnected)
         {
+            var monitorHistory = new MonitorHistory
+            {
+                MonitorId = monitorTcp.MonitorId,
+                Status = isConnected,
+                TimeStamp = DateTime.UtcNow,
+                StatusCode = 0,
+                ResponseMessage =
+                    $"Failed to establish a connection to {monitorTcp.IP}:{monitorTcp.Port} after {monitorTcp.Retries} retries. Response: {monitorTcp.Response}",
+                ResponseTime = 0,
+                HttpVersion = ""
+            };
+
+            await _monitorRepository.SaveMonitorHistory(monitorHistory);
+            await _monitorRepository.UpdateMonitorStatus(monitorTcp.MonitorId, isConnected, 0);
+
             if (monitorTcp.LastStatus)
             {
-                var monitorHistory = new MonitorHistory
-                {
-                    MonitorId = monitorTcp.MonitorId,
-                    Status = isConnected,
-                    TimeStamp = DateTime.UtcNow,
-                    StatusCode = 0,
-                    ResponseMessage = $"Failed to establish a connection to {monitorTcp.IP}:{monitorTcp.Port} after {monitorTcp.Retries} retries. Response: {monitorTcp.Response}",
-                    ResponseTime = 0,
-                    HttpVersion = ""
-                };
-
-                await _monitorRepository.SaveMonitorHistory(monitorHistory);
-                await _monitorRepository.UpdateMonitorStatus(monitorTcp.MonitorId, isConnected, 0);
                 await _notificationProducer.HandleFailedTcpNotifications(monitorTcp);
             }
         }
