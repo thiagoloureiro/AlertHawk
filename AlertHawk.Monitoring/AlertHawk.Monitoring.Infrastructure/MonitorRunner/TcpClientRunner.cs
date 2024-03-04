@@ -29,6 +29,12 @@ public class TcpClientRunner : ITcpClientRunner
             {
                 isConnected = await MakeTcpCall(monitorTcp);
 
+                if (!isConnected)
+                {
+                    retries++;
+                    continue;
+                }
+
                 var monitorHistory = new MonitorHistory
                 {
                     MonitorId = monitorTcp.MonitorId,
@@ -68,8 +74,7 @@ public class TcpClientRunner : ITcpClientRunner
                     Status = isConnected,
                     TimeStamp = DateTime.UtcNow,
                     StatusCode = 0,
-                    ResponseMessage =
-                        $"Failed to establish a connection to {monitorTcp.IP}:{monitorTcp.Port} after {monitorTcp.Retries} retries. Response: {monitorTcp.Response}",
+                    ResponseMessage = $"Failed to establish a connection to {monitorTcp.IP}:{monitorTcp.Port} after {monitorTcp.Retries} retries. Response: {monitorTcp.Response}",
                     ResponseTime = 0,
                     HttpVersion = ""
                 };
@@ -78,6 +83,9 @@ public class TcpClientRunner : ITcpClientRunner
                 await _monitorRepository.UpdateMonitorStatus(monitorTcp.MonitorId, isConnected, 0);
                 await _notificationProducer.HandleFailedTcpNotifications(monitorTcp);
             }
+
+            throw new Exception(
+                $"Failed to establish a connection to {monitorTcp.IP}:{monitorTcp.Port} after {monitorTcp.Retries} retries.");
         }
 
         return isConnected;
@@ -85,13 +93,20 @@ public class TcpClientRunner : ITcpClientRunner
 
     public async Task<bool> MakeTcpCall(MonitorTcp monitorTcp)
     {
-        CancellationToken cancellationToken = new CancellationToken();
-        using var client = new TcpClient();
-        var connectTask = client.ConnectAsync(monitorTcp.IP, monitorTcp.Port, cancellationToken);
-        await connectTask.AsTask().WaitAsync(TimeSpan.FromSeconds(monitorTcp.Timeout), cancellationToken);
-        cancellationToken.ThrowIfCancellationRequested();
+        try
+        {
+            CancellationToken cancellationToken = new CancellationToken();
+            using var client = new TcpClient();
+            var connectTask = client.ConnectAsync(monitorTcp.IP, monitorTcp.Port, cancellationToken);
+            await connectTask.AsTask().WaitAsync(TimeSpan.FromSeconds(monitorTcp.Timeout), cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
 
-        var isConnected = true;
-        return isConnected;
+            var isConnected = true;
+            return isConnected;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 }

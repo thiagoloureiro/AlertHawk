@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
@@ -40,8 +41,8 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
     }
     
     [Theory]
-    [InlineData("1.1.1.1", 4443)]
-    [InlineData("8.8.8.8", 4443)]
+    [InlineData("1.1.1.1", 6665)]
+    [InlineData("8.8.8.8", 64564)]
     public async Task Should_Make_Tcp_Call_Failed_Result(string ip, int port)
     {
         // Arrange
