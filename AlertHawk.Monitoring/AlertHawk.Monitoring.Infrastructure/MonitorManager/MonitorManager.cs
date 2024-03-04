@@ -88,7 +88,7 @@ public class MonitorManager : IMonitorManager
             }
         }
     }
-    
+
     private async Task StartTcpMonitorJobs(IEnumerable<Monitor> monitorListByIds)
     {
         var lstMonitorByTcpType = monitorListByIds.Where(x => x.MonitorTypeId == 3);
@@ -162,8 +162,7 @@ public class MonitorManager : IMonitorManager
                 {
                     Hostname = Environment.MachineName,
                     TimeStamp = DateTime.UtcNow,
-                    // MonitorRegion = GetMonitorRegionVariable()
-                    MonitorRegion = MonitorRegion.Europe
+                    MonitorRegion = GetMonitorRegionVariable()
                 };
             }
 
