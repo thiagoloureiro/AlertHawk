@@ -1,11 +1,8 @@
-using System.Net.Http.Headers;
-using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Domain.Utils;
 using EasyMemoryCache;
-using Newtonsoft.Json;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
@@ -15,11 +12,13 @@ public class MonitorService : IMonitorService
     private readonly IMonitorRepository _monitorRepository;
     private readonly ICaching _caching;
     private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
+    private readonly IMonitorGroupService _monitorGroupService;
 
-    public MonitorService(IMonitorRepository monitorRepository, ICaching caching)
+    public MonitorService(IMonitorRepository monitorRepository, ICaching caching, IMonitorGroupService monitorGroupService)
     {
         _monitorRepository = monitorRepository;
         _caching = caching;
+        _monitorGroupService = monitorGroupService;
     }
 
     public async Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id)
@@ -240,7 +239,7 @@ public class MonitorService : IMonitorService
 
     public async Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(string token)
     {
-        var listGroupMonitorIds = await GetUserGroupMonitorList(token);
+        var listGroupMonitorIds = await _monitorGroupService.GetUserGroupMonitorListIds(token);
 
         if (listGroupMonitorIds != null)
         {
@@ -248,17 +247,6 @@ public class MonitorService : IMonitorService
         }
 
         return null;
-    }
-
-    private static async Task<List<int>?> GetUserGroupMonitorList(string token)
-    {
-        using var client = new HttpClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        var content = await client.GetAsync("https://dev.api.alerthawk.tech/auth/api/UsersMonitorGroup/GetAll");
-        var result = await content.Content.ReadAsStringAsync();
-        var groupMonitorIds = JsonConvert.DeserializeObject<List<UsersMonitorGroup>>(result);
-        var listGroupMonitorIds = groupMonitorIds?.Select(x => x.GroupMonitorId).ToList();
-        return listGroupMonitorIds;
     }
 
     public async Task UpdateMonitorHttp(MonitorHttp monitorHttp)

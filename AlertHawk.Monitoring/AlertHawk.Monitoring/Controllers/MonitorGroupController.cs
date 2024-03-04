@@ -1,5 +1,6 @@
 ﻿using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
+using AlertHawk.Monitoring.Infrastructure.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -23,7 +24,13 @@ namespace AlertHawk.Monitoring.Controllers
         [Authorize]
         public async Task<IActionResult> GetMonitorGroupList()
         {
-            var result = await _monitorGroupService.GetMonitorGroupList();
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (jwtToken == null)
+            {
+                return BadRequest("Invalid Token");
+            }
+            
+            var result = await _monitorGroupService.GetMonitorGroupList(jwtToken);
             return Ok(result);
         }
 
