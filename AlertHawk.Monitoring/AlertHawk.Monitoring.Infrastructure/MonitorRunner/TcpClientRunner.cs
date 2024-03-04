@@ -29,12 +29,6 @@ public class TcpClientRunner : ITcpClientRunner
             {
                 isConnected = await MakeTcpCall(monitorTcp);
 
-                if (!isConnected)
-                {
-                    retries++;
-                    continue;
-                }
-
                 var monitorHistory = new MonitorHistory
                 {
                     MonitorId = monitorTcp.MonitorId,
@@ -52,6 +46,12 @@ public class TcpClientRunner : ITcpClientRunner
                 if (!monitorTcp.LastStatus)
                 {
                     await _notificationProducer.HandleSuccessTcpNotifications(monitorTcp);
+                }
+                
+                if (!isConnected)
+                {
+                    retries++;
+                    continue;
                 }
             }
             catch (SocketException err)
