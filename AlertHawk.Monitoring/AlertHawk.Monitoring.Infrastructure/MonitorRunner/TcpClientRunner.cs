@@ -78,9 +78,6 @@ public class TcpClientRunner : ITcpClientRunner
                 await _monitorRepository.UpdateMonitorStatus(monitorTcp.MonitorId, isConnected, 0);
                 await _notificationProducer.HandleFailedTcpNotifications(monitorTcp);
             }
-
-            throw new Exception(
-                $"Failed to establish a connection to {monitorTcp.IP}:{monitorTcp.Port} after {monitorTcp.Retries} retries.");
         }
 
         return isConnected;
