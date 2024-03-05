@@ -162,8 +162,7 @@ public class MonitorManager : IMonitorManager
                 {
                     Hostname = Environment.MachineName,
                     TimeStamp = DateTime.UtcNow,
-                    //MonitorRegion = GetMonitorRegionVariable()
-                    MonitorRegion = MonitorRegion.Europe
+                    MonitorRegion = GetMonitorRegionVariable()
                 };
             }
 
