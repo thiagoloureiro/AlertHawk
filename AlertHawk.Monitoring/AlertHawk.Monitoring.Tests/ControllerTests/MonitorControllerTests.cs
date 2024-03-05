@@ -2,10 +2,10 @@ using AlertHawk.Monitoring.Controllers;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
-using EasyMemoryCache;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ControllerTests;
 
@@ -96,5 +96,27 @@ public class MonitorControllerTests
         Assert.Contains("MonitorId: 1", message);
         Assert.Contains("HttpTasksList Count: 0", message); // Assuming no items in the list
         Assert.Contains("TcpTasksList Count: 0", message); // Assuming no items in the list
+    }
+    
+    [Fact]
+    public async Task GetMonitorList_Returns_OkResult_With_Expected_Result()
+    {
+        // Arrange
+        var monitorService = Substitute.For<IMonitorService>();
+        var expectedList = new List<Monitor>(); // Assuming Monitor is your model
+        monitorService.GetMonitorList().Returns(expectedList);
+
+        var monitorServiceMock = Substitute.For<IMonitorService>();
+        var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+
+        // Act
+        var result = await controller.GetMonitorList();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var resultList = Assert.IsAssignableFrom<IEnumerable<Monitor>>(okResult.Value);
+        Assert.Equal(expectedList, resultList);
     }
 }
