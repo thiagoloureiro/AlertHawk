@@ -218,6 +218,8 @@ public class MonitorService : IMonitorService
             monitorHttp.HeadersJson = JsonUtils.ConvertTupleToJson(monitorHttp.Headers);
         }
 
+        await SetMonitorDashboardDataCacheList();
+        
         return await _monitorRepository.CreateMonitorHttp(monitorHttp);
     }
 
