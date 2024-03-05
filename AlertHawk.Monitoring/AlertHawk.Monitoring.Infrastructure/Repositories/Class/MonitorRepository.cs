@@ -89,6 +89,12 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
         string sql = @"DELETE FROM [Monitor] WHERE Id=@id";
         await db.ExecuteAsync(sql, new { id }, commandType: CommandType.Text);
+        
+        string sqlTasks = @"DELETE FROM [MonitorAgentTasks] WHERE MonitorId=@id";
+        await db.ExecuteAsync(sqlTasks, new { id }, commandType: CommandType.Text);
+        
+        string sqlAlerts = @"DELETE FROM [MonitorAlert] WHERE MonitorId=@id";
+        await db.ExecuteAsync(sqlAlerts, new { id }, commandType: CommandType.Text);
 
         string sqlHttp = @"DELETE FROM [MonitorHttp] WHERE MonitorId=@id";
         await db.ExecuteAsync(sqlHttp, new { id }, commandType: CommandType.Text);
