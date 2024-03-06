@@ -23,16 +23,17 @@ namespace AlertHawk.Monitoring.Controllers
 
         [SwaggerOperation(Summary = "Retrieves detailed status for the current monitor Agent")]
         [ProducesResponseType(typeof(MonitorStatusDashboard), StatusCodes.Status200OK)]
-        [HttpGet("monitorStatusDashboard")]
-        public async Task<IActionResult> GetMonitorStatusDashboard()
+        [HttpGet("monitorStatusDashboard/{environment}")]
+        public async Task<IActionResult> GetMonitorStatusDashboard(
+            MonitorEnvironment environment = MonitorEnvironment.Production)
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
             if (jwtToken == null)
             {
                 return BadRequest("Invalid Token");
             }
-            
-            var result = await _monitorService.GetMonitorStatusDashboard(jwtToken);
+
+            var result = await _monitorService.GetMonitorStatusDashboard(jwtToken, environment);
             return Ok(result);
         }
 
@@ -57,8 +58,9 @@ namespace AlertHawk.Monitoring.Controllers
         [SwaggerOperation(Summary =
             "Retrieves a List of items to be Monitored by Monitor Group Ids (JWT Token required)")]
         [ProducesResponseType(typeof(IEnumerable<Domain.Entities.Monitor>), StatusCodes.Status200OK)]
-        [HttpGet("monitorListByMonitorGroupIds")]
-        public async Task<IActionResult> GetMonitorListByMonitorGroupIds()
+        [HttpGet("monitorListByMonitorGroupIds/{environment}")]
+        public async Task<IActionResult> GetMonitorListByMonitorGroupIds(
+            MonitorEnvironment environment = MonitorEnvironment.Production)
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
             if (jwtToken == null)
@@ -66,7 +68,7 @@ namespace AlertHawk.Monitoring.Controllers
                 return BadRequest("Invalid Token");
             }
 
-            var result = await _monitorService.GetMonitorListByMonitorGroupIds(jwtToken);
+            var result = await _monitorService.GetMonitorListByMonitorGroupIds(jwtToken, environment);
             return Ok(result);
         }
 
@@ -147,6 +149,7 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorService.GetMonitorFailureCount(days);
             return Ok(result);
         }
+
         [SwaggerOperation(Summary = "Retrieves monitor http by monitorId")]
         [ProducesResponseType(typeof(MonitorHttp), StatusCodes.Status200OK)]
         [HttpGet("getMonitorHttpByMonitorId/{monitorId}")]
@@ -155,6 +158,7 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorService.GetHttpMonitorByMonitorId(monitorId);
             return Ok(result);
         }
+
         [SwaggerOperation(Summary = "Retrieves monitor tcp by monitorId")]
         [ProducesResponseType(typeof(MonitorTcp), StatusCodes.Status200OK)]
         [HttpGet("getMonitorTcpByMonitorId/{monitorId}")]

@@ -27,13 +27,14 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
 
-    public async Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(List<int> groupMonitorIds)
+    public async Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(List<int> groupMonitorIds,
+        MonitorEnvironment environment)
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
             @$"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor] M
-            INNER JOIN MonitorGroupItems MGI ON MGI.MonitorId = M.Id WHERE MGI.MonitorGroupId IN @groupMonitorIds";
-        return await db.QueryAsync<Monitor>(sql, new { groupMonitorIds }, commandType: CommandType.Text);
+            INNER JOIN MonitorGroupItems MGI ON MGI.MonitorId = M.Id WHERE MGI.MonitorGroupId IN @groupMonitorIds AND M.MonitorEnvironment = @environment";
+        return await db.QueryAsync<Monitor>(sql, new { groupMonitorIds, environment }, commandType: CommandType.Text);
     }
 
     public async Task UpdateMonitorHttp(MonitorHttp monitorHttp)
@@ -89,10 +90,10 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
         string sql = @"DELETE FROM [Monitor] WHERE Id=@id";
         await db.ExecuteAsync(sql, new { id }, commandType: CommandType.Text);
-        
+
         string sqlTasks = @"DELETE FROM [MonitorAgentTasks] WHERE MonitorId=@id";
         await db.ExecuteAsync(sqlTasks, new { id }, commandType: CommandType.Text);
-        
+
         string sqlAlerts = @"DELETE FROM [MonitorAlert] WHERE MonitorId=@id";
         await db.ExecuteAsync(sqlAlerts, new { id }, commandType: CommandType.Text);
 
@@ -101,7 +102,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
 
         string sqlTcp = @"DELETE FROM [MonitorTcp] WHERE MonitorId=@id";
         await db.ExecuteAsync(sqlTcp, new { id }, commandType: CommandType.Text);
-        
+
         string sqlHistory = @"DELETE FROM [MonitorHistory] WHERE MonitorId=@id";
         await db.ExecuteAsync(sqlHistory, new { id }, commandType: CommandType.Text);
     }

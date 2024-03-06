@@ -22,7 +22,8 @@ public interface IMonitorRepository
     Task<int> CreateMonitorHttp(MonitorHttp monitorHttp);
     Task SaveMonitorAlert(MonitorHistory monitorHistory);
     Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days);
-    Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(List<int> groupMonitorIds);
+    Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(List<int> groupMonitorIds,
+        MonitorEnvironment environment);
     Task UpdateMonitorHttp(MonitorHttp monitorHttp);
     Task DeleteMonitor(int id);
     Task<int> CreateMonitorTcp(MonitorTcp monitorTcp);
