@@ -298,7 +298,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @"SELECT TOP 10000 MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion FROM [MonitorHistory] WHERE MonitorId=@id AND TimeStamp >= DATEADD(day, -30, GETUTCDATE())  ORDER BY TimeStamp DESC";
+            @"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion FROM [MonitorHistory] WHERE MonitorId=@id AND TimeStamp >= DATEADD(day, -30, GETUTCDATE())  ORDER BY TimeStamp DESC";
         return await db.QueryAsync<MonitorHistory>(sql, new { id, days }, commandType: CommandType.Text);
     }
 
