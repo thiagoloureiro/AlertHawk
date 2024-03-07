@@ -152,6 +152,7 @@ public class UserController : Controller
     }
 
     [HttpGet("{email}")]
+    [SwaggerOperation(Summary = "Returns user by email. If user does not exist, it will create a new user. (Azure AD Login) - JWT Token required")]
     [Authorize]
     [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
     public async Task<ActionResult> Get(string email)
