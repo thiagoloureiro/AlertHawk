@@ -1,3 +1,5 @@
+![alt text]([http://url/to/img.png](https://raw.githubusercontent.com/thiagoloureiro/AlertHawk/main/logo.png))
+
 # Welcome to AlertHawk: Your Self-Hosted Monitoring Solution
 **Overview**
 **AlertHawk** is a cutting-edge, easy-to-use self-hosted monitoring tool designed to empower you with real-time insights into the health and performance of your applications. Whether you're managing WebAPIs, websites, databases, or a variety of other components, AlertHawk is your go-to solution for comprehensive monitoring.
