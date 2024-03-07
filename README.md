@@ -1,4 +1,4 @@
-![alt text]([http://url/to/img.png](https://raw.githubusercontent.com/thiagoloureiro/AlertHawk/main/logo.png))
+![Logo](https://raw.githubusercontent.com/thiagoloureiro/AlertHawk/main/logo.png)
 
 # Welcome to AlertHawk: Your Self-Hosted Monitoring Solution
 **Overview**
