@@ -66,10 +66,10 @@ namespace AlertHawk.Authentication.Controllers
         [Authorize()]
         public async Task<IActionResult> GetAll()
         {
-            var usrAdmin = await GetUserByToken();
-            if (usrAdmin != null)
+            var userDetails = await GetUserByToken();
+            if (userDetails != null)
             {
-                return Ok(await _usersMonitorGroupService.GetAsync(usrAdmin.Id));
+                return Ok(await _usersMonitorGroupService.GetAsync(userDetails.Id));
             }
 
             return Ok();
