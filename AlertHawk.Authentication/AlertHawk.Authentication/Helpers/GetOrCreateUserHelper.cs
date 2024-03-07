@@ -18,6 +18,8 @@ public class GetOrCreateUserHelper(IUserService userService)
         }
 
         var user = await userService.GetByEmail(userEmail);
+        
+        // This is for AD First Login only
         if (ReferenceEquals(null, user))
         {
             var name = claims.Claims.FirstOrDefault(s => s.Type.Contains("givenname"))?.Value + " " +

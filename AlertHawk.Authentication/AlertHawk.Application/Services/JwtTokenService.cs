@@ -27,7 +27,7 @@ public class JwtTokenService : IJwtTokenService
         {
             new Claim("id", user.Id.ToString()),
             new Claim("username", user.Username),
-            new Claim("email", user.Email),
+            new Claim("emailaddress", user.Email),
             new Claim("isAdmin", user.IsAdmin.ToString())
         };
 
