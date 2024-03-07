@@ -25,7 +25,7 @@ public class MonitorControllerTests
 
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
-        monitorServiceMock.GetMonitorStatusDashboard(jwtToken).Returns(Task.FromResult(expectedDashboardData));
+        monitorServiceMock.GetMonitorStatusDashboard(jwtToken, MonitorEnvironment.Production).Returns(Task.FromResult(expectedDashboardData));
 
         var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
 

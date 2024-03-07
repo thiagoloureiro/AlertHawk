@@ -193,9 +193,9 @@ public class MonitorService : IMonitorService
         await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20);
     }
 
-    public async Task<MonitorStatusDashboard> GetMonitorStatusDashboard(string jwtToken)
+    public async Task<MonitorStatusDashboard> GetMonitorStatusDashboard(string jwtToken, MonitorEnvironment environment)
     {
-        var monitorList = await GetMonitorListByMonitorGroupIds(jwtToken);
+        var monitorList = await GetMonitorListByMonitorGroupIds(jwtToken, environment);
 
         var enumerable = monitorList.ToList();
         var paused = enumerable.Count(x => x.Paused);
@@ -237,13 +237,14 @@ public class MonitorService : IMonitorService
         return monitorFailureCounts;
     }
 
-    public async Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(string token)
+    public async Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(string token,
+        MonitorEnvironment environment)
     {
         var listGroupMonitorIds = await _monitorGroupService.GetUserGroupMonitorListIds(token);
 
         if (listGroupMonitorIds != null)
         {
-            return await _monitorRepository.GetMonitorListByMonitorGroupIds(listGroupMonitorIds);
+            return await _monitorRepository.GetMonitorListByMonitorGroupIds(listGroupMonitorIds, environment);
         }
 
         return null;
