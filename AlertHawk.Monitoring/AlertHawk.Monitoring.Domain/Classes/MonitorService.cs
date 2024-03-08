@@ -14,7 +14,8 @@ public class MonitorService : IMonitorService
     private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
     private readonly IMonitorGroupService _monitorGroupService;
 
-    public MonitorService(IMonitorRepository monitorRepository, ICaching caching, IMonitorGroupService monitorGroupService)
+    public MonitorService(IMonitorRepository monitorRepository, ICaching caching,
+        IMonitorGroupService monitorGroupService)
     {
         _monitorRepository = monitorRepository;
         _caching = caching;
@@ -178,6 +179,7 @@ public class MonitorService : IMonitorService
 
     public async Task SetMonitorDashboardDataCacheList()
     {
+        Console.WriteLine("Caching Started");
         var lstMonitorDashboard = new List<MonitorDashboard?>();
         var lstMonitor = await GetMonitorList();
 
@@ -191,6 +193,7 @@ public class MonitorService : IMonitorService
         }
 
         await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20);
+        Console.WriteLine("Caching Completed");
     }
 
     public async Task<MonitorStatusDashboard> GetMonitorStatusDashboard(string jwtToken, MonitorEnvironment environment)
@@ -217,7 +220,7 @@ public class MonitorService : IMonitorService
         {
             monitorHttp.HeadersJson = JsonUtils.ConvertTupleToJson(monitorHttp.Headers);
         }
-        
+
         return await _monitorRepository.CreateMonitorHttp(monitorHttp);
     }
 
@@ -244,7 +247,25 @@ public class MonitorService : IMonitorService
 
         if (listGroupMonitorIds != null)
         {
-            return await _monitorRepository.GetMonitorListByMonitorGroupIds(listGroupMonitorIds, environment);
+            var monitors = await _monitorRepository.GetMonitorListByMonitorGroupIds(listGroupMonitorIds, environment);
+            if (monitors != null)
+            {
+                var monitorList = monitors.ToList();
+                var dashboardDataList = GetMonitorDashboardDataList(monitorList.Select(x => x.Id).ToList()).ToList();
+                if (dashboardDataList.Any())
+                {
+                    foreach (var monitor in monitorList)
+                    {
+                        var dashboardData = dashboardDataList.FirstOrDefault(x => x.MonitorId == monitor.Id);
+                        if (dashboardData != null)
+                        {
+                            monitor.MonitorStatusDashboard = dashboardData;
+                        }
+                    }
+                }
+
+                return monitors;
+            }
         }
 
         return null;
@@ -285,7 +306,7 @@ public class MonitorService : IMonitorService
         return await _monitorRepository.GetTcpMonitorByMonitorId(id);
     }
 
-    public async Task<IEnumerable<MonitorDashboard>> GetMonitorDashboardDataList(List<int> ids)
+    public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
     {
         var data = _caching.GetValueFromCache<List<MonitorDashboard?>>(_cacheKeyDashboardList);
 

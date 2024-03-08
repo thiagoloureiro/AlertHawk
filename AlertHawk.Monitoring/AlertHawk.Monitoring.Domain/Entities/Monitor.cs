@@ -13,4 +13,5 @@ public class Monitor
     public bool Paused { get; set; }
     public MonitorRegion MonitorRegion { get; set; }
     public MonitorEnvironment MonitorEnvironment { get; set; }
+    public MonitorDashboard MonitorStatusDashboard { get; set; }
 }

@@ -12,7 +12,7 @@ public interface IMonitorService
     Task DeleteMonitorHistory(int days);
     Task PauseMonitor(int id, bool paused);
     Task<MonitorDashboard?> GetMonitorDashboardData(int id);
-    Task<IEnumerable<MonitorDashboard>> GetMonitorDashboardDataList(List<int> ids);
+    IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids);
     Task SetMonitorDashboardDataCacheList();
     Task<MonitorStatusDashboard> GetMonitorStatusDashboard(string jwtToken, MonitorEnvironment environment);
     Task<int> CreateMonitorHttp(MonitorHttp monitorHttp);
