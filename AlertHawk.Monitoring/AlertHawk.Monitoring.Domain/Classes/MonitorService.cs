@@ -179,7 +179,6 @@ public class MonitorService : IMonitorService
 
     public async Task SetMonitorDashboardDataCacheList()
     {
-        Console.WriteLine("Caching Started");
         var lstMonitorDashboard = new List<MonitorDashboard?>();
         var lstMonitor = await GetMonitorList();
 
@@ -193,7 +192,6 @@ public class MonitorService : IMonitorService
         }
 
         await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20);
-        Console.WriteLine("Caching Completed");
     }
 
     public async Task<MonitorStatusDashboard> GetMonitorStatusDashboard(string jwtToken, MonitorEnvironment environment)
