@@ -5,6 +5,7 @@ namespace AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 public interface IMonitorGroupRepository
 {
     Task<IEnumerable<MonitorGroup>> GetMonitorGroupList();
+    Task<IEnumerable<MonitorGroup>> GetMonitorGroupList(MonitorEnvironment environment);
     Task<MonitorGroup> GetMonitorGroupById(int id);
     Task AddMonitorToGroup(MonitorGroupItems monitorGroupItems);
     Task RemoveMonitorFromGroup(MonitorGroupItems monitorGroupItems);

@@ -27,20 +27,21 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorGroupService.GetMonitorGroupList();
             return Ok(result);
         }
-        
+
         [SwaggerOperation(Summary = "Retrieves a List of all Monitor Groups By User Token")]
         [ProducesResponseType(typeof(IEnumerable<MonitorGroup>), StatusCodes.Status200OK)]
-        [HttpGet("monitorGroupListByUser")]
+        [HttpGet("monitorGroupListByUser/{environment}")]
         [Authorize]
-        public async Task<IActionResult> GetMonitorGroupListByUser()
+        public async Task<IActionResult> GetMonitorGroupListByUser(
+            MonitorEnvironment environment = MonitorEnvironment.Production)
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
             if (jwtToken == null)
             {
                 return BadRequest("Invalid Token");
             }
-            
-            var result = await _monitorGroupService.GetMonitorGroupList(jwtToken);
+
+            var result = await _monitorGroupService.GetMonitorGroupList(jwtToken, environment);
             return Ok(result);
         }
 
@@ -61,7 +62,7 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorGroupService.AddMonitorToGroup(monitorGroupItems);
             return Ok();
         }
-        
+
         [SwaggerOperation(Summary = "Create a Monitor Group")]
         [ProducesResponseType(typeof(MonitorGroup), StatusCodes.Status200OK)]
         [HttpPost("addMonitorGroup")]
@@ -70,8 +71,8 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorGroupService.AddMonitorGroup(monitorGroup);
             return Ok();
         }
-        
-          
+
+
         [SwaggerOperation(Summary = "Update a Monitor Group")]
         [ProducesResponseType(typeof(MonitorGroup), StatusCodes.Status200OK)]
         [HttpPost("updateMonitorGroup")]
@@ -80,7 +81,7 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorGroupService.UpdateMonitorGroup(monitorGroup);
             return Ok();
         }
-        
+
         [SwaggerOperation(Summary = "Delete a Monitor Group")]
         [ProducesResponseType(typeof(MonitorGroup), StatusCodes.Status200OK)]
         [HttpDelete("deleteMonitorGroup/{id}")]
@@ -89,7 +90,7 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorGroupService.DeleteMonitorGroup(id);
             return Ok();
         }
-        
+
         [SwaggerOperation(Summary = "Remove Monitors from the Group")]
         [ProducesResponseType(typeof(MonitorGroup), StatusCodes.Status200OK)]
         [HttpDelete("removeMonitorFromGroup")]

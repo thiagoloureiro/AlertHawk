@@ -28,4 +28,5 @@ public interface IMonitorRepository
     Task DeleteMonitor(int id);
     Task<int> CreateMonitorTcp(MonitorTcp monitorTcp);
     Task UpdateMonitorTcp(MonitorTcp monitorTcp);
+    Task<IEnumerable<Monitor?>> GetMonitorList(MonitorEnvironment environment);
 }

@@ -22,10 +22,10 @@ public class MonitorGroupService : IMonitorGroupService
         return monitorGroupList;
     }
 
-    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList(string jwtToken)
+    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList(string jwtToken, MonitorEnvironment environment)
     {
         var ids = await GetUserGroupMonitorListIds(jwtToken);
-        var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupList();
+        var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupList(environment);
 
         if (ids == null)
         {

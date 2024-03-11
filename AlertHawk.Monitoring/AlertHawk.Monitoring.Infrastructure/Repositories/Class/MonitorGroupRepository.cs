@@ -25,6 +25,14 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
     public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList()
     {
         await using var db = new SqlConnection(_connstring);
+        string sql = @"SELECT Id, Name FROM [MonitorGroup]";
+        var monitorGroupList = await db.QueryAsync<MonitorGroup>(sql, commandType: CommandType.Text);
+        return monitorGroupList;
+    }
+
+    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList(MonitorEnvironment environment)
+    {
+        await using var db = new SqlConnection(_connstring);
 
         var monitorList = await _monitorRepository.GetMonitorList();
 
