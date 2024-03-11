@@ -1,6 +1,7 @@
 ﻿using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Services;
 using EasyMemoryCache;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -8,6 +9,7 @@ namespace AlertHawk.Notification.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class NotificationTypeController : ControllerBase
     {
         private readonly INotificationTypeService _notificationTypeService;

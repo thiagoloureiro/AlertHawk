@@ -10,6 +10,7 @@ using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Helpers;
 using AlertHawk.Notification.Infrastructure.Notifiers;
 using MassTransit;
+using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using SharedModels;
 
@@ -68,17 +69,27 @@ builder.WebHost.UseSentry(options =>
             {
                 if (
                     sentryEvent.Level == SentryLevel.Error
-                    && sentryEvent.Logger?.Equals("Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter", StringComparison.Ordinal) == true
+                    && sentryEvent.Logger?.Equals("Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter",
+                        StringComparison.Ordinal) == true
                     && sentryEvent.Message?.Message?.Contains("IDX10223", StringComparison.Ordinal) == true
                 )
-                {   // Do not log 'IDX10223: Lifetime validation failed. The token is expired.'
+                {
+                    // Do not log 'IDX10223: Lifetime validation failed. The token is expired.'
                     return null;
                 }
+
                 return sentryEvent;
             }
         );
     }
 );
+
+var azureEnabled = Environment.GetEnvironmentVariable("AZURE_AD_AUTH_ENABLED", EnvironmentVariableTarget.Process) ??
+                   "true";
+if (azureEnabled == "true")
+{
+    builder.Services.AddMicrosoftIdentityWebApiAuthentication(configuration, jwtBearerScheme: "AzureAd");
+}
 
 var app = builder.Build();
 

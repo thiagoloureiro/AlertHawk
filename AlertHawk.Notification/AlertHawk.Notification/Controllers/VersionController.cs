@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Reflection;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AlertHawk.Notification.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [AllowAnonymous]
     public class VersionController : ControllerBase
     {
         [HttpGet]
