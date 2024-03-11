@@ -13,17 +13,34 @@ namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
 {
     private readonly string _connstring;
+    private readonly IMonitorRepository _monitorRepository;
 
-    public MonitorGroupRepository(IConfiguration configuration) : base(configuration)
+    public MonitorGroupRepository(IConfiguration configuration, IMonitorRepository monitorRepository) : base(
+        configuration)
     {
+        _monitorRepository = monitorRepository;
         _connstring = GetConnectionString();
     }
 
     public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList()
     {
         await using var db = new SqlConnection(_connstring);
+
+        var monitorList = await _monitorRepository.GetMonitorList();
+
+        string sqlMonitorGroupItems = @"SELECT MonitorId, MonitorGroupId FROM [MonitorGroupItems]";
+        var groupItems = await db.QueryAsync<MonitorGroupItems>(sqlMonitorGroupItems, commandType: CommandType.Text);
+
         string sql = @"SELECT Id, Name FROM [MonitorGroup]";
-        return await db.QueryAsync<MonitorGroup>(sql, commandType: CommandType.Text);
+        var monitorGroupList = await db.QueryAsync<MonitorGroup>(sql, commandType: CommandType.Text);
+
+        foreach (var monitorGroup in monitorGroupList)
+        {
+            var monitors = groupItems.Where(x => x.MonitorGroupId == monitorGroup.Id).Select(x => x.MonitorId);
+            monitorGroup.Monitors = monitorList.Where(x => monitors.Contains(x.Id));
+        }
+
+        return monitorGroupList;
     }
 
     public async Task<MonitorGroup> GetMonitorGroupById(int id)
@@ -32,12 +49,20 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
         string sql = @"SELECT Id, Name FROM [MonitorGroup] WHERE id=@id";
         var monitor = await db.QueryFirstOrDefaultAsync<MonitorGroup>(sql, new { id }, commandType: CommandType.Text);
 
-        string sqlMonitor =
-            @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status FROM [MonitorGroupItems] MGI INNER JOIN [Monitor] M on M.Id = MGI.MonitorId WHERE MGI.MonitorGroupId=@id";
+        if (monitor != null)
+        {
+            string sqlMonitor =
+                @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status FROM [MonitorGroupItems] MGI INNER JOIN [Monitor] M on M.Id = MGI.MonitorId WHERE MGI.MonitorGroupId=@id";
 
-        var lstMonitors = await db.QueryAsync<Monitor>(sqlMonitor, new { id }, commandType: CommandType.Text);
-        monitor.Monitors = lstMonitors;
-        return monitor;
+            var lstMonitors = await db.QueryAsync<Monitor>(sqlMonitor, new { id }, commandType: CommandType.Text);
+            monitor.Monitors = lstMonitors;
+            return monitor;
+        }
+
+        return new MonitorGroup
+        {
+            Name = null
+        };
     }
 
     public async Task AddMonitorToGroup(MonitorGroupItems monitorGroupItems)
