@@ -9,6 +9,7 @@ namespace AlertHawk.Monitoring.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class MonitorGroupController : ControllerBase
     {
         private readonly IMonitorGroupService _monitorGroupService;
