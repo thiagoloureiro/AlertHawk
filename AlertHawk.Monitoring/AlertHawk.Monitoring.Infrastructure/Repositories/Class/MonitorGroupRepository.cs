@@ -32,12 +32,20 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
         string sql = @"SELECT Id, Name FROM [MonitorGroup] WHERE id=@id";
         var monitor = await db.QueryFirstOrDefaultAsync<MonitorGroup>(sql, new { id }, commandType: CommandType.Text);
 
-        string sqlMonitor =
-            @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status FROM [MonitorGroupItems] MGI INNER JOIN [Monitor] M on M.Id = MGI.MonitorId WHERE MGI.MonitorGroupId=@id";
+        if (monitor != null)
+        {
+            string sqlMonitor =
+                @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status FROM [MonitorGroupItems] MGI INNER JOIN [Monitor] M on M.Id = MGI.MonitorId WHERE MGI.MonitorGroupId=@id";
 
-        var lstMonitors = await db.QueryAsync<Monitor>(sqlMonitor, new { id }, commandType: CommandType.Text);
-        monitor.Monitors = lstMonitors;
-        return monitor;
+            var lstMonitors = await db.QueryAsync<Monitor>(sqlMonitor, new { id }, commandType: CommandType.Text);
+            monitor.Monitors = lstMonitors;
+            return monitor;
+        }
+
+        return new MonitorGroup
+        {
+            Name = null
+        };
     }
 
     public async Task AddMonitorToGroup(MonitorGroupItems monitorGroupItems)
