@@ -67,12 +67,11 @@ builder.Services.AddMassTransit(x =>
 });
 
 var azureEnabled = Environment.GetEnvironmentVariable("AZURE_AD_AUTH_ENABLED", EnvironmentVariableTarget.Process) ??
-                   "false";
+                   "true";
 if (azureEnabled == "true")
 {
     builder.Services.AddMicrosoftIdentityWebApiAuthentication(configuration, jwtBearerScheme: "AzureAd");
 }
-
 
 builder.Services.AddHangfire(config => config.UseMemoryStorage());
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());

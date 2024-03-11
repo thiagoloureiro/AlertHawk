@@ -3,6 +3,7 @@ using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
+using EasyMemoryCache;
 using Newtonsoft.Json;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
@@ -10,10 +11,13 @@ namespace AlertHawk.Monitoring.Domain.Classes;
 public class MonitorGroupService : IMonitorGroupService
 {
     private readonly IMonitorGroupRepository _monitorGroupRepository;
+    private readonly ICaching _caching;
+    private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
 
-    public MonitorGroupService(IMonitorGroupRepository monitorGroupRepository)
+    public MonitorGroupService(IMonitorGroupRepository monitorGroupRepository, ICaching caching)
     {
         _monitorGroupRepository = monitorGroupRepository;
+        _caching = caching;
     }
 
     public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList()
@@ -33,7 +37,22 @@ public class MonitorGroupService : IMonitorGroupService
         }
 
         monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id));
-        return monitorGroupList;
+
+        var monitorGroups = monitorGroupList.ToList();
+        foreach (var monitorGroup in monitorGroups)
+        {
+            if (monitorGroup.Monitors != null)
+            {
+                var dashboardData =
+                    GetMonitorDashboardDataList(monitorGroup.Monitors.Select(x => x.Id).ToList());
+                foreach (var monitor in monitorGroup.Monitors)
+                {
+                    monitor.MonitorStatusDashboard = dashboardData.FirstOrDefault(x => x.MonitorId == monitor.Id);
+                }
+            }
+        }
+
+        return monitorGroups;
     }
 
     public async Task<MonitorGroup> GetMonitorGroupById(int id)
@@ -70,10 +89,27 @@ public class MonitorGroupService : IMonitorGroupService
     {
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        // TODO : Move this to a configuration file
         var content = await client.GetAsync("https://dev.api.alerthawk.tech/auth/api/UsersMonitorGroup/GetAll");
         var result = await content.Content.ReadAsStringAsync();
         var groupMonitorIds = JsonConvert.DeserializeObject<List<UsersMonitorGroup>>(result);
         var listGroupMonitorIds = groupMonitorIds?.Select(x => x.GroupMonitorId).ToList();
         return listGroupMonitorIds;
+    }
+
+    private IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
+    {
+        var data = _caching.GetValueFromCache<List<MonitorDashboard?>>(_cacheKeyDashboardList);
+
+        if (data != null)
+        {
+            var items = data.Where(item => item != null).ToList();
+
+            var dataToReturn = items.Where(x => ids.Contains(x.MonitorId)).ToList();
+
+            return dataToReturn;
+        }
+
+        return new List<MonitorDashboard>();
     }
 }

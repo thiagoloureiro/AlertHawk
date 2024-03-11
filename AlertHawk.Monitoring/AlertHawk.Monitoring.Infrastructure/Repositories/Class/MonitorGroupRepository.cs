@@ -34,7 +34,7 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
     {
         await using var db = new SqlConnection(_connstring);
 
-        var monitorList = await _monitorRepository.GetMonitorList();
+        var monitorList = await _monitorRepository.GetMonitorList(environment);
 
         string sqlMonitorGroupItems = @"SELECT MonitorId, MonitorGroupId FROM [MonitorGroupItems]";
         var groupItems = await db.QueryAsync<MonitorGroupItems>(sqlMonitorGroupItems, commandType: CommandType.Text);
