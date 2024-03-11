@@ -28,7 +28,7 @@ namespace AlertHawk.Monitoring.Controllers
             MonitorEnvironment environment = MonitorEnvironment.Production)
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
-            if (jwtToken == null)
+            if (string.IsNullOrEmpty(jwtToken))
             {
                 return BadRequest("Invalid Token");
             }
