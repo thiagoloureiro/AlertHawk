@@ -13,17 +13,34 @@ namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
 {
     private readonly string _connstring;
+    private readonly IMonitorRepository _monitorRepository;
 
-    public MonitorGroupRepository(IConfiguration configuration) : base(configuration)
+    public MonitorGroupRepository(IConfiguration configuration, IMonitorRepository monitorRepository) : base(
+        configuration)
     {
+        _monitorRepository = monitorRepository;
         _connstring = GetConnectionString();
     }
 
     public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList()
     {
         await using var db = new SqlConnection(_connstring);
+
+        var monitorList = await _monitorRepository.GetMonitorList();
+
+        string sqlMonitorGroupItems = @"SELECT MonitorId, MonitorGroupId FROM [MonitorGroupItems]";
+        var groupItems = await db.QueryAsync<MonitorGroupItems>(sqlMonitorGroupItems, commandType: CommandType.Text);
+
         string sql = @"SELECT Id, Name FROM [MonitorGroup]";
-        return await db.QueryAsync<MonitorGroup>(sql, commandType: CommandType.Text);
+        var monitorGroupList = await db.QueryAsync<MonitorGroup>(sql, commandType: CommandType.Text);
+
+        foreach (var monitorGroup in monitorGroupList)
+        {
+            var monitors = groupItems.Where(x => x.MonitorGroupId == monitorGroup.Id).Select(x => x.MonitorId);
+            monitorGroup.Monitors = monitorList.Where(x => monitors.Contains(x.Id));
+        }
+
+        return monitorGroupList;
     }
 
     public async Task<MonitorGroup> GetMonitorGroupById(int id)
