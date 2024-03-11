@@ -135,12 +135,12 @@ public class MonitorService : IMonitorService
             {
                 var monitorDashboard = new MonitorDashboard
                 {
-                    ResponseTime = monitorHistories.Average(x => x.ResponseTime),
-                    Uptime24Hrs = uptime24Hrs,
-                    Uptime7Days = upTime7Days,
-                    Uptime30Days = uptime30Days,
-                    Uptime3Months = uptime3Months,
-                    Uptime6Months = uptime6Months,
+                    ResponseTime = Math.Round(monitorHistories.Average(x => x.ResponseTime), 2),
+                    Uptime24Hrs = Math.Round(uptime24Hrs, 2),
+                    Uptime7Days = Math.Round(upTime7Days, 2),
+                    Uptime30Days = Math.Round(uptime30Days, 2),
+                    Uptime3Months = Math.Round(uptime3Months, 2),
+                    Uptime6Months = Math.Round(uptime6Months, 2),
                     CertExpDays = monitor.DaysToExpireCert,
                     MonitorId = id
                 };
