@@ -28,7 +28,7 @@ namespace AlertHawk.Monitoring.Controllers
             return Ok(result);
         }
 
-        [SwaggerOperation(Summary = "Retrieves a List of all Monitor Groups By User Token")]
+        [SwaggerOperation(Summary = "Retrieves a List of all Monitor Groups (including monitor list + dashboard data) By User Token")]
         [ProducesResponseType(typeof(IEnumerable<MonitorGroup>), StatusCodes.Status200OK)]
         [HttpGet("monitorGroupListByUser/{environment}")]
         [Authorize]
