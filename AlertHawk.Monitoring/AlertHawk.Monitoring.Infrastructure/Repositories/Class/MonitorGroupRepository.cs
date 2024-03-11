@@ -30,7 +30,7 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
         return monitorGroupList;
     }
 
-    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList(MonitorEnvironment environment)
+    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupListByEnvironment(MonitorEnvironment environment)
     {
         await using var db = new SqlConnection(_connstring);
 

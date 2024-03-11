@@ -26,10 +26,39 @@ public class MonitorGroupService : IMonitorGroupService
         return monitorGroupList;
     }
 
-    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList(string jwtToken, MonitorEnvironment environment)
+    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupListByEnvironment(string jwtToken, MonitorEnvironment environment)
     {
         var ids = await GetUserGroupMonitorListIds(jwtToken);
-        var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupList(environment);
+        var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupListByEnvironment(environment);
+
+        if (ids == null)
+        {
+            return new List<MonitorGroup> { new MonitorGroup { Id = 0, Name = "No Groups Found" } };
+        }
+
+        monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id));
+
+        var monitorGroups = monitorGroupList.ToList();
+        foreach (var monitorGroup in monitorGroups)
+        {
+            if (monitorGroup.Monitors != null)
+            {
+                var dashboardData =
+                    GetMonitorDashboardDataList(monitorGroup.Monitors.Select(x => x.Id).ToList());
+                foreach (var monitor in monitorGroup.Monitors)
+                {
+                    monitor.MonitorStatusDashboard = dashboardData.FirstOrDefault(x => x.MonitorId == monitor.Id);
+                }
+            }
+        }
+
+        return monitorGroups;
+    }
+
+    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList(string jwtToken)
+    {
+        var ids = await GetUserGroupMonitorListIds(jwtToken);
+        var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupList();
 
         if (ids == null)
         {

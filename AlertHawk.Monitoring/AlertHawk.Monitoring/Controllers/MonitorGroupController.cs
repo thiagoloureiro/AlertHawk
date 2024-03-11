@@ -28,11 +28,29 @@ namespace AlertHawk.Monitoring.Controllers
             return Ok(result);
         }
 
-        [SwaggerOperation(Summary = "Retrieves a List of all Monitor Groups (including monitor list + dashboard data) By User Token")]
+        [SwaggerOperation(Summary =
+            "Retrieves a List of all Monitor Groups (including monitor list + dashboard data) By User Token")]
+        [ProducesResponseType(typeof(IEnumerable<MonitorGroup>), StatusCodes.Status200OK)]
+        [HttpGet("monitorGroupListByUser")]
+        [Authorize]
+        public async Task<IActionResult> GetMonitorGroupListByUser()
+        {
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (jwtToken == null)
+            {
+                return BadRequest("Invalid Token");
+            }
+
+            var result = await _monitorGroupService.GetMonitorGroupList(jwtToken);
+            return Ok(result);
+        }
+
+        [SwaggerOperation(Summary =
+            "Retrieves a List of all Monitor Groups (including monitor list + dashboard data) By User Token")]
         [ProducesResponseType(typeof(IEnumerable<MonitorGroup>), StatusCodes.Status200OK)]
         [HttpGet("monitorGroupListByUser/{environment}")]
         [Authorize]
-        public async Task<IActionResult> GetMonitorGroupListByUser(
+        public async Task<IActionResult> GetMonitorGroupListByEnvironment(
             MonitorEnvironment environment = MonitorEnvironment.Production)
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
@@ -41,7 +59,7 @@ namespace AlertHawk.Monitoring.Controllers
                 return BadRequest("Invalid Token");
             }
 
-            var result = await _monitorGroupService.GetMonitorGroupList(jwtToken, environment);
+            var result = await _monitorGroupService.GetMonitorGroupListByEnvironment(jwtToken, environment);
             return Ok(result);
         }
 
