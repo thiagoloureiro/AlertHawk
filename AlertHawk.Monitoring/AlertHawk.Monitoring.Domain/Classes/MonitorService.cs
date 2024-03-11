@@ -179,19 +179,22 @@ public class MonitorService : IMonitorService
 
     public async Task SetMonitorDashboardDataCacheList()
     {
-        var lstMonitorDashboard = new List<MonitorDashboard?>();
-        var lstMonitor = await GetMonitorList();
-
-        foreach (var monitor in lstMonitor)
+        if (GlobalVariables.MasterNode)
         {
-            if (monitor != null)
-            {
-                var monitorData = await GetMonitorDashboardData(monitor.Id);
-                lstMonitorDashboard.Add(monitorData);
-            }
-        }
+            var lstMonitorDashboard = new List<MonitorDashboard?>();
+            var lstMonitor = await GetMonitorList();
 
-        await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20);
+            foreach (var monitor in lstMonitor)
+            {
+                if (monitor != null)
+                {
+                    var monitorData = await GetMonitorDashboardData(monitor.Id);
+                    lstMonitorDashboard.Add(monitorData);
+                }
+            }
+
+            await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20);
+        }
     }
 
     public async Task<MonitorStatusDashboard> GetMonitorStatusDashboard(string jwtToken, MonitorEnvironment environment)

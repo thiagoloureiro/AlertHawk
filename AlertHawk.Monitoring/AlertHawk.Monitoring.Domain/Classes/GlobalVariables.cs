@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace AlertHawk.Monitoring.Infrastructure.MonitorManager;
+namespace AlertHawk.Monitoring.Domain.Classes;
 
 [ExcludeFromCodeCoverage]
 public static class GlobalVariables
