@@ -141,6 +141,14 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorService.PauseMonitor(id, paused);
             return Ok();
         }
+        
+        [SwaggerOperation(Summary = "Pause or resume the monitoring for the specified Monitor Group Id")]
+        [HttpPut("pauseMonitorByGroupId/{groupId}/{paused}")]
+        public async Task<IActionResult> PauseMonitorByGroupId(int groupId, bool paused)
+        {
+            await _monitorService.PauseMonitorByGroupId(groupId, paused);
+            return Ok();
+        }
 
         [SwaggerOperation(Summary = "Retrieves Failure Count")]
         [ProducesResponseType(typeof(IEnumerable<MonitorAgent>), StatusCodes.Status200OK)]

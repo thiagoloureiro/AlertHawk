@@ -24,4 +24,5 @@ public interface IMonitorService
     Task UpdateMonitorTcp(MonitorTcp monitorTcp);
     Task<MonitorHttp> GetHttpMonitorByMonitorId(int id);
     Task<MonitorTcp> GetTcpMonitorByMonitorId(int id);
+    Task PauseMonitorByGroupId(int groupId, bool paused);
 }

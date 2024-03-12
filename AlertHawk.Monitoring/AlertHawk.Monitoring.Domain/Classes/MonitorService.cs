@@ -307,6 +307,18 @@ public class MonitorService : IMonitorService
         return await _monitorRepository.GetTcpMonitorByMonitorId(id);
     }
 
+    public async Task PauseMonitorByGroupId(int groupId, bool paused)
+    {
+        var monitorGroup = await _monitorGroupService.GetMonitorGroupById(groupId);
+        if (monitorGroup != null)
+        {
+            foreach (var monitor in monitorGroup.Monitors)
+            {
+                await PauseMonitor(monitor.Id, paused);
+            }
+        }
+    }
+
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
     {
         var data = _caching.GetValueFromCache<List<MonitorDashboard?>>(_cacheKeyDashboardList);
