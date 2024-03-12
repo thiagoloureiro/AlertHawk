@@ -46,8 +46,7 @@ public class MonitorManager : IMonitorManager
         {
             var httpMonitorIds = monitorByHttpType.Select(x => x.Id).ToList();
             var lstMonitors = await _monitorRepository.GetHttpMonitorByIds(httpMonitorIds);
-
-
+            
             GlobalVariables.HttpTaskList = httpMonitorIds;
 
             var lstStringsToAdd = new List<string>();

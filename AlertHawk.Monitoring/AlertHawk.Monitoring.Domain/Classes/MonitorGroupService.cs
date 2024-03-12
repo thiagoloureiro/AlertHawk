@@ -13,6 +13,7 @@ public class MonitorGroupService : IMonitorGroupService
     private readonly IMonitorGroupRepository _monitorGroupRepository;
     private readonly ICaching _caching;
     private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
+    private readonly string _cacheKeyMonitorGroupList = "monitorGroupList_";
 
     public MonitorGroupService(IMonitorGroupRepository monitorGroupRepository, ICaching caching)
     {
@@ -26,10 +27,14 @@ public class MonitorGroupService : IMonitorGroupService
         return monitorGroupList;
     }
 
-    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupListByEnvironment(string jwtToken, MonitorEnvironment environment)
+    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupListByEnvironment(string jwtToken,
+        MonitorEnvironment environment)
     {
         var ids = await GetUserGroupMonitorListIds(jwtToken);
-        var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupListByEnvironment(environment);
+
+        var monitorGroupList = await _caching.GetOrSetObjectFromCacheAsync($"{_cacheKeyMonitorGroupList}{(int)environment}",
+            20,
+            () => _monitorGroupRepository.GetMonitorGroupListByEnvironment(environment));
 
         if (ids == null)
         {
@@ -91,27 +96,42 @@ public class MonitorGroupService : IMonitorGroupService
 
     public async Task AddMonitorToGroup(MonitorGroupItems monitorGroupItems)
     {
+        InvalidateGroupCache();
         await _monitorGroupRepository.AddMonitorToGroup(monitorGroupItems);
     }
 
     public async Task RemoveMonitorFromGroup(MonitorGroupItems monitorGroupItems)
     {
+        InvalidateGroupCache();
         await _monitorGroupRepository.RemoveMonitorFromGroup(monitorGroupItems);
     }
 
     public async Task AddMonitorGroup(MonitorGroup monitorGroup)
     {
+        InvalidateGroupCache();
         await _monitorGroupRepository.AddMonitorGroup(monitorGroup);
     }
 
     public async Task UpdateMonitorGroup(MonitorGroup monitorGroup)
     {
+        InvalidateGroupCache();
         await _monitorGroupRepository.UpdateMonitorGroup(monitorGroup);
     }
 
     public async Task DeleteMonitorGroup(int id)
     {
+        InvalidateGroupCache();
         await _monitorGroupRepository.DeleteMonitorGroup(id);
+    }
+
+    private void InvalidateGroupCache()
+    {
+        _caching.Invalidate(_cacheKeyMonitorGroupList + (int)MonitorEnvironment.Production);
+        _caching.Invalidate(_cacheKeyMonitorGroupList + (int)MonitorEnvironment.Development);
+        _caching.Invalidate(_cacheKeyMonitorGroupList + (int)MonitorEnvironment.QA);
+        _caching.Invalidate(_cacheKeyMonitorGroupList + (int)MonitorEnvironment.Staging);
+        _caching.Invalidate(_cacheKeyMonitorGroupList + (int)MonitorEnvironment.Testing);
+        _caching.Invalidate(_cacheKeyMonitorGroupList + (int)MonitorEnvironment.PreProd);
     }
 
     public async Task<List<int>?> GetUserGroupMonitorListIds(string token)
