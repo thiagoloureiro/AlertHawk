@@ -57,7 +57,7 @@ public class MonitorService : IMonitorService
     {
         try
         {
-            var result = await _caching.GetOrSetObjectFromCacheAsync($"GroupHistory_{id}_90", 20,
+            var result = await _caching.GetOrSetObjectFromCacheAsync($"GroupHistory_{id}_90", 5,
                 () => _monitorRepository.GetMonitorHistory(id, 90));
 
             if (result == null)
@@ -76,7 +76,7 @@ public class MonitorService : IMonitorService
             }
 
             var monitor =
-                await _caching.GetOrSetObjectFromCacheAsync($"Monitor_{id}", 20,
+                await _caching.GetOrSetObjectFromCacheAsync($"Monitor_{id}", 5,
                     () => _monitorRepository.GetMonitorById(id));
 
             if (monitor == null)
