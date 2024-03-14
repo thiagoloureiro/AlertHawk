@@ -57,6 +57,7 @@ public class MonitorService : IMonitorService
     {
         try
         {
+            Console.WriteLine($"Caching {id}");
             var result = await _caching.GetOrSetObjectFromCacheAsync($"GroupHistory_{id}_90", 5,
                 () => _monitorRepository.GetMonitorHistory(id, 90));
 
@@ -181,6 +182,7 @@ public class MonitorService : IMonitorService
     {
         if (GlobalVariables.MasterNode)
         {
+            Console.WriteLine("Started Caching Monitor Dashboard Data List");
             var lstMonitorDashboard = new List<MonitorDashboard?>();
             var lstMonitor = await GetMonitorList();
 
@@ -194,6 +196,7 @@ public class MonitorService : IMonitorService
             }
 
             await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20);
+            Console.WriteLine("Finished Caching Monitor Dashboard Data List");
         }
     }
 
