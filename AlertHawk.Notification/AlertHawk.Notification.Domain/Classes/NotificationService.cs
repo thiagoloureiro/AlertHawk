@@ -1,7 +1,10 @@
-﻿using AlertHawk.Notification.Domain.Entities;
+﻿using System.Net.Http.Headers;
+using AlertHawk.Authentication.Domain.Entities;
+using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Domain.Interfaces.Repositories;
 using AlertHawk.Notification.Domain.Interfaces.Services;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace AlertHawk.Notification.Domain.Classes
@@ -112,6 +115,19 @@ namespace AlertHawk.Notification.Domain.Classes
         public async Task<NotificationItem?> SelectNotificationItemById(int id)
         {
             return await _notificationRepository.SelectNotificationItemById(id);
+        }
+        
+        public async Task<List<int>?> GetUserGroupMonitorListIds(string token)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ?? "https://dev.api.alerthawk.tech/auth/";
+            var content = await client.GetAsync($"{authApi}api/UsersMonitorGroup/GetAll");
+            var result = await content.Content.ReadAsStringAsync();
+            var groupMonitorIds = JsonConvert.DeserializeObject<List<UsersMonitorGroup>>(result);
+            var listGroupMonitorIds = groupMonitorIds?.Select(x => x.GroupMonitorId).ToList();
+            return listGroupMonitorIds;
         }
 
         private static void ConvertJsonToTuple(NotificationWebHook webHook)
