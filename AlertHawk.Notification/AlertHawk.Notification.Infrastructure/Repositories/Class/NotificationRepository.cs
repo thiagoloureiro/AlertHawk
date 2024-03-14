@@ -21,7 +21,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
     public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList()
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = "SELECT Id, Name, Description, NotificationTypeId FROM [NotificationItem]";
+        string sql = "SELECT Id, MonitorGroupId, Name, Description, NotificationTypeId FROM [NotificationItem]";
 
         var notificationItemList = await db.QueryAsync<NotificationItem>(sql, commandType: CommandType.Text);
 
@@ -161,7 +161,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
     public async Task<NotificationItem?> SelectNotificationItemById(int id)
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = "SELECT Id, Name, Description, NotificationTypeId FROM [NotificationItem]";
+        string sql = "SELECT Id, MonitorGroupId, Name, Description, NotificationTypeId FROM [NotificationItem]";
 
         var notificationItemList = await db.QueryAsync<NotificationItem>(sql, commandType: CommandType.Text);
         var notificationItem = notificationItemList.FirstOrDefault(x => x.Id == id);
@@ -202,7 +202,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
     public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList(List<int> ids)
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = "SELECT Id, Name, Description, NotificationTypeId FROM [NotificationItem] WHERE id IN @ids";
+        string sql = "SELECT Id, MonitorGroupId, Name, Description, NotificationTypeId FROM [NotificationItem] WHERE id IN @ids";
 
         var notificationItemList =
             await db.QueryAsync<NotificationItem>(sql, new { ids }, commandType: CommandType.Text);
@@ -261,13 +261,13 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @"INSERT INTO [NotificationItem] (Name, NotificationTypeId, Description) VALUES (@Name, @NotificationTypeId, @Description); SELECT CAST(SCOPE_IDENTITY() as int)";
+            @"INSERT INTO [NotificationItem] (Name, MonitorGroupId, NotificationTypeId, Description) VALUES (@Name, @MonitorGroupId, @NotificationTypeId, @Description); SELECT CAST(SCOPE_IDENTITY() as int)";
 
         var notificationId = await db.QuerySingleAsync<int>(sql,
             new
             {
                 Name = notificationItem.Name, NotificationTypeId = notificationItem.NotificationTypeId,
-                Description = notificationItem.Description
+                Description = notificationItem.Description, MonitorGroupId = notificationItem.MonitorGroupId
             },
             commandType: CommandType.Text);
         return notificationId;
