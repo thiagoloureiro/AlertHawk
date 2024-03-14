@@ -25,4 +25,6 @@ public interface IMonitorService
     Task<MonitorHttp> GetHttpMonitorByMonitorId(int id);
     Task<MonitorTcp> GetTcpMonitorByMonitorId(int id);
     Task PauseMonitorByGroupId(int groupId, bool paused);
+    Task AddMonitorNotification(MonitorNotification monitorNotification);
+    Task RemoveMonitorNotification(MonitorNotification monitorNotification);
 }

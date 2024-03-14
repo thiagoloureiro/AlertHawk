@@ -322,6 +322,16 @@ public class MonitorService : IMonitorService
         }
     }
 
+    public async Task AddMonitorNotification(MonitorNotification monitorNotification)
+    {
+        await _monitorRepository.AddMonitorNotification(monitorNotification);
+    }
+
+    public async Task RemoveMonitorNotification(MonitorNotification monitorNotification)
+    {
+       await _monitorRepository.RemoveMonitorNotification(monitorNotification);
+    }
+
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
     {
         var data = _caching.GetValueFromCache<List<MonitorDashboard?>>(_cacheKeyDashboardList);

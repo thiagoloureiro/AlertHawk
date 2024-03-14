@@ -91,6 +91,29 @@ namespace AlertHawk.Monitoring.Controllers
             return Ok(result);
         }
 
+        [SwaggerOperation(Summary = "Add Notification to Monitor")]
+        [ProducesResponseType(typeof(IEnumerable<MonitorNotification>), StatusCodes.Status200OK)]
+        [HttpPost("addMonitorNotification")]
+        public async Task<IActionResult> AddMonitorNotification([FromBody] MonitorNotification monitorNotification)
+        {
+            var notifications = await _monitorService.GetMonitorNotifications(monitorNotification.MonitorId);
+
+            if (notifications.Any(x => x.NotificationId == monitorNotification.NotificationId))
+                return BadRequest("Notification already exists for this monitor");
+
+            await _monitorService.AddMonitorNotification(monitorNotification);
+            return Ok();
+        }
+
+        [SwaggerOperation(Summary = "Remove Notification from Monitor")]
+        [ProducesResponseType(typeof(IEnumerable<MonitorNotification>), StatusCodes.Status200OK)]
+        [HttpPost("removeMonitorNotification")]
+        public async Task<IActionResult> RemoveMonitorNotification([FromBody] MonitorNotification monitorNotification)
+        {
+            await _monitorService.RemoveMonitorNotification(monitorNotification);
+            return Ok();
+        }
+
         [SwaggerOperation(Summary = "Create a new monitor Http")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [HttpPost("createMonitorHttp")]
@@ -141,7 +164,7 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorService.PauseMonitor(id, paused);
             return Ok();
         }
-        
+
         [SwaggerOperation(Summary = "Pause or resume the monitoring for the specified Monitor Group Id")]
         [HttpPut("pauseMonitorByGroupId/{groupId}/{paused}")]
         public async Task<IActionResult> PauseMonitorByGroupId(int groupId, bool paused)

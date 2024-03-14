@@ -29,4 +29,6 @@ public interface IMonitorRepository
     Task<int> CreateMonitorTcp(MonitorTcp monitorTcp);
     Task UpdateMonitorTcp(MonitorTcp monitorTcp);
     Task<IEnumerable<Monitor?>> GetMonitorList(MonitorEnvironment environment);
+    Task AddMonitorNotification(MonitorNotification monitorNotification);
+    Task RemoveMonitorNotification(MonitorNotification monitorNotification);
 }

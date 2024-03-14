@@ -34,7 +34,25 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor] WHERE MonitorEnvironment = @environment";
         return await db.QueryAsync<Monitor>(sql, new { environment }, commandType: CommandType.Text);
     }
-    
+
+    public async Task AddMonitorNotification(MonitorNotification monitorNotification)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @"INSERT INTO [MonitorNotification] (MonitorId, NotificationId) VALUES (@MonitorId, @NotificationId)";
+        await db.ExecuteAsync(sql, new { monitorNotification.MonitorId, monitorNotification.NotificationId },
+            commandType: CommandType.Text);
+    }
+
+    public async Task RemoveMonitorNotification(MonitorNotification monitorNotification)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @"DELETE FROM [MonitorNotification] WHERE MonitorId=@MonitorId AND NotificationId=@NotificationId";
+        await db.ExecuteAsync(sql, new { monitorNotification.MonitorId, monitorNotification.NotificationId },
+            commandType: CommandType.Text);
+    }
+
     public async Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(List<int> groupMonitorIds,
         MonitorEnvironment environment)
     {
