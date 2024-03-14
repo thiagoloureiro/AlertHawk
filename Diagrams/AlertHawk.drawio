@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2024-02-22T14:12:18.074Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" etag="tT0MXvLBzrgSq0AIXj1r" version="23.1.5" type="github">
+<mxfile host="app.diagrams.net" modified="2024-03-14T19:52:10.667Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" etag="avBjEAAE0W8x2z7GgFYy" version="24.0.6" type="github">
   <diagram name="Página-1" id="EC5-yDx1gmlKd79TGFPl">
-    <mxGraphModel dx="2261" dy="2084" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1811" dy="1759" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -38,6 +38,9 @@
           <mxGeometry x="0.6941" y="-3" relative="1" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="nuFNRSTuU9vE3Ly6UdoT-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=classic;startFill=1;" edge="1" parent="1" source="1MhiarmOQ1BAu21N2S9K-2" target="bWFMUhMA222-z3urMpEF-1">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="1MhiarmOQ1BAu21N2S9K-2" value="Monitoring Service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
           <mxGeometry x="400" y="230" width="120" height="60" as="geometry" />
@@ -161,10 +164,10 @@
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="0GfC3lX6S0VPZCZiWhWO-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="1MhiarmOQ1BAu21N2S9K-1" target="0GfC3lX6S0VPZCZiWhWO-1">
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="1MhiarmOQ1BAu21N2S9K-1" target="0GfC3lX6S0VPZCZiWhWO-1" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="0GfC3lX6S0VPZCZiWhWO-3" value="HTTPS" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="0GfC3lX6S0VPZCZiWhWO-2">
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-3" value="HTTPS" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="0GfC3lX6S0VPZCZiWhWO-2" vertex="1" connectable="0">
           <mxGeometry x="0.9286" y="4" relative="1" as="geometry">
             <mxPoint x="4" y="10" as="offset" />
           </mxGeometry>
@@ -211,10 +214,10 @@
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-36" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="URw1oCdvZ4ZULjiAWeCE-20" target="URw1oCdvZ4ZULjiAWeCE-21" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="0GfC3lX6S0VPZCZiWhWO-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="URw1oCdvZ4ZULjiAWeCE-20" target="0GfC3lX6S0VPZCZiWhWO-4">
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="URw1oCdvZ4ZULjiAWeCE-20" target="0GfC3lX6S0VPZCZiWhWO-4" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="0GfC3lX6S0VPZCZiWhWO-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="URw1oCdvZ4ZULjiAWeCE-20" target="0GfC3lX6S0VPZCZiWhWO-5">
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="URw1oCdvZ4ZULjiAWeCE-20" target="0GfC3lX6S0VPZCZiWhWO-5" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="URw1oCdvZ4ZULjiAWeCE-20" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
@@ -293,37 +296,37 @@
         <mxCell id="vqQ0VsHs9EydCFRSuEvc-7" value="" style="shape=image;html=1;verticalAlign=top;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;imageAspect=0;aspect=fixed;image=https://cdn2.iconfinder.com/data/icons/social-media-2189/48/17-Google_chrome-128.png" parent="1" vertex="1">
           <mxGeometry x="500" y="-20" width="30" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="0GfC3lX6S0VPZCZiWhWO-1" value="Generic HTTP WebHook Notification" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFCC;" vertex="1" parent="1">
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-1" value="Generic HTTP WebHook Notification" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFCC;" parent="1" vertex="1">
           <mxGeometry x="-760" y="120" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="0GfC3lX6S0VPZCZiWhWO-4" value="Applications (URLS)&lt;br&gt;Servers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-4" value="Applications (URLS)&lt;br&gt;Servers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
           <mxGeometry x="1860.5" y="70" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="0GfC3lX6S0VPZCZiWhWO-5" value="Applications (URLS)&lt;br&gt;Servers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-5" value="Applications (URLS)&lt;br&gt;Servers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
           <mxGeometry x="2030" y="70" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="0GfC3lX6S0VPZCZiWhWO-8" value="Monitor Region Asia" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-8" value="Monitor Region Asia" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="1870" y="470" width="100" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="0GfC3lX6S0VPZCZiWhWO-9" value="Application(s) Asia" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-9" value="Application(s) Asia" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="1870" y="40" width="100" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="0GfC3lX6S0VPZCZiWhWO-10" value="Application(s) North America" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-10" value="Application(s) North America" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="2040" y="40" width="100" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="0GfC3lX6S0VPZCZiWhWO-11" value="Application(s) Europe" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-11" value="Application(s) Europe" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="1710" y="40" width="100" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="0GfC3lX6S0VPZCZiWhWO-12" value="Monitor Region Europe" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-12" value="Monitor Region Europe" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="1717" y="540" width="100" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="0GfC3lX6S0VPZCZiWhWO-13" value="Application(s) North America" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-13" value="Application(s) North America" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="2018" y="540" width="100" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="0GfC3lX6S0VPZCZiWhWO-16" value="Connection from monitor to URLs" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-16" value="Connection from monitor to URLs" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="1918" y="170" width="200" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="0GfC3lX6S0VPZCZiWhWO-17" value="&lt;h1&gt;Monitor Region&lt;/h1&gt;&lt;div&gt;Each monitor has the configuration to run on a specific region, then the monitor fetches the tasks and queries the URLs for the region,&lt;/div&gt;&lt;div&gt;For example, Monitor 3 (green) only queries Asian URLs, the Salmon (4 and 5) North America, and the others, Europe.&lt;/div&gt;&lt;div&gt;A Custom option also is available in case of the internal network.&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+        <mxCell id="0GfC3lX6S0VPZCZiWhWO-17" value="&lt;h1&gt;Monitor Region&lt;/h1&gt;&lt;div&gt;Each monitor has the configuration to run on a specific region, then the monitor fetches the tasks and queries the URLs for the region,&lt;/div&gt;&lt;div&gt;For example, Monitor 3 (green) only queries Asian URLs, the Salmon (4 and 5) North America, and the others, Europe.&lt;/div&gt;&lt;div&gt;A Custom option also is available in case of the internal network.&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="2190" y="610" width="270" height="180" as="geometry" />
         </mxCell>
       </root>
