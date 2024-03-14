@@ -123,8 +123,6 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
 
     private async Task DeleteAllMonitorAgentTasks(List<int> ids)
     {
-        Console.WriteLine($"Deleting MonitorAgentTasks {string.Join(",", ids)}");
-
         await using var db = new SqlConnection(_connstring);
         string sqlAllMonitors = @"DELETE FROM [MonitorAgentTasks] WHERE MonitorId IN @ids";
         await db.ExecuteAsync(sqlAllMonitors, new { ids }, commandType: CommandType.Text);
