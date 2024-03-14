@@ -177,7 +177,7 @@ public class NotificationServiceTests
         notificationRepository.SelectNotificationItemList().Returns(expectedNotificationList);
 
         // Act
-        var result = await notificationService.SelectNotificationItemList();
+        var result = await notificationService.SelectNotificationItemList("token");
 
         // Assert
         await notificationRepository.Received(1).SelectNotificationItemList();

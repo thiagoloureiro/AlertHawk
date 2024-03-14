@@ -1,5 +1,6 @@
 ﻿using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Services;
+using AlertHawk.Notification.Infrastructure.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -59,7 +60,13 @@ namespace AlertHawk.Notification.Controllers
         [ProducesResponseType(typeof(List<NotificationItem>), StatusCodes.Status200OK)]
         public async Task<IActionResult> SelectNotificationItemList()
         {
-            var result = await _notificationService.SelectNotificationItemList();
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (jwtToken == null)
+            {
+                return BadRequest("Invalid Token");
+            }
+            
+            var result = await _notificationService.SelectNotificationItemList(jwtToken);
 
             foreach (var item in result)
             {

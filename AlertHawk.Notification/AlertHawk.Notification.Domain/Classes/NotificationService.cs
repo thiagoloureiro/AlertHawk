@@ -102,9 +102,11 @@ namespace AlertHawk.Notification.Domain.Classes
             await _notificationRepository.DeleteNotificationItem(id);
         }
 
-        public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList()
+        public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList(string jwtToken)
         {
-            return await _notificationRepository.SelectNotificationItemList();
+            var groupIds = await GetUserGroupMonitorListIds(jwtToken);  
+            var items = await _notificationRepository.SelectNotificationItemList();
+            return items.Where(x => groupIds.Contains(x.MonitorGroupId)).ToList();
         }
 
         public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList(List<int> ids)
