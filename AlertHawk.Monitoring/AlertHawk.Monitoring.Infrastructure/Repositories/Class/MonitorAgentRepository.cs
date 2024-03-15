@@ -1,6 +1,7 @@
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
@@ -23,6 +24,8 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
     public async Task ManageMonitorStatus(MonitorAgent monitorAgent)
     {
         var allMonitors = await GetAllMonitorAgents();
+        
+        monitorAgent.Version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString();
 
         await using var db = new SqlConnection(_connstring);
         await DeleteOutdatedMonitors(allMonitors, db);
