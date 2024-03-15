@@ -11,6 +11,8 @@ public class Monitor
     public bool Status { get; set; }
     public int DaysToExpireCert { get; set; }
     public bool Paused { get; set; }
+    public string? UrlToCheck { get; set; }
+    public string? MonitorTcp { get; set; }
     public MonitorRegion MonitorRegion { get; set; }
     public MonitorEnvironment MonitorEnvironment { get; set; }
     public MonitorDashboard? MonitorStatusDashboard { get; set; }
