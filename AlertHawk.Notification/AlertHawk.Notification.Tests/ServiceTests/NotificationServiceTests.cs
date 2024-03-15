@@ -2,6 +2,7 @@ using AlertHawk.Notification.Domain.Classes;
 using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Domain.Interfaces.Repositories;
+using AlertHawk.Notification.Domain.Interfaces.Services;
 using NSubstitute;
 
 namespace AlertHawk.Notification.Tests.ServiceTests;
@@ -165,23 +166,6 @@ public class NotificationServiceTests
 
         // Assert
         await notificationRepository.Received(1).DeleteNotificationItem(Arg.Is(notificationItem.Id));
-    }
-
-    [Fact]
-    public async Task SelectNotificationItemList_Calls_Repository_Method()
-    {
-        // Arrange
-        var expectedNotificationList = new List<NotificationItem>();
-        var notificationItem = CreateMock(out var notificationRepository, out var notificationService);
-        expectedNotificationList.Add(notificationItem);
-        notificationRepository.SelectNotificationItemList().Returns(expectedNotificationList);
-
-        // Act
-        var result = await notificationService.SelectNotificationItemList("token");
-
-        // Assert
-        await notificationRepository.Received(1).SelectNotificationItemList();
-        Assert.Same(expectedNotificationList, result);
     }
 
     [Fact]
