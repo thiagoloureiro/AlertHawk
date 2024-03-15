@@ -87,7 +87,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
     public async Task<List<MonitorAgent>> GetAllMonitorAgents()
     {
         await using var db = new SqlConnection(_connstring);
-        string sqlAllMonitors = @"SELECT Id, Hostname, TimeStamp, IsMaster, MonitorRegion FROM [MonitorAgent]";
+        string sqlAllMonitors = @"SELECT Id, Hostname, TimeStamp, IsMaster, MonitorRegion, Version FROM [MonitorAgent]";
         var result = await db.QueryAsync<MonitorAgent>(sqlAllMonitors, commandType: CommandType.Text);
         return result.ToList();
     }
@@ -154,7 +154,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         MonitorAgent monitorToUpdate)
     {
         string sqlInsertMaster =
-            @"UPDATE [MonitorAgent] SET TimeStamp = @TimeStamp, IsMaster = @IsMaster, MonitorRegion = @MonitorRegion WHERE Id = @id";
+            @"UPDATE [MonitorAgent] SET TimeStamp = @TimeStamp, IsMaster = @IsMaster, MonitorRegion = @MonitorRegion, Version = @Version WHERE Id = @id";
 
         await db.ExecuteAsync(sqlInsertMaster,
             new
@@ -162,7 +162,8 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
                 Id = monitorToUpdate.Id,
                 TimeStamp = DateTime.UtcNow,
                 IsMaster = monitorToUpdate.IsMaster,
-                MonitorRegion = monitorToUpdate.MonitorRegion
+                MonitorRegion = monitorToUpdate.MonitorRegion,
+                Version = monitorToUpdate.Version
             }, commandType: CommandType.Text);
     }
 
@@ -172,14 +173,15 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         monitorAgent.IsMaster = isMaster;
         // Insert
         string sqlInsertMaster =
-            @"INSERT INTO [MonitorAgent] (Hostname, TimeStamp, IsMaster, MonitorRegion) VALUES (@Hostname, @TimeStamp, @IsMaster, @MonitorRegion)";
+            @"INSERT INTO [MonitorAgent] (Hostname, TimeStamp, IsMaster, MonitorRegion, Version) VALUES (@Hostname, @TimeStamp, @IsMaster, @MonitorRegion, @Version)";
         await db.ExecuteAsync(sqlInsertMaster,
             new
             {
                 HostName = monitorAgent.Hostname,
                 TimeStamp = monitorAgent.TimeStamp,
                 IsMaster = monitorAgent.IsMaster,
-                MonitorRegion = monitorAgent.MonitorRegion
+                MonitorRegion = monitorAgent.MonitorRegion,
+                Version = monitorAgent.Version
             }, commandType: CommandType.Text);
     }
 
