@@ -18,6 +18,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Infrastructure.Producers;
+using Microsoft.AspNetCore.ResponseCompression;
 
 [assembly: ExcludeFromCodeCoverage]
 
@@ -95,6 +96,14 @@ builder.Services.AddTransient<IHttpClientScreenshot, HttpClientScreenshot>();
 
 builder.Services.AddTransient<INotificationProducer, NotificationProducer>();
 
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true; // Enable compression for HTTPS connections
+    options.Providers.Add<GzipCompressionProvider>(); // Use Gzip compression
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+        new[] { "application/json" }); // Compress JSON responses
+});
+
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.DefaultIgnoreCondition =
@@ -163,5 +172,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+app.UseResponseCompression();
 
 app.Run();
