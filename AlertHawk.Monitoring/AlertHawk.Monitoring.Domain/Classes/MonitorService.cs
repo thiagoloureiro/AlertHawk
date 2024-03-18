@@ -104,21 +104,21 @@ public class MonitorService : IMonitorService
 
             // Check if last 24 hours data is present
             bool containsLast24HoursData =
-                lst24Hrs.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-1).AddSeconds(60);
+                lst24Hrs.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-1).AddSeconds(120);
 
             // Check if last 7 days data is present
             bool containsLast7DaysData =
-                lst7Days.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-7).AddSeconds(60);
+                lst7Days.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-7).AddSeconds(120);
 
             // Check if last 30 days data is present
             bool containsLast30DaysData =
-                lst30Days.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-30).AddSeconds(60);
+                lst30Days.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-30).AddSeconds(120);
 
             // Check if last 3 months data is present
-            bool containsLast3MonthsData = lst3Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-90).AddSeconds(60);
+            bool containsLast3MonthsData = lst3Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-90).AddSeconds(120);
 
             // Check if last 6 months data is present
-            bool containsLast6MonthsData = lst6Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-180).AddSeconds(60);
+            bool containsLast6MonthsData = lst6Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-180).AddSeconds(120);
 
             double uptime24Hrs = 0.0;
             if (lst24Hrs.Count > 0 && containsLast24HoursData)
