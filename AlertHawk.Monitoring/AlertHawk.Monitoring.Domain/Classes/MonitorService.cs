@@ -101,33 +101,48 @@ public class MonitorService : IMonitorService
             var lst30Days = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-30)).ToList();
             var lst3Months = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-90)).ToList();
             var lst6Months = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-180)).ToList();
+            
+            // Check if last 24 hours data is present
+            bool containsLast24HoursData = lst24Hrs.Exists(history => (DateTime.UtcNow - history.TimeStamp).TotalHours <= 24);
+
+            // Check if last 7 days data is present
+            bool containsLast7DaysData = lst7Days.Exists(history => (DateTime.UtcNow - history.TimeStamp).TotalDays <= 7);
+
+            // Check if last 30 days data is present
+            bool containsLast30DaysData = lst30Days.Exists(history => (DateTime.UtcNow - history.TimeStamp).TotalDays <= 30);
+
+            // Check if last 3 months data is present
+            bool containsLast3MonthsData = lst3Months.Exists(history => (DateTime.UtcNow - history.TimeStamp).TotalDays <= 90);
+
+            // Check if last 6 months data is present
+            bool containsLast6MonthsData = lst6Months.Exists(history => (DateTime.UtcNow - history.TimeStamp).TotalDays <= 180);
 
             double uptime24Hrs = 0.0;
-            if (lst24Hrs.Count > 0)
+            if (lst24Hrs.Count > 0 && containsLast24HoursData)
             {
                 uptime24Hrs = (double)lst24Hrs.Count(item => item.Status) / lst24Hrs.Count * 100;
             }
 
             double upTime7Days = 0.0;
-            if (lst7Days.Count > 0)
+            if (lst7Days.Count > 0 && containsLast7DaysData)
             {
                 upTime7Days = (double)lst7Days.Count(item => item.Status) / lst7Days.Count * 100;
             }
 
             double uptime30Days = 0.0;
-            if (lst30Days.Count > 0)
+            if (lst30Days.Count > 0 && containsLast30DaysData)
             {
                 uptime30Days = (double)lst30Days.Count(item => item.Status) / lst30Days.Count * 100;
             }
 
             double uptime3Months = 0.0;
-            if (lst3Months.Count > 0)
+            if (lst3Months.Count > 0 && containsLast3MonthsData)
             {
                 uptime3Months = (double)lst3Months.Count(item => item.Status) / lst3Months.Count * 100;
             }
 
             double uptime6Months = 0.0;
-            if (lst6Months.Count > 0)
+            if (lst6Months.Count > 0 && containsLast6MonthsData)
             {
                 uptime6Months = (double)lst6Months.Count(item => item.Status) / lst6Months.Count * 100;
             }
