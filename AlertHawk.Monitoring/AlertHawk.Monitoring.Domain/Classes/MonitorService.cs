@@ -101,21 +101,24 @@ public class MonitorService : IMonitorService
             var lst30Days = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-30)).ToList();
             var lst3Months = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-90)).ToList();
             var lst6Months = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-180)).ToList();
-            
+
             // Check if last 24 hours data is present
-            bool containsLast24HoursData = lst24Hrs.Exists(history => (DateTime.UtcNow - history.TimeStamp).TotalHours <= 24);
+            bool containsLast24HoursData =
+                lst24Hrs.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-1).AddSeconds(60);
 
             // Check if last 7 days data is present
-            bool containsLast7DaysData = lst7Days.Exists(history => (DateTime.UtcNow - history.TimeStamp).TotalDays <= 7);
+            bool containsLast7DaysData =
+                lst7Days.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-7).AddSeconds(60);
 
             // Check if last 30 days data is present
-            bool containsLast30DaysData = lst30Days.Exists(history => (DateTime.UtcNow - history.TimeStamp).TotalDays <= 30);
+            bool containsLast30DaysData =
+                lst30Days.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-30).AddSeconds(60);
 
             // Check if last 3 months data is present
-            bool containsLast3MonthsData = lst3Months.Exists(history => (DateTime.UtcNow - history.TimeStamp).TotalDays <= 90);
+            bool containsLast3MonthsData = lst3Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-90).AddSeconds(60);
 
             // Check if last 6 months data is present
-            bool containsLast6MonthsData = lst6Months.Exists(history => (DateTime.UtcNow - history.TimeStamp).TotalDays <= 180);
+            bool containsLast6MonthsData = lst6Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-180).AddSeconds(60);
 
             double uptime24Hrs = 0.0;
             if (lst24Hrs.Count > 0 && containsLast24HoursData)
@@ -195,7 +198,7 @@ public class MonitorService : IMonitorService
 
     public async Task SetMonitorDashboardDataCacheList()
     {
-        if (GlobalVariables.MasterNode)
+        if (!GlobalVariables.MasterNode)
         {
             Console.WriteLine("Started Caching Monitor Dashboard Data List");
             var lstMonitorDashboard = new List<MonitorDashboard?>();
@@ -344,7 +347,7 @@ public class MonitorService : IMonitorService
 
     public async Task RemoveMonitorNotification(MonitorNotification monitorNotification)
     {
-       await _monitorRepository.RemoveMonitorNotification(monitorNotification);
+        await _monitorRepository.RemoveMonitorNotification(monitorNotification);
     }
 
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
