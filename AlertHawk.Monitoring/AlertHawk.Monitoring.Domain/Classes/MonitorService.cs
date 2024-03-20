@@ -67,7 +67,7 @@ public class MonitorService : IMonitorService
                 {
                     ResponseTime = 0,
                     MonitorId = id,
-                    UpTime1Hr = 0,
+                    Uptime1Hr = 0,
                     Uptime3Months = 0,
                     Uptime6Months = 0,
                     Uptime24Hrs = 0,
@@ -87,7 +87,7 @@ public class MonitorService : IMonitorService
                 {
                     ResponseTime = 0,
                     MonitorId = id,
-                    UpTime1Hr = 0,
+                    Uptime1Hr = 0,
                     Uptime3Months = 0,
                     Uptime6Months = 0,
                     Uptime24Hrs = 0,
@@ -166,7 +166,7 @@ public class MonitorService : IMonitorService
                 var monitorDashboard = new MonitorDashboard
                 {
                     ResponseTime = Math.Round(monitorHistories.Average(x => x.ResponseTime), 2),
-                    UpTime1Hr = Math.Round(uptime1Hr, 2),
+                    Uptime1Hr = Math.Round(uptime1Hr, 2),
                     Uptime24Hrs = Math.Round(uptime24Hrs, 2),
                     Uptime7Days = Math.Round(upTime7Days, 2),
                     Uptime30Days = Math.Round(uptime30Days, 2),
@@ -182,7 +182,7 @@ public class MonitorService : IMonitorService
             {
                 ResponseTime = 0,
                 MonitorId = id,
-                UpTime1Hr = 0,
+                Uptime1Hr = 0,
                 Uptime3Months = 0,
                 Uptime6Months = 0,
                 Uptime24Hrs = 0,
@@ -200,7 +200,7 @@ public class MonitorService : IMonitorService
         {
             ResponseTime = 0,
             MonitorId = id,
-            UpTime1Hr = 0,
+            Uptime1Hr = 0,
             Uptime3Months = 0,
             Uptime6Months = 0,
             Uptime24Hrs = 0,
