@@ -198,7 +198,7 @@ public class MonitorService : IMonitorService
 
     public async Task SetMonitorDashboardDataCacheList()
     {
-        if (!GlobalVariables.MasterNode)
+        if (GlobalVariables.MasterNode)
         {
             Console.WriteLine("Started Caching Monitor Dashboard Data List");
             var lstMonitorDashboard = new List<MonitorDashboard?>();
