@@ -37,11 +37,12 @@ public class MonitorGroupService : IMonitorGroupService
         }
 
         monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id));
+        monitorGroupList = monitorGroupList.Where(x => x.Monitors.Any());
 
         var monitorGroups = monitorGroupList.ToList();
         foreach (var monitorGroup in monitorGroups)
         {
-            if (monitorGroup.Monitors != null)
+            if (monitorGroup.Monitors.Any())
             {
                 var dashboardData =
                     GetMonitorDashboardDataList(monitorGroup.Monitors.Select(x => x.Id).ToList());

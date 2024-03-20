@@ -67,6 +67,7 @@ public class MonitorService : IMonitorService
                 {
                     ResponseTime = 0,
                     MonitorId = id,
+                    UpTime1Hr = 0,
                     Uptime3Months = 0,
                     Uptime6Months = 0,
                     Uptime24Hrs = 0,
@@ -86,6 +87,7 @@ public class MonitorService : IMonitorService
                 {
                     ResponseTime = 0,
                     MonitorId = id,
+                    UpTime1Hr = 0,
                     Uptime3Months = 0,
                     Uptime6Months = 0,
                     Uptime24Hrs = 0,
@@ -96,6 +98,7 @@ public class MonitorService : IMonitorService
             }
 
             var monitorHistories = result.ToList();
+            var lst1Hr = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddHours(-1)).ToList();
             var lst24Hrs = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-1)).ToList();
             var lst7Days = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-7)).ToList();
             var lst30Days = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-30)).ToList();
@@ -115,10 +118,18 @@ public class MonitorService : IMonitorService
                 lst30Days.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-30).AddSeconds(120);
 
             // Check if last 3 months data is present
-            bool containsLast3MonthsData = lst3Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-90).AddSeconds(120);
+            bool containsLast3MonthsData =
+                lst3Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-90).AddSeconds(120);
 
             // Check if last 6 months data is present
-            bool containsLast6MonthsData = lst6Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-180).AddSeconds(120);
+            bool containsLast6MonthsData =
+                lst6Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-180).AddSeconds(120);
+
+            double uptime1Hr = 0.0;
+            if (lst1Hr.Count > 0)
+            {
+                uptime1Hr = (double)lst1Hr.Count(item => item.Status) / lst1Hr.Count * 100;
+            }
 
             double uptime24Hrs = 0.0;
             if (lst24Hrs.Count > 0 && containsLast24HoursData)
@@ -155,6 +166,7 @@ public class MonitorService : IMonitorService
                 var monitorDashboard = new MonitorDashboard
                 {
                     ResponseTime = Math.Round(monitorHistories.Average(x => x.ResponseTime), 2),
+                    UpTime1Hr = Math.Round(uptime1Hr, 2),
                     Uptime24Hrs = Math.Round(uptime24Hrs, 2),
                     Uptime7Days = Math.Round(upTime7Days, 2),
                     Uptime30Days = Math.Round(uptime30Days, 2),
@@ -170,6 +182,7 @@ public class MonitorService : IMonitorService
             {
                 ResponseTime = 0,
                 MonitorId = id,
+                UpTime1Hr = 0,
                 Uptime3Months = 0,
                 Uptime6Months = 0,
                 Uptime24Hrs = 0,
@@ -187,6 +200,7 @@ public class MonitorService : IMonitorService
         {
             ResponseTime = 0,
             MonitorId = id,
+            UpTime1Hr = 0,
             Uptime3Months = 0,
             Uptime6Months = 0,
             Uptime24Hrs = 0,

@@ -3,6 +3,7 @@ namespace AlertHawk.Monitoring.Domain.Entities;
 public class MonitorDashboard
 {
     public int MonitorId { get; set; }
+    public double UpTime1Hr { get; set; }
     public double Uptime24Hrs { get; set; }
     public double Uptime7Days { get; set; }
     public double Uptime30Days { get; set; }
