@@ -196,7 +196,7 @@ public class MonitorManager : IMonitorManager
     private async Task SetAgentTasksPerMonitorPerRegion(int monitorRegion)
     {
         var lstMonitorAgentTasks = new List<MonitorAgentTasks>();
-        var monitors = await _monitorRepository.GetMonitorList();
+        var monitors = await _monitorRepository.GetMonitorRunningList();
         monitors = monitors.Where(x => (int)x.MonitorRegion == monitorRegion);
 
         var monitorAgents = await _monitorAgentRepository.GetAllMonitorAgents();

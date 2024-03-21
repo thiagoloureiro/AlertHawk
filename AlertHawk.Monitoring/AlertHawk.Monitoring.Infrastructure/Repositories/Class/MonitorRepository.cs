@@ -27,6 +27,14 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
 
+    public async Task<IEnumerable<Monitor?>> GetMonitorRunningList()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor] WHERE Paused = 0";
+        return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
+    }
+
     public async Task<IEnumerable<Monitor?>> GetMonitorList(MonitorEnvironment environment)
     {
         await using var db = new SqlConnection(_connstring);
