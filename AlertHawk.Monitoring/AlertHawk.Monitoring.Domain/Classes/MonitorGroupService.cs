@@ -71,7 +71,7 @@ public class MonitorGroupService : IMonitorGroupService
                     }
 
                     var data = await _caching.GetOrSetObjectFromCacheAsync(_cacheKeyMonitorDayHist + monitor.Id, 10, () =>
-                        _monitorRepository.GetMonitorHistory(monitor.Id, 1));
+                        _monitorRepository.GetMonitorHistoryByIdAndHours(monitor.Id, 1));
 
                     monitor.MonitorStatusDashboard.HistoryData = data;
                 }

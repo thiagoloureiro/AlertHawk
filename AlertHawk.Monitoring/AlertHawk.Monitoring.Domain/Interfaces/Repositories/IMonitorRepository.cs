@@ -17,7 +17,7 @@ public interface IMonitorRepository
     Task UpdateMonitorStatus(int id, bool status, int daysToExpireCert);
     Task SaveMonitorHistory(MonitorHistory monitorHistory);
     Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id);
-    Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days);
+    Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndDays(int id, int days);
     Task DeleteMonitorHistory(int days);
     Task PauseMonitor(int id, bool paused);
     Task<int> CreateMonitorHttp(MonitorHttp monitorHttp);
@@ -32,4 +32,5 @@ public interface IMonitorRepository
     Task<IEnumerable<Monitor?>> GetMonitorList(MonitorEnvironment environment);
     Task AddMonitorNotification(MonitorNotification monitorNotification);
     Task RemoveMonitorNotification(MonitorNotification monitorNotification);
+    Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndHours(int id, int hours);
 }

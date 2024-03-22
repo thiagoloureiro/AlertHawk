@@ -34,7 +34,7 @@ public class MonitorService : IMonitorService
 
     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days)
     {
-        return await _monitorRepository.GetMonitorHistory(id, days);
+        return await _monitorRepository.GetMonitorHistoryByIdAndDays(id, days);
     }
 
     public async Task<IEnumerable<Monitor?>> GetMonitorList()
@@ -59,7 +59,7 @@ public class MonitorService : IMonitorService
         {
             Console.WriteLine($"Caching {id}");
             var result = await _caching.GetOrSetObjectFromCacheAsync($"GroupHistory_{id}_90", 5,
-                () => _monitorRepository.GetMonitorHistory(id, 90));
+                () => _monitorRepository.GetMonitorHistoryByIdAndDays(id, 90));
 
             if (result == null)
             {

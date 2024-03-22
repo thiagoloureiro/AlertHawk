@@ -335,12 +335,20 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return id;
     }
 
-    public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days)
+    public async Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndDays(int id, int days)
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
             @$"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion FROM [MonitorHistory] WHERE MonitorId=@id AND TimeStamp >= DATEADD(day, -{days}, GETUTCDATE())  ORDER BY TimeStamp DESC";
         return await db.QueryAsync<MonitorHistory>(sql, new { id, days }, commandType: CommandType.Text);
+    }
+    
+    public async Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndHours(int id, int hours)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @$"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion FROM [MonitorHistory] WHERE MonitorId=@id AND TimeStamp >= DATEADD(hour, -{hours}, GETUTCDATE())  ORDER BY TimeStamp DESC";
+        return await db.QueryAsync<MonitorHistory>(sql, new { id, hours }, commandType: CommandType.Text);
     }
 
     public async Task SaveMonitorHistory(MonitorHistory monitorHistory)
