@@ -26,7 +26,8 @@ public class MonitorGroupService : IMonitorGroupService
         return monitorGroupList;
     }
 
-    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupListByEnvironment(string jwtToken, MonitorEnvironment environment)
+    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupListByEnvironment(string jwtToken,
+        MonitorEnvironment environment)
     {
         var ids = await GetUserGroupMonitorListIds(jwtToken);
         var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupListByEnvironment(environment);
@@ -78,6 +79,21 @@ public class MonitorGroupService : IMonitorGroupService
                 foreach (var monitor in monitorGroup.Monitors)
                 {
                     monitor.MonitorStatusDashboard = dashboardData.FirstOrDefault(x => x.MonitorId == monitor.Id);
+                    if (monitor.MonitorStatusDashboard == null)
+                    {
+                        monitor.MonitorStatusDashboard = new MonitorDashboard
+                        {
+                            MonitorId = monitor.Id,
+                            Uptime1Hr = 0,
+                            Uptime6Months = 0,
+                            Uptime7Days = 0,
+                            Uptime3Months = 0,
+                            Uptime30Days = 0,
+                            Uptime24Hrs = 0,
+                            CertExpDays = 0,
+                            ResponseTime = 0
+                        };
+                    }
                 }
             }
         }
