@@ -130,7 +130,7 @@ public class MonitorService : IMonitorService
             {
                 uptime1Hr = (double)lst1Hr.Count(item => item.Status) / lst1Hr.Count * 100;
             }
-
+    
             double uptime24Hrs = 0.0;
             if (lst24Hrs.Count > 0 && containsLast24HoursData)
             {

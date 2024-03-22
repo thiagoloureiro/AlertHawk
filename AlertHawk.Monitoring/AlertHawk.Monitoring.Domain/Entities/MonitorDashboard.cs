@@ -11,4 +11,5 @@ public class MonitorDashboard
     public double Uptime6Months { get; set; }
     public double CertExpDays { get; set; }
     public double ResponseTime { get; set; }
+    public IEnumerable<MonitorHistory> HistoryData { get; set; }
 }

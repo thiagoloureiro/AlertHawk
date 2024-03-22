@@ -13,11 +13,15 @@ public class MonitorGroupService : IMonitorGroupService
     private readonly IMonitorGroupRepository _monitorGroupRepository;
     private readonly ICaching _caching;
     private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
+    private readonly string _cacheKeyMonitorDayHist = "CacheKeyMonitorDayHist_";
+    private readonly IMonitorService _monitorService;
 
-    public MonitorGroupService(IMonitorGroupRepository monitorGroupRepository, ICaching caching)
+    public MonitorGroupService(IMonitorGroupRepository monitorGroupRepository, ICaching caching,
+        IMonitorService monitorService)
     {
         _monitorGroupRepository = monitorGroupRepository;
         _caching = caching;
+        _monitorService = monitorService;
     }
 
     public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList()
@@ -50,6 +54,7 @@ public class MonitorGroupService : IMonitorGroupService
                 foreach (var monitor in monitorGroup.Monitors)
                 {
                     monitor.MonitorStatusDashboard = dashboardData.FirstOrDefault(x => x.MonitorId == monitor.Id);
+
                     if (monitor.MonitorStatusDashboard == null)
                     {
                         monitor.MonitorStatusDashboard = new MonitorDashboard
@@ -65,6 +70,11 @@ public class MonitorGroupService : IMonitorGroupService
                             ResponseTime = 0
                         };
                     }
+
+                    var data = await _caching.GetOrSetObjectFromCacheAsync(_cacheKeyMonitorDayHist + monitor.Id, 10, () =>
+                        _monitorService.GetMonitorHistory(monitor.Id, 1));
+
+                    monitor.MonitorStatusDashboard.HistoryData = data;
                 }
             }
         }
@@ -151,7 +161,8 @@ public class MonitorGroupService : IMonitorGroupService
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ?? "https://api.monitoring.electrificationtools.abb.com/auth/";
+        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
+                      "https://api.monitoring.electrificationtools.abb.com/auth/";
         var content = await client.GetAsync($"{authApi}api/UsersMonitorGroup/GetAll");
         var result = await content.Content.ReadAsStringAsync();
         var groupMonitorIds = JsonConvert.DeserializeObject<List<UsersMonitorGroup>>(result);
