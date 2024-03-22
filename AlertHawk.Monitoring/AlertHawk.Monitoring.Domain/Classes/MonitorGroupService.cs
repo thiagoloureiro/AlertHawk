@@ -14,14 +14,13 @@ public class MonitorGroupService : IMonitorGroupService
     private readonly ICaching _caching;
     private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
     private readonly string _cacheKeyMonitorDayHist = "CacheKeyMonitorDayHist_";
-    private readonly IMonitorService _monitorService;
+    private readonly IMonitorRepository _monitorRepository;
 
-    public MonitorGroupService(IMonitorGroupRepository monitorGroupRepository, ICaching caching,
-        IMonitorService monitorService)
+    public MonitorGroupService(IMonitorGroupRepository monitorGroupRepository, ICaching caching, IMonitorRepository monitorRepository)
     {
         _monitorGroupRepository = monitorGroupRepository;
         _caching = caching;
-        _monitorService = monitorService;
+        _monitorRepository = monitorRepository;
     }
 
     public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList()
@@ -72,7 +71,7 @@ public class MonitorGroupService : IMonitorGroupService
                     }
 
                     var data = await _caching.GetOrSetObjectFromCacheAsync(_cacheKeyMonitorDayHist + monitor.Id, 10, () =>
-                        _monitorService.GetMonitorHistory(monitor.Id, 1));
+                        _monitorRepository.GetMonitorHistory(monitor.Id, 1));
 
                     monitor.MonitorStatusDashboard.HistoryData = data;
                 }
