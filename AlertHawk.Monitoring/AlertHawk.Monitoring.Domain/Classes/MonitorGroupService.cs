@@ -50,6 +50,21 @@ public class MonitorGroupService : IMonitorGroupService
                 foreach (var monitor in monitorGroup.Monitors)
                 {
                     monitor.MonitorStatusDashboard = dashboardData.FirstOrDefault(x => x.MonitorId == monitor.Id);
+                    if (monitor.MonitorStatusDashboard == null)
+                    {
+                        monitor.MonitorStatusDashboard = new MonitorDashboard
+                        {
+                            MonitorId = monitor.Id,
+                            Uptime1Hr = 0,
+                            Uptime6Months = 0,
+                            Uptime7Days = 0,
+                            Uptime3Months = 0,
+                            Uptime30Days = 0,
+                            Uptime24Hrs = 0,
+                            CertExpDays = 0,
+                            ResponseTime = 0
+                        };
+                    }
                 }
             }
         }
@@ -136,7 +151,7 @@ public class MonitorGroupService : IMonitorGroupService
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ?? "https://dev.api.alerthawk.tech/auth/";
+        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ?? "https://api.monitoring.electrificationtools.abb.com/auth/";
         var content = await client.GetAsync($"{authApi}api/UsersMonitorGroup/GetAll");
         var result = await content.Content.ReadAsStringAsync();
         var groupMonitorIds = JsonConvert.DeserializeObject<List<UsersMonitorGroup>>(result);
