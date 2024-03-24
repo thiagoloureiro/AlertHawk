@@ -14,12 +14,7 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
             smtpClient.Port = 587;
             smtpClient.Credentials = new NetworkCredential(emailNotification.Username, emailNotification.Password);
             smtpClient.EnableSsl = true;
-
-            if (emailNotification.Body != null)
-                emailNotification.Body = emailNotification.Body.Contains("Success")
-                    ? "\u2705 " + emailNotification.Body
-                    : "\u274C " + emailNotification.Body;
-
+            
             if (emailNotification.Subject != null)
                 emailNotification.Subject = emailNotification.Subject.Contains("Success")
                     ? "\u2705 " + emailNotification.Subject
