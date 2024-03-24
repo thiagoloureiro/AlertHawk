@@ -17,13 +17,13 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
 
             if (emailNotification.Body != null)
                 emailNotification.Body = emailNotification.Body.Contains("Success")
-                    ? ":heavy_check_mark: " + emailNotification.Body
-                    : ":x: " + emailNotification.Body;
+                    ? "\u2705 " + emailNotification.Body
+                    : "\u274C " + emailNotification.Body;
 
             if (emailNotification.Subject != null)
                 emailNotification.Subject = emailNotification.Subject.Contains("Success")
-                    ? ":heavy_check_mark: " + emailNotification.Subject
-                    : ":x: " + emailNotification.Subject;
+                    ? "\u2705 " + emailNotification.Subject
+                    : "\u274C " + emailNotification.Subject;
 
 
             // Create and send email to multiple recipients
