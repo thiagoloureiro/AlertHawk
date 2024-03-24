@@ -15,6 +15,17 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
             smtpClient.Credentials = new NetworkCredential(emailNotification.Username, emailNotification.Password);
             smtpClient.EnableSsl = true;
 
+            if (emailNotification.Body != null)
+                emailNotification.Body = emailNotification.Body.Contains("Success")
+                    ? ":heavy_check_mark: " + emailNotification.Body
+                    : ":x: " + emailNotification.Body;
+
+            if (emailNotification.Subject != null)
+                emailNotification.Subject = emailNotification.Subject.Contains("Success")
+                    ? ":heavy_check_mark: " + emailNotification.Subject
+                    : ":x: " + emailNotification.Subject;
+
+
             // Create and send email to multiple recipients
             var mailMessage = new MailMessage();
             mailMessage.From = new MailAddress(emailNotification.FromEmail);
@@ -69,11 +80,12 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
                         await Task.Delay(TimeSpan.FromSeconds(retryIntervalSeconds));
                     }
                 }
+
                 retryCount++;
             }
 
             Console.WriteLine("Failed to send email after retries.");
-            return false; 
+            return false;
         }
     }
 }
