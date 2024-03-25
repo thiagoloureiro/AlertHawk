@@ -106,31 +106,52 @@ public class MonitorService : IMonitorService
             var lst6Months = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-180)).ToList();
 
             // Check if last 24 hours data is present
-            bool containsLast24HoursData =
-                lst24Hrs.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-1).AddSeconds(120);
+            bool containsLast24HoursData = false;
+            if (lst24Hrs.Any())
+            {
+                containsLast24HoursData =
+                    lst24Hrs.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-1).AddSeconds(120);
+            }
 
             // Check if last 7 days data is present
-            bool containsLast7DaysData =
-                lst7Days.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-7).AddSeconds(120);
+            bool containsLast7DaysData = false;
+            if (lst7Days.Any())
+            {
+                containsLast7DaysData =
+                    lst7Days.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-7).AddSeconds(120);
+            }
 
             // Check if last 30 days data is present
-            bool containsLast30DaysData =
-                lst30Days.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-30).AddSeconds(120);
+            bool containsLast30DaysData = false;
+            if (lst30Days.Any())
+            {
+                containsLast30DaysData =
+                    lst30Days.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-30).AddSeconds(120);
+            }
+
 
             // Check if last 3 months data is present
-            bool containsLast3MonthsData =
-                lst3Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-90).AddSeconds(120);
+            bool containsLast3MonthsData = false;
+            if (lst3Months.Any())
+            {
+                containsLast3MonthsData =
+                    lst3Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-90).AddSeconds(120);
+            }
 
             // Check if last 6 months data is present
-            bool containsLast6MonthsData =
-                lst6Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-180).AddSeconds(120);
+            bool containsLast6MonthsData = false;
+            if (lst6Months.Any())
+            {
+                containsLast6MonthsData =
+                    lst6Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-180).AddSeconds(120);
+            }
 
             double uptime1Hr = 0.0;
             if (lst1Hr.Count > 0)
             {
                 uptime1Hr = (double)lst1Hr.Count(item => item.Status) / lst1Hr.Count * 100;
             }
-    
+
             double uptime24Hrs = 0.0;
             if (lst24Hrs.Count > 0 && containsLast24HoursData)
             {
