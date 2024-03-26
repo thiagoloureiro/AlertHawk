@@ -16,7 +16,8 @@ public class MonitorGroupService : IMonitorGroupService
     private readonly string _cacheKeyMonitorDayHist = "CacheKeyMonitorDayHist_";
     private readonly IMonitorRepository _monitorRepository;
 
-    public MonitorGroupService(IMonitorGroupRepository monitorGroupRepository, ICaching caching, IMonitorRepository monitorRepository)
+    public MonitorGroupService(IMonitorGroupRepository monitorGroupRepository, ICaching caching,
+        IMonitorRepository monitorRepository)
     {
         _monitorGroupRepository = monitorGroupRepository;
         _caching = caching;
@@ -70,11 +71,49 @@ public class MonitorGroupService : IMonitorGroupService
                         };
                     }
 
-                    var data = await _caching.GetOrSetObjectFromCacheAsync(_cacheKeyMonitorDayHist + monitor.Id, 10, () =>
-                        _monitorService.GetMonitorHistory(monitor.Id, 1));
+                    var data = await _caching.GetOrSetObjectFromCacheAsync(_cacheKeyMonitorDayHist + monitor.Id, 10,
+                        () =>
+                            _monitorRepository.GetMonitorHistoryByIdAndHours(monitor.Id, 1));
 
                     monitor.MonitorStatusDashboard.HistoryData = data;
                 }
+
+                var avg1hr = monitorGroup.Monitors
+                    .Select(x => x.MonitorStatusDashboard.Uptime1Hr)
+                    .Where(x => x > 0) // Filter out values greater than zero
+                    .Average();
+
+                var avg24hrs = monitorGroup.Monitors
+                    .Select(x => x.MonitorStatusDashboard.Uptime24Hrs)
+                    .Where(x => x > 0) // Filter out values greater than zero
+                    .Average();
+
+                var avg7days = monitorGroup.Monitors
+                    .Select(x => x.MonitorStatusDashboard.Uptime7Days)
+                    .Where(x => x > 0) // Filter out values greater than zero
+                    .Average();
+
+                var avg30days = monitorGroup.Monitors
+                    .Select(x => x.MonitorStatusDashboard.Uptime30Days)
+                    .Where(x => x > 0) // Filter out values greater than zero
+                    .Average();
+
+                var avg3months = monitorGroup.Monitors
+                    .Select(x => x.MonitorStatusDashboard.Uptime3Months)
+                    .Where(x => x > 0) // Filter out values greater than zero
+                    .Average();
+
+                var avg6months = monitorGroup.Monitors
+                    .Select(x => x.MonitorStatusDashboard.Uptime6Months)
+                    .Where(x => x > 0) // Filter out values greater than zero
+                    .Average();
+
+                monitorGroup.AvgUptime1Hr = avg1hr;
+                monitorGroup.AvgUptime24Hrs = avg24hrs;
+                monitorGroup.AvgUptime7Days = avg7days;
+                monitorGroup.AvgUptime30Days = avg30days;
+                monitorGroup.AvgUptime3Months = avg3months;
+                monitorGroup.AvgUptime6Months = avg6months;
             }
         }
 
