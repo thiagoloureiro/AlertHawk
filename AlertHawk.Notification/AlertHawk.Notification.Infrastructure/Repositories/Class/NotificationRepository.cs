@@ -153,8 +153,8 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         await db.ExecuteAsync(sqlDetails, new
         {
             notificationId,
-            notificationItem.NotificationWebHook?.Message, notificationItem.NotificationWebHook?.WebHookUrl, 
-            notificationItem.NotificationWebHook?.Body,  notificationItem.NotificationWebHook?.HeadersJson
+            notificationItem.NotificationWebHook?.Message, notificationItem.NotificationWebHook?.WebHookUrl,
+            notificationItem.NotificationWebHook?.Body, notificationItem.NotificationWebHook?.HeadersJson
         }, commandType: CommandType.Text);
     }
 
@@ -170,8 +170,8 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         var notificationTeamsList = await SelectNotificationTeamsList();
         var notificationSlackList = await SelectNotificationSlackList();
         var notificationTelegramList = await SelectNotificationTelegramList();
-        var notificationWebHookList= await SelectNotificationWebHookList();
-        
+        var notificationWebHookList = await SelectNotificationWebHookList();
+
         switch (notificationItem?.NotificationTypeId)
         {
             case 1: // Smtp
@@ -202,7 +202,8 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
     public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList(List<int> ids)
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = "SELECT Id, MonitorGroupId, Name, Description, NotificationTypeId FROM [NotificationItem] WHERE id IN @ids";
+        string sql =
+            "SELECT Id, MonitorGroupId, Name, Description, NotificationTypeId FROM [NotificationItem] WHERE id IN @ids";
 
         var notificationItemList =
             await db.QueryAsync<NotificationItem>(sql, new { ids }, commandType: CommandType.Text);
@@ -212,7 +213,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         var notificationSlackList = await SelectNotificationSlackList();
         var notificationTelegramList = await SelectNotificationTelegramList();
         var notificationWebHookList = await SelectNotificationWebHookList();
-        
+
         var selectNotificationItemList = notificationItemList.ToList();
         foreach (var notificationItem in selectNotificationItemList)
         {
@@ -257,6 +258,16 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         await DeleteNotificationItemFromChilds(id);
     }
 
+    public async Task<IEnumerable<NotificationItem?>> SelectNotificationItemByMonitorGroupId(int id)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            "SELECT NI.Id, NI.MonitorGroupId, NI.Name, NI.Description, NI.NotificationTypeId FROM [NotificationItem] NI " +
+            "INNER JOIN NotificationMonitorGroup NMG on NMG.NotificationId = NI.Id WHERE NMG.MonitorGroupId = @id";
+
+        return await db.QueryAsync<NotificationItem>(sql, new { id }, commandType: CommandType.Text);
+    }
+
     private async Task<int> InsertNotificationItem(NotificationItem notificationItem)
     {
         await using var db = new SqlConnection(_connstring);
@@ -281,7 +292,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         string sqlSlack = @"DELETE FROM [NotificationSlack] WHERE NotificationId = @Id";
         string sqlTelegram = @"DELETE FROM [NotificationTelegram] WHERE NotificationId = @Id";
         string sqlWebHook = @"DELETE FROM [NotificationWebHook] WHERE NotificationId = @Id";
-        
+
         await db.ExecuteAsync(sqlEmailSmtp, new { Id = id }, commandType: CommandType.Text);
         await db.ExecuteAsync(sqlTeams, new { Id = id }, commandType: CommandType.Text);
         await db.ExecuteAsync(sqlSlack, new { Id = id }, commandType: CommandType.Text);
@@ -329,7 +340,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         var resultList = await db.QueryAsync<NotificationTelegram>(sql, commandType: CommandType.Text);
         return resultList.ToList();
     }
-    
+
     private async Task<List<NotificationWebHook>> SelectNotificationWebHookList()
     {
         await using var db = new SqlConnection(_connstring);

@@ -132,6 +132,11 @@ namespace AlertHawk.Notification.Domain.Classes
             return listGroupMonitorIds;
         }
 
+        public async Task<IEnumerable<NotificationItem?>> SelectNotificationItemByMonitorGroupId(int id)
+        {
+            return await _notificationRepository.SelectNotificationItemByMonitorGroupId(id);
+        }
+
         private static void ConvertJsonToTuple(NotificationWebHook webHook)
         {
             try

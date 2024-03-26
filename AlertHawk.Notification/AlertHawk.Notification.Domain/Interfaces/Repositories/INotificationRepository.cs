@@ -14,4 +14,5 @@ public interface INotificationRepository
     Task<NotificationItem?> SelectNotificationItemById(int id);
     Task<IEnumerable<NotificationItem>> SelectNotificationItemList(List<int> ids);
     Task DeleteNotificationItem(int id);
+    Task<IEnumerable<NotificationItem?>> SelectNotificationItemByMonitorGroupId(int id);
 }
