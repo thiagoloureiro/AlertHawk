@@ -9,7 +9,9 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
         {
             using HttpClient httpClient = new HttpClient();
             string payload = $"{{\"text\": \"{message}\"}}";
-
+            
+            message = message.Contains("Success") ? ":white_check_mark: " + message : ":x: " + message;
+            
             StringContent content = new StringContent(payload, Encoding.UTF8, "application/json");
 
             HttpResponseMessage response = await httpClient.PostAsync(webHookUrl, content);
