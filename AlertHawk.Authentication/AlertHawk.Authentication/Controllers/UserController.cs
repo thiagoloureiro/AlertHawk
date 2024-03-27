@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.Annotations;
 using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Helpers;
+using Sentry;
 
 namespace AlertHawk.Authentication.Controllers;
 
