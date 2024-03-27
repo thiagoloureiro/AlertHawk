@@ -49,6 +49,8 @@ public class MonitorGroupService : IMonitorGroupService
         {
             if (monitorGroup.Monitors.Any())
             {
+                monitorGroup.Monitors = monitorGroup.Monitors.OrderBy(x => x.Name).ToList();
+                
                 var dashboardData =
                     GetMonitorDashboardDataList(monitorGroup.Monitors.Select(x => x.Id).ToList());
                 foreach (var monitor in monitorGroup.Monitors)
