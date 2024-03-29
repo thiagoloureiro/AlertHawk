@@ -146,37 +146,37 @@ public class MonitorService : IMonitorService
                     lst6Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-180).AddSeconds(120);
             }
 
-            double uptime1Hr = 0.0;
+            double uptime1Hr = -1;
             if (lst1Hr.Count > 0)
             {
                 uptime1Hr = (double)lst1Hr.Count(item => item.Status) / lst1Hr.Count * 100;
             }
 
-            double uptime24Hrs = 0.0;
+            double uptime24Hrs = -1;
             if (lst24Hrs.Count > 0 && containsLast24HoursData)
             {
                 uptime24Hrs = (double)lst24Hrs.Count(item => item.Status) / lst24Hrs.Count * 100;
             }
 
-            double upTime7Days = 0.0;
+            double upTime7Days = -1;
             if (lst7Days.Count > 0 && containsLast7DaysData)
             {
                 upTime7Days = (double)lst7Days.Count(item => item.Status) / lst7Days.Count * 100;
             }
 
-            double uptime30Days = 0.0;
+            double uptime30Days = -1;
             if (lst30Days.Count > 0 && containsLast30DaysData)
             {
                 uptime30Days = (double)lst30Days.Count(item => item.Status) / lst30Days.Count * 100;
             }
 
-            double uptime3Months = 0.0;
+            double uptime3Months = -1;
             if (lst3Months.Count > 0 && containsLast3MonthsData)
             {
                 uptime3Months = (double)lst3Months.Count(item => item.Status) / lst3Months.Count * 100;
             }
 
-            double uptime6Months = 0.0;
+            double uptime6Months = -1;
             if (lst6Months.Count > 0 && containsLast6MonthsData)
             {
                 uptime6Months = (double)lst6Months.Count(item => item.Status) / lst6Months.Count * 100;
@@ -233,23 +233,31 @@ public class MonitorService : IMonitorService
 
     public async Task SetMonitorDashboardDataCacheList()
     {
-        if (GlobalVariables.MasterNode)
+        try
         {
-            Console.WriteLine("Started Caching Monitor Dashboard Data List");
-            var lstMonitorDashboard = new List<MonitorDashboard?>();
-            var lstMonitor = await GetMonitorList();
-
-            foreach (var monitor in lstMonitor)
+            if (GlobalVariables.MasterNode)
             {
-                if (monitor != null)
-                {
-                    var monitorData = await GetMonitorDashboardData(monitor.Id);
-                    lstMonitorDashboard.Add(monitorData);
-                }
-            }
+                Console.WriteLine("Started Caching Monitor Dashboard Data List");
+                var lstMonitorDashboard = new List<MonitorDashboard?>();
+                var lstMonitor = await GetMonitorList();
 
-            await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20);
-            Console.WriteLine("Finished Caching Monitor Dashboard Data List");
+                foreach (var monitor in lstMonitor)
+                {
+                    if (monitor != null)
+                    {
+                        var monitorData = await GetMonitorDashboardData(monitor.Id);
+                        lstMonitorDashboard.Add(monitorData);
+                    }
+                }
+
+                await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20);
+                Console.WriteLine("Finished Caching Monitor Dashboard Data List");
+            }
+        }
+        catch (Exception e)
+        {
+            SentrySdk.CaptureException(e);
+            throw;
         }
     }
 

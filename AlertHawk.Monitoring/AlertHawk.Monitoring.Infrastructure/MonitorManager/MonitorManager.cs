@@ -27,14 +27,22 @@ public class MonitorManager : IMonitorManager
 
     public async Task StartRunnerManager()
     {
-        var tasksToMonitor = await _monitorAgentRepository.GetAllMonitorAgentTasksByAgentId(GlobalVariables.NodeId);
-        if (tasksToMonitor.Any())
+        try
         {
-            var monitorIds = tasksToMonitor.Select(x => x.MonitorId).ToList();
-            var monitorListByIds = await _monitorRepository.GetMonitorListByIds(monitorIds);
+            var tasksToMonitor = await _monitorAgentRepository.GetAllMonitorAgentTasksByAgentId(GlobalVariables.NodeId);
+            if (tasksToMonitor.Any())
+            {
+                var monitorIds = tasksToMonitor.Select(x => x.MonitorId).ToList();
+                var monitorListByIds = await _monitorRepository.GetMonitorListByIds(monitorIds);
 
-            await StartHttpMonitorJobs(monitorListByIds);
-            await StartTcpMonitorJobs(monitorListByIds);
+                await StartHttpMonitorJobs(monitorListByIds);
+                await StartTcpMonitorJobs(monitorListByIds);
+            }
+        }
+        catch (Exception e)
+        {
+            SentrySdk.CaptureException(e);
+            throw;
         }
     }
 
@@ -46,7 +54,7 @@ public class MonitorManager : IMonitorManager
         {
             var httpMonitorIds = monitorByHttpType.Select(x => x.Id).ToList();
             var lstMonitors = await _monitorRepository.GetHttpMonitorByIds(httpMonitorIds);
-            
+
             GlobalVariables.HttpTaskList = httpMonitorIds;
 
             var lstStringsToAdd = new List<string>();
@@ -171,6 +179,7 @@ public class MonitorManager : IMonitorManager
         catch (Exception e)
         {
             SentrySdk.CaptureException(e);
+            throw;
         }
     }
 
@@ -190,6 +199,7 @@ public class MonitorManager : IMonitorManager
         catch (Exception e)
         {
             SentrySdk.CaptureException(e);
+            throw;
         }
     }
 

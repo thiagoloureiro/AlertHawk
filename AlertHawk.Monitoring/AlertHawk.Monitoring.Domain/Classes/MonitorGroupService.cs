@@ -47,7 +47,7 @@ public class MonitorGroupService : IMonitorGroupService
         var monitorGroups = monitorGroupList.ToList();
         foreach (var monitorGroup in monitorGroups)
         {
-            if (monitorGroup.Monitors.Any())
+            if (monitorGroup.Monitors != null && monitorGroup.Monitors.Any())
             {
                 monitorGroup.Monitors = monitorGroup.Monitors.OrderBy(x => x.Name).ToList();
                 
