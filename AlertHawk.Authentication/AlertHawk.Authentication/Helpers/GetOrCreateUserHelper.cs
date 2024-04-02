@@ -10,11 +10,11 @@ public class GetOrCreateUserHelper(IUserService userService)
     public async Task<UserDto> GetUserOrCreateUser(ClaimsPrincipal claims)
     {
         string userEmail = "";
-        var hasEmailIdentityNameLoggued = claims.Identity?.Name;
-        if (hasEmailIdentityNameLoggued != null)
+        var hasEmailIdentityNameLogged = claims.Identity?.Name;
+        if (hasEmailIdentityNameLogged != null)
         {
             userEmail = claims.Claims.FirstOrDefault(s => s.Type.Contains("emailaddress"))?.Value ??
-                        hasEmailIdentityNameLoggued;
+                        hasEmailIdentityNameLogged;
         }
 
         var user = await userService.GetByEmail(userEmail);
