@@ -194,5 +194,4 @@ public class UserRepository : BaseRepository, IUserRepository
 
         return _mapper.Map<UserDto>(user);
     }
-
 }

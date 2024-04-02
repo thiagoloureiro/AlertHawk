@@ -5,9 +5,7 @@ using AutoMapper.EquivalencyExpression;
 using EasyMemoryCache.Configuration;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
-using AlertHawk.Authentication;
 using Microsoft.Identity.Web;
-using Sentry;
 
 var builder = WebApplication.CreateBuilder(args);
 
