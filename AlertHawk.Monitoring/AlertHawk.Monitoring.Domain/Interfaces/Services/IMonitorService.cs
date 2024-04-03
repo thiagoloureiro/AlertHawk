@@ -19,7 +19,7 @@ public interface IMonitorService
     Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days);
     Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(string token, MonitorEnvironment environment);
     Task UpdateMonitorHttp(MonitorHttp monitorHttp);
-    Task DeleteMonitor(int id);
+    Task DeleteMonitor(int id, string? jwtToken);
     Task<int> CreateMonitorTcp(MonitorTcp monitorTcp);
     Task UpdateMonitorTcp(MonitorTcp monitorTcp);
     Task<MonitorHttp> GetHttpMonitorByMonitorId(int id);

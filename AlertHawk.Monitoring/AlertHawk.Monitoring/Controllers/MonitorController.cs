@@ -153,7 +153,8 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpDelete("deleteMonitor/{id}")]
         public async Task<IActionResult> DeleteMonitor(int id)
         {
-            await _monitorService.DeleteMonitor(id);
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            await _monitorService.DeleteMonitor(id, jwtToken);
             return Ok();
         }
 

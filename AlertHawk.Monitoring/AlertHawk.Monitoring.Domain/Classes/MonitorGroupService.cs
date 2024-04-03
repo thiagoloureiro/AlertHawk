@@ -201,6 +201,10 @@ public class MonitorGroupService : IMonitorGroupService
     public async Task<List<int>?> GetUserGroupMonitorListIds(string token)
     {
         var client = _httpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.Add("User-Agent", "PostmanRuntime/7.36.1");
+        client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
+        client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+        client.DefaultRequestHeaders.Add("Accept", "*/*");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??

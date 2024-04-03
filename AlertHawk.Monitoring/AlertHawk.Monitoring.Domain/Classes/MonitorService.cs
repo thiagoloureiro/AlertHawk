@@ -1,8 +1,11 @@
+using System.Net.Http.Headers;
+using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Domain.Utils;
 using EasyMemoryCache;
+using Newtonsoft.Json;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
@@ -13,13 +16,15 @@ public class MonitorService : IMonitorService
     private readonly ICaching _caching;
     private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
     private readonly IMonitorGroupService _monitorGroupService;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public MonitorService(IMonitorRepository monitorRepository, ICaching caching,
-        IMonitorGroupService monitorGroupService)
+        IMonitorGroupService monitorGroupService, IHttpClientFactory httpClientFactory)
     {
         _monitorRepository = monitorRepository;
         _caching = caching;
         _monitorGroupService = monitorGroupService;
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
     }
 
     public async Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id)
@@ -346,9 +351,24 @@ public class MonitorService : IMonitorService
         await _monitorRepository.UpdateMonitorHttp(monitorHttp);
     }
 
-    public async Task DeleteMonitor(int id)
+    public async Task DeleteMonitor(int id, string? jwtToken)
     {
+        var monitor = await _monitorRepository.GetMonitorById(id);
+
+        if (monitor == null)
+        {
+            return;
+        }
+
+        var action = new UserAction
+        {
+            Action = $"Delete Monitor {monitor.Name}",
+            TimeStamp = DateTime.UtcNow
+        };
+        
         await _monitorRepository.DeleteMonitor(id);
+        
+        await CreateAction(action, jwtToken);
     }
 
     public async Task<int> CreateMonitorTcp(MonitorTcp monitorTcp)
@@ -407,5 +427,30 @@ public class MonitorService : IMonitorService
         }
 
         return new List<MonitorDashboard>();
+    }
+
+    private async Task CreateAction(UserAction action, string token)
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Add("User-Agent", "PostmanRuntime/7.36.1");
+            client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
+            client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+            client.DefaultRequestHeaders.Add("Accept", "*/*");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            using var content = new StringContent(JsonConvert.SerializeObject(action), System.Text.Encoding.UTF8,
+                "application/json");
+
+            var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
+                          "https://api.monitoring.electrificationtools.abb.com/auth/";
+            var response = await client.PostAsync($"{authApi}api/UsersMonitorGroup/GetAll", content);
+            response.EnsureSuccessStatusCode();
+        }
+        catch (Exception e)
+        {
+            SentrySdk.CaptureException(e);
+        }
     }
 }
