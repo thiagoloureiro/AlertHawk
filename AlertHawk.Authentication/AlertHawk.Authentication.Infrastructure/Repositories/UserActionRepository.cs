@@ -12,7 +12,7 @@ public class UserActionRepository : BaseRepository, IUserActionRepository
 
     public async Task CreateAsync(UserAction userAction)
     {
-        const string sql = "INSERT INTO [dbo].[UserAction] ([UserId], [Action], [ActionTime]) VALUES (@UserId, @Action, @TimeStamp)";
+        const string sql = "INSERT INTO [dbo].[UserAction] ([UserId], [Action], [TimeStamp]) VALUES (@UserId, @Action, @TimeStamp)";
         await ExecuteNonQueryAsync(sql, new { userAction.UserId, userAction.Action, userAction.TimeStamp });
     }
 
