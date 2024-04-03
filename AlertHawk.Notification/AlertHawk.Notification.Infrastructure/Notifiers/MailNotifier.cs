@@ -16,7 +16,7 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
             smtpClient.EnableSsl = true;
             
             if (emailNotification.Subject != null)
-                emailNotification.Subject = emailNotification.Subject.Contains("Success")
+                emailNotification.Subject = emailNotification.Body.Contains("Success")
                     ? "\u2705 " + emailNotification.Subject
                     : "\u274C " + emailNotification.Subject;
 
