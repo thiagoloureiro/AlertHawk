@@ -445,7 +445,7 @@ public class MonitorService : IMonitorService
 
             var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
                           "https://api.monitoring.electrificationtools.abb.com/auth/";
-            var response = await client.PostAsync($"{authApi}api/UsersMonitorGroup/GetAll", content);
+            var response = await client.PostAsync($"{authApi}api/UserAction/create", content);
             response.EnsureSuccessStatusCode();
         }
         catch (Exception e)
