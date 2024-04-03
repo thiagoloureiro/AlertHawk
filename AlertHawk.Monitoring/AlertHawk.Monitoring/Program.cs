@@ -104,6 +104,9 @@ builder.Services.AddResponseCompression(options =>
         new[] { "application/json" }); // Compress JSON responses
 });
 
+// Add HttpClientFactory
+builder.Services.AddHttpClient();
+
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.DefaultIgnoreCondition =

@@ -15,13 +15,15 @@ public class MonitorGroupService : IMonitorGroupService
     private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
     private readonly string _cacheKeyMonitorDayHist = "CacheKeyMonitorDayHist_";
     private readonly IMonitorRepository _monitorRepository;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public MonitorGroupService(IMonitorGroupRepository monitorGroupRepository, ICaching caching,
-        IMonitorRepository monitorRepository)
+        IMonitorRepository monitorRepository, IHttpClientFactory httpClientFactory)
     {
         _monitorGroupRepository = monitorGroupRepository;
         _caching = caching;
         _monitorRepository = monitorRepository;
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
     }
 
     public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList()
@@ -198,7 +200,7 @@ public class MonitorGroupService : IMonitorGroupService
 
     public async Task<List<int>?> GetUserGroupMonitorListIds(string token)
     {
-        using var client = new HttpClient();
+        var client = _httpClientFactory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
