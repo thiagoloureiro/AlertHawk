@@ -13,11 +13,11 @@ namespace AlertHawk.Authentication.Controllers
     {
         private readonly IUserActionService _userActionService;
         private readonly GetOrCreateUserHelper _getOrCreateUserHelper;
-        
-        public UserActionController(IUserActionService userActionService, GetOrCreateUserHelper getOrCreateUserHelper)
+
+        public UserActionController(IUserService userService, IUserActionService userActionService)
         {
+            _getOrCreateUserHelper = new GetOrCreateUserHelper(userService);
             _userActionService = userActionService;
-            _getOrCreateUserHelper = getOrCreateUserHelper;
         }
 
         [HttpPost("create")]
@@ -36,6 +36,7 @@ namespace AlertHawk.Authentication.Controllers
             {
                 return BadRequest("User/Token not found");
             }
+
             userAction.UserId = user.Id;
 
             await _userActionService.CreateAsync(userAction);
@@ -50,7 +51,7 @@ namespace AlertHawk.Authentication.Controllers
             var userActions = await _userActionService.GetAsync();
             return Ok(userActions);
         }
-        
+
         private async Task<UserDto?> GetUserByToken()
         {
             return await _getOrCreateUserHelper.GetUserOrCreateUser(User);
