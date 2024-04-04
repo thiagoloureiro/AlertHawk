@@ -141,7 +141,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sqlTcp, new { id }, commandType: CommandType.Text);
 
         string sqlHistory = @"DELETE FROM [MonitorHistory] WHERE MonitorId=@id";
-        await db.ExecuteAsync(sqlHistory, new { id }, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlHistory, new { id }, commandType: CommandType.Text, commandTimeout: 600);
     }
 
     public async Task<int> CreateMonitorTcp(MonitorTcp monitorTcp)
