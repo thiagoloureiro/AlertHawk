@@ -56,7 +56,7 @@ namespace AlertHawk.Monitoring.Controllers
             return Ok(result);
         }
         
-        [SwaggerOperation(Summary = "Retrieves a List of items to be Monitored")]
+        [SwaggerOperation(Summary = "Retrieves a List of items to be Monitored, filtered by Tag")]
         [ProducesResponseType(typeof(IEnumerable<Domain.Entities.Monitor>), StatusCodes.Status200OK)]
         [HttpGet("monitorListByTag/{tag}")]
         public async Task<IActionResult> GetMonitorListByTag(string tag)
