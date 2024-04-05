@@ -88,9 +88,6 @@ namespace AlertHawk.Notification.Domain.Classes
                         break;
                 }
 
-
-                return true;
-
                 return false;
             }
             catch (Exception e)
