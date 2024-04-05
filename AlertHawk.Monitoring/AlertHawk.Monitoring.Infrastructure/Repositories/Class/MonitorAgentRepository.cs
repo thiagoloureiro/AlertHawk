@@ -108,19 +108,29 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         {
             await DeleteAllMonitorAgentTasks(lstMonitorAgentTasks.Select(x => x.MonitorId).ToList());
 
-            string sqlInsertMaster =
-                @"INSERT INTO [MonitorAgentTasks] (MonitorId, MonitorAgentId) VALUES (@MonitorId, @MonitorAgentId)";
-            await using var db = new SqlConnection(_connstring);
+            DataTable table = new DataTable();
+            table.Columns.Add("MonitorId", typeof(int));
+            table.Columns.Add("MonitorAgentId", typeof(int));
 
             foreach (var item in lstMonitorAgentTasks)
             {
-                await db.ExecuteAsync(sqlInsertMaster,
-                    new
-                    {
-                        MonitorId = item.MonitorId,
-                        MonitorAgentId = item.MonitorAgentId
-                    }, commandType: CommandType.Text);
+                table.Rows.Add(item.MonitorId, item.MonitorAgentId);
             }
+
+            await using var connection = new SqlConnection(_connstring);
+            await connection.OpenAsync();
+
+            // Create an instance of SqlBulkCopy
+            using var bulkCopy = new SqlBulkCopy(connection);
+            // Set the destination table name
+            bulkCopy.DestinationTableName = "MonitorAgentTasks";
+
+            // Optionally, map the DataTable columns to the database table's columns if they are not in the same order or have different names
+            bulkCopy.ColumnMappings.Add("MonitorId", "MonitorId");
+            bulkCopy.ColumnMappings.Add("MonitorAgentId", "MonitorAgentId");
+
+            // Perform the bulk copy
+            await bulkCopy.WriteToServerAsync(table);
         }
     }
 
