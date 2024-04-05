@@ -254,7 +254,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     public async Task<IEnumerable<string?>> GetMonitorTagList()
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = "SELECT DISTINCT(Tag) FROM [Monitor]";
+        string sql = "SELECT DISTINCT(Tag) FROM [Monitor] WHERE Tag IS NOT NULL";
         return await db.QueryAsync<string>(sql, commandType: CommandType.Text);
     }
 
