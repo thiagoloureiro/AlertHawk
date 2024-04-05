@@ -268,6 +268,13 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         return await db.QueryAsync<NotificationItem>(sql, new { id }, commandType: CommandType.Text);
     }
 
+    public async Task InsertNotificationLog(NotificationLog notificationLog)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = "INSERT INTO [NotificationLog] (TimeStamp, NotificationTypeId, Message) VALUES (@TimeStamp, @NotificationTypeId, @Message)";
+        await db.ExecuteAsync(sql, new { notificationLog.TimeStamp, notificationLog.NotificationTypeId, notificationLog.Message }, commandType: CommandType.Text);
+    }
+
     private async Task<int> InsertNotificationItem(NotificationItem notificationItem)
     {
         await using var db = new SqlConnection(_connstring);

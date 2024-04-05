@@ -32,41 +32,66 @@ namespace AlertHawk.Notification.Domain.Classes
 
         public async Task<bool> Send(NotificationSend notificationSend)
         {
-            switch (notificationSend.NotificationTypeId)
+            try
             {
-                case 1: // Email SMTP
-                    notificationSend.NotificationEmail.Body += notificationSend.Message;
-                    var result = await _mailNotifier.Send(notificationSend.NotificationEmail);
-                    return result;
+                var notificationLog = new NotificationLog
+                {
+                    TimeStamp = DateTime.UtcNow,
+                    NotificationTypeId = notificationSend.NotificationTypeId,
+                };
 
-                case 2: // MS Teams
-                    await _teamsNotifier.SendNotification(notificationSend.Message,
-                        notificationSend.NotificationTeams.WebHookUrl);
-                    return true;
+                switch (notificationSend.NotificationTypeId)
+                {
+                    case 1: // Email SMTP
+                        notificationSend.NotificationEmail.Body += notificationSend.Message;
+                        notificationLog.Message =
+                            $"Subject:{notificationSend.NotificationEmail.Subject} Body:{notificationSend.NotificationEmail.Body} Email: {notificationSend.NotificationEmail.ToEmail}, CCEmail: {notificationSend.NotificationEmail.ToCCEmail}, BCCEmail:{notificationSend.NotificationEmail.ToBCCEmail}";
+                        var result = await _mailNotifier.Send(notificationSend.NotificationEmail);
+                        return result;
 
-                case 3: // Telegram
-                    await _telegramNotifier.SendNotification(notificationSend.NotificationTelegram.ChatId,
-                        notificationSend.Message,
-                        notificationSend.NotificationTelegram.TelegramBotToken);
-                    return true;
+                    case 2: // MS Teams
+                        notificationLog.Message = $"Teams Message:{notificationSend.Message};";
+                        await _teamsNotifier.SendNotification(notificationSend.Message,
+                            notificationSend.NotificationTeams.WebHookUrl);
+                        return true;
 
-                case 4: // Slack
-                    await _slackNotifier.SendNotification(notificationSend.NotificationSlack.Channel,
-                        notificationSend.Message, notificationSend.NotificationSlack.WebHookUrl);
-                    return true;
+                    case 3: // Telegram
+                        notificationLog.Message =
+                            $"Telegram Message:{notificationSend.Message} ChatId: {notificationSend.NotificationTelegram.ChatId}";
+                        await _telegramNotifier.SendNotification(notificationSend.NotificationTelegram.ChatId,
+                            notificationSend.Message,
+                            notificationSend.NotificationTelegram.TelegramBotToken);
+                        return true;
 
-                case 5: // WebHook
-                    ConvertJsonToTuple(notificationSend.NotificationWebHook);
-                    await _webHookNotifier.SendNotification(notificationSend.NotificationWebHook.Message,
-                        notificationSend.NotificationWebHook.WebHookUrl,
-                        notificationSend.NotificationWebHook.Body, notificationSend.NotificationWebHook.Headers);
-                    return true;
-                default:
-                    Console.WriteLine($"Not found NotificationTypeId: {notificationSend.NotificationTypeId}");
-                    break;
+                    case 4: // Slack
+                        notificationLog.Message =
+                            $"Telegram Message:{notificationSend.Message} ChatId: {notificationSend.NotificationSlack.Channel}";
+                        await _slackNotifier.SendNotification(notificationSend.NotificationSlack.Channel,
+                            notificationSend.Message, notificationSend.NotificationSlack.WebHookUrl);
+                        return true;
+
+                    case 5: // WebHook
+                        notificationLog.Message =
+                            $"Telegram Message:{notificationSend.Message} WebHookUrl: {notificationSend.NotificationWebHook.WebHookUrl}";
+                        ConvertJsonToTuple(notificationSend.NotificationWebHook);
+                        await _webHookNotifier.SendNotification(notificationSend.NotificationWebHook.Message,
+                            notificationSend.NotificationWebHook.WebHookUrl,
+                            notificationSend.NotificationWebHook.Body, notificationSend.NotificationWebHook.Headers);
+                        return true;
+                    default:
+                        Console.WriteLine($"Not found NotificationTypeId: {notificationSend.NotificationTypeId}");
+                        break;
+                }
+
+                await InsertNotificationLog(notificationLog);
+
+                return false;
             }
-
-            return false;
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+                return false;
+            }
         }
 
         public async Task InsertNotificationItem(NotificationItem notificationItem)
@@ -104,7 +129,7 @@ namespace AlertHawk.Notification.Domain.Classes
 
         public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList(string jwtToken)
         {
-            var groupIds = await GetUserGroupMonitorListIds(jwtToken);  
+            var groupIds = await GetUserGroupMonitorListIds(jwtToken);
             var items = await _notificationRepository.SelectNotificationItemList();
             return items.Where(x => groupIds.Contains(x.MonitorGroupId)).ToList();
         }
@@ -118,7 +143,7 @@ namespace AlertHawk.Notification.Domain.Classes
         {
             return await _notificationRepository.SelectNotificationItemById(id);
         }
-        
+
         public async Task<List<int>?> GetUserGroupMonitorListIds(string token)
         {
             using var client = new HttpClient();
@@ -135,6 +160,11 @@ namespace AlertHawk.Notification.Domain.Classes
         public async Task<IEnumerable<NotificationItem?>> SelectNotificationItemByMonitorGroupId(int id)
         {
             return await _notificationRepository.SelectNotificationItemByMonitorGroupId(id);
+        }
+
+        public async Task InsertNotificationLog(NotificationLog notificationLog)
+        {
+            await _notificationRepository.InsertNotificationLog(notificationLog);
         }
 
         private static void ConvertJsonToTuple(NotificationWebHook webHook)

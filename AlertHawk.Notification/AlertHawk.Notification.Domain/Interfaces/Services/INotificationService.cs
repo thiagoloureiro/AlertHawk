@@ -13,5 +13,6 @@ namespace AlertHawk.Notification.Domain.Interfaces.Services
         Task<NotificationItem?> SelectNotificationItemById(int id);
         Task<List<int>?> GetUserGroupMonitorListIds(string token);
         Task<IEnumerable<NotificationItem?>> SelectNotificationItemByMonitorGroupId(int id);
+        Task InsertNotificationLog(NotificationLog notificationLog);
     }
 }
