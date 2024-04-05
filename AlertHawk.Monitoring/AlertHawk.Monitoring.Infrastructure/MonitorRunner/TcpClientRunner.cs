@@ -19,7 +19,6 @@ public class TcpClientRunner : ITcpClientRunner
 
     public async Task<bool> CheckTcpAsync(MonitorTcp monitorTcp)
     {
-        Console.WriteLine($"CheckTCPAsync Called for MonitorId: {monitorTcp.IP}:{monitorTcp.Port}");
         bool isConnected = false;
         int retries = 0;
         int retryIntervalMilliseconds = 3000;
