@@ -47,12 +47,14 @@ namespace AlertHawk.Notification.Domain.Classes
                         notificationLog.Message =
                             $"Subject:{notificationSend.NotificationEmail.Subject} Body:{notificationSend.NotificationEmail.Body} Email: {notificationSend.NotificationEmail.ToEmail}, CCEmail: {notificationSend.NotificationEmail.ToCCEmail}, BCCEmail:{notificationSend.NotificationEmail.ToBCCEmail}";
                         var result = await _mailNotifier.Send(notificationSend.NotificationEmail);
+                        await InsertNotificationLog(notificationLog);
                         return result;
 
                     case 2: // MS Teams
                         notificationLog.Message = $"Teams Message:{notificationSend.Message};";
                         await _teamsNotifier.SendNotification(notificationSend.Message,
                             notificationSend.NotificationTeams.WebHookUrl);
+                        await InsertNotificationLog(notificationLog);
                         return true;
 
                     case 3: // Telegram
@@ -61,6 +63,7 @@ namespace AlertHawk.Notification.Domain.Classes
                         await _telegramNotifier.SendNotification(notificationSend.NotificationTelegram.ChatId,
                             notificationSend.Message,
                             notificationSend.NotificationTelegram.TelegramBotToken);
+                        await InsertNotificationLog(notificationLog);
                         return true;
 
                     case 4: // Slack
@@ -68,6 +71,7 @@ namespace AlertHawk.Notification.Domain.Classes
                             $"Telegram Message:{notificationSend.Message} ChatId: {notificationSend.NotificationSlack.Channel}";
                         await _slackNotifier.SendNotification(notificationSend.NotificationSlack.Channel,
                             notificationSend.Message, notificationSend.NotificationSlack.WebHookUrl);
+                        await InsertNotificationLog(notificationLog);
                         return true;
 
                     case 5: // WebHook
@@ -77,13 +81,15 @@ namespace AlertHawk.Notification.Domain.Classes
                         await _webHookNotifier.SendNotification(notificationSend.NotificationWebHook.Message,
                             notificationSend.NotificationWebHook.WebHookUrl,
                             notificationSend.NotificationWebHook.Body, notificationSend.NotificationWebHook.Headers);
+                        await InsertNotificationLog(notificationLog);
                         return true;
                     default:
                         Console.WriteLine($"Not found NotificationTypeId: {notificationSend.NotificationTypeId}");
                         break;
                 }
 
-                await InsertNotificationLog(notificationLog);
+
+                return true;
 
                 return false;
             }
