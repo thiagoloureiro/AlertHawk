@@ -30,10 +30,25 @@ public class HttpClientScreenshot : IHttpClientScreenshot
                 // Initialize ChromeDriver
                 using var driver = new ChromeDriver(options);
 
-                driver.Navigate().GoToUrl(url);
+                bool navigationSuccessful = false;
+                int retryCount = 0;
+                while (!navigationSuccessful && retryCount < 3) // Retry up to 3 times
+                {
+                    try
+                    {
+                        driver.Navigate().GoToUrl(url);
+                        navigationSuccessful = true;
+                    }
+                    catch (WebDriverException)
+                    {
+                        retryCount++;
+                        // You may want to add some delay between retries
+                        await Task.Delay(1000); // 1 second delay between retries
+                    }
+                }
 
                 // Wait for the page to load (adjust the wait time as needed)
-                Thread.Sleep(VariableUtils.GetIntEnvVariable("screenshot_wait_time_ms") ?? 3000);
+                await Task.Delay(VariableUtils.GetIntEnvVariable("screenshot_wait_time_ms") ?? 3000);
 
                 // Take screenshot
                 Screenshot screenshot = ((ITakesScreenshot)driver).GetScreenshot();
