@@ -251,6 +251,13 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return await db.QueryAsync<Monitor>(sql, new { Tag }, commandType: CommandType.Text);
     }
 
+    public async Task<IEnumerable<string?>> GetMonitorTagList()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = "SELECT DISTINCT(Tag) FROM [Monitor]";
+        return await db.QueryAsync<string>(sql, commandType: CommandType.Text);
+    }
+
     public async Task<Monitor> GetMonitorById(int id)
     {
         await using var db = new SqlConnection(_connstring);

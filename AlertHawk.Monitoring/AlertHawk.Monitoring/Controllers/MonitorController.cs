@@ -64,6 +64,17 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorService.GetMonitorListByTag(tag);
             return Ok(result);
         }
+        
+             
+        [SwaggerOperation(Summary = "Retrieves a List (string) of monitor Tags")]
+        [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
+        [HttpGet("monitorTagList")]
+        public async Task<IActionResult> GetMonitorTagList()
+        {
+            var result = await _monitorService.GetMonitorTagList();
+            return Ok(result);
+        }
+
 
         [SwaggerOperation(Summary =
             "Retrieves a List of items to be Monitored by Monitor Group Ids (JWT Token required)")]
