@@ -62,7 +62,6 @@ public class MonitorService : IMonitorService
     {
         try
         {
-            Console.WriteLine($"Caching {id}");
             var result = await _caching.GetOrSetObjectFromCacheAsync($"GroupHistory_{id}_90", 10,
                 () => _monitorRepository.GetMonitorHistoryByIdAndDays(id, 90));
 
