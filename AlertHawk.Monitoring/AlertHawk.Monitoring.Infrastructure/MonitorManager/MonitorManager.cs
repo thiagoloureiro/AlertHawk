@@ -170,7 +170,7 @@ public class MonitorManager : IMonitorManager
                 {
                     Hostname = Environment.MachineName,
                     TimeStamp = DateTime.UtcNow,
-                    MonitorRegion = GetMonitorRegionVariable()
+                    MonitorRegion = MonitorUtils.GetMonitorRegionVariable()
                 };
             }
 
@@ -253,18 +253,5 @@ public class MonitorManager : IMonitorManager
 
             await _monitorAgentRepository.UpsertMonitorAgentTasks(lstMonitorAgentTasks, monitorRegion);
         }
-    }
-
-    static MonitorRegion GetMonitorRegionVariable()
-    {
-        string? monitorRegion = Environment.GetEnvironmentVariable("monitor_region");
-        if (!string.IsNullOrEmpty(monitorRegion) && int.TryParse(monitorRegion, out int result))
-        {
-            MonitorRegion value = (MonitorRegion)result;
-            return value;
-        }
-
-        // Default value if environment variable is not set or not a valid boolean
-        return MonitorRegion.Custom;
     }
 }
