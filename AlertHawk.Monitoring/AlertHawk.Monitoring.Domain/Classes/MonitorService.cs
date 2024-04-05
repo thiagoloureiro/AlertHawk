@@ -62,10 +62,11 @@ public class MonitorService : IMonitorService
     {
         try
         {
-            var result = await _caching.GetOrSetObjectFromCacheAsync($"GroupHistory_{id}_90", 10,
-                () => _monitorRepository.GetMonitorHistoryByIdAndDays(id, 90));
-
-            if (result == null)
+            //    var result = await _caching.GetOrSetObjectFromCacheAsync($"GroupHistory_{id}_90", 10,() => _monitorRepository.GetMonitorHistoryByIdAndDays(id, 90));
+            
+            var result = await _monitorRepository.GetMonitorHistoryByIdAndDays(id, 90);
+            var enumerable = result.ToList();
+            if (!enumerable.Any())
             {
                 return new MonitorDashboard
                 {
@@ -101,7 +102,7 @@ public class MonitorService : IMonitorService
                 };
             }
 
-            var monitorHistories = result.ToList();
+            var monitorHistories = enumerable.ToList();
             var lst1Hr = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddHours(-1)).ToList();
             var lst24Hrs = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-1)).ToList();
             var lst7Days = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-7)).ToList();
@@ -364,9 +365,9 @@ public class MonitorService : IMonitorService
             Action = $"Delete Monitor {monitor.Name}",
             TimeStamp = DateTime.UtcNow
         };
-        
+
         await _monitorRepository.DeleteMonitor(id);
-        
+
         await CreateAction(action, jwtToken);
     }
 
