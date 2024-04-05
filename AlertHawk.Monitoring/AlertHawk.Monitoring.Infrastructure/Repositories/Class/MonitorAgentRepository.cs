@@ -24,7 +24,6 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
     public async Task ManageMonitorStatus(MonitorAgent monitorAgent)
     {
         var allMonitors = await GetAllMonitorAgents();
-        
         monitorAgent.Version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString();
 
         await using var db = new SqlConnection(_connstring);
@@ -57,6 +56,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
 
         if (monitorToUpdate != null)
         {
+            monitorToUpdate.Version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString();
             monitorToUpdate.MonitorRegion = monitorAgent.MonitorRegion;
             GlobalVariables.NodeId = monitorToUpdate.Id;
             await UpdateExistingMonitor(db, monitorToUpdate);
