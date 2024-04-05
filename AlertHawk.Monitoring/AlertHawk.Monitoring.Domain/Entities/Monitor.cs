@@ -16,4 +16,5 @@ public class Monitor
     public MonitorRegion MonitorRegion { get; set; }
     public MonitorEnvironment MonitorEnvironment { get; set; }
     public MonitorDashboard? MonitorStatusDashboard { get; set; }
+    public string? Tag { get;set; }
 }

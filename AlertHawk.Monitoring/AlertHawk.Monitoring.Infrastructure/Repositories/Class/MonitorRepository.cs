@@ -39,7 +39,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @"SELECT M.Id, M.Name, HTTP.UrlToCheck, CAST(IP AS VARCHAR(255)) + ':' + CAST(Port AS VARCHAR(10)) AS MonitorTcp, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor] M
+            @"SELECT M.Id, M.Name, HTTP.UrlToCheck, CAST(IP AS VARCHAR(255)) + ':' + CAST(Port AS VARCHAR(10)) AS MonitorTcp, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag FROM [Monitor] M
                 LEFT JOIN MonitorHttp HTTP on HTTP.MonitorId = M.Id
                 LEFT JOIN MonitorTcp TCP ON TCP.MonitorId = M.Id 
                 WHERE MonitorEnvironment = @environment";
@@ -69,7 +69,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @$"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor] M
+            @$"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag FROM [Monitor] M
             INNER JOIN MonitorGroupItems MGI ON MGI.MonitorId = M.Id WHERE MGI.MonitorGroupId IN @groupMonitorIds AND M.MonitorEnvironment = @environment";
         return await db.QueryAsync<Monitor>(sql, new { groupMonitorIds, environment }, commandType: CommandType.Text);
     }
@@ -148,8 +148,8 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sqlMonitor =
-            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment) 
-            VALUES (@Name, @MonitorTypeId, @HeartBeatInterval, @Retries, @Status, @DaysToExpireCert, @Paused, @MonitorRegion, @MonitorEnvironment); SELECT CAST(SCOPE_IDENTITY() as int)";
+            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag) 
+            VALUES (@Name, @MonitorTypeId, @HeartBeatInterval, @Retries, @Status, @DaysToExpireCert, @Paused, @MonitorRegion, @MonitorEnvironment, @Tag); SELECT CAST(SCOPE_IDENTITY() as int)";
         var id = await db.ExecuteScalarAsync<int>(sqlMonitor,
             new
             {
@@ -161,7 +161,8 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 monitorTcp.DaysToExpireCert,
                 monitorTcp.Paused,
                 monitorTcp.MonitorRegion,
-                monitorTcp.MonitorEnvironment
+                monitorTcp.MonitorEnvironment,
+                monitorTcp.Tag
             }, commandType: CommandType.Text);
 
         string sqlMonitorTcp =
@@ -237,8 +238,17 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string whereClause = $"WHERE Id IN ({string.Join(",", ids)})";
 
         string sql =
-            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor] {whereClause}";
+            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag FROM [Monitor] {whereClause}";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
+    }
+    
+    public async Task<IEnumerable<Monitor>> GetMonitorListbyTag(string Tag)
+    {
+        await using var db = new SqlConnection(_connstring);
+
+        string sql =
+            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag FROM [Monitor] WHERE Tag = @Tag";
+        return await db.QueryAsync<Monitor>(sql, new { Tag }, commandType: CommandType.Text);
     }
 
     public async Task<Monitor> GetMonitorById(int id)
@@ -246,7 +256,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
 
         string sql =
-            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment  FROM [Monitor] WHERE Id=@id";
+            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag FROM [Monitor] WHERE Id=@id";
         return await db.QueryFirstOrDefaultAsync<Monitor>(sql, new { id }, commandType: CommandType.Text);
     }
 
@@ -255,7 +265,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
 
         string sql =
-            $@"SELECT a.Id, a.Name, a.MonitorTypeId, a.HeartBeatInterval, a.Retries, a.Status, a.DaysToExpireCert, a.Paused, a.MonitorRegion, a.MonitorEnvironment, 
+            $@"SELECT a.Id, a.Name, a.MonitorTypeId, a.HeartBeatInterval, a.Retries, a.Status, a.DaysToExpireCert, a.Paused, a.MonitorRegion, a.MonitorEnvironment, a.Tag, 
                b.MonitorId, b.CheckCertExpiry, b.IgnoreTlsSsl, b.MaxRedirects, b.UrlToCheck, b.Timeout, b.MonitorHttpMethod, b.Body, b.HeadersJson  
                 FROM [Monitor] a inner join
                 [MonitorHttp] b on a.Id = b.MonitorId
@@ -268,7 +278,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
 
         string sql =
-            $@"SELECT a.Id, a.Name, a.MonitorTypeId, a.HeartBeatInterval, a.Retries, a.Status, a.DaysToExpireCert, a.Paused, a.MonitorRegion, a.MonitorEnvironment, 
+            $@"SELECT a.Id, a.Name, a.MonitorTypeId, a.HeartBeatInterval, a.Retries, a.Status, a.DaysToExpireCert, a.Paused, a.MonitorRegion, a.MonitorEnvironment, a.Tag, 
                b.MonitorId, b.Port, b.IP, b.Timeout, b.LastStatus                  
                 FROM [Monitor] a inner join
                 [MonitorTcp] b on a.Id = b.MonitorId

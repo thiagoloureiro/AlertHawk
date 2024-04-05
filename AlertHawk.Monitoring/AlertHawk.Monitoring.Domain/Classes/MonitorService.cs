@@ -413,6 +413,11 @@ public class MonitorService : IMonitorService
         await _monitorRepository.RemoveMonitorNotification(monitorNotification);
     }
 
+    public async Task<IEnumerable<Monitor?>> GetMonitorListByTag(string tag)
+    {
+        return await _monitorRepository.GetMonitorListbyTag(tag);
+    }
+
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
     {
         var data = _caching.GetValueFromCache<List<MonitorDashboard?>>(_cacheKeyDashboardList);

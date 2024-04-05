@@ -33,4 +33,5 @@ public interface IMonitorRepository
     Task AddMonitorNotification(MonitorNotification monitorNotification);
     Task RemoveMonitorNotification(MonitorNotification monitorNotification);
     Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndHours(int id, int hours);
+    Task<IEnumerable<Monitor>> GetMonitorListbyTag(string Tag);
 }
