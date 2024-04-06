@@ -6,6 +6,7 @@ using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
+using AlertHawk.Monitoring.Infrastructure.Utils;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 
@@ -29,7 +30,9 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         await using var db = new SqlConnection(_connstring);
         await DeleteOutdatedMonitors(allMonitors, db);
 
-        if (!allMonitors.Any(x => x.IsMaster))
+        var disableMaster = VariableUtils.GetBoolEnvVariable("DISABLE_MASTER");
+
+        if (!allMonitors.Any(x => x.IsMaster) && !disableMaster)
         {
             var currentMonitor = allMonitors.FirstOrDefault(x => x.Hostname == monitorAgent.Hostname);
             monitorAgent.IsMaster = true;
