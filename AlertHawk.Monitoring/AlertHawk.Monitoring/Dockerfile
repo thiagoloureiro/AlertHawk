@@ -1,13 +1,13 @@
 #See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS base
-RUN apk update && apk upgrade
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+RUN apt-get update && apt-get upgrade -y
 USER app
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["AlertHawk.Monitoring/AlertHawk.Monitoring.csproj", "AlertHawk.Monitoring/"]
@@ -22,13 +22,14 @@ RUN dotnet publish "./AlertHawk.Monitoring.csproj" -c $BUILD_CONFIGURATION -o /a
 
 FROM base AS final
 USER root
-# Install dependencies
-RUN apk update \
-    && apk add --no-cache wget ca-certificates \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apk add --no-cache - \
-    && echo "http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apk/repositories \
-    && apk add --no-cache chromium \
-    && rm -rf /var/cache/apk/*
+RUN apt-get update \
+    && apt-get install -y wget gnupg \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "AlertHawk.Monitoring.dll"]
