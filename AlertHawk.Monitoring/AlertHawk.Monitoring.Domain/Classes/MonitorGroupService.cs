@@ -47,17 +47,21 @@ public class MonitorGroupService : IMonitorGroupService
         monitorGroupList = monitorGroupList.Where(x => x.Monitors.Any());
 
         var monitorGroups = monitorGroupList.ToList();
+        
+        var allMonitorIds = monitorGroupList
+            .SelectMany(group => group.Monitors?.Select(m => m.Id) ?? Enumerable.Empty<int>()).ToList();
+        var allDashboardData = GetMonitorDashboardDataList(allMonitorIds);
+        var monitorDashboards = allDashboardData.ToList();
+        
         foreach (var monitorGroup in monitorGroups)
         {
             if (monitorGroup.Monitors != null && monitorGroup.Monitors.Any())
             {
                 monitorGroup.Monitors = monitorGroup.Monitors.OrderBy(x => x.Name).ToList();
-                
-                var dashboardData =
-                    GetMonitorDashboardDataList(monitorGroup.Monitors.Select(x => x.Id).ToList());
                 foreach (var monitor in monitorGroup.Monitors)
                 {
-                    monitor.MonitorStatusDashboard = dashboardData.FirstOrDefault(x => x.MonitorId == monitor.Id);
+                    var dashboardData = monitorDashboards.Find(x => x.MonitorId == monitor.Id);
+                    monitor.MonitorStatusDashboard = dashboardData;
 
                     if (monitor.MonitorStatusDashboard == null)
                     {
@@ -129,44 +133,44 @@ public class MonitorGroupService : IMonitorGroupService
         var ids = await GetUserGroupMonitorListIds(jwtToken);
         var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupList();
 
-        if (ids == null)
+        if (ids == null || !ids.Any())
         {
             return new List<MonitorGroup> { new MonitorGroup { Id = 0, Name = "No Groups Found" } };
         }
 
-        monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id));
-
-        var monitorGroups = monitorGroupList.ToList();
-        foreach (var monitorGroup in monitorGroups)
+        monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id)).ToList();
+        
+        var allMonitorIds = monitorGroupList
+            .SelectMany(group => group.Monitors?.Select(m => m.Id) ?? Enumerable.Empty<int>()).ToList();
+        var allDashboardData = GetMonitorDashboardDataList(allMonitorIds);
+        var monitorDashboards = allDashboardData.ToList();
+        
+        foreach (var monitorGroup in monitorGroupList)
         {
             if (monitorGroup.Monitors != null)
             {
-                var dashboardData =
-                    GetMonitorDashboardDataList(monitorGroup.Monitors.Select(x => x.Id).ToList());
                 foreach (var monitor in monitorGroup.Monitors)
                 {
-                    monitor.MonitorStatusDashboard = dashboardData.FirstOrDefault(x => x.MonitorId == monitor.Id);
-                    if (monitor.MonitorStatusDashboard == null)
+                    var dashboardData = monitorDashboards.Find(x => x.MonitorId == monitor.Id);
+                    monitor.MonitorStatusDashboard = dashboardData ?? new MonitorDashboard
                     {
-                        monitor.MonitorStatusDashboard = new MonitorDashboard
-                        {
-                            MonitorId = monitor.Id,
-                            Uptime1Hr = 0,
-                            Uptime6Months = 0,
-                            Uptime7Days = 0,
-                            Uptime3Months = 0,
-                            Uptime30Days = 0,
-                            Uptime24Hrs = 0,
-                            CertExpDays = 0,
-                            ResponseTime = 0
-                        };
-                    }
+                        MonitorId = monitor.Id,
+                        Uptime1Hr = 0,
+                        Uptime6Months = 0,
+                        Uptime7Days = 0,
+                        Uptime3Months = 0,
+                        Uptime30Days = 0,
+                        Uptime24Hrs = 0,
+                        CertExpDays = 0,
+                        ResponseTime = 0
+                    };
                 }
             }
         }
 
-        return monitorGroups;
+        return monitorGroupList;
     }
+
 
     public async Task<MonitorGroup> GetMonitorGroupById(int id)
     {
@@ -224,7 +228,7 @@ public class MonitorGroupService : IMonitorGroupService
         {
             var items = data.Where(item => item != null).ToList();
 
-            var dataToReturn = items.Where(x => ids.Contains(x.MonitorId)).ToList();
+            IEnumerable<MonitorDashboard> dataToReturn = items.Where(x => ids.Contains(x.MonitorId)).ToList();
 
             return dataToReturn;
         }
