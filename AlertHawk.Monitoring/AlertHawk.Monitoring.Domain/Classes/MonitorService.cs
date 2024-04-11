@@ -63,7 +63,7 @@ public class MonitorService : IMonitorService
         try
         {
             //    var result = await _caching.GetOrSetObjectFromCacheAsync($"GroupHistory_{id}_90", 10,() => _monitorRepository.GetMonitorHistoryByIdAndDays(id, 90));
-            
+
             var result = await _monitorRepository.GetMonitorHistoryByIdAndDays(id, 90);
             var enumerable = result.ToList();
             if (!enumerable.Any())
@@ -133,7 +133,6 @@ public class MonitorService : IMonitorService
                 containsLast30DaysData =
                     lst30Days.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-30).AddSeconds(120);
             }
-
 
             // Check if last 3 months data is present
             bool containsLast3MonthsData = false;
@@ -444,7 +443,7 @@ public class MonitorService : IMonitorService
         try
         {
             var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Add("User-Agent", "PostmanRuntime/7.36.1");
+            client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
             client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
             client.DefaultRequestHeaders.Add("Connection", "keep-alive");
             client.DefaultRequestHeaders.Add("Accept", "*/*");

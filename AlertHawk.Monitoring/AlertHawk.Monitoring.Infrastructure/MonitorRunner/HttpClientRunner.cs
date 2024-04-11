@@ -23,7 +23,6 @@ public class HttpClientRunner : IHttpClientRunner
         _notificationProducer = notificationProducer;
     }
 
-
     public async Task CheckUrlsAsync(MonitorHttp monitorHttp)
     {
         int maxRetries = monitorHttp.Retries;
@@ -66,7 +65,6 @@ public class HttpClientRunner : IHttpClientRunner
                         await _notificationProducer.HandleSuccessNotifications(monitorHttp, response.ReasonPhrase);
                         await _monitorRepository.SaveMonitorAlert(monitorHistory);
                     }
-
 
                     break;
                 }
@@ -157,7 +155,7 @@ public class HttpClientRunner : IHttpClientRunner
         handler.MaxAutomaticRedirections = monitorHttp.MaxRedirects;
 
         using HttpClient client = new HttpClient(handler);
-        client.DefaultRequestHeaders.Add("User-Agent", "PostmanRuntime/7.36.1");
+        client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
         client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
         client.DefaultRequestHeaders.Add("Connection", "keep-alive");
         client.DefaultRequestHeaders.Add("Accept", "*/*");

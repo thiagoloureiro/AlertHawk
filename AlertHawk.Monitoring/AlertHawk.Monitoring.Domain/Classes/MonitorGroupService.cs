@@ -47,12 +47,12 @@ public class MonitorGroupService : IMonitorGroupService
         monitorGroupList = monitorGroupList.Where(x => x.Monitors.Any());
 
         var monitorGroups = monitorGroupList.ToList();
-        
+
         var allMonitorIds = monitorGroupList
             .SelectMany(group => group.Monitors?.Select(m => m.Id) ?? Enumerable.Empty<int>()).ToList();
         var allDashboardData = GetMonitorDashboardDataList(allMonitorIds);
         var monitorDashboards = allDashboardData.ToList();
-        
+
         foreach (var monitorGroup in monitorGroups)
         {
             if (monitorGroup.Monitors != null && monitorGroup.Monitors.Any())
@@ -139,12 +139,12 @@ public class MonitorGroupService : IMonitorGroupService
         }
 
         monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id)).ToList();
-        
+
         var allMonitorIds = monitorGroupList
             .SelectMany(group => group.Monitors?.Select(m => m.Id) ?? Enumerable.Empty<int>()).ToList();
         var allDashboardData = GetMonitorDashboardDataList(allMonitorIds);
         var monitorDashboards = allDashboardData.ToList();
-        
+
         foreach (var monitorGroup in monitorGroupList)
         {
             if (monitorGroup.Monitors != null)
@@ -170,7 +170,6 @@ public class MonitorGroupService : IMonitorGroupService
 
         return monitorGroupList;
     }
-
 
     public async Task<MonitorGroup> GetMonitorGroupById(int id)
     {
@@ -205,7 +204,7 @@ public class MonitorGroupService : IMonitorGroupService
     public async Task<List<int>?> GetUserGroupMonitorListIds(string token)
     {
         var client = _httpClientFactory.CreateClient();
-        client.DefaultRequestHeaders.Add("User-Agent", "PostmanRuntime/7.36.1");
+        client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
         client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
         client.DefaultRequestHeaders.Add("Connection", "keep-alive");
         client.DefaultRequestHeaders.Add("Accept", "*/*");
