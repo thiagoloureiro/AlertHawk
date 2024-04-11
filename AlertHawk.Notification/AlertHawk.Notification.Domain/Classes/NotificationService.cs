@@ -143,7 +143,7 @@ namespace AlertHawk.Notification.Domain.Classes
         {
             var groupIds = await GetUserGroupMonitorListIds(jwtToken);
             var items = await _notificationRepository.SelectNotificationItemList();
-            return items.Where(x => groupIds.Contains(x.MonitorGroupId)).ToList();
+            return items.Where(x => groupIds != null && groupIds.Contains(x.MonitorGroupId)).ToList();
         }
 
         public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList(List<int> ids)

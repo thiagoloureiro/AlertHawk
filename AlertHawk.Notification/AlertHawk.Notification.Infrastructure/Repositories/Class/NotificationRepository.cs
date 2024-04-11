@@ -1,11 +1,11 @@
+using AlertHawk.Notification.Domain.Entities;
+using AlertHawk.Notification.Domain.Interfaces.Repositories;
+using AlertHawk.Notification.Domain.Utils;
+using Dapper;
+using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics.CodeAnalysis;
-using AlertHawk.Notification.Domain.Entities;
-using AlertHawk.Notification.Domain.Interfaces.Repositories;
-using AlertHawk.Notification.Infrastructure.Utils;
-using Dapper;
-using Microsoft.Extensions.Configuration;
 
 namespace AlertHawk.Notification.Infrastructure.Repositories.Class;
 

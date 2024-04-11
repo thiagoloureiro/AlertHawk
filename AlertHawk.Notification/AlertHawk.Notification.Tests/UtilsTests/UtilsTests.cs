@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using AlertHawk.Notification.Domain.Utils;
 using AlertHawk.Notification.Infrastructure.Utils;
 
 namespace AlertHawk.Notification.Tests.UtilsTests
@@ -17,7 +18,7 @@ namespace AlertHawk.Notification.Tests.UtilsTests
 
             // Act
             string? encrypted = AesEncryption.EncryptString(originalString);
-            string decryptedString = AesEncryption.DecryptString(encrypted);
+            string? decryptedString = AesEncryption.DecryptString(encrypted);
 
             // Assert
             Assert.Equal(originalString, decryptedString);

@@ -9,13 +9,18 @@ namespace AlertHawk.Notification.Domain.Utils
 
         private static byte[] HexStringToByteArray(string? hex)
         {
-            int numberOfChars = hex.Length;
-            byte[] bytes = new byte[numberOfChars / 2];
-            for (int i = 0; i < numberOfChars; i += 2)
+            if (hex != null)
             {
-                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+                int numberOfChars = hex.Length;
+                byte[] bytes = new byte[numberOfChars / 2];
+                for (int i = 0; i < numberOfChars; i += 2)
+                {
+                    bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+                }
+                return bytes;
             }
-            return bytes;
+
+            return new byte[] { };
         }
 
         public static string? EncryptString(string? plainText)
@@ -45,12 +50,12 @@ namespace AlertHawk.Notification.Domain.Utils
             return Convert.ToBase64String(encrypted);
         }
 
-        public static string DecryptString(string? cipherText)
+        public static string? DecryptString(string? cipherText)
         {
             if (cipherText == null || cipherText.Length <= 0)
                 throw new ArgumentNullException(nameof(cipherText));
 
-            string plaintext = null;
+            string? plaintext = null;
             byte[] cipherBytes = Convert.FromBase64String(cipherText);
 
             using Aes aesAlg = Aes.Create();
