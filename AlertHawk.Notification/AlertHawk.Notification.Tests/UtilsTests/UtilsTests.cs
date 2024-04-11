@@ -1,4 +1,5 @@
-﻿using AlertHawk.Notification.Infrastructure.Utils;
+﻿using System.Security.Cryptography;
+using AlertHawk.Notification.Infrastructure.Utils;
 
 namespace AlertHawk.Notification.Tests.UtilsTests
 {
@@ -8,7 +9,11 @@ namespace AlertHawk.Notification.Tests.UtilsTests
         public void EncryptAndDecrypt_ReturnsOriginalString()
         {
             // Arrange
+            var keys = Utils.GenerateAesKeyAndIv();
+
             string originalString = "encrypted-thing";
+            Environment.SetEnvironmentVariable("AesKey", keys.Item1);
+            Environment.SetEnvironmentVariable("AesIV", keys.Item2);
 
             // Act
             string? encrypted = AesEncryption.EncryptString(originalString);

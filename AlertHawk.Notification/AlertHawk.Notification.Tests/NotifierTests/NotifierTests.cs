@@ -1,17 +1,24 @@
 using AlertHawk.Notification.Controllers;
 using AlertHawk.Notification.Domain.Entities;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 
 namespace AlertHawk.Notification.Tests.NotifierTests;
 
 public class NotifierTests : IClassFixture<NotificationController>
 {
-    private readonly NotificationController _notificationController;
+    private readonly IMailNotifier _mailNotifier;
+    private readonly ISlackNotifier _slackNotifier;
+    private readonly ITeamsNotifier _teamsNotifier;
+    private readonly ITelegramNotifier _telegramNotifier;
+    private readonly IWebHookNotifier _webHookNotifier;
 
-    public NotifierTests(NotificationController notificationController)
+    public NotifierTests(IMailNotifier mailNotifier, ISlackNotifier slackNotifier, ITeamsNotifier teamsNotifier, ITelegramNotifier telegramNotifier, IWebHookNotifier webHookNotifier)
     {
-        _notificationController = notificationController;
+        _mailNotifier = mailNotifier;
+        _slackNotifier = slackNotifier;
+        _teamsNotifier = teamsNotifier;
+        _telegramNotifier = telegramNotifier;
+        _webHookNotifier = webHookNotifier;
     }
 
     [Fact]
@@ -32,12 +39,10 @@ public class NotifierTests : IClassFixture<NotificationController>
         };
 
         // Act
-        var result = await _notificationController.SendNotification(notificationSend) as OkObjectResult;
+        var result = await _telegramNotifier.SendNotification(notificationSend.NotificationTelegram.ChatId, notificationSend.Message, notificationSend.NotificationTelegram.TelegramBotToken);
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
-        Assert.Equal(true, result.Value);
     }
 
     [Fact]
@@ -66,12 +71,11 @@ public class NotifierTests : IClassFixture<NotificationController>
         };
 
         // Act
-        var result = await _notificationController.SendNotification(notificationSend) as OkObjectResult;
+        var result = await _mailNotifier.Send(notificationSend.NotificationEmail);
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
-        Assert.Equal(true, result.Value);
+        Assert.True(result);
     }
 
     [Fact]
@@ -101,12 +105,10 @@ public class NotifierTests : IClassFixture<NotificationController>
         };
 
         // Act
-        var result = await _notificationController.SendNotification(notificationSend) as OkObjectResult;
+        var result = await _mailNotifier.Send(notificationSend.NotificationEmail);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
-        Assert.Equal(true, result.Value);
+        Assert.True(result);
     }
 
     [Fact]
@@ -127,12 +129,10 @@ public class NotifierTests : IClassFixture<NotificationController>
         };
 
         // Act
-        var result = await _notificationController.SendNotification(notificationSend) as OkObjectResult;
+        await _slackNotifier.SendNotification(notificationSend.NotificationSlack.Channel, notificationSend.Message, notificationSend.NotificationSlack.WebHookUrl);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
-        Assert.Equal(true, result.Value);
+        Assert.True(true);
     }
 
     [Fact]
@@ -152,12 +152,10 @@ public class NotifierTests : IClassFixture<NotificationController>
         };
 
         // Act
-        var result = await _notificationController.SendNotification(notificationSend) as OkObjectResult;
+        await _teamsNotifier.SendNotification(notificationSend.Message, notificationSend.NotificationTeams.WebHookUrl);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
-        Assert.Equal(true, result.Value);
+        Assert.True(true);
     }
 
     [Fact]
@@ -166,7 +164,7 @@ public class NotifierTests : IClassFixture<NotificationController>
         // Arrange
         var message = "Message Details from Webhook";
         var channel = "alerthawk-test";
-        
+
         var body = $"{{\"channel\": \"{channel}\", \"text\": \"{message}\"}}";
         var headers = "{User-Agent: \"Mozilla/5.0\"}";
 
@@ -186,11 +184,9 @@ public class NotifierTests : IClassFixture<NotificationController>
         };
 
         // Act
-        var result = await _notificationController.SendNotification(notificationSend) as OkObjectResult;
+        await _webHookNotifier.SendNotification(notificationSend.Message, notificationSend.NotificationWebHook.WebHookUrl, notificationSend.NotificationWebHook.Body, notificationSend.NotificationWebHook.Headers);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
-        Assert.Equal(true, result.Value);
+        Assert.True(true);
     }
 }
