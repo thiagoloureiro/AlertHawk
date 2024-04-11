@@ -2,6 +2,7 @@
 using System.Net.Mail;
 using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
+using AlertHawk.Notification.Infrastructure.Utils;
 
 namespace AlertHawk.Notification.Infrastructure.Notifiers
 {
@@ -12,14 +13,13 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
             // Set up SMTP client
             var smtpClient = new SmtpClient(emailNotification.Hostname);
             smtpClient.Port = 587;
-            smtpClient.Credentials = new NetworkCredential(emailNotification.Username, emailNotification.Password);
+            smtpClient.Credentials = new NetworkCredential(emailNotification.Username, AesEncryption.DecryptString(emailNotification.Password));
             smtpClient.EnableSsl = true;
-            
+
             if (emailNotification.Subject != null)
-                emailNotification.Subject = emailNotification.Body.Contains("Success")
+                emailNotification.Subject = emailNotification.Body != null && emailNotification.Body.Contains("Success")
                     ? "\u2705 " + emailNotification.Subject
                     : "\u274C " + emailNotification.Subject;
-
 
             // Create and send email to multiple recipients
             var mailMessage = new MailMessage();

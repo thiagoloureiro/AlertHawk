@@ -3,6 +3,7 @@ using System.Data.SqlClient;
 using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Repositories;
+using AlertHawk.Notification.Infrastructure.Utils;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 
@@ -38,13 +39,16 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
                 case 1: // Smtp
                     item.NotificationEmail = notificationEmailList.SingleOrDefault(x => x.NotificationId == item.Id);
                     break;
+
                 case 2: // Teams
                     item.NotificationTeams = notificationTeamsList.SingleOrDefault(x => x.NotificationId == item.Id);
                     break;
+
                 case 3: // Telegram
                     item.NotificationTelegram =
                         notificationTelegramList.SingleOrDefault(x => x.NotificationId == item.Id);
                     break;
+
                 case 4: // Slack
                     item.NotificationSlack = notificationSlackList.SingleOrDefault(x => x.NotificationId == item.Id);
                     break;
@@ -54,26 +58,37 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         return selectNotificationItemList;
     }
 
-
     public async Task InsertNotificationItemEmailSmtp(NotificationItem notificationItem)
     {
         var notificationId = await InsertNotificationItem(notificationItem);
 
-        await using var db = new SqlConnection(_connstring);
-        string sqlDetails =
-            @"INSERT INTO [NotificationEmailSmtp] (NotificationId, FromEmail, ToEmail, HostName, Port, Username, Password, ToCCEmail, ToBCCEmail, EnableSSL, Subject, Body, IsHtmlBody) 
+        if (notificationItem.NotificationEmail != null)
+        {
+            notificationItem.NotificationEmail.Password =
+                AesEncryption.EncryptString(notificationItem.NotificationEmail?.Password);
+
+            await using var db = new SqlConnection(_connstring);
+            string sqlDetails =
+                @"INSERT INTO [NotificationEmailSmtp] (NotificationId, FromEmail, ToEmail, HostName, Port, Username, Password, ToCCEmail, ToBCCEmail, EnableSSL, Subject, Body, IsHtmlBody)
         VALUES (@notificationId, @FromEmail, @ToEmail, @HostName, @Port, @Username, @Password, @ToCCEmail, @ToBCCEmail, @EnableSSL, @Subject, @Body, @IsHtmlBody)";
 
-        await db.ExecuteAsync(sqlDetails, new
-        {
-            notificationId,
-            notificationItem.NotificationEmail?.FromEmail, notificationItem.NotificationEmail?.ToEmail,
-            notificationItem.NotificationEmail?.Hostname, notificationItem.NotificationEmail?.Port,
-            notificationItem.NotificationEmail?.Username, notificationItem.NotificationEmail?.Password,
-            notificationItem.NotificationEmail?.ToCCEmail, notificationItem.NotificationEmail?.ToBCCEmail,
-            notificationItem.NotificationEmail?.EnableSsl, notificationItem.NotificationEmail?.Subject,
-            notificationItem.NotificationEmail?.Body, notificationItem.NotificationEmail?.IsHtmlBody
-        }, commandType: CommandType.Text);
+            await db.ExecuteAsync(sqlDetails, new
+            {
+                notificationId,
+                notificationItem.NotificationEmail?.FromEmail,
+                notificationItem.NotificationEmail?.ToEmail,
+                notificationItem.NotificationEmail?.Hostname,
+                notificationItem.NotificationEmail?.Port,
+                notificationItem.NotificationEmail?.Username,
+                notificationItem.NotificationEmail?.Password,
+                notificationItem.NotificationEmail?.ToCCEmail,
+                notificationItem.NotificationEmail?.ToBCCEmail,
+                notificationItem.NotificationEmail?.EnableSsl,
+                notificationItem.NotificationEmail?.Subject,
+                notificationItem.NotificationEmail?.Body,
+                notificationItem.NotificationEmail?.IsHtmlBody
+            }, commandType: CommandType.Text);
+        }
     }
 
     public async Task UpdateNotificationItem(NotificationItem notificationItem)
@@ -153,8 +168,10 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         await db.ExecuteAsync(sqlDetails, new
         {
             notificationId,
-            notificationItem.NotificationWebHook?.Message, notificationItem.NotificationWebHook?.WebHookUrl,
-            notificationItem.NotificationWebHook?.Body, notificationItem.NotificationWebHook?.HeadersJson
+            notificationItem.NotificationWebHook?.Message,
+            notificationItem.NotificationWebHook?.WebHookUrl,
+            notificationItem.NotificationWebHook?.Body,
+            notificationItem.NotificationWebHook?.HeadersJson
         }, commandType: CommandType.Text);
     }
 
@@ -178,18 +195,22 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
                 notificationItem.NotificationEmail =
                     notificationEmailList.SingleOrDefault(x => x.NotificationId == notificationItem.Id);
                 break;
+
             case 2: // Teams
                 notificationItem.NotificationTeams =
                     notificationTeamsList.SingleOrDefault(x => x.NotificationId == notificationItem.Id);
                 break;
+
             case 3: // Telegram
                 notificationItem.NotificationTelegram =
                     notificationTelegramList.SingleOrDefault(x => x.NotificationId == notificationItem.Id);
                 break;
+
             case 4: // Slack
                 notificationItem.NotificationSlack =
                     notificationSlackList.SingleOrDefault(x => x.NotificationId == notificationItem.Id);
                 break;
+
             case 5: // WebHook
                 notificationItem.NotificationWebHook =
                     notificationWebHookList.SingleOrDefault(x => x.NotificationId == notificationItem.Id);
@@ -223,18 +244,22 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
                     notificationItem.NotificationEmail =
                         notificationEmailList.SingleOrDefault(x => x.NotificationId == notificationItem.Id);
                     break;
+
                 case 2: // Teams
                     notificationItem.NotificationTeams =
                         notificationTeamsList.SingleOrDefault(x => x.NotificationId == notificationItem.Id);
                     break;
+
                 case 3: // Telegram
                     notificationItem.NotificationTelegram =
                         notificationTelegramList.SingleOrDefault(x => x.NotificationId == notificationItem.Id);
                     break;
+
                 case 4: // Slack
                     notificationItem.NotificationSlack =
                         notificationSlackList.SingleOrDefault(x => x.NotificationId == notificationItem.Id);
                     break;
+
                 case 5: // WebHook
                     notificationItem.NotificationWebHook =
                         notificationWebHookList.SingleOrDefault(x => x.NotificationId == notificationItem.Id);
@@ -284,8 +309,10 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         var notificationId = await db.QuerySingleAsync<int>(sql,
             new
             {
-                Name = notificationItem.Name, NotificationTypeId = notificationItem.NotificationTypeId,
-                Description = notificationItem.Description, MonitorGroupId = notificationItem.MonitorGroupId
+                Name = notificationItem.Name,
+                NotificationTypeId = notificationItem.NotificationTypeId,
+                Description = notificationItem.Description,
+                MonitorGroupId = notificationItem.MonitorGroupId
             },
             commandType: CommandType.Text);
         return notificationId;
@@ -336,7 +363,6 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         var resultList = await db.QueryAsync<NotificationSlack>(sql, commandType: CommandType.Text);
         return resultList.ToList();
     }
-
 
     private async Task<List<NotificationTelegram>> SelectNotificationTelegramList()
     {
