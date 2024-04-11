@@ -13,7 +13,7 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
             // Set up SMTP client
             var smtpClient = new SmtpClient(emailNotification.Hostname);
             smtpClient.Port = 587;
-            smtpClient.Credentials = new NetworkCredential(emailNotification.Username, AesEncryption.DecryptString(emailNotification.Password));
+            smtpClient.Credentials = new NetworkCredential(emailNotification.Username, emailNotification.Password);
             smtpClient.EnableSsl = true;
 
             if (emailNotification.Subject != null)

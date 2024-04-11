@@ -110,14 +110,14 @@ namespace AlertHawk.Notification.Controllers
 
             return Ok();
         }
-        
+
         [HttpGet("SelectNotificationByMonitorGroup/{id}")]
         [SwaggerOperation(Summary = "Select NotificationItem By Monitor Id")]
         [ProducesResponseType(typeof(List<NotificationItem>), StatusCodes.Status200OK)]
         public async Task<IActionResult> SelectNotificationItemByMonitorGroupId(int id)
         {
             var result = await _notificationService.SelectNotificationItemByMonitorGroupId(id);
-            
+
             return Ok(result);
         }
     }

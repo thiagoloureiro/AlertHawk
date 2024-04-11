@@ -74,7 +74,6 @@ public class NotifierTests : IClassFixture<NotificationController>
         var result = await _mailNotifier.Send(notificationSend.NotificationEmail);
 
         // Assert
-        Assert.NotNull(result);
         Assert.True(result);
     }
 

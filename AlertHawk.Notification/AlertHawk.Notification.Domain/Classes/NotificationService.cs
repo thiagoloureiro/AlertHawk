@@ -4,6 +4,7 @@ using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Domain.Interfaces.Repositories;
 using AlertHawk.Notification.Domain.Interfaces.Services;
+using AlertHawk.Notification.Domain.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -43,6 +44,9 @@ namespace AlertHawk.Notification.Domain.Classes
                 switch (notificationSend.NotificationTypeId)
                 {
                     case 1: // Email SMTP
+                        notificationSend.NotificationEmail.Password =
+                            AesEncryption.DecryptString(notificationSend.NotificationEmail.Password);
+
                         notificationSend.NotificationEmail.Body += notificationSend.Message;
                         notificationLog.Message =
                             $"Subject:{notificationSend.NotificationEmail.Subject} Body:{notificationSend.NotificationEmail.Body} Email: {notificationSend.NotificationEmail.ToEmail}, CCEmail: {notificationSend.NotificationEmail.ToCCEmail}, BCCEmail:{notificationSend.NotificationEmail.ToBCCEmail}";
@@ -83,6 +87,7 @@ namespace AlertHawk.Notification.Domain.Classes
                             notificationSend.NotificationWebHook.Body, notificationSend.NotificationWebHook.Headers);
                         await InsertNotificationLog(notificationLog);
                         return true;
+
                     default:
                         Console.WriteLine($"Not found NotificationTypeId: {notificationSend.NotificationTypeId}");
                         break;
@@ -101,18 +106,22 @@ namespace AlertHawk.Notification.Domain.Classes
         {
             switch (notificationItem.NotificationTypeId)
             {
-                case 1: // Email SMTP 
+                case 1: // Email SMTP
                     await _notificationRepository.InsertNotificationItemEmailSmtp(notificationItem);
                     break;
+
                 case 2: // MS Teams
                     await _notificationRepository.InsertNotificationItemMsTeams(notificationItem);
                     break;
+
                 case 3: // Telegram
                     await _notificationRepository.InsertNotificationItemTelegram(notificationItem);
                     break;
+
                 case 4: // Slack
                     await _notificationRepository.InsertNotificationItemSlack(notificationItem);
                     break;
+
                 case 5: // WebHook
                     await _notificationRepository.InsertNotificationItemWebHook(notificationItem);
                     break;
