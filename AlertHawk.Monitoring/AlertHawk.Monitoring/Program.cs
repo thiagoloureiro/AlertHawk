@@ -82,6 +82,7 @@ builder.Services.AddTransient<IMonitorService, MonitorService>();
 builder.Services.AddTransient<IMonitorGroupService, MonitorGroupService>();
 builder.Services.AddTransient<IMonitorAgentService, MonitorAgentService>();
 builder.Services.AddTransient<IMonitorAlertService, MonitorAlertService>();
+builder.Services.AddTransient<IHealthCheckService, HealthCheckService>();
 
 builder.Services.AddTransient<IMonitorTypeRepository, MonitorTypeRepository>();
 builder.Services.AddTransient<IMonitorRepository, MonitorRepository>();
@@ -89,6 +90,7 @@ builder.Services.AddTransient<IMonitorAgentRepository, MonitorAgentRepository>()
 builder.Services.AddTransient<IMonitorManager, MonitorManager>();
 builder.Services.AddTransient<IMonitorGroupRepository, MonitorGroupRepository>();
 builder.Services.AddTransient<IMonitorAlertRepository, MonitorAlertRepository>();
+builder.Services.AddTransient<IHealthCheckRepository, HealthCheckRepository>();
 
 builder.Services.AddTransient<IHttpClientRunner, HttpClientRunner>();
 builder.Services.AddTransient<ITcpClientRunner, TcpClientRunner>();

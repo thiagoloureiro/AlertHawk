@@ -50,7 +50,7 @@ public class MonitorGroupService : IMonitorGroupService
 
         var allMonitorIds = monitorGroupList
             .SelectMany(group => group.Monitors?.Select(m => m.Id) ?? Enumerable.Empty<int>()).ToList();
-        var allDashboardData = GetMonitorDashboardDataList(allMonitorIds);
+        var allDashboardData = await GetMonitorDashboardDataList(allMonitorIds);
         var monitorDashboards = allDashboardData.ToList();
 
         foreach (var monitorGroup in monitorGroups)
@@ -142,7 +142,7 @@ public class MonitorGroupService : IMonitorGroupService
 
         var allMonitorIds = monitorGroupList
             .SelectMany(group => group.Monitors?.Select(m => m.Id) ?? Enumerable.Empty<int>()).ToList();
-        var allDashboardData = GetMonitorDashboardDataList(allMonitorIds);
+        var allDashboardData = await GetMonitorDashboardDataList(allMonitorIds);
         var monitorDashboards = allDashboardData.ToList();
 
         foreach (var monitorGroup in monitorGroupList)
@@ -219,9 +219,9 @@ public class MonitorGroupService : IMonitorGroupService
         return listGroupMonitorIds;
     }
 
-    private IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
+    private async Task<IEnumerable<MonitorDashboard>> GetMonitorDashboardDataList(List<int> ids)
     {
-        var data = _caching.GetValueFromCache<List<MonitorDashboard?>>(_cacheKeyDashboardList);
+        var data = await _caching.GetValueFromCacheAsync<List<MonitorDashboard?>>(_cacheKeyDashboardList);
 
         if (data != null)
         {

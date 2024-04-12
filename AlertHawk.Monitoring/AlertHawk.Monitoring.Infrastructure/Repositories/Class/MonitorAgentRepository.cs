@@ -34,7 +34,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
 
         if (!allMonitors.Any(x => x.IsMaster) && !disableMaster)
         {
-            var currentMonitor = allMonitors.FirstOrDefault(x => x.Hostname == monitorAgent.Hostname);
+            var currentMonitor = allMonitors.Find(x => x.Hostname == monitorAgent.Hostname);
             monitorAgent.IsMaster = true;
             GlobalVariables.MasterNode = true;
 
