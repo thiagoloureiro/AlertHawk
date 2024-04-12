@@ -1,5 +1,6 @@
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
+using EasyMemoryCache;
 using EasyMemoryCache.Memorycache;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
@@ -7,9 +8,9 @@ namespace AlertHawk.Monitoring.Domain.Classes;
 public class HealthCheckService : IHealthCheckService
 {
     private readonly IHealthCheckRepository _healthCheckRepository;
-    private readonly Caching _caching;
+    private readonly ICaching _caching;
 
-    public HealthCheckService(IHealthCheckRepository healthCheckRepository, Caching caching)
+    public HealthCheckService(IHealthCheckRepository healthCheckRepository, ICaching caching)
     {
         _healthCheckRepository = healthCheckRepository;
         _caching = caching;
