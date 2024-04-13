@@ -14,7 +14,7 @@ public class HttpClientRunnerTests : IClassFixture<HttpClientRunner>
     }
 
     [Theory]
-    [InlineData("https://httpbin.org/get", MonitorHttpMethod.Get)]
+    [InlineData("https://www.google.com", MonitorHttpMethod.Get)]
     [InlineData("https://httpbin.org/post", MonitorHttpMethod.Post)]
     [InlineData("https://httpbin.org/put", MonitorHttpMethod.Put)]
     public async Task Should_Make_HttpClient_Call_OK_Result(string url, MonitorHttpMethod method)

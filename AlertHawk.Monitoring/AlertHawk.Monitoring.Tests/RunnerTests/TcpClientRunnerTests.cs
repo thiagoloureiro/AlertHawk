@@ -39,9 +39,9 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
         // Assert
         Assert.True(result);
     }
-    
+
     [Theory]
-    [InlineData("1.1.1.1", 6665)]
+    [InlineData("127.0.0.1", 4434)]
     [InlineData("8.8.8.8", 64564)]
     public async Task Should_Make_Tcp_Call_Failed_Result(string ip, int port)
     {
