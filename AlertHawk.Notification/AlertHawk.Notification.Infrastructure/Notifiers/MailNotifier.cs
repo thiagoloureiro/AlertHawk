@@ -17,9 +17,11 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
             smtpClient.EnableSsl = true;
 
             if (emailNotification.Subject != null)
+            {
                 emailNotification.Subject = emailNotification.Body != null && emailNotification.Body.Contains("Success")
                     ? "\u2705 " + emailNotification.Subject
                     : "\u274C " + emailNotification.Subject;
+            }
 
             // Create and send email to multiple recipients
             var mailMessage = new MailMessage();

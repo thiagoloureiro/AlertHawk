@@ -3,8 +3,6 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
-using MassTransit;
-using SharedModels;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
@@ -13,7 +11,7 @@ public class HttpClientRunner : IHttpClientRunner
     private readonly IMonitorRepository _monitorRepository;
     private readonly IHttpClientScreenshot _httpClientScreenshot;
     private readonly INotificationProducer _notificationProducer;
-    private int _daysToExpireCert = 0;
+    private int _daysToExpireCert;
 
     public HttpClientRunner(IMonitorRepository monitorRepository, IHttpClientScreenshot httpClientScreenshot,
         INotificationProducer notificationProducer)
