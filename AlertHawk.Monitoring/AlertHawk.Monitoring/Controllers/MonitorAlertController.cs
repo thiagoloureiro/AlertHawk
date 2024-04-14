@@ -56,10 +56,6 @@ namespace AlertHawk.Monitoring.Controllers
                     fileName = $"MonitorAlerts_{DateTime.UtcNow:yyyyMMdd}.xlsx";
                     return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                         fileName);
-                case ReportType.Pdf:
-                    fileName = $"MonitorAlerts_{DateTime.UtcNow:yyyyMMdd}.pdf";
-                   return new FileStreamResult(stream, "application/pdf") { FileDownloadName = fileName };
-
                 default:
                     return BadRequest("Invalid Report Type");
             }

@@ -3,9 +3,6 @@ using System.Data.SqlClient;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
-using iText.Kernel.Pdf;
-using iText.Layout;
-using iText.Layout.Element;
 using Microsoft.Extensions.Configuration;
 using OfficeOpenXml;
 
@@ -70,7 +67,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
             foreach (var alert in alerts)
             {
                 col = 1;
-                worksheet.Cells[row, col++].Value = alert.TimeStamp;
+                worksheet.Cells[row, col++].Value = alert.TimeStamp.ToString("dd/MM/yyyy HH:mm:ss");
                 worksheet.Cells[row, col++].Value = alert.Status;
                 worksheet.Cells[row, col++].Value = alert.Message;
                 worksheet.Cells[row, col++].Value = alert.ScreenShotUrl;
@@ -82,38 +79,6 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
         }
 
         stream.Position = 0;
-        return stream;
-    }
-
-    public async Task<MemoryStream> CreatePdfFileAsync(IEnumerable<MonitorAlert> monitorAlerts)
-    { 
-        var stream = new MemoryStream();
-        PdfWriter writer = new PdfWriter(stream);
-        PdfDocument pdf = new PdfDocument(writer);
-        Document document = new Document(pdf);
-
-        Table table = new Table(7); // The number of columns for MonitorAlert properties
-
-        // Add headers
-        table.AddHeaderCell("Timestamp");
-        table.AddHeaderCell("Status");
-        table.AddHeaderCell("Message");
-        table.AddHeaderCell("Screenshot URL");
-        table.AddHeaderCell("Monitor Name");
-
-        // Add data
-        foreach (var alert in monitorAlerts)
-        {
-            table.AddCell(alert.TimeStamp.ToString("g")); // "g" for general date/time pattern (short time)
-            table.AddCell(alert.Status ? "True" : "False");
-            table.AddCell(alert.Message);
-            table.AddCell(alert.ScreenShotUrl);
-            table.AddCell(alert.MonitorName);
-        }
-
-        document.Add(table);
-        document.Close(); // This also closes the PdfWriter and underlying stream
-        stream.Position = 0; // Rewind the stream for reading
         return stream;
     }
 }

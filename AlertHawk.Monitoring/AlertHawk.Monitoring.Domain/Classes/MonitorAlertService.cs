@@ -34,7 +34,6 @@ public class MonitorAlertService : IMonitorAlertService
         return reportType switch
         {
             ReportType.Excel => await _monitorAlertRepository.CreateExcelFileAsync(monitorAlerts),
-            ReportType.Pdf => await _monitorAlertRepository.CreatePdfFileAsync(monitorAlerts),
             _ => new MemoryStream()
         };
     }
