@@ -17,10 +17,11 @@ namespace AlertHawk.Notification.Domain.Utils
                 {
                     bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
                 }
+
                 return bytes;
             }
 
-            return new byte[] { };
+            return [];
         }
 
         public static string? EncryptString(string? plainText)
@@ -43,6 +44,7 @@ namespace AlertHawk.Notification.Domain.Utils
                 {
                     swEncrypt.Write(plainText);
                 }
+
                 encrypted = msEncrypt.ToArray();
             }
 
@@ -53,7 +55,9 @@ namespace AlertHawk.Notification.Domain.Utils
         public static string? DecryptString(string? cipherText)
         {
             if (cipherText == null || cipherText.Length <= 0)
+            {
                 throw new ArgumentNullException(nameof(cipherText));
+            }
 
             string? plaintext = null;
             byte[] cipherBytes = Convert.FromBase64String(cipherText);

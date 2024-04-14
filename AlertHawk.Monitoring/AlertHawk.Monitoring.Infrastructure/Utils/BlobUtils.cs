@@ -2,7 +2,7 @@ using Azure.Storage.Blobs;
 
 namespace AlertHawk.Monitoring.Infrastructure.Utils;
 
-public class BlobUtils
+public static class BlobUtils
 {
     public static async Task<string> UploadByteArrayToBlob(string blobName, byte[] data)
     {

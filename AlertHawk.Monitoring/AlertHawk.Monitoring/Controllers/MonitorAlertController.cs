@@ -48,17 +48,14 @@ namespace AlertHawk.Monitoring.Controllers
 
             var stream = await _monitorAlertService.GetMonitorAlertsReport(monitorId, days, jwtToken, reportType);
 
-            string fileName;
-
-            switch (reportType)
+            if (reportType == ReportType.Excel)
             {
-                case ReportType.Excel:
-                    fileName = $"MonitorAlerts_{DateTime.UtcNow:yyyyMMdd}.xlsx";
-                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        fileName);
-                default:
-                    return BadRequest("Invalid Report Type");
+                var fileName = $"MonitorAlerts_{DateTime.UtcNow:yyyyMMdd}.xlsx";
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileName);
             }
+
+            return BadRequest("Invalid Report Type");
         }
     }
 }

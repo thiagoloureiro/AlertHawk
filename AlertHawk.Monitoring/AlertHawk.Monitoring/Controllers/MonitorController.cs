@@ -55,7 +55,7 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorService.GetMonitorList();
             return Ok(result);
         }
-        
+
         [SwaggerOperation(Summary = "Retrieves a List of items to be Monitored, filtered by Tag")]
         [ProducesResponseType(typeof(IEnumerable<Domain.Entities.Monitor>), StatusCodes.Status200OK)]
         [HttpGet("monitorListByTag/{tag}")]
@@ -64,8 +64,8 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorService.GetMonitorListByTag(tag);
             return Ok(result);
         }
-        
-             
+
+
         [SwaggerOperation(Summary = "Retrieves a List (string) of monitor Tags")]
         [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
         [HttpGet("monitorTagList")]
@@ -119,7 +119,9 @@ namespace AlertHawk.Monitoring.Controllers
             var notifications = await _monitorService.GetMonitorNotifications(monitorNotification.MonitorId);
 
             if (notifications.Any(x => x.NotificationId == monitorNotification.NotificationId))
+            {
                 return BadRequest("Notification already exists for this monitor");
+            }
 
             await _monitorService.AddMonitorNotification(monitorNotification);
             return Ok();

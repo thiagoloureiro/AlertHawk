@@ -58,20 +58,20 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
             var col = 1;
 
             worksheet.Cells[1, col++].Value = "Timestamp";
-            worksheet.Cells[1, col++].Value = "Status";
-            worksheet.Cells[1, col++].Value = "Message";
-            worksheet.Cells[1, col++].Value = "Screenshot URL";
             worksheet.Cells[1, col++].Value = "Monitor Name";
+            worksheet.Cells[1, col++].Value = "Message";
+            worksheet.Cells[1, col].Value = "Screenshot URL";
+ 
 
             var row = 2;
             foreach (var alert in alerts)
             {
                 col = 1;
                 worksheet.Cells[row, col++].Value = alert.TimeStamp.ToString("dd/MM/yyyy HH:mm:ss");
-                worksheet.Cells[row, col++].Value = alert.Status;
-                worksheet.Cells[row, col++].Value = alert.Message;
-                worksheet.Cells[row, col++].Value = alert.ScreenShotUrl;
                 worksheet.Cells[row, col++].Value = alert.MonitorName;
+                worksheet.Cells[row, col++].Value = alert.Message;
+                worksheet.Cells[row, col].Value = alert.ScreenShotUrl;
+   
                 row++;
             }
 
