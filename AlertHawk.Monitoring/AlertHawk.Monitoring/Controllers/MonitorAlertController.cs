@@ -20,8 +20,8 @@ namespace AlertHawk.Monitoring.Controllers
         }
 
         [SwaggerOperation(Summary = "Retrieves a list of Monitor Alerts")]
-        [ProducesResponseType(typeof(MonitorStatusDashboard), StatusCodes.Status200OK)]
-            [HttpGet("monitorAlerts/{monitorId}/{days}")]
+        [ProducesResponseType(typeof(List<MonitorAlert>), StatusCodes.Status200OK)]
+        [HttpGet("monitorAlerts/{monitorId}/{days}")]
         public async Task<IActionResult> GetMonitorAlerts(int? monitorId = 0, int? days = 30)
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
@@ -32,6 +32,37 @@ namespace AlertHawk.Monitoring.Controllers
 
             var result = await _monitorAlertService.GetMonitorAlerts(monitorId, days, jwtToken);
             return Ok(result);
+        }
+
+        [SwaggerOperation(Summary = "Retrieves a list of Monitor Alerts in Excel format")]
+        [ProducesResponseType(typeof(List<MonitorAlert>), StatusCodes.Status200OK)]
+        [HttpGet("monitorAlertsReport/{monitorId}/{days}/{reportType}")]
+        public async Task<IActionResult> GetMonitorAlertsReport(int? monitorId = 0, int? days = 30,
+            ReportType reportType = ReportType.Excel)
+        {
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (jwtToken == null)
+            {
+                return BadRequest("Invalid Token");
+            }
+
+            var stream = await _monitorAlertService.GetMonitorAlertsReport(monitorId, days, jwtToken, reportType);
+
+            string fileName;
+
+            switch (reportType)
+            {
+                case ReportType.Excel:
+                    fileName = $"MonitorAlerts_{DateTime.UtcNow:yyyyMMdd}.xlsx";
+                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        fileName);
+                case ReportType.Pdf:
+                    fileName = $"MonitorAlerts_{DateTime.UtcNow:yyyyMMdd}.pdf";
+                   return new FileStreamResult(stream, "application/pdf") { FileDownloadName = fileName };
+
+                default:
+                    return BadRequest("Invalid Report Type");
+            }
         }
     }
 }
