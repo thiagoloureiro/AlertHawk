@@ -25,4 +25,16 @@ public class MonitorAlertService : IMonitorAlertService
 
         return new List<MonitorAlert>();
     }
+
+    public async Task<MemoryStream> GetMonitorAlertsReport(int? monitorId, int? days, string jwtToken,
+        ReportType reportType)
+    {
+        var monitorAlerts = await GetMonitorAlerts(monitorId, days, jwtToken);
+
+        return reportType switch
+        {
+            ReportType.Excel => await _monitorAlertRepository.CreateExcelFileAsync(monitorAlerts),
+            _ => new MemoryStream()
+        };
+    }
 }

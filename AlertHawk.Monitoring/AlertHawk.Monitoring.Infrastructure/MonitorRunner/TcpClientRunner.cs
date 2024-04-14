@@ -98,16 +98,26 @@ public class TcpClientRunner : ITcpClientRunner
         {
             CancellationToken cancellationToken = new CancellationToken();
             using var client = new TcpClient();
+            
+            // Initiate connection with timeout.
             var connectTask = client.ConnectAsync(monitorTcp.IP, monitorTcp.Port, cancellationToken);
             await connectTask.AsTask().WaitAsync(TimeSpan.FromSeconds(monitorTcp.Timeout), cancellationToken);
+
+            // Check if the cancellation was requested due to timeout or other reasons.
             cancellationToken.ThrowIfCancellationRequested();
 
-            var isConnected = true;
-            return isConnected;
+            // Explicitly check if the client is connected after the await operation.
+            if (!client.Connected)
+            {
+                return false; // Return false if the client is not connected.
+            }
+
+            return true; // Return true if the connection is successful.
         }
         catch (Exception)
         {
-            return false;
+            return false; // Return false if an exception occurred.
         }
+
     }
 }

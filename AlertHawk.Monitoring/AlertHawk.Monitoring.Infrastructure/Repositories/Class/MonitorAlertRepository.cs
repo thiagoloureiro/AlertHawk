@@ -4,6 +4,7 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
 using Microsoft.Extensions.Configuration;
+using OfficeOpenXml;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 
@@ -42,5 +43,42 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 ORDER BY MA.TimeStamp DESC";
 
         return await db.QueryAsync<MonitorAlert>(sql, commandType: CommandType.Text);
+    }
+
+    public async Task<MemoryStream> CreateExcelFileAsync(IEnumerable<MonitorAlert> alerts)
+    {
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial; // Set license context
+        var stream = new MemoryStream();
+
+        using (var package = new ExcelPackage(stream))
+        {
+            // Add a new worksheet to the empty workbook
+            var worksheet = package.Workbook.Worksheets.Add("Alerts");
+            // Add column headers
+            var col = 1;
+
+            worksheet.Cells[1, col++].Value = "Timestamp";
+            worksheet.Cells[1, col++].Value = "Status";
+            worksheet.Cells[1, col++].Value = "Message";
+            worksheet.Cells[1, col++].Value = "Screenshot URL";
+            worksheet.Cells[1, col++].Value = "Monitor Name";
+
+            var row = 2;
+            foreach (var alert in alerts)
+            {
+                col = 1;
+                worksheet.Cells[row, col++].Value = alert.TimeStamp.ToString("dd/MM/yyyy HH:mm:ss");
+                worksheet.Cells[row, col++].Value = alert.Status;
+                worksheet.Cells[row, col++].Value = alert.Message;
+                worksheet.Cells[row, col++].Value = alert.ScreenShotUrl;
+                worksheet.Cells[row, col++].Value = alert.MonitorName;
+                row++;
+            }
+
+            await package.SaveAsync();
+        }
+
+        stream.Position = 0;
+        return stream;
     }
 }
