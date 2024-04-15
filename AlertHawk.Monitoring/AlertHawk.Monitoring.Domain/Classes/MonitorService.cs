@@ -62,8 +62,6 @@ public class MonitorService : IMonitorService
     {
         try
         {
-            //    var result = await _caching.GetOrSetObjectFromCacheAsync($"GroupHistory_{id}_90", 10,() => _monitorRepository.GetMonitorHistoryByIdAndDays(id, 90));
-
             var result = await _monitorRepository.GetMonitorHistoryByIdAndDays(id, 90);
             var enumerable = result.ToList();
             if (!enumerable.Any())
@@ -103,12 +101,12 @@ public class MonitorService : IMonitorService
             }
 
             var monitorHistories = enumerable.ToList();
-            var lst1Hr = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddHours(-1)).ToList();
-            var lst24Hrs = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-1)).ToList();
-            var lst7Days = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-7)).ToList();
-            var lst30Days = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-30)).ToList();
-            var lst3Months = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-90)).ToList();
-            var lst6Months = monitorHistories.Where(x => x.TimeStamp > DateTime.Now.AddDays(-180)).ToList();
+            var lst1Hr = monitorHistories.Where(x => x.TimeStamp > DateTime.UtcNow.AddHours(-1)).ToList();
+            var lst24Hrs = monitorHistories.Where(x => x.TimeStamp > DateTime.UtcNow.AddDays(-1)).ToList();
+            var lst7Days = monitorHistories.Where(x => x.TimeStamp > DateTime.UtcNow.AddDays(-7)).ToList();
+            var lst30Days = monitorHistories.Where(x => x.TimeStamp > DateTime.UtcNow.AddDays(-30)).ToList();
+            var lst3Months = monitorHistories.Where(x => x.TimeStamp > DateTime.UtcNow.AddDays(-90)).ToList();
+            var lst6Months = monitorHistories.Where(x => x.TimeStamp > DateTime.UtcNow.AddDays(-180)).ToList();
 
             // Check if last 24 hours data is present
             bool containsLast24HoursData = false;
