@@ -13,6 +13,7 @@ public class MonitorGroupService : IMonitorGroupService
     private readonly IMonitorGroupRepository _monitorGroupRepository;
     private readonly ICaching _caching;
     private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
+    private readonly string _cacheKeyMonitorGroupList = "MonitorGroupList";
     private readonly string _cacheKeyMonitorDayHist = "CacheKeyMonitorDayHist_";
     private readonly IMonitorRepository _monitorRepository;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -28,7 +29,8 @@ public class MonitorGroupService : IMonitorGroupService
 
     public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList()
     {
-        var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupList();
+        var monitorGroupList = await _caching.GetOrSetObjectFromCacheAsync(_cacheKeyMonitorGroupList, 10,
+            () => _monitorGroupRepository.GetMonitorGroupList());
         return monitorGroupList;
     }
 
