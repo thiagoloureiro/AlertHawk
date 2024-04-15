@@ -191,16 +191,19 @@ public class MonitorGroupService : IMonitorGroupService
     public async Task AddMonitorGroup(MonitorGroup monitorGroup)
     {
         await _monitorGroupRepository.AddMonitorGroup(monitorGroup);
+        _caching.Invalidate(_cacheKeyMonitorGroupList);
     }
 
     public async Task UpdateMonitorGroup(MonitorGroup monitorGroup)
     {
         await _monitorGroupRepository.UpdateMonitorGroup(monitorGroup);
+        _caching.Invalidate(_cacheKeyMonitorGroupList);
     }
 
     public async Task DeleteMonitorGroup(int id)
     {
         await _monitorGroupRepository.DeleteMonitorGroup(id);
+        _caching.Invalidate(_cacheKeyMonitorGroupList);
     }
 
     public async Task<List<int>?> GetUserGroupMonitorListIds(string token)

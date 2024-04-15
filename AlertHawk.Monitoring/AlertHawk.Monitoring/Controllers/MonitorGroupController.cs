@@ -91,7 +91,6 @@ namespace AlertHawk.Monitoring.Controllers
             return Ok();
         }
 
-
         [SwaggerOperation(Summary = "Update a Monitor Group")]
         [ProducesResponseType(typeof(MonitorGroup), StatusCodes.Status200OK)]
         [HttpPost("updateMonitorGroup")]
