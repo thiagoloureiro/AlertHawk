@@ -29,7 +29,7 @@ public class MonitorReportRepository : RepositoryBase, IMonitorReportRepository
                                     MonitorHistory
                                 WHERE
                                     MonitorId IN (select monitorid from MonitorGroupItems where MonitorGroupId = @groupId) AND
-                                    TimeStamp >= DATEADD(hour, -@hours, GETUTCDATE())
+                                    TimeStamp >=DATEADD(hour, -@HoursAgo, DATEADD(minute, -1,GETUTCDATE()))
                             ),
                             Durations AS (
                                 SELECT
@@ -66,10 +66,33 @@ public class MonitorReportRepository : RepositoryBase, IMonitorReportRepository
                                     JOIN Monitor m ON ma.MonitorId = m.id
                                     WHERE ma.Status = 'false'
                                     AND ma.MonitorId IN (select monitorid from MonitorGroupItems where MonitorGroupId = @groupId)
-                                    AND ma.Timestamp >= DATEADD(HOUR, -@hours, GETDATE())
+                                    AND ma.Timestamp >= DATEADD(HOUR, -@hours, DATEADD(minute, -1,GETDATE()))
                                     GROUP BY ma.MonitorId, m.Name
                                     ORDER BY m.Name;";
         return await db.QueryAsync<MonitorReportAlerts>(sqlAllMonitors, new { groupId, hours },
             commandType: CommandType.Text);
+    }
+
+    public async Task<IEnumerable<MonitorReponseTime>> GetMonitorResponseTime(int groupId, int hours)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlAllMonitors = $@"SELECT
+                                mh.MonitorId,
+                                m.Name AS MonitorName,
+                                AVG(mh.ResponseTime) AS AvgResponseTime,
+                                MAX(mh.ResponseTime) AS MaxResponseTime,
+                                MIN(mh.ResponseTime) AS MinResponseTime
+                            FROM
+                                MonitorHistory mh
+                            JOIN
+                                Monitor m ON mh.MonitorId = m.Id
+                            WHERE
+                                mh.TimeStamp >= DATEADD(HOUR, -@hours, GETDATE()) AND
+                                mh.MonitorId IN (select MonitorId from MonitorGroupItems where MonitorGroupId = @groupId)
+                            GROUP BY
+                                mh.MonitorId, m.Name
+                            ORDER BY
+                                m.Name;";
+        return await db.QueryAsync<MonitorReponseTime>(sqlAllMonitors, new { groupId, hours }, commandType: CommandType.Text);
     }
 }

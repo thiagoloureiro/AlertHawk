@@ -22,4 +22,9 @@ public class MonitorReportService: IMonitorReportService
     {
         return await _monitorReportRepository.GetMonitorAlerts(groupId, hours);
     }
+
+    public async Task<IEnumerable<MonitorReponseTime>> GetMonitorResponseTime(int groupId, int hours)
+    {
+        return await _monitorReportRepository.GetMonitorResponseTime(groupId, hours);
+    }
 }
