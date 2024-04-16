@@ -29,7 +29,7 @@ public class MonitorReportRepository : RepositoryBase, IMonitorReportRepository
                                     MonitorHistory
                                 WHERE
                                     MonitorId IN (select monitorid from MonitorGroupItems where MonitorGroupId = @groupId) AND
-                                    TimeStamp >=DATEADD(hour, -@HoursAgo, DATEADD(minute, -1,GETUTCDATE()))
+                                    TimeStamp >=DATEADD(hour, -@hours, DATEADD(minute, -1,GETUTCDATE()))
                             ),
                             Durations AS (
                                 SELECT
