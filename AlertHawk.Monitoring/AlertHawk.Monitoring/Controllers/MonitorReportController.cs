@@ -1,3 +1,4 @@
+using AlertHawk.Monitoring.Attributes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Entities.Report;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
@@ -9,7 +10,7 @@ namespace AlertHawk.Monitoring.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[AllowAnonymous]
+[ApiKeyAuth]
 public class MonitorReportController: ControllerBase
 {
     private IMonitorReportService _monitorReportService;
