@@ -1,0 +1,96 @@
+
+# API Documentation
+
+## 1. Uptime Report Endpoint
+
+### GET `/monitoring/api/MonitorReport/Uptime/{GroupId}/{Hours}`
+
+This endpoint retrieves a report of uptime and downtime for monitors within a specified group over a given number of hours.
+
+**Parameters:**
+
+- **GroupId** (path parameter): An integer identifying the group of monitors.
+- **Hours** (path parameter): An integer specifying the time span in hours for the report.
+
+**Headers:**
+
+- **ApiKey**: Your API key for authentication.
+
+**Response Format:**
+
+A JSON array of objects, each representing a monitor and its online and offline times in minutes.
+
+**Response Example:**
+
+```json
+[
+    {
+        "monitorName": "AlertHawk Auth API",
+        "totalOnlineMinutes": 599,
+        "totalOfflineMinutes": 0
+    },
+    {
+        "monitorName": "AlertHawk Monitor API",
+        "totalOnlineMinutes": 599,
+        "totalOfflineMinutes": 0
+    },
+    {
+        "monitorName": "AlertHawk Notification API",
+        "totalOnlineMinutes": 599,
+        "totalOfflineMinutes": 0
+    },
+    {
+        "monitorName": "AlertHawk UI (Monitor)",
+        "totalOnlineMinutes": 599,
+        "totalOfflineMinutes": 0
+    }
+]
+```
+
+**CURL Example:**
+
+```bash
+curl -X GET "https://{API_URL}/monitoring/api/MonitorReport/Uptime/1/10" \
+     --header "ApiKey: your_api_key"
+```
+
+## 2. Alert Report Endpoint
+
+### GET `/monitoring/api/MonitorReport/Alert/{GroupId}/{Hours}`
+
+This endpoint retrieves a report of alerts for monitors within a specified group over a given number of hours.
+
+**Parameters:**
+
+- **GroupId** (path parameter): An integer identifying the group of monitors.
+- **Hours** (path parameter): An integer specifying the time span in hours for the report.
+
+**Headers:**
+
+- **ApiKey**: Your API key for authentication.
+
+**Response Format:**
+
+A JSON array of objects, each representing a monitor and the number of alerts it generated within the specified timeframe.
+
+**Response Example:**
+
+```json
+[
+    {
+        "monitorName": "AlertHawk Auth API",
+        "numAlerts": 1
+    },
+    {
+        "monitorName": "AlertHawk Monitor API",
+        "numAlerts": 1
+    }
+]
+```
+
+**CURL Example:**
+
+```bash
+curl -X GET "https://{API_URL}/monitoring/api/MonitorReport/Alert/1/600" \
+     --header "ApiKey: your_api_key"
+```
