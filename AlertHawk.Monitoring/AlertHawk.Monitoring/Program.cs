@@ -51,21 +51,27 @@ var configuration = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
-var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
-var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
-var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
+var enabledRabbitMq = Environment.GetEnvironmentVariable("RABBITMQ_ENABLED", EnvironmentVariableTarget.Process) ??
+                      "true";
 
-builder.Services.AddMassTransit(x =>
+if (enabledRabbitMq == "true")
 {
-    x.UsingRabbitMq((context, cfg) =>
+    var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
+    var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
+    var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
+
+    builder.Services.AddMassTransit(x =>
     {
-        cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
+        x.UsingRabbitMq((context, cfg) =>
         {
-            h.Username(rabbitMqUser);
-            h.Password(rabbitMqPass);
+            cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
+            {
+                h.Username(rabbitMqUser);
+                h.Password(rabbitMqPass);
+            });
         });
     });
-});
+}
 
 var azureEnabled = Environment.GetEnvironmentVariable("AZURE_AD_AUTH_ENABLED", EnvironmentVariableTarget.Process) ??
                    "true";
@@ -155,7 +161,6 @@ using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>(
     var monitorService = serviceScope.ServiceProvider.GetService<IMonitorService>();
     monitorService?.SetMonitorDashboardDataCacheList();
 }
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
