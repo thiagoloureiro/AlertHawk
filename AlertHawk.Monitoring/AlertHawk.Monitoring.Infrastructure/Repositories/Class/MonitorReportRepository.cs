@@ -29,7 +29,7 @@ public class MonitorReportRepository : RepositoryBase, IMonitorReportRepository
                                     MonitorHistory
                                 WHERE
                                     MonitorId IN (select monitorid from MonitorGroupItems where MonitorGroupId = @groupId) AND
-                                    TimeStamp >= DATEADD(hour, -@hours, GETUTCDATE())
+                                    TimeStamp >=DATEADD(hour, -@HoursAgo, DATEADD(minute, -1,GETUTCDATE()))
                             ),
                             Durations AS (
                                 SELECT
@@ -66,7 +66,7 @@ public class MonitorReportRepository : RepositoryBase, IMonitorReportRepository
                                     JOIN Monitor m ON ma.MonitorId = m.id
                                     WHERE ma.Status = 'false'
                                     AND ma.MonitorId IN (select monitorid from MonitorGroupItems where MonitorGroupId = @groupId)
-                                    AND ma.Timestamp >= DATEADD(HOUR, -@hours, GETDATE())
+                                    AND ma.Timestamp >= DATEADD(HOUR, -@hours, DATEADD(minute, -1,GETDATE()))
                                     GROUP BY ma.MonitorId, m.Name
                                     ORDER BY m.Name;";
         return await db.QueryAsync<MonitorReportAlerts>(sqlAllMonitors, new { groupId, hours },
