@@ -8,5 +8,6 @@ public enum MonitorRegion
     SouthAmerica = 4,
     Africa = 5,
     Asia = 6,
-    Custom = 7
+    Custom = 7,
+    Custom2 = 8
 }
