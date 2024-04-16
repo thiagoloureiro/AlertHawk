@@ -1,8 +1,6 @@
 using AlertHawk.Monitoring.Attributes;
-using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Entities.Report;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -35,6 +33,15 @@ public class MonitorReportController: ControllerBase
     public async Task<IActionResult> GetMonitorAlerts(int groupId, int hours)
     {
         var result = await _monitorReportService.GetMonitorAlerts(groupId, hours);
+        return Ok(result);
+    }
+    
+    [SwaggerOperation(Summary = "Retrieves ResponseTime Metrics by GroupId")]
+    [ProducesResponseType(typeof(IEnumerable<MonitorReponseTime>), StatusCodes.Status200OK)]
+    [HttpGet("ResponseTime/{groupId}/{hours}")]
+    public async Task<IActionResult> GetMonitorResponseTime(int groupId, int hours)
+    {
+        var result = await _monitorReportService.GetMonitorResponseTime(groupId, hours);
         return Ok(result);
     }
 }
