@@ -9,5 +9,7 @@ public enum MonitorRegion
     Africa = 5,
     Asia = 6,
     Custom = 7,
-    Custom2 = 8
+    Custom2 = 8,
+    Custom3 = 9,
+    Custom4 = 10
 }
