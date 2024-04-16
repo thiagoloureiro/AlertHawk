@@ -18,7 +18,7 @@ public class MonitorReportService: IMonitorReportService
         return await _monitorReportRepository.GetMonitorReportUptime(groupId, hours);
     }
 
-    public Task<IEnumerable<MonitorReportAlerts>> GetMonitorAlerts(int groupId, int hours)
+    public async Task<IEnumerable<MonitorReportAlerts>> GetMonitorAlerts(int groupId, int hours)
     {
         return await _monitorReportRepository.GetMonitorAlerts(groupId, hours);
     }
