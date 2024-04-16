@@ -21,7 +21,7 @@ public class MonitorReportController: ControllerBase
     
     [SwaggerOperation(Summary = "Retrieves Total Online and Offline minutes by GroupId")]
     [ProducesResponseType(typeof(IEnumerable<MonitorReportUptime>), StatusCodes.Status200OK)]
-    [HttpGet("Report/{groupId}/{hours}")]
+    [HttpGet("Uptime/{groupId}/{hours}")]
     public async Task<IActionResult> GetMonitorReportUptime(int groupId, int hours)
     {
         var result = await _monitorReportService.GetMonitorReportUptime(groupId, hours);
@@ -30,7 +30,7 @@ public class MonitorReportController: ControllerBase
     
     [SwaggerOperation(Summary = "Retrieves Total Monitor Alerts by GroupId")]
     [ProducesResponseType(typeof(IEnumerable<MonitorReportAlerts>), StatusCodes.Status200OK)]
-    [HttpGet("Report/{groupId}/{hours}")]
+    [HttpGet("Alert/{groupId}/{hours}")]
     public async Task<IActionResult> GetMonitorAlerts(int groupId, int hours)
     {
         var result = await _monitorReportService.GetMonitorAlerts(groupId, hours);
