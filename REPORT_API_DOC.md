@@ -96,3 +96,60 @@ A JSON array of objects, each representing a monitor and the number of alerts it
 curl -X GET "https://{API_URL}/monitoring/api/MonitorReport/Alert/1/600" \
      --header "ApiKey: your_api_key"
 ```
+
+## 3. Response Time Report Endpoint
+
+### GET GET /monitoring/api/MonitorReport/ResponseTime/{GroupId}/{Hours}
+
+This endpoint retrieves a report of average, maximum, and minimum response times for monitors within a specified group over a given number of hours.
+
+**Parameters:**
+
+- **GroupId** (path parameter): An integer identifying the group of monitors.
+- **Hours** (path parameter): An integer specifying the time span in hours for the report.
+
+**Headers:**
+
+- **ApiKey**: Your API key for authentication.
+
+**Response Format:**
+
+A JSON array of objects, each representing a monitor and its average, maximum, and minimum response times.
+
+**Response Example:**
+
+```json
+[
+    {
+        "monitorName": "AlertHawk Auth API",
+        "avgResponseTime": 272,
+        "maxResponseTime": 10801,
+        "minResponseTime": 0
+    },
+    {
+        "monitorName": "AlertHawk Monitor API",
+        "avgResponseTime": 278,
+        "maxResponseTime": 9119,
+        "minResponseTime": 0
+    },
+    {
+        "monitorName": "AlertHawk Notification API",
+        "avgResponseTime": 254,
+        "maxResponseTime": 9865,
+        "minResponseTime": 0
+    },
+    {
+        "monitorName": "AlertHawk UI (Monitor)",
+        "avgResponseTime": 332,
+        "maxResponseTime": 15706,
+        "minResponseTime": 5
+    }
+]
+```
+
+**CURL Example:**
+
+```bash
+curl -X GET "https://{API_URL}/monitoring/api/MonitorReport/ResponseTime/1/600" \
+     --header "ApiKey: your_api_key"
+```

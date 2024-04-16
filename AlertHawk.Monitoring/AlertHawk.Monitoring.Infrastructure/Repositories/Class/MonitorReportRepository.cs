@@ -88,6 +88,7 @@ public class MonitorReportRepository : RepositoryBase, IMonitorReportRepository
                                 Monitor m ON mh.MonitorId = m.Id
                             WHERE
                                 mh.TimeStamp >= DATEADD(HOUR, -@hours, GETDATE()) AND
+                                mh.Status = 1 AND
                                 mh.MonitorId IN (select MonitorId from MonitorGroupItems where MonitorGroupId = @groupId)
                             GROUP BY
                                 mh.MonitorId, m.Name
