@@ -1,0 +1,75 @@
+using System.Data;
+using System.Data.SqlClient;
+using AlertHawk.Monitoring.Domain.Entities.Report;
+using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using Dapper;
+using Microsoft.Extensions.Configuration;
+
+namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
+
+public class MonitorReportRepository : RepositoryBase, IMonitorReportRepository
+{
+    private readonly string _connstring;
+
+    public MonitorReportRepository(IConfiguration configuration) : base(configuration)
+    {
+        _connstring = GetConnectionString();
+    }
+
+    public async Task<IEnumerable<MonitorReportUptime>> GetMonitorReportUptime(int groupId, int hours)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlAllMonitors = @"WITH StatusChanges AS (
+                                SELECT
+                                    MonitorId,
+                                    Status,
+                                    TimeStamp,
+                                    LEAD(TimeStamp) OVER (PARTITION BY MonitorId ORDER BY TimeStamp) AS NextTimeStamp
+                                FROM
+                                    MonitorHistory
+                                WHERE
+                                    MonitorId IN (select monitorid from MonitorGroupItems where MonitorGroupId = @groupId) AND
+                                    TimeStamp >= DATEADD(hour, -@hours, GETUTCDATE())
+                            ),
+                            Durations AS (
+                                SELECT
+                                    MonitorId,
+                                    Status,
+                                    TimeStamp,
+                                    NextTimeStamp,
+                                    DATEDIFF(minute, TimeStamp, NextTimeStamp) AS DurationInMinutes
+                                FROM
+                                    StatusChanges
+                                WHERE
+                                    NextTimeStamp IS NOT NULL
+                            )
+                            SELECT
+                                m.name AS MonitorName,
+                                d.MonitorId,
+                                SUM(CASE WHEN d.Status = 'true' THEN d.DurationInMinutes ELSE 0 END) AS TotalOnlineMinutes,
+                                SUM(CASE WHEN d.Status = 'false' THEN d.DurationInMinutes ELSE 0 END) AS TotalOfflineMinutes
+                            FROM
+                                Durations d
+                            JOIN
+                                Monitor m ON d.MonitorId = m.id
+                            GROUP BY
+                                d.MonitorId, m.name";
+        return await db.QueryAsync<MonitorReportUptime>(sqlAllMonitors, new { groupId, hours },
+            commandType: CommandType.Text);
+    }
+
+    public async Task<IEnumerable<MonitorReportAlerts>> GetMonitorAlerts(int groupId, int hours)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlAllMonitors = $@"SELECT m.Name AS MonitorName, ma.MonitorId, COUNT(*) AS NumAlerts
+                                    FROM MonitorAlert ma
+                                    JOIN Monitor m ON ma.MonitorId = m.id
+                                    WHERE ma.Status = 'false'
+                                    AND ma.MonitorId IN (select monitorid from MonitorGroupItems where MonitorGroupId = @groupId)
+                                    AND ma.Timestamp >= DATEADD(HOUR, -@hours, GETDATE())
+                                    GROUP BY ma.MonitorId, m.Name
+                                    ORDER BY m.Name;";
+        return await db.QueryAsync<MonitorReportAlerts>(sqlAllMonitors, new { groupId, hours },
+            commandType: CommandType.Text);
+    }
+}
