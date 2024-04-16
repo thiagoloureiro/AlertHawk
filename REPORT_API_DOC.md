@@ -7,6 +7,8 @@
 
 This endpoint retrieves a report of uptime and downtime for monitors within a specified group over a given number of hours.
 
+GroupId means a group of application/monitors, for example, Group 1 - AlerHawk, contains 4 monitors, 3 for APIs and 1 for the UI Application.
+
 **Parameters:**
 
 - **GroupId** (path parameter): An integer identifying the group of monitors.
