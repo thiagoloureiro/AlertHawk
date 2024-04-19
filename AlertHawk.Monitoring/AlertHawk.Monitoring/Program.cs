@@ -81,6 +81,8 @@ if (azureEnabled == "true")
 }
 
 builder.Services.AddHangfire(config => config.UseMemoryStorage());
+builder.Services.AddHangfireServer();
+
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
 
 builder.Services.AddTransient<IMonitorTypeService, MonitorTypeService>();
@@ -148,13 +150,16 @@ builder.Services.AddSwaggerGen(c =>
 });
 var app = builder.Build();
 
-app.UseHangfireServer();
+var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
 
-RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMonitorHeartBeatManager(), "*/6 * * * * *");
-RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
-RecurringJob.AddOrUpdate<IMonitorManager>(x => x.StartRunnerManager(), "*/25 * * * * *");
+recurringJobManager.AddOrUpdate<IMonitorManager>("StartMonitorHeartBeatManager", x => x.StartMonitorHeartBeatManager(),
+    "*/6 * * * * *");
+recurringJobManager.AddOrUpdate<IMonitorManager>("StartMasterMonitorAgentTaskManager",
+    x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
+recurringJobManager.AddOrUpdate<IMonitorManager>("StartRunnerManager", x => x.StartRunnerManager(), "*/25 * * * * *");
+recurringJobManager.AddOrUpdate<IMonitorService>("SetMonitorDashboardDataCacheList", x => x.SetMonitorDashboardDataCacheList(),
+    "*/5 * * * *");
 
-RecurringJob.AddOrUpdate<IMonitorService>(x => x.SetMonitorDashboardDataCacheList(), "*/5 * * * *");
 // Resolve the service and run the method immediately
 using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
 {

@@ -9,7 +9,7 @@
         <PackageProjectUrl>https://github.com/thiagoloureiro/AlertHawk</PackageProjectUrl>
         <PackageLicenseUrl>https://github.com/thiagoloureiro/AlertHawk/blob/main/LICENSE</PackageLicenseUrl>
         <RepositoryUrl>https://github.com/thiagoloureiro/AlertHawk</RepositoryUrl>
-        <Version>1.0.14</Version>
+        <Version>1.0.15</Version>
         <Icon>https://raw.githubusercontent.com/thiagoloureiro/AlertHawk/main/AlertHawk.Monitoring/monitoring.png</Icon>
         <PackageIcon>monitoring.png</PackageIcon>
     </PropertyGroup>
@@ -24,7 +24,7 @@
     <ItemGroup>
       <PackageReference Include="AlertHawk.Authentication.Domain" Version="1.0.3" />
       <PackageReference Include="AlertHawk.Notification.Domain" Version="1.0.5" />
-      <PackageReference Include="Azure.Identity" Version="1.11.0" />
+      <PackageReference Include="Azure.Identity" Version="1.11.1" />
       <PackageReference Include="EasyMemoryCache" Version="2.0.3" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
     </ItemGroup>
