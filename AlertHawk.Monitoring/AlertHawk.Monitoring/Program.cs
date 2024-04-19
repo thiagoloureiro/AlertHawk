@@ -51,27 +51,23 @@ var configuration = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
-var enabledRabbitMq = Environment.GetEnvironmentVariable("RABBITMQ_ENABLED", EnvironmentVariableTarget.Process) ??
-                      "true";
 
-if (enabledRabbitMq == "true")
+var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
+var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
+var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
+
+builder.Services.AddMassTransit(x =>
 {
-    var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
-    var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
-    var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
-
-    builder.Services.AddMassTransit(x =>
+    x.UsingRabbitMq((context, cfg) =>
     {
-        x.UsingRabbitMq((context, cfg) =>
+        cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
         {
-            cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
-            {
-                h.Username(rabbitMqUser);
-                h.Password(rabbitMqPass);
-            });
+            h.Username(rabbitMqUser);
+            h.Password(rabbitMqPass);
         });
     });
-}
+});
+
 
 var azureEnabled = Environment.GetEnvironmentVariable("AZURE_AD_AUTH_ENABLED", EnvironmentVariableTarget.Process) ??
                    "true";
@@ -157,7 +153,8 @@ recurringJobManager.AddOrUpdate<IMonitorManager>("StartMonitorHeartBeatManager",
 recurringJobManager.AddOrUpdate<IMonitorManager>("StartMasterMonitorAgentTaskManager",
     x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
 recurringJobManager.AddOrUpdate<IMonitorManager>("StartRunnerManager", x => x.StartRunnerManager(), "*/25 * * * * *");
-recurringJobManager.AddOrUpdate<IMonitorService>("SetMonitorDashboardDataCacheList", x => x.SetMonitorDashboardDataCacheList(),
+recurringJobManager.AddOrUpdate<IMonitorService>("SetMonitorDashboardDataCacheList",
+    x => x.SetMonitorDashboardDataCacheList(),
     "*/5 * * * *");
 
 // Resolve the service and run the method immediately
