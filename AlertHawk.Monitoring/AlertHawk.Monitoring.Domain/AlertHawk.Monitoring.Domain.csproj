@@ -24,7 +24,7 @@
     <ItemGroup>
       <PackageReference Include="AlertHawk.Authentication.Domain" Version="1.0.3" />
       <PackageReference Include="AlertHawk.Notification.Domain" Version="1.0.5" />
-      <PackageReference Include="Azure.Identity" Version="1.11.1" />
+      <PackageReference Include="Azure.Identity" Version="1.11.2" />
       <PackageReference Include="EasyMemoryCache" Version="2.0.3" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
     </ItemGroup>

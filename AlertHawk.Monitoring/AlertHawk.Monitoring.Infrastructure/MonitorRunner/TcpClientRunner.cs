@@ -27,7 +27,7 @@ public class TcpClientRunner : ITcpClientRunner
         {
             try
             {
-                isConnected = await MakeTcpCall(monitorTcp);
+                isConnected = MakeTcpCall(monitorTcp);
 
                 var monitorHistory = new MonitorHistory
                 {
@@ -92,32 +92,26 @@ public class TcpClientRunner : ITcpClientRunner
         return isConnected;
     }
 
-    public async Task<bool> MakeTcpCall(MonitorTcp monitorTcp)
+    public bool MakeTcpCall(MonitorTcp monitorTcp)
     {
+        using var tcpClient = new TcpClient();
         try
         {
-            CancellationToken cancellationToken = new CancellationToken();
-            using var client = new TcpClient();
-            
-            // Initiate connection with timeout.
-            var connectTask = client.ConnectAsync(monitorTcp.IP, monitorTcp.Port, cancellationToken);
-            await connectTask.AsTask().WaitAsync(TimeSpan.FromSeconds(monitorTcp.Timeout), cancellationToken);
+            var timeoutInSeconds = monitorTcp.Timeout;
 
-            // Check if the cancellation was requested due to timeout or other reasons.
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // Explicitly check if the client is connected after the await operation.
-            if (!client.Connected)
+            var task = tcpClient.ConnectAsync(monitorTcp.IP, monitorTcp.Port);
+            if (Task.WaitAny(new Task[] { task }, timeoutInSeconds * 1000) == -1)
             {
-                return false; // Return false if the client is not connected.
+                // Timeout, connection attempt was not successful within the given timeframe
+                return false;
             }
 
-            return true; // Return true if the connection is successful.
+            return tcpClient.Connected; // Return true if connected, false otherwise
         }
         catch (Exception)
         {
-            return false; // Return false if an exception occurred.
+            // Handle exceptions (such as invalid IP, port out of range, etc.)
+            return false;
         }
-
     }
 }
