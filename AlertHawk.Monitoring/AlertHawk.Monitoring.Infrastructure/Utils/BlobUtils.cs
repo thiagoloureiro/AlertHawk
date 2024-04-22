@@ -4,7 +4,7 @@ namespace AlertHawk.Monitoring.Infrastructure.Utils;
 
 public static class BlobUtils
 {
-    public static async Task<string> UploadByteArrayToBlob(string blobName, byte[] data)
+    public static async Task<string?> UploadByteArrayToBlob(string blobName, byte[] data)
     {
         var containerName = Environment.GetEnvironmentVariable("azure_blob_storage_container_name");
         var connectionString = Environment.GetEnvironmentVariable("azure_blob_storage_connection_string");

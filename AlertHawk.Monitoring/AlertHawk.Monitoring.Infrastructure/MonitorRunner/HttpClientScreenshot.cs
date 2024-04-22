@@ -7,29 +7,28 @@ namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
 public class HttpClientScreenshot : IHttpClientScreenshot
 {
-    public async Task<string> TakeScreenshotAsync(string url, int monitorId, string monitorName)
+    public async Task<string?> TakeScreenshotAsync(string url, int monitorId, string monitorName)
     {
-        try
+        var screenshotEnabled = VariableUtils.GetBoolEnvVariable("enable_screenshot");
+        string? screenshotUrl = string.Empty;
+        if (screenshotEnabled)
         {
-            var screenshotEnabled = VariableUtils.GetBoolEnvVariable("enable_screenshot");
-            string screenshotUrl = string.Empty;
-            if (screenshotEnabled)
+            // Set the path to the directory where you want to save the screenshot
+            string screenshotDirectory = $@"/screenshots/{monitorId}_{monitorName}";
+            // Ensure the directory exists, create it if necessary
+            Directory.CreateDirectory(screenshotDirectory);
+
+            // Set Chrome options
+            ChromeOptions options = new ChromeOptions();
+            options.AddArguments("--no-sandbox");
+            //options.AddArguments("--disable-dev-shm-usage");
+            options.AddArgument("--headless");
+            options.AddArgument("--window-size=1280,780");
+
+            // Initialize ChromeDriver
+            using var driver = new ChromeDriver(options);
+            try
             {
-                // Set the path to the directory where you want to save the screenshot
-                string screenshotDirectory = $@"/screenshots/{monitorId}_{monitorName}";
-                // Ensure the directory exists, create it if necessary
-                Directory.CreateDirectory(screenshotDirectory);
-
-                // Set Chrome options
-                ChromeOptions options = new ChromeOptions();
-                options.AddArguments("--no-sandbox");
-                options.AddArguments("--disable-dev-shm-usage");
-                options.AddArgument("--headless");
-                options.AddArgument("--window-size=1280,780");
-
-                // Initialize ChromeDriver
-                using var driver = new ChromeDriver(options);
-
                 bool navigationSuccessful = false;
                 int retryCount = 0;
                 while (!navigationSuccessful && retryCount < 3) // Retry up to 3 times
@@ -68,14 +67,23 @@ public class HttpClientScreenshot : IHttpClientScreenshot
                 }
 
                 Console.WriteLine($"Screenshot saved: {filePath}");
-            }
 
-            return screenshotUrl;
+
+                return screenshotUrl;
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+                driver.Quit();
+                return null;
+            }
+            finally
+            {
+                driver.Close();
+                driver.Quit();
+            }
         }
-        catch (Exception e)
-        {
-            SentrySdk.CaptureException(e);
-            return null;
-        }
+
+        return null;
     }
 }

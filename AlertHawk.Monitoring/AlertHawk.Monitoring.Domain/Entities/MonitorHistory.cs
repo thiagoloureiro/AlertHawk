@@ -10,5 +10,5 @@ public class MonitorHistory
     public int ResponseTime { get; set; }
     public string? HttpVersion { get; set; }
     public string? ResponseMessage { get; set; }
-    public string ScreenShotUrl { get; set; }
+    public string? ScreenShotUrl { get; set; }
 }
