@@ -18,7 +18,7 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
     [Theory]
     [InlineData("8.8.8.8", 443)]
     [InlineData("1.1.1.1", 443)]
-    public async Task Should_Make_Tcp_Call_Success_Result(string ip, int port)
+    public void Should_Make_Tcp_Call_Success_Result(string ip, int port)
     {
         // Arrange
         var monitorTcp = new MonitorTcp
@@ -34,7 +34,7 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
         };
 
         // Act
-        var result = await _tcpClientRunner.MakeTcpCall(monitorTcp);
+        var result = _tcpClientRunner.MakeTcpCall(monitorTcp);
 
         // Assert
         Assert.True(result);
@@ -42,15 +42,15 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
 
     [Theory]
     [InlineData("127.0.0.1", 4434)]
-    [InlineData("8.8.8.8", 64564)]
-    public async Task Should_Make_Tcp_Call_Failed_Result(string ip, int port)
+    [InlineData("9.8.7.6", 64564)]
+    public void Should_Make_Tcp_Call_Failed_Result(string ip, int port)
     {
         // Arrange
         var monitorTcp = new MonitorTcp
         {
             Id = 1,
             Name = "Test",
-            Timeout = 2,
+            Timeout = 20,
             Port = port,
             IP = ip,
             HeartBeatInterval = 1,
@@ -58,7 +58,7 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
         };
 
         // Act
-        var result = await _tcpClientRunner.MakeTcpCall(monitorTcp);
+        var result = _tcpClientRunner.MakeTcpCall(monitorTcp);
 
         // Assert
         Assert.False(result);
