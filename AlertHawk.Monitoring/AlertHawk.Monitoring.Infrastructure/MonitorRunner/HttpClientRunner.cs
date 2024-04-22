@@ -25,6 +25,9 @@ public class HttpClientRunner : IHttpClientRunner
     {
         int maxRetries = monitorHttp.Retries;
         int retryCount = 0;
+        
+        var monitor = await _monitorRepository.GetMonitorById(monitorHttp.MonitorId);
+        monitorHttp.LastStatus = monitor.Status;
 
         while (retryCount < maxRetries)
         {
