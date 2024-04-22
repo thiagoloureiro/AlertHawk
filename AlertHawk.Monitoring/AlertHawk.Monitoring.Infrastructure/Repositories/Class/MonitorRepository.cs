@@ -105,7 +105,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string sqlMonitorHttp =
             @"UPDATE [MonitorHttp] SET CheckCertExpiry = @CheckCertExpiry, IgnoreTlsSsl = @IgnoreTlsSsl, 
             MaxRedirects = @MaxRedirects, UrlToCheck = @UrlToCheck, Timeout = @Timeout, MonitorHttpMethod = @MonitorHttpMethod, 
-            Body = @Body, HeadersJson = @HeadersJson WHERE MonitorId = @monitorId";
+            Body = @Body, HeadersJson = @HeadersJsonWHERE MonitorId = @monitorId";
 
         await db.ExecuteAsync(sqlMonitorHttp,
             new
@@ -118,7 +118,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 monitorHttp.Body,
                 monitorHttp.HeadersJson,
                 monitorHttp.UrlToCheck,
-                monitorHttp.Timeout
+                monitorHttp.Timeout,
             }, commandType: CommandType.Text);
     }
 
@@ -306,7 +306,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string sql = @"UPDATE [Monitor] SET Status=@status, DaysToExpireCert=@daysToExpireCert WHERE Id=@id";
         await db.ExecuteAsync(sql, new { id, status, daysToExpireCert }, commandType: CommandType.Text);
     }
-
+    
     public async Task PauseMonitor(int id, bool paused)
     {
         await using var db = new SqlConnection(_connstring);
@@ -318,7 +318,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sqlMonitor =
-            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment) VALUES (@Name, @MonitorTypeId, @HeartBeatInterval, @Retries, @Status, @DaysToExpireCert, @Paused, @MonitorRegion, @MonitorEnvironment); SELECT CAST(SCOPE_IDENTITY() as int)";
+            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, LastStatus) VALUES (@Name, @MonitorTypeId, @HeartBeatInterval, @Retries, @Status, @DaysToExpireCert, @Paused, @MonitorRegion, @MonitorEnvironment, @LastStatus); SELECT CAST(SCOPE_IDENTITY() as int)";
         var id = await db.ExecuteScalarAsync<int>(sqlMonitor,
             new
             {
@@ -330,7 +330,8 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 monitorHttp.DaysToExpireCert,
                 monitorHttp.Paused,
                 monitorHttp.MonitorRegion,
-                monitorHttp.MonitorEnvironment
+                monitorHttp.MonitorEnvironment,
+                monitorHttp.LastStatus
             }, commandType: CommandType.Text);
 
         string sqlMonitorHttp =
@@ -347,7 +348,8 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 monitorHttp.Body,
                 monitorHttp.HeadersJson,
                 monitorHttp.UrlToCheck,
-                monitorHttp.Timeout
+                monitorHttp.Timeout,
+                monitorHttp.LastStatus
             }, commandType: CommandType.Text);
         return id;
     }
@@ -408,7 +410,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string whereClause = $"WHERE MonitorId IN ({string.Join(",", ids)})";
 
         string sql =
-            $@"SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp] {whereClause}";
+            $@"SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson, LastStatus FROM [MonitorHttp] {whereClause}";
 
         return await db.QueryAsync<MonitorHttp>(sql, commandType: CommandType.Text);
     }

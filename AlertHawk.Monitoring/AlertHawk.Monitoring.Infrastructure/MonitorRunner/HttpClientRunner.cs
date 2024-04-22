@@ -58,7 +58,7 @@ public class HttpClientRunner : IHttpClientRunner
                         _daysToExpireCert);
                     await _monitorRepository.SaveMonitorHistory(monitorHistory);
 
-                    if (!monitorHttp.LastStatus)
+                    if (succeeded != monitorHttp.LastStatus)
                     {
                         await _notificationProducer.HandleSuccessNotifications(monitorHttp, response.ReasonPhrase);
                         await _monitorRepository.SaveMonitorAlert(monitorHistory);

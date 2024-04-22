@@ -1,6 +1,7 @@
 # Using the official .NET images based on Alpine
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS base
 # Install necessary packages and create user
+RUN apk update && apk upgrade
 RUN apk --no-cache add icu-libs
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 WORKDIR /app
