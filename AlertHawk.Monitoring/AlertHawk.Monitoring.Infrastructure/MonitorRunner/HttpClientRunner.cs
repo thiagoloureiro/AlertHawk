@@ -77,6 +77,9 @@ public class HttpClientRunner : IHttpClientRunner
                         await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded,
                             _daysToExpireCert);
                         await _monitorRepository.SaveMonitorHistory(monitorHistory);
+                        
+                        Console.WriteLine("Success: " + succeeded);
+                        Console.WriteLine("Last status: " + monitorHttp.LastStatus);
 
                         // only send notification when goes from online to offline to avoid flood
                         if (monitorHttp.LastStatus)
@@ -87,6 +90,7 @@ public class HttpClientRunner : IHttpClientRunner
                                 monitorHttp.UrlToCheck,
                                 monitorHttp.MonitorId, monitorHttp.Name);
                             monitorHistory.ScreenShotUrl = screenshotUrl;
+                            Console.WriteLine("Calling SaveMonitorAlert...");
                             await _monitorRepository.SaveMonitorAlert(monitorHistory);
 
                             break;
@@ -96,6 +100,7 @@ public class HttpClientRunner : IHttpClientRunner
             }
             catch (Exception err)
             {
+                Console.WriteLine(err.Message);
                 retryCount++;
                 Thread.Sleep(2000);
                 // If max retries reached, update status and save history
