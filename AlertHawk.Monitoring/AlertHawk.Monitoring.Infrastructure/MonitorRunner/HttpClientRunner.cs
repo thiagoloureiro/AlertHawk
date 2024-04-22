@@ -26,6 +26,9 @@ public class HttpClientRunner : IHttpClientRunner
         int maxRetries = monitorHttp.Retries;
         int retryCount = 0;
 
+        var monitor = await _monitorRepository.GetMonitorById(monitorHttp.MonitorId);
+        monitorHttp.LastStatus = monitor.Status;
+
         while (retryCount < maxRetries)
         {
             try
@@ -77,7 +80,7 @@ public class HttpClientRunner : IHttpClientRunner
                         await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded,
                             _daysToExpireCert);
                         await _monitorRepository.SaveMonitorHistory(monitorHistory);
-                        
+
                         Console.WriteLine("Success: " + succeeded);
                         Console.WriteLine("Last status: " + monitorHttp.LastStatus);
 
