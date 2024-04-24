@@ -19,9 +19,11 @@ using System.Text.Json.Serialization;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Infrastructure.Producers;
 using Microsoft.AspNetCore.ResponseCompression;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+using AlertHawk.Monitoring.Infrastructure;
 
 [assembly: ExcludeFromCodeCoverage]
-
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseSentry(options =>
     {
@@ -51,7 +53,6 @@ var configuration = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
-
 var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
 var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
 var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
@@ -67,7 +68,6 @@ builder.Services.AddMassTransit(x =>
         });
     });
 });
-
 
 var azureEnabled = Environment.GetEnvironmentVariable("AZURE_AD_AUTH_ENABLED", EnvironmentVariableTarget.Process) ??
                    "true";
@@ -115,6 +115,27 @@ builder.Services.AddResponseCompression(options =>
 // Add HttpClientFactory
 builder.Services.AddHttpClient();
 
+builder.Services.AddHttpClient("agentClient", client =>
+    {
+        client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
+        client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
+        client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+        client.DefaultRequestHeaders.Add("Accept", "*/*");
+    })
+    .ConfigurePrimaryHttpMessageHandler(() =>
+    {
+        return new HttpClientHandler()
+        {
+            ServerCertificateCustomValidationCallback = (HttpRequestMessage message, X509Certificate2 cert, X509Chain chain, SslPolicyErrors errors) =>
+            {
+                // Use AsyncLocal to store certificate details temporarily during the request
+                CertificateHelper.cert = cert;
+                return true; // Validate the certificate as per your security requirements
+            },
+            MaxAutomaticRedirections = 3,
+        };
+    });
+
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.DefaultIgnoreCondition =
@@ -130,7 +151,8 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1",
         new OpenApiInfo
         {
-            Title = "AlertHawk Monitoring API", Version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
+            Title = "AlertHawk Monitoring API",
+            Version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
         });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
