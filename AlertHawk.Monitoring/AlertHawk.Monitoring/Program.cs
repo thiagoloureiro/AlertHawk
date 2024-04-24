@@ -79,24 +79,24 @@ if (azureEnabled == "true")
 
 var connectionString = configuration.GetValue<string>("ConnectionStrings:SqlConnectionString");
 
-builder.Services.AddHangfire(config => config.UseMemoryStorage());
+//builder.Services.AddHangfire(config => config.UseMemoryStorage());
 
-//builder.Services.AddHangfire(config =>
-//    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
-//        .UseSimpleAssemblyNameTypeSerializer()
-//        .UseRecommendedSerializerSettings()
-//        .UseSqlServerStorage(connectionString, new SqlServerStorageOptions
-//        {
-//            CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
-//            SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
-//            QueuePollInterval = TimeSpan.Zero,
-//            UseRecommendedIsolationLevel = true,
-//            DisableGlobalLocks = true  // Good for high-scale scenarios
-//        }));
+builder.Services.AddHangfire(config =>
+    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UseSqlServerStorage(connectionString, new SqlServerStorageOptions
+        {
+            CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+            SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+            QueuePollInterval = TimeSpan.Zero,
+            UseRecommendedIsolationLevel = true,
+            DisableGlobalLocks = true  // Good for high-scale scenarios
+        }));
 
 builder.Services.AddHangfireServer(options =>
 {
-    options.WorkerCount = 10;
+    options.WorkerCount = 300;
     options.Queues = new[] { Environment.MachineName.ToLower() };  // Ensure the queue name matches here
 });
 
