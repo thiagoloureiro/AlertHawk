@@ -79,18 +79,20 @@ if (azureEnabled == "true")
 
 var connectionString = configuration.GetValue<string>("ConnectionStrings:SqlConnectionString");
 
-builder.Services.AddHangfire(config =>
-    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
-        .UseSimpleAssemblyNameTypeSerializer()
-        .UseRecommendedSerializerSettings()
-        .UseSqlServerStorage(connectionString, new SqlServerStorageOptions
-        {
-            CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
-            SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
-            QueuePollInterval = TimeSpan.Zero,
-            UseRecommendedIsolationLevel = true,
-            DisableGlobalLocks = true  // Good for high-scale scenarios
-        }));
+builder.Services.AddHangfire(config => config.UseMemoryStorage());
+
+//builder.Services.AddHangfire(config =>
+//    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+//        .UseSimpleAssemblyNameTypeSerializer()
+//        .UseRecommendedSerializerSettings()
+//        .UseSqlServerStorage(connectionString, new SqlServerStorageOptions
+//        {
+//            CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+//            SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+//            QueuePollInterval = TimeSpan.Zero,
+//            UseRecommendedIsolationLevel = true,
+//            DisableGlobalLocks = true  // Good for high-scale scenarios
+//        }));
 
 builder.Services.AddHangfireServer(options =>
 {
@@ -189,13 +191,13 @@ var app = builder.Build();
 
 var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
 
-recurringJobManager.AddOrUpdate<IMonitorManager>($"{Environment.MachineName}_StartMonitorHeartBeatManager", queue: Environment.MachineName.ToLower(),
+recurringJobManager.AddOrUpdate<IMonitorManager>($"StartMonitorHeartBeatManager", queue: Environment.MachineName.ToLower(),
     x => x.StartMonitorHeartBeatManager(),
     "*/6 * * * * *");
-recurringJobManager.AddOrUpdate<IMonitorManager>($"{Environment.MachineName}_StartMasterMonitorAgentTaskManager", queue: Environment.MachineName.ToLower(),
+recurringJobManager.AddOrUpdate<IMonitorManager>($"StartMasterMonitorAgentTaskManager", queue: Environment.MachineName.ToLower(),
   x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
-recurringJobManager.AddOrUpdate<IMonitorManager>($"{Environment.MachineName}_StartRunnerManager", queue: Environment.MachineName.ToLower(), x => x.StartRunnerManager(), "*/25 * * * * *");
-recurringJobManager.AddOrUpdate<IMonitorService>($"${Environment.MachineName}_SetMonitorDashboardDataCacheList", queue: Environment.MachineName.ToLower(),
+recurringJobManager.AddOrUpdate<IMonitorManager>($"StartRunnerManager", queue: Environment.MachineName.ToLower(), x => x.StartRunnerManager(), "*/25 * * * * *");
+recurringJobManager.AddOrUpdate<IMonitorService>($"$SetMonitorDashboardDataCacheList", queue: Environment.MachineName.ToLower(),
   x => x.SetMonitorDashboardDataCacheList(),
  "*/5 * * * *");
 
