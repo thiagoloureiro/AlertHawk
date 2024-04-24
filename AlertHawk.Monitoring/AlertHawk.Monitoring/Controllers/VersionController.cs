@@ -18,6 +18,16 @@ namespace AlertHawk.Monitoring.Controllers
             var version = Assembly.GetEntryAssembly()?.GetName().Version;
             return version!.ToString();
         }
+        
+        [HttpGet("cleanGCTest")]
+        [SwaggerOperation(Summary = "TestCleanGC")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        public IActionResult GetTest()
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            return Ok();
+        }
 
         [HttpPost]
         [SwaggerOperation(Summary = "Post Request test")]

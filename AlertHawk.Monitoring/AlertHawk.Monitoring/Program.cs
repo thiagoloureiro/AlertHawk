@@ -76,7 +76,10 @@ if (azureEnabled == "true")
     builder.Services.AddMicrosoftIdentityWebApiAuthentication(configuration, jwtBearerScheme: "AzureAd");
 }
 
-builder.Services.AddHangfire(config => config.UseMemoryStorage());
+var connectionString = configuration.GetValue<string>("ConnectionStrings:SqlConnectionString");
+
+builder.Services.AddHangfire(config => config.UseSqlServerStorage(connectionString));
+
 builder.Services.AddHangfireServer();
 
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
@@ -173,11 +176,11 @@ var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>(
 recurringJobManager.AddOrUpdate<IMonitorManager>("StartMonitorHeartBeatManager", x => x.StartMonitorHeartBeatManager(),
     "*/6 * * * * *");
 recurringJobManager.AddOrUpdate<IMonitorManager>("StartMasterMonitorAgentTaskManager",
-    x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
+  x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
 recurringJobManager.AddOrUpdate<IMonitorManager>("StartRunnerManager", x => x.StartRunnerManager(), "*/25 * * * * *");
 recurringJobManager.AddOrUpdate<IMonitorService>("SetMonitorDashboardDataCacheList",
-    x => x.SetMonitorDashboardDataCacheList(),
-    "*/5 * * * *");
+  x => x.SetMonitorDashboardDataCacheList(),
+ "*/5 * * * *");
 
 // Resolve the service and run the method immediately
 using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
