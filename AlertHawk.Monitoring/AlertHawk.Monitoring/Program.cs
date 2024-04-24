@@ -100,7 +100,7 @@ builder.Services.AddTransient<IMonitorReportRepository, MonitorReportRepository>
 
 builder.Services.AddTransient<IHttpClientRunner, HttpClientRunner>();
 builder.Services.AddTransient<ITcpClientRunner, TcpClientRunner>();
-builder.Services.AddTransient<IHttpClientScreenshot, HttpClientScreenshot>();
+builder.Services.AddScoped<IHttpClientScreenshot, HttpClientScreenshot>();
 
 builder.Services.AddTransient<INotificationProducer, NotificationProducer>();
 
