@@ -92,7 +92,11 @@ builder.Services.AddHangfire(config =>
             DisableGlobalLocks = true  // Good for high-scale scenarios
         }));
 
-builder.Services.AddHangfireServer();
+builder.Services.AddHangfireServer(options =>
+{
+    options.WorkerCount = 10;
+    options.Queues = new[] { Environment.MachineName.ToLower() };  // Ensure the queue name matches here
+});
 
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
 
@@ -185,12 +189,13 @@ var app = builder.Build();
 
 var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
 
-recurringJobManager.AddOrUpdate<IMonitorManager>("StartMonitorHeartBeatManager", x => x.StartMonitorHeartBeatManager(),
+recurringJobManager.AddOrUpdate<IMonitorManager>($"{Environment.MachineName}_StartMonitorHeartBeatManager", queue: Environment.MachineName.ToLower(),
+    x => x.StartMonitorHeartBeatManager(),
     "*/6 * * * * *");
-recurringJobManager.AddOrUpdate<IMonitorManager>("StartMasterMonitorAgentTaskManager",
+recurringJobManager.AddOrUpdate<IMonitorManager>($"{Environment.MachineName}_StartMasterMonitorAgentTaskManager", queue: Environment.MachineName.ToLower(),
   x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
-recurringJobManager.AddOrUpdate<IMonitorManager>("StartRunnerManager", x => x.StartRunnerManager(), "*/25 * * * * *");
-recurringJobManager.AddOrUpdate<IMonitorService>("SetMonitorDashboardDataCacheList",
+recurringJobManager.AddOrUpdate<IMonitorManager>($"{Environment.MachineName}_StartRunnerManager", queue: Environment.MachineName.ToLower(), x => x.StartRunnerManager(), "*/25 * * * * *");
+recurringJobManager.AddOrUpdate<IMonitorService>($"${Environment.MachineName}_SetMonitorDashboardDataCacheList", queue: Environment.MachineName.ToLower(),
   x => x.SetMonitorDashboardDataCacheList(),
  "*/5 * * * *");
 

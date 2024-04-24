@@ -74,7 +74,7 @@ public class MonitorManager : IMonitorManager
             }
 
             IEnumerable<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
-            recurringJobs = recurringJobs.Where(x => x.Id.StartsWith("StartRunnerManager_CheckUrlsAsync_JobId"))
+            recurringJobs = recurringJobs.Where(x => x.Id.Contains("StartRunnerManager_CheckUrlsAsync_JobId"))
                 .ToList();
 
             foreach (var job in recurringJobs)
@@ -87,11 +87,11 @@ public class MonitorManager : IMonitorManager
 
             foreach (var monitorHttp in monitorHttps)
             {
-                string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
+                string jobId = $"{Environment.MachineName}_StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
                 Thread.Sleep(50);
                 var monitor = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
 
-                RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, x => x.CheckUrlsAsync(monitorHttp),
+                RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, queue: Environment.MachineName.ToLower(), x => x.CheckUrlsAsync(monitorHttp),
                     $"*/{monitor?.HeartBeatInterval} * * * *");
             }
         }
@@ -118,12 +118,12 @@ public class MonitorManager : IMonitorManager
                 monitorTcp.Name = monitorByTcpType.FirstOrDefault(x => x.Id == monitorTcp.MonitorId).Name;
                 monitorTcp.Retries = monitorByTcpType.FirstOrDefault(x => x.Id == monitorTcp.MonitorId).Retries;
 
-                string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorTcp.MonitorId}";
+                string jobId = $"{Environment.MachineName}_StartRunnerManager_CheckUrlsAsync_JobId_{monitorTcp.MonitorId}";
                 lstStringsToAdd.Add(jobId);
             }
 
             IEnumerable<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
-            recurringJobs = recurringJobs.Where(x => x.Id.StartsWith("StartRunnerManager_CheckTcpAsync_JobId"))
+            recurringJobs = recurringJobs.Where(x => x.Id.Contains("StartRunnerManager_CheckTcpAsync_JobId"))
                 .ToList();
 
             foreach (var job in recurringJobs)
@@ -139,7 +139,7 @@ public class MonitorManager : IMonitorManager
                 string jobId = $"StartRunnerManager_CheckTcpAsync_JobId_{monitorTcp.MonitorId}";
                 Thread.Sleep(50);
                 var monitor = monitorByTcpType.FirstOrDefault(x => x.Id == monitorTcp.MonitorId);
-                RecurringJob.AddOrUpdate<ITcpClientRunner>(jobId, x => x.CheckTcpAsync(monitorTcp),
+                RecurringJob.AddOrUpdate<ITcpClientRunner>(jobId, queue: Environment.MachineName.ToLower(), x => x.CheckTcpAsync(monitorTcp),
                     $"*/{monitor?.HeartBeatInterval} * * * *");
             }
         }
