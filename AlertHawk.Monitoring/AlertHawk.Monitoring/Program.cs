@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.ResponseCompression;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using AlertHawk.Monitoring.Infrastructure;
+using Hangfire.SqlServer;
 
 [assembly: ExcludeFromCodeCoverage]
 var builder = WebApplication.CreateBuilder(args);
@@ -78,7 +79,18 @@ if (azureEnabled == "true")
 
 var connectionString = configuration.GetValue<string>("ConnectionStrings:SqlConnectionString");
 
-builder.Services.AddHangfire(config => config.UseSqlServerStorage(connectionString));
+builder.Services.AddHangfire(config =>
+    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UseSqlServerStorage(connectionString, new SqlServerStorageOptions
+        {
+            CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+            SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+            QueuePollInterval = TimeSpan.Zero,
+            UseRecommendedIsolationLevel = true,
+            DisableGlobalLocks = true  // Good for high-scale scenarios
+        }));
 
 builder.Services.AddHangfireServer();
 
