@@ -87,7 +87,7 @@ public class MonitorManager : IMonitorManager
 
             foreach (var monitorHttp in monitorHttps)
             {
-                string jobId = $"{Environment.MachineName}_StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
+                string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
                 Thread.Sleep(50);
                 var monitor = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
 
@@ -118,7 +118,7 @@ public class MonitorManager : IMonitorManager
                 monitorTcp.Name = monitorByTcpType.FirstOrDefault(x => x.Id == monitorTcp.MonitorId).Name;
                 monitorTcp.Retries = monitorByTcpType.FirstOrDefault(x => x.Id == monitorTcp.MonitorId).Retries;
 
-                string jobId = $"{Environment.MachineName}_StartRunnerManager_CheckUrlsAsync_JobId_{monitorTcp.MonitorId}";
+                string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorTcp.MonitorId}";
                 lstStringsToAdd.Add(jobId);
             }
 
