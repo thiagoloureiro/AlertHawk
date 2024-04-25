@@ -91,7 +91,7 @@ public class MonitorManager : IMonitorManager
                 Thread.Sleep(50);
                 var monitor = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
 
-                RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, queue: $"{Environment.MachineName}_{jobId}", x => x.CheckUrlsAsync(monitorHttp),
+                RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, queue: $"{Environment.MachineName.ToLower()}_{jobId}", x => x.CheckUrlsAsync(monitorHttp),
                     $"*/{monitor?.HeartBeatInterval} * * * *");
             }
         }
@@ -139,7 +139,7 @@ public class MonitorManager : IMonitorManager
                 string jobId = $"StartRunnerManager_CheckTcpAsync_JobId_{monitorTcp.MonitorId}";
                 Thread.Sleep(50);
                 var monitor = monitorByTcpType.FirstOrDefault(x => x.Id == monitorTcp.MonitorId);
-                RecurringJob.AddOrUpdate<ITcpClientRunner>(jobId, queue: $"{Environment.MachineName}_{jobId}", x => x.CheckTcpAsync(monitorTcp),
+                RecurringJob.AddOrUpdate<ITcpClientRunner>(jobId, queue: $"{Environment.MachineName.ToLower()}_{jobId}", x => x.CheckTcpAsync(monitorTcp),
                     $"*/{monitor?.HeartBeatInterval} * * * *");
             }
         }
