@@ -1,28 +1,43 @@
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
+using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Utils;
+using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using EasyMemoryCache;
 using Hangfire;
 using Hangfire.Storage;
+using Microsoft.Extensions.DependencyInjection;
+using Quartz;
+using Quartz.Impl;
+using System.Net.Http;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorManager;
 
-public class MonitorManager : IMonitorManager
+public class MonitorManager : IMonitorManager, IJob
 {
     private readonly IMonitorAgentRepository _monitorAgentRepository;
     private readonly IMonitorRepository _monitorRepository;
     private readonly ICaching _caching;
+    private readonly ISchedulerFactory _schedulerFactory;
+    private IScheduler _scheduler;
+    private readonly IHttpClientScreenshot _httpClientScreenshot;
+    private readonly INotificationProducer _notificationProducer;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public MonitorManager(IMonitorAgentRepository monitorAgentRepository, IMonitorRepository monitorRepository,
-        ICaching caching)
+        ICaching caching, IHttpClientScreenshot httpClientScreenshot, INotificationProducer notificationProducer, IHttpClientFactory httpClientFactory)
     {
         _monitorAgentRepository = monitorAgentRepository;
         _monitorRepository = monitorRepository;
         _caching = caching;
+        _httpClientScreenshot = httpClientScreenshot;
+        _notificationProducer = notificationProducer;
+        _httpClientFactory = httpClientFactory;
+        _schedulerFactory = new StdSchedulerFactory();
     }
 
     public async Task StartRunnerManager()
@@ -66,24 +81,59 @@ public class MonitorManager : IMonitorManager
                     monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Status;
                 monitorHttp.Name = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Name;
                 monitorHttp.Retries = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Retries;
+                monitorHttp.MonitorId = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Id;
 
                 JsonUtils.ConvertJsonToTuple(monitorHttp);
 
                 string jobId = $"StartRunnerManager_CheckUrlsAsync_JobId_{monitorHttp.MonitorId}";
                 lstStringsToAdd.Add(jobId);
+
+                _scheduler = await _schedulerFactory.GetScheduler();
+
+                // Define the job data
+                JobDataMap jobDataMap = new JobDataMap();
+                jobDataMap["monitorHttp"] = monitorHttp;
+                jobDataMap.Put("MonitorRepository", _monitorRepository);
+                jobDataMap.Put("HttpClientScreenshot", _httpClientScreenshot);
+                jobDataMap.Put("NotificationProducer", _notificationProducer);
+                jobDataMap.Put("HttpClientFactory", _httpClientFactory);
+
+                // Start the scheduler
+                await _scheduler.Start();
+
+                // Define the job and tie it to our class
+                IJobDetail job = JobBuilder.Create<HttpClientRunner>()
+                    .WithIdentity(jobId, "group1")
+                    .UsingJobData(jobDataMap)
+                    .Build();
+
+                // Define a trigger that will fire the job
+                ITrigger trigger = TriggerBuilder.Create()
+                    .WithIdentity($"{jobId}_httpClientTrigger", "group1")
+                    .StartNow()
+                    .WithSimpleSchedule(x => x
+                        .WithIntervalInSeconds(30)  // Interval at which the job will run (e.g., every 30 seconds)
+                        .RepeatForever())
+                    .Build();
+
+                // Tell Quartz to schedule the job using our trigger
+                await _scheduler.ScheduleJob(job, trigger);
             }
 
-            IEnumerable<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
-            recurringJobs = recurringJobs.Where(x => x.Id.Contains("StartRunnerManager_CheckUrlsAsync_JobId"))
-                .ToList();
+            //            var myJobScheduler = new MyJobScheduler(_scheduler);
+            //  await myJobScheduler.ScheduleJob("jobId1", 60);
 
-            foreach (var job in recurringJobs)
-            {
-                if (!lstStringsToAdd.Contains(job.Id))
-                {
-                    RecurringJob.RemoveIfExists(job.Id);
-                }
-            }
+            // IEnumerable<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
+            //   recurringJobs = recurringJobs.Where(x => x.Id.Contains("StartRunnerManager_CheckUrlsAsync_JobId"))
+            //    .ToList();
+
+            //   foreach (var job in recurringJobs)
+            //  {
+            //      if (!lstStringsToAdd.Contains(job.Id))
+            //      {
+            //          RecurringJob.RemoveIfExists(job.Id);
+            //      }
+            //  }
 
             foreach (var monitorHttp in monitorHttps)
             {
@@ -91,8 +141,8 @@ public class MonitorManager : IMonitorManager
                 Thread.Sleep(50);
                 var monitor = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId);
 
-                RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, queue: Environment.MachineName.ToLower(), x => x.CheckUrlsAsync(monitorHttp),
-                    $"*/{monitor?.HeartBeatInterval} * * * *");
+                //  RecurringJob.AddOrUpdate<IHttpClientRunner>(jobId, queue: Environment.MachineName.ToLower(), x => x.CheckUrlsAsync(monitorHttp),
+                //      $"*/{monitor?.HeartBeatInterval} * * * *");
             }
         }
     }
@@ -252,6 +302,28 @@ public class MonitorManager : IMonitorManager
             }
 
             await _monitorAgentRepository.UpsertMonitorAgentTasks(lstMonitorAgentTasks, monitorRegion);
+        }
+    }
+
+    public async Task Execute(IJobExecutionContext context)
+    {
+        var jobKey = context.JobDetail.Key.Name;
+        switch (jobKey)
+        {
+            case "StartMonitorHeartBeatManager":
+                await StartMonitorHeartBeatManager();
+                break;
+
+            case "StartMasterMonitorAgentTaskManager":
+                await StartMasterMonitorAgentTaskManager();
+                break;
+
+            case "StartRunnerManager":
+                await StartRunnerManager();
+                break;
+
+            default:
+                throw new NotSupportedException($"Unsupported job key: {jobKey}");
         }
     }
 }

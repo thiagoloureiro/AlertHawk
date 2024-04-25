@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
@@ -23,6 +24,10 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using AlertHawk.Monitoring.Infrastructure;
 using Hangfire.SqlServer;
+using Quartz;
+using ProtoBuf.Meta;
+using Quartz.Impl;
+using Quartz.Spi;
 
 [assembly: ExcludeFromCodeCoverage]
 var builder = WebApplication.CreateBuilder(args);
@@ -70,6 +75,50 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+builder.Services.AddQuartz(configure =>
+{
+});
+
+builder.Services.AddQuartzHostedService(options =>
+{
+    options.WaitForJobsToComplete = true;
+});
+
+// Register MyJobScheduler
+
+builder.Services.AddQuartz(configure =>
+{
+    // First job
+    var jobKey = new JobKey("StartMonitorHeartBeatManager");
+    configure
+        .AddJob<MonitorManager>(jobKey)
+        .AddTrigger(trigger => trigger
+            .ForJob(jobKey)
+            .WithSimpleSchedule(schedule => schedule
+                .WithIntervalInSeconds(5)
+                .RepeatForever()));
+
+    // Second job
+    var jobKey2 = new JobKey("StartMasterMonitorAgentTaskManager");
+    configure
+        .AddJob<MonitorManager>(jobKey2)
+        .AddTrigger(trigger => trigger
+            .ForJob(jobKey2)
+            .WithSimpleSchedule(schedule => schedule
+                .WithIntervalInSeconds(60)
+                .RepeatForever()));
+
+    // 3rd job
+    var jobKey3 = new JobKey("StartRunnerManager");
+    configure
+        .AddJob<MonitorManager>(jobKey3)
+        .AddTrigger(trigger => trigger
+            .ForJob(jobKey3)
+            .WithSimpleSchedule(schedule => schedule
+                .WithIntervalInSeconds(60)
+            .RepeatForever()));
+});
+
 var azureEnabled = Environment.GetEnvironmentVariable("AZURE_AD_AUTH_ENABLED", EnvironmentVariableTarget.Process) ??
                    "true";
 if (azureEnabled == "true")
@@ -81,24 +130,24 @@ var connectionString = configuration.GetValue<string>("ConnectionStrings:SqlConn
 
 //builder.Services.AddHangfire(config => config.UseMemoryStorage());
 
-builder.Services.AddHangfire(config =>
-    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
-        .UseSimpleAssemblyNameTypeSerializer()
-        .UseRecommendedSerializerSettings()
-        .UseSqlServerStorage(connectionString, new SqlServerStorageOptions
-        {
-            CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
-            SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
-            QueuePollInterval = TimeSpan.Zero,
-            UseRecommendedIsolationLevel = true,
-            DisableGlobalLocks = true  // Good for high-scale scenarios
-        }));
+//builder.Services.AddHangfire(config =>
+//    config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+//        .UseSimpleAssemblyNameTypeSerializer()
+//        .UseRecommendedSerializerSettings()
+//        .UseSqlServerStorage(connectionString, new SqlServerStorageOptions
+//        {
+//            CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+//            SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+//            QueuePollInterval = TimeSpan.Zero,
+//            UseRecommendedIsolationLevel = true,
+//            DisableGlobalLocks = true  // Good for high-scale scenarios
+//        }));
 
-builder.Services.AddHangfireServer(options =>
-{
-    options.WorkerCount = 300;
-    options.Queues = new[] { Environment.MachineName.ToLower() };  // Ensure the queue name matches here
-});
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.WorkerCount = 300;
+//    options.Queues = new[] { Environment.MachineName.ToLower() };  // Ensure the queue name matches here
+//});
 
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
 
@@ -189,24 +238,24 @@ builder.Services.AddSwaggerGen(c =>
 });
 var app = builder.Build();
 
-var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
+//var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
 
-recurringJobManager.AddOrUpdate<IMonitorManager>($"StartMonitorHeartBeatManager", queue: Environment.MachineName.ToLower(),
-    x => x.StartMonitorHeartBeatManager(),
-    "*/6 * * * * *");
-recurringJobManager.AddOrUpdate<IMonitorManager>($"StartMasterMonitorAgentTaskManager", queue: Environment.MachineName.ToLower(),
-  x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
-recurringJobManager.AddOrUpdate<IMonitorManager>($"StartRunnerManager", queue: Environment.MachineName.ToLower(), x => x.StartRunnerManager(), "*/25 * * * * *");
-recurringJobManager.AddOrUpdate<IMonitorService>($"$SetMonitorDashboardDataCacheList", queue: Environment.MachineName.ToLower(),
-  x => x.SetMonitorDashboardDataCacheList(),
- "*/5 * * * *");
+//recurringJobManager.AddOrUpdate<IMonitorManager>($"StartMonitorHeartBeatManager", queue: Environment.MachineName.ToLower(),
+//    x => x.StartMonitorHeartBeatManager(),
+//    "*/6 * * * * *");
+//recurringJobManager.AddOrUpdate<IMonitorManager>($"StartMasterMonitorAgentTaskManager", queue: Environment.MachineName.ToLower(),
+//  x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
+//recurringJobManager.AddOrUpdate<IMonitorManager>($"StartRunnerManager", queue: Environment.MachineName.ToLower(), x => x.StartRunnerManager(), "*/25 * * * * *");
+//recurringJobManager.AddOrUpdate<IMonitorService>($"$SetMonitorDashboardDataCacheList", queue: Environment.MachineName.ToLower(),
+//  x => x.SetMonitorDashboardDataCacheList(),
+// "*/5 * * * *");
 
-// Resolve the service and run the method immediately
-using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
-{
-    var monitorService = serviceScope.ServiceProvider.GetService<IMonitorService>();
-    monitorService?.SetMonitorDashboardDataCacheList();
-}
+//// Resolve the service and run the method immediately
+//using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
+//{
+//    var monitorService = serviceScope.ServiceProvider.GetService<IMonitorService>();
+//    monitorService?.SetMonitorDashboardDataCacheList();
+//}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

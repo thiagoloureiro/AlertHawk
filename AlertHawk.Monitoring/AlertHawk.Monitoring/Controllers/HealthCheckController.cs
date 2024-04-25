@@ -8,7 +8,7 @@ namespace AlertHawk.Monitoring.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 [AllowAnonymous]
-public class HealthCheckController: ControllerBase
+public class HealthCheckController : ControllerBase
 {
     [HttpGet]
     [SwaggerOperation(Summary = "Health Check Endpoint")]

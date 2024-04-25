@@ -3,16 +3,21 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using Quartz;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
-public class HttpClientRunner : IHttpClientRunner
+public class HttpClientRunner : IHttpClientRunner, IJob
 {
-    private readonly IMonitorRepository _monitorRepository;
-    private readonly IHttpClientScreenshot _httpClientScreenshot;
-    private readonly INotificationProducer _notificationProducer;
+    private IMonitorRepository _monitorRepository;
+    private IHttpClientScreenshot _httpClientScreenshot;
+    private INotificationProducer _notificationProducer;
+    private IHttpClientFactory _httpClientFactory;
     private int _daysToExpireCert;
-    private readonly IHttpClientFactory _httpClientFactory;
+
+    public HttpClientRunner()
+    {
+    }
 
     public HttpClientRunner(IMonitorRepository monitorRepository, IHttpClientScreenshot httpClientScreenshot,
         INotificationProducer notificationProducer, IHttpClientFactory httpClientFactory)
@@ -191,5 +196,17 @@ public class HttpClientRunner : IHttpClientRunner
         monitorHttp.ResponseStatusCode = response.StatusCode;
         monitorHttp.HttpVersion = response.Version.ToString();
         return response;
+    }
+
+    public async Task Execute(IJobExecutionContext context)
+    {
+        MonitorHttp monitorHttp = (MonitorHttp)context.JobDetail.JobDataMap["monitorHttp"];
+        _monitorRepository = (IMonitorRepository)context.JobDetail.JobDataMap["MonitorRepository"];
+        _httpClientScreenshot = (IHttpClientScreenshot)context.JobDetail.JobDataMap["HttpClientScreenshot"];
+        _notificationProducer = (INotificationProducer)context.JobDetail.JobDataMap["NotificationProducer"];
+        _httpClientFactory = (IHttpClientFactory)context.JobDetail.JobDataMap["HttpClientFactory"];
+
+        await CheckUrlsAsync(monitorHttp);
+        Console.WriteLine(monitorHttp.MonitorId);
     }
 }
