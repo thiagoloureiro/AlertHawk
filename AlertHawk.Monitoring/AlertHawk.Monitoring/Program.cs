@@ -13,15 +13,20 @@ using EasyMemoryCache.Configuration;
 using Hangfire;
 using Hangfire.MemoryStorage;
 using MassTransit;
+using MassTransit.Futures.Contracts;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
+using ProtoBuf.Meta;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Security;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Hangfire.Redis.StackExchange;
+using Microsoft.Extensions.Configuration;
+using StackExchange.Redis;
 
 [assembly: ExcludeFromCodeCoverage]
 var builder = WebApplication.CreateBuilder(args);
@@ -76,7 +81,17 @@ if (azureEnabled == "true")
     builder.Services.AddMicrosoftIdentityWebApiAuthentication(configuration, jwtBearerScheme: "AzureAd");
 }
 
-builder.Services.AddHangfire(config => config.UseMemoryStorage());
+//builder.Services.AddHangfire(config => config.UseMemoryStorage());
+
+GlobalConfiguration.Configuration.UseRedisStorage();
+
+var redis = ConnectionMultiplexer.Connect(configuration.GetValue<string>("CacheSettings:RedisConnectionString"));
+
+builder.Services.AddHangfire(configuration =>
+{
+    configuration.UseRedisStorage(redis);
+});
+
 builder.Services.AddHangfireServer();
 
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
