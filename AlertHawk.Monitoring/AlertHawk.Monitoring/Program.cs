@@ -186,7 +186,7 @@ var app = builder.Build();
 
 var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
 
-recurringJobManager.AddOrUpdate<IMonitorManager>("StartMonitorHeartBeatManager", queue: ($"({Environment.MachineName}_startMonitorHeartBeatManager").ToLower(), x => x.StartMonitorHeartBeatManager(),
+recurringJobManager.AddOrUpdate<IMonitorManager>("StartMonitorHeartBeatManager", queue: ($"{Environment.MachineName}_startMonitorHeartBeatManager").ToLower(), x => x.StartMonitorHeartBeatManager(),
     "*/6 * * * * *");
 recurringJobManager.AddOrUpdate<IMonitorManager>("StartMasterMonitorAgentTaskManager", queue: ($"{Environment.MachineName.ToLower()}_StartMasterMonitorAgentTaskManager)").ToLower(),
     x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
