@@ -186,12 +186,12 @@ var app = builder.Build();
 
 var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
 
-recurringJobManager.AddOrUpdate<IMonitorManager>("StartMonitorHeartBeatManager", x => x.StartMonitorHeartBeatManager(),
+recurringJobManager.AddOrUpdate<IMonitorManager>("StartMonitorHeartBeatManager", queue: $"{Environment.MachineName}_StartMonitorHeartBeatManager", x => x.StartMonitorHeartBeatManager(),
     "*/6 * * * * *");
-recurringJobManager.AddOrUpdate<IMonitorManager>("StartMasterMonitorAgentTaskManager",
+recurringJobManager.AddOrUpdate<IMonitorManager>("StartMasterMonitorAgentTaskManager", queue: $"{Environment.MachineName}_StartMasterMonitorAgentTaskManager",
     x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
-recurringJobManager.AddOrUpdate<IMonitorManager>("StartRunnerManager", x => x.StartRunnerManager(), "*/25 * * * * *");
-recurringJobManager.AddOrUpdate<IMonitorService>("SetMonitorDashboardDataCacheList",
+recurringJobManager.AddOrUpdate<IMonitorManager>("StartRunnerManager", queue: $"{Environment.MachineName}_StartRunnerManager", x => x.StartRunnerManager(), "*/25 * * * * *");
+recurringJobManager.AddOrUpdate<IMonitorService>("SetMonitorDashboardDataCacheList", queue: $"{Environment.MachineName}_SetMonitorDashboardDataCacheList",
     x => x.SetMonitorDashboardDataCacheList(),
     "*/5 * * * *");
 
