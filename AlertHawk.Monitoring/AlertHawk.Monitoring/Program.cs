@@ -83,12 +83,10 @@ if (azureEnabled == "true")
 
 //builder.Services.AddHangfire(config => config.UseMemoryStorage());
 
-GlobalConfiguration.Configuration.UseRedisStorage();
-
-var redisConnstring = configuration.GetValue<string>("CacheSettings:RedisConnectionString");
+var redisConnstring = configuration.GetValue<string>("HangFireRedis");
 Console.WriteLine(redisConnstring);
 
-var redis = ConnectionMultiplexer.Connect(configuration.GetValue<string>("CacheSettings:RedisConnectionString"));
+var redis = ConnectionMultiplexer.Connect(redisConnstring);
 
 builder.Services.AddHangfire(c =>
 {
