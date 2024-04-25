@@ -87,9 +87,9 @@ GlobalConfiguration.Configuration.UseRedisStorage();
 
 var redis = ConnectionMultiplexer.Connect(configuration.GetValue<string>("CacheSettings:RedisConnectionString"));
 
-builder.Services.AddHangfire(configuration =>
+builder.Services.AddHangfire(c =>
 {
-    configuration.UseRedisStorage(redis);
+    c.UseRedisStorage(redis);
 });
 
 builder.Services.AddHangfireServer();
