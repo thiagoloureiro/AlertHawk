@@ -1,27 +1,28 @@
-using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
+using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Helpers;
+using AlertHawk.Monitoring.Infrastructure;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
+using AlertHawk.Monitoring.Infrastructure.Producers;
 using AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 using EasyMemoryCache.Configuration;
 using Hangfire;
 using Hangfire.MemoryStorage;
 using MassTransit;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
+using System.Diagnostics.CodeAnalysis;
+using System.Net.Security;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AlertHawk.Monitoring.Domain.Interfaces.Producers;
-using AlertHawk.Monitoring.Infrastructure.Producers;
-using Microsoft.AspNetCore.ResponseCompression;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
-using AlertHawk.Monitoring.Infrastructure;
+using AlertHawk.Monitoring.Infrastructure.Utils;
 
 [assembly: ExcludeFromCodeCoverage]
 var builder = WebApplication.CreateBuilder(args);
@@ -166,6 +167,9 @@ builder.Services.AddSwaggerGen(c =>
     });
     c.OperationFilter<SecurityRequirementsOperationFilter>();
 });
+
+GlobalVariables.RandomString = StringUtils.RandomStringGenerator();
+
 var app = builder.Build();
 
 var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
