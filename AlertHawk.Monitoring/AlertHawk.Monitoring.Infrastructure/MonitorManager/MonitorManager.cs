@@ -159,7 +159,7 @@ public class MonitorManager : IMonitorManager
 
                 monitorAgent = new MonitorAgent
                 {
-                    Hostname = Environment.MachineName,
+                    Hostname = $"{Environment.MachineName}_{GlobalVariables.RandomString}",
                     TimeStamp = DateTime.UtcNow,
                     MonitorRegion = region
                 };
@@ -168,7 +168,7 @@ public class MonitorManager : IMonitorManager
             {
                 monitorAgent = new MonitorAgent
                 {
-                    Hostname = Environment.MachineName,
+                    Hostname = $"{Environment.MachineName}_{GlobalVariables.RandomString}",
                     TimeStamp = DateTime.UtcNow,
                     MonitorRegion = MonitorUtils.GetMonitorRegionVariable()
                 };

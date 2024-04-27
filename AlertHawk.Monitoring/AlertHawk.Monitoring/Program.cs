@@ -22,6 +22,7 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AlertHawk.Monitoring.Infrastructure.Utils;
 
 [assembly: ExcludeFromCodeCoverage]
 var builder = WebApplication.CreateBuilder(args);
@@ -166,6 +167,9 @@ builder.Services.AddSwaggerGen(c =>
     });
     c.OperationFilter<SecurityRequirementsOperationFilter>();
 });
+
+GlobalVariables.RandomString = StringUtils.RandomStringGenerator();
+
 var app = builder.Build();
 
 var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
