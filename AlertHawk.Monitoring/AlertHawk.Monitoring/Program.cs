@@ -116,27 +116,6 @@ builder.Services.AddResponseCompression(options =>
 // Add HttpClientFactory
 builder.Services.AddHttpClient();
 
-builder.Services.AddHttpClient("agentClient", client =>
-    {
-        client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
-        client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
-        client.DefaultRequestHeaders.Add("Connection", "keep-alive");
-        client.DefaultRequestHeaders.Add("Accept", "*/*");
-    })
-    .ConfigurePrimaryHttpMessageHandler(() =>
-    {
-        return new HttpClientHandler()
-        {
-            ServerCertificateCustomValidationCallback = (HttpRequestMessage message, X509Certificate2 cert, X509Chain chain, SslPolicyErrors errors) =>
-            {
-                // Use AsyncLocal to store certificate details temporarily during the request
-                CertificateHelper.cert = cert;
-                return true; // Validate the certificate as per your security requirements
-            },
-            MaxAutomaticRedirections = 3,
-        };
-    });
-
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.DefaultIgnoreCondition =
@@ -176,12 +155,14 @@ var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>(
 
 recurringJobManager.AddOrUpdate<IMonitorManager>("StartMonitorHeartBeatManager", x => x.StartMonitorHeartBeatManager(),
     "*/6 * * * * *");
+
 recurringJobManager.AddOrUpdate<IMonitorManager>("StartMasterMonitorAgentTaskManager",
     x => x.StartMasterMonitorAgentTaskManager(), "*/10 * * * * *");
+
 recurringJobManager.AddOrUpdate<IMonitorManager>("StartRunnerManager", x => x.StartRunnerManager(), "*/25 * * * * *");
+
 recurringJobManager.AddOrUpdate<IMonitorService>("SetMonitorDashboardDataCacheList",
-    x => x.SetMonitorDashboardDataCacheList(),
-    "*/5 * * * *");
+    x => x.SetMonitorDashboardDataCacheList(), "*/5 * * * *");
 
 // Resolve the service and run the method immediately
 using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())

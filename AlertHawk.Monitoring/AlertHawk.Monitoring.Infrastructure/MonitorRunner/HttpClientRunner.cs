@@ -12,15 +12,13 @@ public class HttpClientRunner : IHttpClientRunner
     private readonly IHttpClientScreenshot _httpClientScreenshot;
     private readonly INotificationProducer _notificationProducer;
     private int _daysToExpireCert;
-    private readonly IHttpClientFactory _httpClientFactory;
 
     public HttpClientRunner(IMonitorRepository monitorRepository, IHttpClientScreenshot httpClientScreenshot,
-        INotificationProducer notificationProducer, IHttpClientFactory httpClientFactory)
+        INotificationProducer notificationProducer)
     {
         _monitorRepository = monitorRepository;
         _httpClientScreenshot = httpClientScreenshot;
         _notificationProducer = notificationProducer;
-        _httpClientFactory = httpClientFactory;
     }
 
     public async Task CheckUrlsAsync(MonitorHttp monitorHttp)
@@ -137,9 +135,26 @@ public class HttpClientRunner : IHttpClientRunner
 
     public async Task<HttpResponseMessage> MakeHttpClientCall(MonitorHttp monitorHttp)
     {
-        //using HttpClient client = new HttpClient(handler);
+        var notAfter = DateTime.UtcNow;
+        int daysToExpireCert = 0;
 
-        var client = _httpClientFactory.CreateClient("agentClient");
+        using HttpClientHandler handler = new HttpClientHandler();
+        if (monitorHttp.CheckCertExpiry)
+        {
+            handler.ServerCertificateCustomValidationCallback = (request, cert, chain, policyErrors) =>
+            {
+                if (cert != null) notAfter = cert.NotAfter;
+                daysToExpireCert = (notAfter - DateTime.UtcNow).Days;
+                return true;
+            };
+        }
+
+        // Set the maximum number of automatic redirects
+        handler.MaxAutomaticRedirections = monitorHttp.MaxRedirects;
+        
+        using HttpClient client = new HttpClient(handler);
+
+        //var client = _httpClientFactory.CreateClient("agentClient");
 
         client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
         client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
@@ -178,15 +193,6 @@ public class HttpClientRunner : IHttpClientRunner
         var elapsed = sw.ElapsedMilliseconds;
         monitorHttp.ResponseTime = (int)elapsed;
         sw.Stop();
-
-        var notAfter = DateTime.UtcNow;
-        var cert = CertificateHelper.cert;
-        if (cert != null)
-        {
-            notAfter = cert.NotAfter;
-        }
-
-        _daysToExpireCert = (notAfter - DateTime.UtcNow).Days;
 
         monitorHttp.ResponseStatusCode = response.StatusCode;
         monitorHttp.HttpVersion = response.Version.ToString();
