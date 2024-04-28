@@ -136,15 +136,14 @@ public class HttpClientRunner : IHttpClientRunner
     public async Task<HttpResponseMessage> MakeHttpClientCall(MonitorHttp monitorHttp)
     {
         var notAfter = DateTime.UtcNow;
-        int daysToExpireCert = 0;
-
+        
         using HttpClientHandler handler = new HttpClientHandler();
         if (monitorHttp.CheckCertExpiry)
         {
             handler.ServerCertificateCustomValidationCallback = (request, cert, chain, policyErrors) =>
             {
                 if (cert != null) notAfter = cert.NotAfter;
-                daysToExpireCert = (notAfter - DateTime.UtcNow).Days;
+                _daysToExpireCert = (notAfter - DateTime.UtcNow).Days;
                 return true;
             };
         }
