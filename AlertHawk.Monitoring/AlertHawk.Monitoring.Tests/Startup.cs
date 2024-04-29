@@ -9,7 +9,6 @@ using AlertHawk.Monitoring.Infrastructure.Producers;
 using AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 using EasyMemoryCache.Configuration;
 using Hangfire;
-using Hangfire.MemoryStorage;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,7 +26,7 @@ public class Startup
             .Build();
         services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
 
-        services.AddHangfire(config => config.UseMemoryStorage());
+        services.AddHangfire(config => config.UseInMemoryStorage());
 
         services.AddTransient<IMonitorTypeService, MonitorTypeService>();
         services.AddTransient<IMonitorService, MonitorService>();

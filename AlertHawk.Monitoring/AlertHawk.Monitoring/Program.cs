@@ -11,7 +11,6 @@ using AlertHawk.Monitoring.Infrastructure.Producers;
 using AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 using EasyMemoryCache.Configuration;
 using Hangfire;
-using Hangfire.MemoryStorage;
 using MassTransit;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Identity.Web;
@@ -23,6 +22,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AlertHawk.Monitoring.Infrastructure.Utils;
+using Hangfire.InMemory;
 
 [assembly: ExcludeFromCodeCoverage]
 var builder = WebApplication.CreateBuilder(args);
@@ -77,7 +77,10 @@ if (azureEnabled == "true")
     builder.Services.AddMicrosoftIdentityWebApiAuthentication(configuration, jwtBearerScheme: "AzureAd");
 }
 
-builder.Services.AddHangfire(config => config.UseMemoryStorage());
+builder.Services.AddHangfire(config => config.UseInMemoryStorage(new InMemoryStorageOptions
+{
+    MaxExpirationTime = TimeSpan.FromMinutes(20)
+}));
 builder.Services.AddHangfireServer();
 
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
