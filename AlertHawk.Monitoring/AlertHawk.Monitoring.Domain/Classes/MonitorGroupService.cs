@@ -181,11 +181,15 @@ public class MonitorGroupService : IMonitorGroupService
     public async Task AddMonitorToGroup(MonitorGroupItems monitorGroupItems)
     {
         await _monitorGroupRepository.AddMonitorToGroup(monitorGroupItems);
+        _caching.Invalidate(_cacheKeyMonitorGroupList);
+
     }
 
     public async Task RemoveMonitorFromGroup(MonitorGroupItems monitorGroupItems)
     {
         await _monitorGroupRepository.RemoveMonitorFromGroup(monitorGroupItems);
+        _caching.Invalidate(_cacheKeyMonitorGroupList);
+
     }
 
     public async Task AddMonitorGroup(MonitorGroup monitorGroup)
@@ -196,12 +200,14 @@ public class MonitorGroupService : IMonitorGroupService
 
     public async Task UpdateMonitorGroup(MonitorGroup monitorGroup)
     {
+        
         await _monitorGroupRepository.UpdateMonitorGroup(monitorGroup);
         _caching.Invalidate(_cacheKeyMonitorGroupList);
     }
 
-    public async Task DeleteMonitorGroup(int id)
+    public async Task DeleteMonitorGroup(string jwtToken, int id)
     {
+        await DeleteUserGroupMonitorListIds(jwtToken, id);
         await _monitorGroupRepository.DeleteMonitorGroup(id);
         _caching.Invalidate(_cacheKeyMonitorGroupList);
     }
@@ -222,6 +228,19 @@ public class MonitorGroupService : IMonitorGroupService
         var groupMonitorIds = JsonConvert.DeserializeObject<List<UsersMonitorGroup>>(result);
         var listGroupMonitorIds = groupMonitorIds?.Select(x => x.GroupMonitorId).ToList();
         return listGroupMonitorIds;
+    }
+    public async Task DeleteUserGroupMonitorListIds(string token, int userGroupMonitorId)
+    {
+        var client = _httpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
+        client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
+        client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+        client.DefaultRequestHeaders.Add("Accept", "*/*");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
+                      "https://api.monitoring.electrificationtools.abb.com/auth/";
+        await client.DeleteAsync($"{authApi}api/UsersMonitorGroup/{userGroupMonitorId}");
     }
 
     private async Task<IEnumerable<MonitorDashboard>> GetMonitorDashboardDataList(List<int> ids)

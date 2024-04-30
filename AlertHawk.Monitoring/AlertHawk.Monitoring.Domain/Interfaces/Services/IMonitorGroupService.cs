@@ -12,7 +12,7 @@ public interface IMonitorGroupService
     Task RemoveMonitorFromGroup(MonitorGroupItems monitorGroupItems);
     Task AddMonitorGroup(MonitorGroup monitorGroup);
     Task UpdateMonitorGroup(MonitorGroup monitorGroup);
-    Task DeleteMonitorGroup(int id);
+    Task DeleteMonitorGroup(string jwtToken, int id);
     Task<List<int>?> GetUserGroupMonitorListIds(string token);
     Task<IEnumerable<MonitorGroup>> GetMonitorGroupList();
 }
