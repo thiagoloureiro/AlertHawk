@@ -15,7 +15,16 @@ public class MonitorReportService: IMonitorReportService
 
     public async Task<IEnumerable<MonitorReportUptime>>GetMonitorReportUptime(int groupId, int hours)
     {
-        return await _monitorReportRepository.GetMonitorReportUptime(groupId, hours);
+        var result =  await _monitorReportRepository.GetMonitorReportUptime(groupId, hours);
+
+        var monitorReportUptimes = result.ToList();
+        foreach (var report in monitorReportUptimes)
+        {
+            double uptimePercentage = (double)report.TotalOnlineMinutes / (report.TotalOnlineMinutes + report.TotalOfflineMinutes) * 100;
+            report.UptimePercentage = uptimePercentage;
+        }
+
+        return monitorReportUptimes;
     }
 
     public async Task<IEnumerable<MonitorReportAlerts>> GetMonitorAlerts(int groupId, int hours)

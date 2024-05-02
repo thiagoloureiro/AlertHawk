@@ -114,7 +114,7 @@ public class MonitorService : IMonitorService
             if (lst24Hrs.Any())
             {
                 containsLast24HoursData =
-                    lst24Hrs.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-1).AddSeconds(120);
+                    lst24Hrs.Min(x => x.TimeStamp) <= DateTime.UtcNow.AddDays(-1).AddSeconds(120);
             }
 
             // Check if last 7 days data is present
@@ -122,7 +122,7 @@ public class MonitorService : IMonitorService
             if (lst7Days.Any())
             {
                 containsLast7DaysData =
-                    lst7Days.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-7).AddSeconds(120);
+                    lst7Days.Min(x => x.TimeStamp) <= DateTime.UtcNow.AddDays(-7).AddSeconds(120);
             }
 
             // Check if last 30 days data is present
@@ -130,7 +130,7 @@ public class MonitorService : IMonitorService
             if (lst30Days.Any())
             {
                 containsLast30DaysData =
-                    lst30Days.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-30).AddSeconds(120);
+                    lst30Days.Min(x => x.TimeStamp) <= DateTime.UtcNow.AddDays(-30).AddSeconds(120);
             }
 
             // Check if last 3 months data is present
@@ -138,7 +138,7 @@ public class MonitorService : IMonitorService
             if (lst3Months.Any())
             {
                 containsLast3MonthsData =
-                    lst3Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-90).AddSeconds(120);
+                    lst3Months.Min(x => x.TimeStamp) <= DateTime.UtcNow.AddDays(-90).AddSeconds(120);
             }
 
             // Check if last 6 months data is present
@@ -146,7 +146,7 @@ public class MonitorService : IMonitorService
             if (lst6Months.Any())
             {
                 containsLast6MonthsData =
-                    lst6Months.Min(x => x.TimeStamp) <= DateTime.Now.AddDays(-180).AddSeconds(120);
+                    lst6Months.Min(x => x.TimeStamp) <= DateTime.UtcNow.AddDays(-180).AddSeconds(120);
             }
 
             double uptime1Hr = -1;
