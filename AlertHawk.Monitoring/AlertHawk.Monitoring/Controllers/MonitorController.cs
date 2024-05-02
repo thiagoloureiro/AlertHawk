@@ -226,7 +226,7 @@ namespace AlertHawk.Monitoring.Controllers
 
         [SwaggerOperation(Summary = "Force Cache Refresh for Dashboard")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-        [HttpGet("forceCashRefresh")]
+        [HttpGet("forceCacheRefresh")]
         public async Task<IActionResult> ForceCashRefresh()
         {
             await _monitorService.SetMonitorDashboardDataCacheList();

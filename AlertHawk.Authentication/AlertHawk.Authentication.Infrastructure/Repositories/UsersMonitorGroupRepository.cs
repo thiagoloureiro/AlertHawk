@@ -27,5 +27,9 @@ public class UsersMonitorGroupRepository : BaseRepository, IUsersMonitorGroupRep
         return await ExecuteQueryAsyncWithParameters<UsersMonitorGroup>(sql, new { userId }) ?? Array.Empty<UsersMonitorGroup>();
     }
 
-   
+    public async Task DeleteAllByGroupMonitorIdAsync(int groupMonitorId)
+    {
+        const string sql = "delete [dbo].[UsersMonitorGroup] where GroupMonitorId = @groupMonitorId";
+        await ExecuteNonQueryAsync(sql, new { groupMonitorId });
+    }
 }

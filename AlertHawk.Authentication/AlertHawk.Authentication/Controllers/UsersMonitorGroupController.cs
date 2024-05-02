@@ -94,9 +94,41 @@ namespace AlertHawk.Authentication.Controllers
             return Ok(await _usersMonitorGroupService.GetAsync(userId));
         }
 
+        [HttpDelete("{groupMonitorId}")]
+        [SwaggerOperation(Summary = "Delete all group monitor relationship by groupMonitorId")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [Authorize()]
+        public async Task<IActionResult> DeleteMonitorGroupByGroupMonitorId(int groupMonitorId)
+        {
+            var usrAdmin = await IsUserAdmin();
+            if (usrAdmin == null)
+            {
+                await _usersMonitorGroupService.DeleteAllByGroupMonitorIdAsync(groupMonitorId);
+                return Ok();
+            }
+            else
+            {
+                return usrAdmin;
+            }
+
+        }
+        private async Task<ObjectResult?> IsUserAdmin()
+        {
+            var usr = await _getOrCreateUserHelper.GetUserOrCreateUser(User);
+            if (!usr.IsAdmin)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
+            }
+
+            return null; // or return a default value if needed
+        }
         private async Task<UserDto?> GetUserByToken()
         {
             return await _getOrCreateUserHelper.GetUserOrCreateUser(User);
         }
+
     }
 }

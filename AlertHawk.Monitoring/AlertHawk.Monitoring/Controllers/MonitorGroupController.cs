@@ -105,7 +105,23 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpDelete("deleteMonitorGroup/{id}")]
         public async Task<IActionResult> DeleteMonitorGroup(int id)
         {
-            await _monitorGroupService.DeleteMonitorGroup(id);
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (jwtToken == null)
+            {
+                return BadRequest("Invalid Token");
+            }
+
+            var monitorGroup = await _monitorGroupService.GetMonitorGroupById(id);
+            if (monitorGroup.Id == 0)
+            {
+                return BadRequest("monitorGroups.monitorNotFound");
+            }
+            else if(monitorGroup.Monitors.Any())
+            {
+                return BadRequest("monitorGroups.hasItemsFound");
+            }
+
+            await _monitorGroupService.DeleteMonitorGroup(jwtToken, id);
             return Ok();
         }
 

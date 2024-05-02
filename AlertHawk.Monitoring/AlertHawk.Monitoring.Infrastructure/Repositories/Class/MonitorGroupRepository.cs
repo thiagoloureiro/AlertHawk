@@ -112,10 +112,6 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
     public async Task DeleteMonitorGroup(int id)
     {
         await using var db = new SqlConnection(_connstring);
-
-        string sqlDeleteGroupItems = @"DELETE FROM [MonitorGroupItems] WHERE MonitorGroupId = @id";
-        await db.QueryAsync<MonitorGroup>(sqlDeleteGroupItems, new { id }, commandType: CommandType.Text);
-
         string sqlDeleteGroup = @"DELETE FROM [MonitorGroup] WHERE id = @id";
         await db.QueryAsync<MonitorGroup>(sqlDeleteGroup, new { id }, commandType: CommandType.Text);
     }
