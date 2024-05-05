@@ -73,7 +73,7 @@ public class HttpClientRunner : IHttpClientRunner
                 {
                     monitorHistory.ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}";
                     retryCount++;
-                    Thread.Sleep(2000);
+                    Thread.Sleep(6000);
 
                     if (retryCount == maxRetries)
                     {
@@ -81,7 +81,7 @@ public class HttpClientRunner : IHttpClientRunner
                             _daysToExpireCert);
                         await _monitorRepository.SaveMonitorHistory(monitorHistory);
 
-                        // only send notification when goes from online to offline to avoid flood
+                        // only send notification when goes from online into offline to avoid flood
                         if (monitorHttp.LastStatus)
                         {
                             await _notificationProducer.HandleFailedNotifications(monitorHttp,
@@ -100,7 +100,7 @@ public class HttpClientRunner : IHttpClientRunner
             catch (Exception err)
             {
                 retryCount++;
-                Thread.Sleep(2000);
+                Thread.Sleep(6000);
                 // If max retries reached, update status and save history
                 if (retryCount == maxRetries)
                 {
@@ -119,7 +119,7 @@ public class HttpClientRunner : IHttpClientRunner
                     await _monitorRepository.SaveMonitorHistory(monitorHistory);
 
                     if (monitorHttp
-                        .LastStatus) // only send notification when goes from online to offline to avoid flood
+                        .LastStatus) // only send notification when goes from online into offline to avoid flood
                     {
                         await _notificationProducer.HandleFailedNotifications(monitorHttp, err.Message);
                         await _monitorRepository.SaveMonitorAlert(monitorHistory);
