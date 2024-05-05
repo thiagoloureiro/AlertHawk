@@ -7,6 +7,7 @@ using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 using AlertHawk.Monitoring.Infrastructure.Producers;
 using AlertHawk.Monitoring.Infrastructure.Repositories.Class;
+using CustomLog.Client;
 using EasyMemoryCache.Configuration;
 using Hangfire;
 using MassTransit;
@@ -48,6 +49,8 @@ public class Startup
         var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
         var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
         var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
+        
+        services.AddCustomLogClient(configuration.GetSection("CustomLogger"));
 
         services.AddMassTransit(x =>
         {
