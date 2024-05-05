@@ -3,6 +3,7 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using CustomLog.Client;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
@@ -12,13 +13,15 @@ public class HttpClientRunner : IHttpClientRunner
     private readonly IHttpClientScreenshot _httpClientScreenshot;
     private readonly INotificationProducer _notificationProducer;
     private int _daysToExpireCert;
-
+    private readonly ICustomLogClient<HttpClientRunner> _logClient;
+    
     public HttpClientRunner(IMonitorRepository monitorRepository, IHttpClientScreenshot httpClientScreenshot,
-        INotificationProducer notificationProducer)
+        INotificationProducer notificationProducer, ICustomLogClient<HttpClientRunner> logClient)
     {
         _monitorRepository = monitorRepository;
         _httpClientScreenshot = httpClientScreenshot;
         _notificationProducer = notificationProducer;
+        _logClient = logClient;
     }
 
     public async Task CheckUrlsAsync(MonitorHttp monitorHttp)
@@ -71,12 +74,14 @@ public class HttpClientRunner : IHttpClientRunner
                 }
                 else
                 {
+                    _logClient.LogWarning($"Error checking URL {monitorHttp.UrlToCheck}, retrying... count: {retryCount}, StatusCode: {monitorHttp.ResponseStatusCode}");
                     monitorHistory.ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}";
                     retryCount++;
                     Thread.Sleep(6000);
 
                     if (retryCount == maxRetries)
                     {
+                        _logClient.LogWarning($"Error checking URL {monitorHttp.UrlToCheck}, with max Retries count: {retryCount} StatusCode: {monitorHttp.ResponseStatusCode}");
                         await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded,
                             _daysToExpireCert);
                         await _monitorRepository.SaveMonitorHistory(monitorHistory);
@@ -99,11 +104,13 @@ public class HttpClientRunner : IHttpClientRunner
             }
             catch (Exception err)
             {
+                _logClient.LogError(err, $"Error checking URL {monitorHttp.UrlToCheck}, retrying... count: {retryCount}, StatusCode: {monitorHttp.ResponseStatusCode}");
                 retryCount++;
                 Thread.Sleep(6000);
                 // If max retries reached, update status and save history
                 if (retryCount == maxRetries)
                 {
+                    _logClient.LogError(err, $"Error checking URL {monitorHttp.UrlToCheck}, with max Retries count: {retryCount} StatusCode: {monitorHttp.ResponseStatusCode}");
                     await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, false, 0);
 
                     var monitorHistory = new MonitorHistory
@@ -153,8 +160,6 @@ public class HttpClientRunner : IHttpClientRunner
         
         using HttpClient client = new HttpClient(handler);
 
-        //var client = _httpClientFactory.CreateClient("agentClient");
-
         client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
         client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
         client.DefaultRequestHeaders.Add("Connection", "keep-alive");
@@ -180,8 +185,8 @@ public class HttpClientRunner : IHttpClientRunner
 
         var sw = new Stopwatch();
         sw.Start();
-
-        using HttpResponseMessage response = monitorHttp.MonitorHttpMethod switch
+        
+        HttpResponseMessage response = monitorHttp.MonitorHttpMethod switch
         {
             MonitorHttpMethod.Get => await client.GetAsync(monitorHttp.UrlToCheck),
             MonitorHttpMethod.Post => await client.PostAsync(monitorHttp.UrlToCheck, content),
