@@ -15,6 +15,7 @@ public class HttpClientRunner : IHttpClientRunner
     private readonly INotificationProducer _notificationProducer;
     private int _daysToExpireCert;
     private readonly ICustomLogClient<HttpClientRunner> _logClient;
+    public int _retryIntervalMilliseconds = 6000;
 
     public HttpClientRunner(IMonitorRepository monitorRepository, IHttpClientScreenshot httpClientScreenshot,
         INotificationProducer notificationProducer, ICustomLogClient<HttpClientRunner> logClient)
@@ -23,6 +24,9 @@ public class HttpClientRunner : IHttpClientRunner
         _httpClientScreenshot = httpClientScreenshot;
         _notificationProducer = notificationProducer;
         _logClient = logClient;
+        _retryIntervalMilliseconds = Environment.GetEnvironmentVariable("HTTP_RETRY_INTERVAL_MS") != null
+            ? int.Parse(Environment.GetEnvironmentVariable("HTTP_RETRY_INTERVAL_MS"))
+            : 6000;
     }
 
     public async Task CheckUrlsAsync(MonitorHttp monitorHttp)
@@ -79,7 +83,7 @@ public class HttpClientRunner : IHttpClientRunner
                         $"Error checking URL {monitorHttp.UrlToCheck}, retrying... count: {retryCount}, StatusCode: {monitorHttp.ResponseStatusCode}");
                     monitorHistory.ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}";
                     retryCount++;
-                    Thread.Sleep(6000);
+                    Thread.Sleep(_retryIntervalMilliseconds);
 
                     if (retryCount == maxRetries)
                     {
@@ -110,7 +114,7 @@ public class HttpClientRunner : IHttpClientRunner
                 _logClient.LogError(err,
                     $"Error checking URL {monitorHttp.UrlToCheck}, retrying... count: {retryCount}, StatusCode: {monitorHttp.ResponseStatusCode}");
                 retryCount++;
-                Thread.Sleep(6000);
+                Thread.Sleep(_retryIntervalMilliseconds);
                 // If max retries reached, update status and save history
                 if (retryCount == maxRetries)
                 {
