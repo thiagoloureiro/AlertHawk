@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
@@ -162,56 +163,73 @@ public class HttpClientRunner : IHttpClientRunner
         // Set the maximum number of automatic redirects
         handler.MaxAutomaticRedirections = monitorHttp.MaxRedirects;
 
-        using HttpClient client = new HttpClient(handler);
-
-        client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
-        client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
-        client.DefaultRequestHeaders.Add("Connection", "keep-alive");
-        client.DefaultRequestHeaders.Add("Accept", "*/*");
-
-        if (monitorHttp.Headers != null)
-        {
-            var newHeaders = monitorHttp.Headers;
-            foreach (var header in newHeaders)
-            {
-                client.DefaultRequestHeaders.Add(header.Item1, header.Item2);
-            }
-        }
-
-        StringContent? content = null;
-
-        if (monitorHttp.Body != null)
-        {
-            content = new StringContent(monitorHttp.Body, System.Text.Encoding.UTF8, "application/json");
-        }
-
-        client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
-
-        var sw = new Stopwatch();
-        sw.Start();
-        HttpResponseMessage? response = null;
-
+        HttpClient? client = null;
         try
         {
-            response = monitorHttp.MonitorHttpMethod switch
+            client = new HttpClient(handler);
+            client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
+            client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
+            client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+            client.DefaultRequestHeaders.Add("Accept", "*/*");
+
+            if (monitorHttp.Headers != null)
             {
-                MonitorHttpMethod.Get => await client.GetAsync(monitorHttp.UrlToCheck),
-                MonitorHttpMethod.Post => await client.PostAsync(monitorHttp.UrlToCheck, content),
-                MonitorHttpMethod.Put => await client.PutAsync(monitorHttp.UrlToCheck, content),
-                _ => throw new ArgumentOutOfRangeException()
-            };
+                var newHeaders = monitorHttp.Headers;
+                foreach (var header in newHeaders)
+                {
+                    client.DefaultRequestHeaders.Add(header.Item1, header.Item2);
+                }
+            }
 
-            var elapsed = sw.ElapsedMilliseconds;
-            monitorHttp.ResponseTime = (int)elapsed;
-            sw.Stop();
+            StringContent? content = null;
 
-            monitorHttp.ResponseStatusCode = response.StatusCode;
-            monitorHttp.HttpVersion = response.Version.ToString();
-            return response;
+            if (monitorHttp.Body != null)
+            {
+                content = new StringContent(monitorHttp.Body, System.Text.Encoding.UTF8, "application/json");
+            }
+
+            client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
+
+            var sw = new Stopwatch();
+            sw.Start();
+            HttpResponseMessage? response = null;
+
+            try
+            {
+                response = monitorHttp.MonitorHttpMethod switch
+                {
+                    MonitorHttpMethod.Get => await client.GetAsync(monitorHttp.UrlToCheck),
+                    MonitorHttpMethod.Post => await client.PostAsync(monitorHttp.UrlToCheck, content),
+                    MonitorHttpMethod.Put => await client.PutAsync(monitorHttp.UrlToCheck, content),
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
+                var elapsed = sw.ElapsedMilliseconds;
+                monitorHttp.ResponseTime = (int)elapsed;
+                sw.Stop();
+
+                monitorHttp.ResponseStatusCode = response.StatusCode;
+                monitorHttp.HttpVersion = response.Version.ToString();
+                return response;
+            }
+            finally
+            {
+                response?.Dispose();
+            }
+        }
+        catch (Exception e)
+        {
+            client?.Dispose();
         }
         finally
         {
-            response?.Dispose();
+            client?.Dispose();
         }
+
+        return new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.InternalServerError,
+            ReasonPhrase = "Internal Server Error"
+        };
     }
 }
