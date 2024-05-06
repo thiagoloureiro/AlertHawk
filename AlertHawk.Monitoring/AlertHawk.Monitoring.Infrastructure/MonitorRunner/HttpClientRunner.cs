@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
@@ -14,7 +15,7 @@ public class HttpClientRunner : IHttpClientRunner
     private readonly INotificationProducer _notificationProducer;
     private int _daysToExpireCert;
     private readonly ICustomLogClient<HttpClientRunner> _logClient;
-    
+
     public HttpClientRunner(IMonitorRepository monitorRepository, IHttpClientScreenshot httpClientScreenshot,
         INotificationProducer notificationProducer, ICustomLogClient<HttpClientRunner> logClient)
     {
@@ -74,14 +75,16 @@ public class HttpClientRunner : IHttpClientRunner
                 }
                 else
                 {
-                    _logClient.LogWarning($"Error checking URL {monitorHttp.UrlToCheck}, retrying... count: {retryCount}, StatusCode: {monitorHttp.ResponseStatusCode}");
+                    _logClient.LogWarning(
+                        $"Error checking URL {monitorHttp.UrlToCheck}, retrying... count: {retryCount}, StatusCode: {monitorHttp.ResponseStatusCode}");
                     monitorHistory.ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}";
                     retryCount++;
                     Thread.Sleep(6000);
 
                     if (retryCount == maxRetries)
                     {
-                        _logClient.LogWarning($"Error checking URL {monitorHttp.UrlToCheck}, with max Retries count: {retryCount} StatusCode: {monitorHttp.ResponseStatusCode}");
+                        _logClient.LogWarning(
+                            $"Error checking URL {monitorHttp.UrlToCheck}, with max Retries count: {retryCount} StatusCode: {monitorHttp.ResponseStatusCode}");
                         await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded,
                             _daysToExpireCert);
                         await _monitorRepository.SaveMonitorHistory(monitorHistory);
@@ -104,13 +107,15 @@ public class HttpClientRunner : IHttpClientRunner
             }
             catch (Exception err)
             {
-                _logClient.LogError(err, $"Error checking URL {monitorHttp.UrlToCheck}, retrying... count: {retryCount}, StatusCode: {monitorHttp.ResponseStatusCode}");
+                _logClient.LogError(err,
+                    $"Error checking URL {monitorHttp.UrlToCheck}, retrying... count: {retryCount}, StatusCode: {monitorHttp.ResponseStatusCode}");
                 retryCount++;
                 Thread.Sleep(6000);
                 // If max retries reached, update status and save history
                 if (retryCount == maxRetries)
                 {
-                    _logClient.LogError(err, $"Error checking URL {monitorHttp.UrlToCheck}, with max Retries count: {retryCount} StatusCode: {monitorHttp.ResponseStatusCode}");
+                    _logClient.LogError(err,
+                        $"Error checking URL {monitorHttp.UrlToCheck}, with max Retries count: {retryCount} StatusCode: {monitorHttp.ResponseStatusCode}");
                     await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, false, 0);
 
                     var monitorHistory = new MonitorHistory
@@ -143,7 +148,7 @@ public class HttpClientRunner : IHttpClientRunner
     public async Task<HttpResponseMessage> MakeHttpClientCall(MonitorHttp monitorHttp)
     {
         var notAfter = DateTime.UtcNow;
-        
+
         using HttpClientHandler handler = new HttpClientHandler();
         if (monitorHttp.CheckCertExpiry)
         {
@@ -157,49 +162,74 @@ public class HttpClientRunner : IHttpClientRunner
 
         // Set the maximum number of automatic redirects
         handler.MaxAutomaticRedirections = monitorHttp.MaxRedirects;
-        
-        using HttpClient client = new HttpClient(handler);
 
-        client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
-        client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
-        client.DefaultRequestHeaders.Add("Connection", "keep-alive");
-        client.DefaultRequestHeaders.Add("Accept", "*/*");
-
-        if (monitorHttp.Headers != null)
+        HttpClient? client = null;
+        try
         {
-            var newHeaders = monitorHttp.Headers;
-            foreach (var header in newHeaders)
+            client = new HttpClient(handler);
+            client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
+            client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
+            client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+            client.DefaultRequestHeaders.Add("Accept", "*/*");
+
+            if (monitorHttp.Headers != null)
             {
-                client.DefaultRequestHeaders.Add(header.Item1, header.Item2);
+                var newHeaders = monitorHttp.Headers;
+                foreach (var header in newHeaders)
+                {
+                    client.DefaultRequestHeaders.Add(header.Item1, header.Item2);
+                }
+            }
+
+            StringContent? content = null;
+
+            if (monitorHttp.Body != null)
+            {
+                content = new StringContent(monitorHttp.Body, System.Text.Encoding.UTF8, "application/json");
+            }
+
+            client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
+
+            var sw = new Stopwatch();
+            sw.Start();
+            HttpResponseMessage? response = null;
+
+            try
+            {
+                response = monitorHttp.MonitorHttpMethod switch
+                {
+                    MonitorHttpMethod.Get => await client.GetAsync(monitorHttp.UrlToCheck),
+                    MonitorHttpMethod.Post => await client.PostAsync(monitorHttp.UrlToCheck, content),
+                    MonitorHttpMethod.Put => await client.PutAsync(monitorHttp.UrlToCheck, content),
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
+                var elapsed = sw.ElapsedMilliseconds;
+                monitorHttp.ResponseTime = (int)elapsed;
+                sw.Stop();
+
+                monitorHttp.ResponseStatusCode = response.StatusCode;
+                monitorHttp.HttpVersion = response.Version.ToString();
+                return response;
+            }
+            finally
+            {
+                response?.Dispose();
             }
         }
-
-        StringContent? content = null;
-
-        if (monitorHttp.Body != null)
+        catch (Exception e)
         {
-            content = new StringContent(monitorHttp.Body, System.Text.Encoding.UTF8, "application/json");
+            client?.Dispose();
+        }
+        finally
+        {
+            client?.Dispose();
         }
 
-        client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
-
-        var sw = new Stopwatch();
-        sw.Start();
-        
-        HttpResponseMessage response = monitorHttp.MonitorHttpMethod switch
+        return new HttpResponseMessage
         {
-            MonitorHttpMethod.Get => await client.GetAsync(monitorHttp.UrlToCheck),
-            MonitorHttpMethod.Post => await client.PostAsync(monitorHttp.UrlToCheck, content),
-            MonitorHttpMethod.Put => await client.PutAsync(monitorHttp.UrlToCheck, content),
-            _ => throw new ArgumentOutOfRangeException()
+            StatusCode = HttpStatusCode.InternalServerError,
+            ReasonPhrase = "Internal Server Error"
         };
-
-        var elapsed = sw.ElapsedMilliseconds;
-        monitorHttp.ResponseTime = (int)elapsed;
-        sw.Stop();
-
-        monitorHttp.ResponseStatusCode = response.StatusCode;
-        monitorHttp.HttpVersion = response.Version.ToString();
-        return response;
     }
 }
