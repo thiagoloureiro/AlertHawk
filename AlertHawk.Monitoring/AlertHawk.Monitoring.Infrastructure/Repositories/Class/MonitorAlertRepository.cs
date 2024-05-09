@@ -84,7 +84,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
         return stream;
     }
     
-    public async Task SaveMonitorAlert(MonitorHistory monitorHistory)
+    public async Task SaveMonitorAlert(MonitorHistory monitorHistory, MonitorEnvironment environment)
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
@@ -96,7 +96,8 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 monitorHistory.TimeStamp,
                 monitorHistory.Status,
                 Message = monitorHistory.ResponseMessage,
-                monitorHistory.ScreenShotUrl
+                monitorHistory.ScreenShotUrl,
+                Environment = environment
             }, commandType: CommandType.Text);
     }
 }

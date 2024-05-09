@@ -74,7 +74,7 @@ public class HttpClientRunner : IHttpClientRunner
                     if (!monitorHttp.LastStatus)
                     {
                         await _notificationProducer.HandleSuccessNotifications(monitorHttp, response.ReasonPhrase);
-                        await _monitorAlertRepository.SaveMonitorAlert(monitorHistory);
+                        await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
                     }
 
                     break;
@@ -104,7 +104,7 @@ public class HttpClientRunner : IHttpClientRunner
                                 monitorHttp.UrlToCheck,
                                 monitorHttp.MonitorId, monitorHttp.Name);
                             monitorHistory.ScreenShotUrl = screenshotUrl;
-                            await _monitorAlertRepository.SaveMonitorAlert(monitorHistory);
+                            await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
 
                             break;
                         }
@@ -140,7 +140,7 @@ public class HttpClientRunner : IHttpClientRunner
                         .LastStatus) // only send notification when goes from online into offline to avoid flood
                     {
                         await _notificationProducer.HandleFailedNotifications(monitorHttp, err.Message);
-                        await _monitorAlertRepository.SaveMonitorAlert(monitorHistory);
+                        await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
                         await _httpClientScreenshot.TakeScreenshotAsync(monitorHttp.UrlToCheck,
                             monitorHttp.MonitorId, monitorHttp.Name);
                     }
