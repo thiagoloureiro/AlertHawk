@@ -108,6 +108,10 @@ public class TcpClientRunner : ITcpClientRunner
 
             return tcpClient.Connected; // Return true if connected, false otherwise
         }
+        catch (SocketException)
+        {
+            return false;
+        }
         catch (Exception)
         {
             // Handle exceptions (such as invalid IP, port out of range, etc.)
