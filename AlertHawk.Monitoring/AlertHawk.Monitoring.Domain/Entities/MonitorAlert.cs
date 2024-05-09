@@ -9,4 +9,5 @@ public class MonitorAlert
     public string? Message { get; set; }
     public string ScreenShotUrl { get; set; }
     public string MonitorName { get; set; }
+    public MonitorEnvironment Environment { get; set; }
 }

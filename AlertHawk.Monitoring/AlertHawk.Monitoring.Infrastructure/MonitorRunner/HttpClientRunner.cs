@@ -13,17 +13,19 @@ public class HttpClientRunner : IHttpClientRunner
     private readonly IMonitorRepository _monitorRepository;
     private readonly IHttpClientScreenshot _httpClientScreenshot;
     private readonly INotificationProducer _notificationProducer;
+    private readonly IMonitorAlertRepository _monitorAlertRepository;
     private int _daysToExpireCert;
     private readonly ICustomLogClient<HttpClientRunner> _logClient;
     public int _retryIntervalMilliseconds = 6000;
 
     public HttpClientRunner(IMonitorRepository monitorRepository, IHttpClientScreenshot httpClientScreenshot,
-        INotificationProducer notificationProducer, ICustomLogClient<HttpClientRunner> logClient)
+        INotificationProducer notificationProducer, ICustomLogClient<HttpClientRunner> logClient, IMonitorAlertRepository monitorAlertRepository)
     {
         _monitorRepository = monitorRepository;
         _httpClientScreenshot = httpClientScreenshot;
         _notificationProducer = notificationProducer;
         _logClient = logClient;
+        _monitorAlertRepository = monitorAlertRepository;
         _retryIntervalMilliseconds = Environment.GetEnvironmentVariable("HTTP_RETRY_INTERVAL_MS") != null
             ? int.Parse(Environment.GetEnvironmentVariable("HTTP_RETRY_INTERVAL_MS"))
             : 6000;
@@ -72,7 +74,7 @@ public class HttpClientRunner : IHttpClientRunner
                     if (!monitorHttp.LastStatus)
                     {
                         await _notificationProducer.HandleSuccessNotifications(monitorHttp, response.ReasonPhrase);
-                        await _monitorRepository.SaveMonitorAlert(monitorHistory);
+                        await _monitorAlertRepository.SaveMonitorAlert(monitorHistory);
                     }
 
                     break;
@@ -102,7 +104,7 @@ public class HttpClientRunner : IHttpClientRunner
                                 monitorHttp.UrlToCheck,
                                 monitorHttp.MonitorId, monitorHttp.Name);
                             monitorHistory.ScreenShotUrl = screenshotUrl;
-                            await _monitorRepository.SaveMonitorAlert(monitorHistory);
+                            await _monitorAlertRepository.SaveMonitorAlert(monitorHistory);
 
                             break;
                         }
@@ -138,7 +140,7 @@ public class HttpClientRunner : IHttpClientRunner
                         .LastStatus) // only send notification when goes from online into offline to avoid flood
                     {
                         await _notificationProducer.HandleFailedNotifications(monitorHttp, err.Message);
-                        await _monitorRepository.SaveMonitorAlert(monitorHistory);
+                        await _monitorAlertRepository.SaveMonitorAlert(monitorHistory);
                         await _httpClientScreenshot.TakeScreenshotAsync(monitorHttp.UrlToCheck,
                             monitorHttp.MonitorId, monitorHttp.Name);
                     }

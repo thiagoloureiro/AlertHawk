@@ -116,7 +116,7 @@ namespace AlertHawk.Monitoring.Controllers
             {
                 return BadRequest("monitorGroups.monitorNotFound");
             }
-            else if(monitorGroup.Monitors.Any())
+            else if(monitorGroup.Monitors != null && monitorGroup.Monitors.Any())
             {
                 return BadRequest("monitorGroups.hasItemsFound");
             }

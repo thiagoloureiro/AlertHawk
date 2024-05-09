@@ -25,7 +25,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
         if (monitorId > 0)
         {
             sql =
-                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl 
+                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl, MA.Environment
                     FROM MonitorAlert MA 
                     INNER JOIN Monitor M on M.Id = MA.MonitorId 
                     WHERE MA.MonitorId = {monitorId} AND MA.TimeStamp >= DATEADD(day, -{days}, GETDATE()) AND MA.[Status] = 0 
@@ -34,7 +34,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
         }
 
         sql =
-            @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl
+            @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl, MA.Environment
                 FROM MonitorAlert MA
                 INNER JOIN Monitor M on M.Id = MA.MonitorId
                 INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id
@@ -59,6 +59,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
 
             worksheet.Cells[1, col++].Value = "Timestamp";
             worksheet.Cells[1, col++].Value = "Monitor Name";
+            worksheet.Cells[1, col++].Value = "Environment";
             worksheet.Cells[1, col++].Value = "Message";
             worksheet.Cells[1, col].Value = "Screenshot URL";
  
@@ -69,6 +70,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 col = 1;
                 worksheet.Cells[row, col++].Value = alert.TimeStamp.ToString("dd/MM/yyyy HH:mm:ss");
                 worksheet.Cells[row, col++].Value = alert.MonitorName;
+                worksheet.Cells[row, col++].Value = alert.Environment.ToString();
                 worksheet.Cells[row, col++].Value = alert.Message;
                 worksheet.Cells[row, col].Value = alert.ScreenShotUrl;
    
@@ -80,5 +82,21 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
 
         stream.Position = 0;
         return stream;
+    }
+    
+    public async Task SaveMonitorAlert(MonitorHistory monitorHistory)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @"INSERT INTO [MonitorAlert] (MonitorId, TimeStamp, Status, Message, ScreenShotUrl, Environment) VALUES (@MonitorId, @TimeStamp, @Status, @Message, @ScreenShotUrl, @Environment)";
+        await db.ExecuteAsync(sql,
+            new
+            {
+                monitorHistory.MonitorId,
+                monitorHistory.TimeStamp,
+                monitorHistory.Status,
+                Message = monitorHistory.ResponseMessage,
+                monitorHistory.ScreenShotUrl
+            }, commandType: CommandType.Text);
     }
 }
