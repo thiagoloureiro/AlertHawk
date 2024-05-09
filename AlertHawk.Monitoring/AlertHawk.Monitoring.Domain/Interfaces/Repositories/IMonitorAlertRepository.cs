@@ -6,5 +6,5 @@ public interface IMonitorAlertRepository
 {
     Task<IEnumerable<MonitorAlert>> GetMonitorAlerts(int? monitorId, int? days, List<int>? groupIds);
     Task<MemoryStream> CreateExcelFileAsync(IEnumerable<MonitorAlert> alerts);
-    Task SaveMonitorAlert(MonitorHistory monitorHistory);
+    Task SaveMonitorAlert(MonitorHistory monitorHistory, MonitorEnvironment environment);
 }
