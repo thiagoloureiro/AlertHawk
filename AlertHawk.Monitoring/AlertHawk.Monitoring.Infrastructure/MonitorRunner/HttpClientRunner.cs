@@ -81,6 +81,9 @@ public class HttpClientRunner : IHttpClientRunner
                 }
                 else
                 {
+                    // Setting Response time to zero when the call fails.
+                    monitorHttp.ResponseTime = 0;
+                    
                     _logClient.LogWarning(
                         $"Error checking URL {monitorHttp.UrlToCheck}, retrying... count: {retryCount}, StatusCode: {monitorHttp.ResponseStatusCode}");
                     monitorHistory.ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}";
@@ -130,7 +133,7 @@ public class HttpClientRunner : IHttpClientRunner
                         Status = false,
                         StatusCode = (int)monitorHttp.ResponseStatusCode,
                         TimeStamp = DateTime.UtcNow,
-                        ResponseTime = monitorHttp.ResponseTime,
+                        ResponseTime = 0,
                         ResponseMessage = err.Message
                     };
 
