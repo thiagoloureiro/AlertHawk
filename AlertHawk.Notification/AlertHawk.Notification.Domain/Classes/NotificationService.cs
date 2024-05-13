@@ -104,6 +104,11 @@ namespace AlertHawk.Notification.Domain.Classes
 
         public async Task InsertNotificationItem(NotificationItem notificationItem)
         {
+            if (notificationItem.Id == 0)
+            {
+                notificationItem.Id = await _notificationRepository.InsertNotificationItem(notificationItem);
+            }
+
             switch (notificationItem.NotificationTypeId)
             {
                 case 1: // Email SMTP
@@ -161,7 +166,7 @@ namespace AlertHawk.Notification.Domain.Classes
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ?? "https://dev.api.alerthawk.tech/auth/";
+            var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ?? "https://dev.api.monitoring.electrificationtools.abb.com/auth/";
             var content = await client.GetAsync($"{authApi}api/UsersMonitorGroup/GetAll");
             var result = await content.Content.ReadAsStringAsync();
             var groupMonitorIds = JsonConvert.DeserializeObject<List<UsersMonitorGroup>>(result);

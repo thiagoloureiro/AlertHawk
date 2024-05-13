@@ -112,30 +112,26 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     public async Task InsertNotificationItemMsTeams(NotificationItem notificationItem)
     {
-        var notificationId = await InsertNotificationItem(notificationItem);
-
         await using var db = new SqlConnection(_connstring);
         string sqlDetails =
             @"INSERT INTO [NotificationTeams] (NotificationId, WebHookUrl) VALUES (@notificationId, @WebHookUrl)";
 
         await db.ExecuteAsync(sqlDetails, new
         {
-            notificationId,
+            notificationItem.Id,
             notificationItem.NotificationTeams?.WebHookUrl
         }, commandType: CommandType.Text);
     }
 
     public async Task InsertNotificationItemTelegram(NotificationItem notificationItem)
     {
-        var notificationId = await InsertNotificationItem(notificationItem);
-
         await using var db = new SqlConnection(_connstring);
         string sqlDetails =
             @"INSERT INTO [NotificationTelegram] (NotificationId, ChatId, TelegramBotToken) VALUES (@notificationId, @ChatId, @TelegramBotToken)";
 
         await db.ExecuteAsync(sqlDetails, new
         {
-            notificationId,
+            notificationItem.Id,
             notificationItem.NotificationTelegram?.ChatId,
             notificationItem.NotificationTelegram?.TelegramBotToken,
         }, commandType: CommandType.Text);
@@ -143,15 +139,13 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     public async Task InsertNotificationItemSlack(NotificationItem notificationItem)
     {
-        var notificationId = await InsertNotificationItem(notificationItem);
-
         await using var db = new SqlConnection(_connstring);
         string sqlDetails =
             @"INSERT INTO [NotificationSlack] (NotificationId, WebHookUrl, Channel) VALUES (@notificationId, @WebHookUrl, @ChannelName)";
 
         await db.ExecuteAsync(sqlDetails, new
         {
-            notificationId,
+            notificationItem.Id,
             notificationItem.NotificationSlack?.WebHookUrl,
             ChannelName = notificationItem.NotificationSlack?.Channel
         }, commandType: CommandType.Text);
@@ -159,7 +153,6 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     public async Task InsertNotificationItemWebHook(NotificationItem notificationItem)
     {
-        var notificationId = await InsertNotificationItem(notificationItem);
 
         await using var db = new SqlConnection(_connstring);
         string sqlDetails =
@@ -167,7 +160,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
         await db.ExecuteAsync(sqlDetails, new
         {
-            notificationId,
+            notificationItem.Id,
             notificationItem.NotificationWebHook?.Message,
             notificationItem.NotificationWebHook?.WebHookUrl,
             notificationItem.NotificationWebHook?.Body,
@@ -300,7 +293,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         await db.ExecuteAsync(sql, new { notificationLog.TimeStamp, notificationLog.NotificationTypeId, notificationLog.Message }, commandType: CommandType.Text);
     }
 
-    private async Task<int> InsertNotificationItem(NotificationItem notificationItem)
+    public async Task<int> InsertNotificationItem(NotificationItem notificationItem)
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
