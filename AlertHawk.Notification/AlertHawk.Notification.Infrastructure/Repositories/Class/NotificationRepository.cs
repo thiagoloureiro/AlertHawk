@@ -118,7 +118,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
         await db.ExecuteAsync(sqlDetails, new
         {
-            notificationItem.Id,
+            notificationId = notificationItem.Id,
             notificationItem.NotificationTeams?.WebHookUrl
         }, commandType: CommandType.Text);
     }
@@ -131,7 +131,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
         await db.ExecuteAsync(sqlDetails, new
         {
-            notificationItem.Id,
+            notificationId = notificationItem.Id,
             notificationItem.NotificationTelegram?.ChatId,
             notificationItem.NotificationTelegram?.TelegramBotToken,
         }, commandType: CommandType.Text);
@@ -145,7 +145,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
         await db.ExecuteAsync(sqlDetails, new
         {
-            notificationItem.Id,
+            notificationId = notificationItem.Id,
             notificationItem.NotificationSlack?.WebHookUrl,
             ChannelName = notificationItem.NotificationSlack?.Channel
         }, commandType: CommandType.Text);
@@ -160,7 +160,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
         await db.ExecuteAsync(sqlDetails, new
         {
-            notificationItem.Id,
+            notificationId = notificationItem.Id,
             notificationItem.NotificationWebHook?.Message,
             notificationItem.NotificationWebHook?.WebHookUrl,
             notificationItem.NotificationWebHook?.Body,
