@@ -225,6 +225,13 @@ public class MonitorGroupService : IMonitorGroupService
                       "https://api.monitoring.electrificationtools.abb.com/auth/";
         var content = await client.GetAsync($"{authApi}api/UsersMonitorGroup/GetAll");
         var result = await content.Content.ReadAsStringAsync();
+        
+        // Check if the response is empty
+        if (string.IsNullOrEmpty(result))
+        {
+            return new List<int>();
+        }
+        
         var groupMonitorIds = JsonConvert.DeserializeObject<List<UsersMonitorGroup>>(result);
         var listGroupMonitorIds = groupMonitorIds?.Select(x => x.GroupMonitorId).ToList();
         return listGroupMonitorIds;
