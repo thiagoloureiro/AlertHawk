@@ -15,6 +15,11 @@ public class GetOrCreateUserHelper(IUserService userService)
         {
             userEmail = claims.Claims.FirstOrDefault(s => s.Type.Contains("emailaddress"))?.Value ??
                         hasEmailIdentityNameLogged;
+
+            if (string.IsNullOrWhiteSpace(userEmail))
+            {
+                userEmail = claims.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+            }
         }
 
         var user = await userService.GetByEmail(userEmail);
