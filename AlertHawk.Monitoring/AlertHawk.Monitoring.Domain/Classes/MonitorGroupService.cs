@@ -188,6 +188,11 @@ public class MonitorGroupService : IMonitorGroupService
         return monitorGroupList;
     }
 
+    public async Task<MonitorGroup> GetMonitorGroupByName(string monitorGroupName)
+    {
+        return await _monitorGroupRepository.GetMonitorGroupByName(monitorGroupName);
+    }
+
     public async Task<MonitorGroup> GetMonitorGroupById(int id)
     {
         return await _monitorGroupRepository.GetMonitorGroupById(id);
