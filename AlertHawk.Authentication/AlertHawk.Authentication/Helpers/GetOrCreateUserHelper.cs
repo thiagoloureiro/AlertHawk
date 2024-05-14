@@ -15,15 +15,20 @@ public class GetOrCreateUserHelper(IUserService userService)
         {
             userEmail = claims.Claims.FirstOrDefault(s => s.Type.Contains("emailaddress"))?.Value ??
                         hasEmailIdentityNameLogged;
-
-            if (string.IsNullOrWhiteSpace(userEmail))
-            {
-                userEmail = claims.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
-            }
         }
 
-        var user = await userService.GetByEmail(userEmail);
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            userEmail = claims.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+        }
+
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            userEmail = claims.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
+        }
         
+        var user = await userService.GetByEmail(userEmail);
+
         // This is for AD First Login only
         if (ReferenceEquals(null, user))
         {
