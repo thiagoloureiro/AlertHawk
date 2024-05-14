@@ -22,6 +22,12 @@ public class UserService : IUserService
 
     public async Task CreateFromAzure(UserCreationFromAzure userCreation)
     {
+        var userList = await _userRepository.GetAll();
+        if (userList != null && !userList.Any())
+        {
+            userCreation.IsAdmin = true;
+        }
+
         await _userRepository.CreateFromAzure(userCreation);
     }
 
@@ -60,6 +66,7 @@ public class UserService : IUserService
     {
         return await _userRepository.GetByUsername(username);
     }
+
     public Task<IEnumerable<UserDto>?> GetAll()
     {
         return _userRepository.GetAll();
