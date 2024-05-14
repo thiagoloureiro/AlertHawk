@@ -116,7 +116,7 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
         await db.QueryAsync<MonitorGroup>(sqlDeleteGroup, new { id }, commandType: CommandType.Text);
     }
 
-    public async Task<MonitorGroup> GetMonitorGroupByName(string monitorGroupName)
+    public async Task<MonitorGroup?> GetMonitorGroupByName(string monitorGroupName)
     {
         await using var db = new SqlConnection(_connstring);
         string sql = @"SELECT Id, Name FROM [MonitorGroup] WHERE Name=@monitorGroupName";
