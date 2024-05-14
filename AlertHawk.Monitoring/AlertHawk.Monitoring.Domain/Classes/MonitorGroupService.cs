@@ -142,6 +142,21 @@ public class MonitorGroupService : IMonitorGroupService
 
         monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id)).ToList();
 
+        return monitorGroupList;
+    }
+    
+    public async Task<IEnumerable<MonitorGroup>> GetMonitorDashboardGroupListByUser(string jwtToken)
+    {
+        var ids = await GetUserGroupMonitorListIds(jwtToken);
+        var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupList();
+
+        if (ids == null || !ids.Any())
+        {
+            return new List<MonitorGroup> { new MonitorGroup { Id = 0, Name = "No Groups Found" } };
+        }
+
+        monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id)).ToList();
+
         var allMonitorIds = monitorGroupList
             .SelectMany(group => group.Monitors?.Select(m => m.Id) ?? Enumerable.Empty<int>()).ToList();
         var allDashboardData = await GetMonitorDashboardDataList(allMonitorIds);
