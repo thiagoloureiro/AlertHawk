@@ -5,6 +5,7 @@ namespace AlertHawk.Notification.Domain.Interfaces.Repositories;
 public interface INotificationRepository
 {
     Task<IEnumerable<NotificationItem>> SelectNotificationItemList();
+    Task<int> InsertNotificationItem(NotificationItem notificationItem);
     Task InsertNotificationItemEmailSmtp(NotificationItem notificationItem);
     Task UpdateNotificationItem(NotificationItem notificationItem);
     Task InsertNotificationItemMsTeams(NotificationItem notificationItem);
