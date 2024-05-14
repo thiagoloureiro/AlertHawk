@@ -9,21 +9,26 @@ public class GetOrCreateUserHelper(IUserService userService)
 {
     public async Task<UserDto> GetUserOrCreateUser(ClaimsPrincipal claims)
     {
-        string userEmail = "";
+        string? userEmail = "";
         var hasEmailIdentityNameLogged = claims.Identity?.Name;
         if (hasEmailIdentityNameLogged != null)
         {
-            userEmail = claims.Claims.FirstOrDefault(s => s.Type.Contains("emailaddress"))?.Value ??
+            userEmail = claims.Claims?.FirstOrDefault(s => s.Type.Contains("emailaddress"))?.Value ??
                         hasEmailIdentityNameLogged;
-
-            if (string.IsNullOrWhiteSpace(userEmail))
-            {
-                userEmail = claims.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
-            }
         }
 
-        var user = await userService.GetByEmail(userEmail);
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            userEmail = claims.Claims?.FirstOrDefault(c => c.Type == "email")?.Value;
+        }
+
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            userEmail = claims.Claims?.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
+        }
         
+        var user = await userService.GetByEmail(userEmail);
+
         // This is for AD First Login only
         if (ReferenceEquals(null, user))
         {
