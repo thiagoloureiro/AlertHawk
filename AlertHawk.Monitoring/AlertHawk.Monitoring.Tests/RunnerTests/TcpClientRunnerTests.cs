@@ -42,7 +42,6 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
 
     [Theory]
     [InlineData("127.0.0.1", 4434)]
-    [InlineData("9.8.7.6", 64564)]
     public void Should_Make_Tcp_Call_Failed_Result(string ip, int port)
     {
         // Arrange

@@ -39,6 +39,7 @@ public class Startup
         services.AddTransient<IMonitorAgentRepository, MonitorAgentRepository>();
         services.AddTransient<IMonitorManager, MonitorManager>();
         services.AddTransient<IMonitorGroupRepository, MonitorGroupRepository>();
+        services.AddTransient<IMonitorAlertRepository, MonitorAlertRepository>();
 
         services.AddTransient<IHttpClientRunner, HttpClientRunner>();
         services.AddTransient<ITcpClientRunner, TcpClientRunner>();
