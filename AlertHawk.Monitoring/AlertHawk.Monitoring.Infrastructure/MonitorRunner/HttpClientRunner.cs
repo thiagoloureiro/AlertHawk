@@ -17,8 +17,7 @@ public class HttpClientRunner : IHttpClientRunner
     public int _retryIntervalMilliseconds = 6000;
 
     public HttpClientRunner(IMonitorRepository monitorRepository, IHttpClientScreenshot httpClientScreenshot,
-        INotificationProducer notificationProducer,
-        IMonitorAlertRepository monitorAlertRepository)
+        INotificationProducer notificationProducer, IMonitorAlertRepository monitorAlertRepository)
     {
         _monitorRepository = monitorRepository;
         _httpClientScreenshot = httpClientScreenshot;
