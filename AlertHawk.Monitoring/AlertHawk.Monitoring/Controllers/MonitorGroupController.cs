@@ -45,7 +45,7 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorGroupService.GetMonitorGroupList(jwtToken);
             return Ok(result);
         }
-        
+
         [SwaggerOperation(Summary =
             "Retrieves a List of all Monitor Groups (including monitor list + dashboard data) By User Token")]
         [ProducesResponseType(typeof(IEnumerable<MonitorGroup>), StatusCodes.Status200OK)]
@@ -104,12 +104,6 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("addMonitorGroup")]
         public async Task<IActionResult> AddMonitorGroup([FromBody] MonitorGroup monitorGroup)
         {
-            var monitor = await _monitorGroupService.GetMonitorGroupByName(monitorGroup.Name);
-            if(monitor?.Id != 0)
-            {
-                return BadRequest("Monitor Already Exists");
-            }
-            
             await _monitorGroupService.AddMonitorGroup(monitorGroup);
             return Ok();
         }
@@ -119,12 +113,6 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("updateMonitorGroup")]
         public async Task<IActionResult> UpdateMonitorGroup([FromBody] MonitorGroup monitorGroup)
         {
-            var monitor = await _monitorGroupService.GetMonitorGroupByName(monitorGroup.Name);
-            if(monitor?.Id != 0)
-            {
-                return BadRequest("Monitor Already Exists");
-            }
-            
             await _monitorGroupService.UpdateMonitorGroup(monitorGroup);
             return Ok();
         }
@@ -145,7 +133,7 @@ namespace AlertHawk.Monitoring.Controllers
             {
                 return BadRequest("monitorGroups.monitorNotFound");
             }
-            else if(monitorGroup.Monitors != null && monitorGroup.Monitors.Any())
+            else if (monitorGroup.Monitors != null && monitorGroup.Monitors.Any())
             {
                 return BadRequest("monitorGroups.hasItemsFound");
             }

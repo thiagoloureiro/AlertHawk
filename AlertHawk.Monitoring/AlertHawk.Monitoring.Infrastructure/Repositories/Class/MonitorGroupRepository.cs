@@ -76,6 +76,10 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
     public async Task AddMonitorToGroup(MonitorGroupItems monitorGroupItems)
     {
         await using var db = new SqlConnection(_connstring);
+        
+        string sqlRemove = @"DELETE FROM [MonitorGroupItems] WHERE MonitorId = @MonitorId";
+        await db.QueryAsync(sqlRemove, new { monitorGroupItems.MonitorId }, commandType: CommandType.Text);
+        
         string sqlInsert =
             @"INSERT INTO [monitorGroupItems] (MonitorId, MonitorGroupId) VALUES (@MonitorId, @MonitorGroupId)";
         await db.QueryAsync<MonitorGroup>(sqlInsert,
