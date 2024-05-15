@@ -144,7 +144,7 @@ public class MonitorGroupService : IMonitorGroupService
 
         return monitorGroupList;
     }
-    
+
     public async Task<IEnumerable<MonitorGroup>> GetMonitorDashboardGroupListByUser(string jwtToken)
     {
         var ids = await GetUserGroupMonitorListIds(jwtToken);
@@ -197,14 +197,12 @@ public class MonitorGroupService : IMonitorGroupService
     {
         await _monitorGroupRepository.AddMonitorToGroup(monitorGroupItems);
         _caching.Invalidate(_cacheKeyMonitorGroupList);
-
     }
 
     public async Task RemoveMonitorFromGroup(MonitorGroupItems monitorGroupItems)
     {
         await _monitorGroupRepository.RemoveMonitorFromGroup(monitorGroupItems);
         _caching.Invalidate(_cacheKeyMonitorGroupList);
-
     }
 
     public async Task AddMonitorGroup(MonitorGroup monitorGroup)
@@ -215,7 +213,6 @@ public class MonitorGroupService : IMonitorGroupService
 
     public async Task UpdateMonitorGroup(MonitorGroup monitorGroup)
     {
-        
         await _monitorGroupRepository.UpdateMonitorGroup(monitorGroup);
         _caching.Invalidate(_cacheKeyMonitorGroupList);
     }
@@ -240,17 +237,18 @@ public class MonitorGroupService : IMonitorGroupService
                       "https://api.monitoring.electrificationtools.abb.com/auth/";
         var content = await client.GetAsync($"{authApi}api/UsersMonitorGroup/GetAll");
         var result = await content.Content.ReadAsStringAsync();
-        
+
         // Check if the response is empty
         if (string.IsNullOrEmpty(result))
         {
             return new List<int>();
         }
-        
+
         var groupMonitorIds = JsonConvert.DeserializeObject<List<UsersMonitorGroup>>(result);
         var listGroupMonitorIds = groupMonitorIds?.Select(x => x.GroupMonitorId).ToList();
         return listGroupMonitorIds;
     }
+
     public async Task DeleteUserGroupMonitorListIds(string token, int userGroupMonitorId)
     {
         var client = _httpClientFactory.CreateClient();

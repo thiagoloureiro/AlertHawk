@@ -45,7 +45,7 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorGroupService.GetMonitorGroupList(jwtToken);
             return Ok(result);
         }
-        
+
         [SwaggerOperation(Summary =
             "Retrieves a List of all Monitor Groups (including monitor list + dashboard data) By User Token")]
         [ProducesResponseType(typeof(IEnumerable<MonitorGroup>), StatusCodes.Status200OK)]
@@ -133,7 +133,7 @@ namespace AlertHawk.Monitoring.Controllers
             {
                 return BadRequest("monitorGroups.monitorNotFound");
             }
-            else if(monitorGroup.Monitors != null && monitorGroup.Monitors.Any())
+            else if (monitorGroup.Monitors != null && monitorGroup.Monitors.Any())
             {
                 return BadRequest("monitorGroups.hasItemsFound");
             }
