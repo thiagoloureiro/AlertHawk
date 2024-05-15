@@ -104,6 +104,12 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("addMonitorGroup")]
         public async Task<IActionResult> AddMonitorGroup([FromBody] MonitorGroup monitorGroup)
         {
+            var monitor = await _monitorGroupService.GetMonitorGroupByName(monitorGroup.Name);
+            if(monitor?.Id != 0)
+            {
+                return BadRequest("Monitor Already Exists");
+            }
+            
             await _monitorGroupService.AddMonitorGroup(monitorGroup);
             return Ok();
         }
@@ -113,6 +119,12 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("updateMonitorGroup")]
         public async Task<IActionResult> UpdateMonitorGroup([FromBody] MonitorGroup monitorGroup)
         {
+            var monitor = await _monitorGroupService.GetMonitorGroupByName(monitorGroup.Name);
+            if(monitor?.Id != 0)
+            {
+                return BadRequest("Monitor Already Exists");
+            }
+            
             await _monitorGroupService.UpdateMonitorGroup(monitorGroup);
             return Ok();
         }

@@ -137,7 +137,7 @@ public class MonitorGroupService : IMonitorGroupService
 
         if (ids == null || !ids.Any())
         {
-            return new List<MonitorGroup> { new MonitorGroup { Id = 0, Name = "No Groups Found" } };
+            return null;
         }
 
         monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id)).ToList();
@@ -186,6 +186,11 @@ public class MonitorGroupService : IMonitorGroupService
         }
 
         return monitorGroupList;
+    }
+
+    public async Task<MonitorGroup?> GetMonitorGroupByName(string monitorGroupName)
+    {
+        return await _monitorGroupRepository.GetMonitorGroupByName(monitorGroupName);
     }
 
     public async Task<MonitorGroup> GetMonitorGroupById(int id)

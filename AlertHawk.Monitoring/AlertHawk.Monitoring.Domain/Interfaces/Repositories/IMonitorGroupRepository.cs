@@ -12,4 +12,5 @@ public interface IMonitorGroupRepository
     Task AddMonitorGroup(MonitorGroup monitorGroup);
     Task UpdateMonitorGroup(MonitorGroup monitorGroup);
     Task DeleteMonitorGroup(int id);
+    Task<MonitorGroup?> GetMonitorGroupByName(string monitorGroupName);
 }
