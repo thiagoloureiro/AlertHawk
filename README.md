@@ -28,3 +28,18 @@
 [![Build status](https://thiagoguaru.visualstudio.com/AlertHawk/_apis/build/status/AlertHawk.Monitoring%20-%20Docker)](https://thiagoguaru.visualstudio.com/AlertHawk/_build/latest?definitionId=11)
 ![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/thiagoguaru/alerthawk/12)
 ![Azure DevOps tests](https://img.shields.io/azure-devops/tests/thiagoguaru/alerthawk/12)
+
+[![Contributors](https://img.shields.io/github/contributors/thiagoloureiro/AlertHawk.svg)](https://github.com/thiagoloureiro/AlertHawk/graphs/contributors)
+[![Forks](https://img.shields.io/github/forks/thiagoloureiro/AlertHawk.svg?style=social)](https://github.com/thiagoloureiro/AlertHawk/network/members)
+[![Stars](https://img.shields.io/github/stars/thiagoloureiro/AlertHawk.svg?style=social)](https://github.com/thiagoloureiro/AlertHawk/stargazers)
+[![Issues](https://img.shields.io/github/issues/thiagoloureiro/AlertHawk.svg)](https://github.com/thiagoloureiro/AlertHawk/issues)
+
+## Contributors
+
+Thanks to these wonderful people for their contributions to the project:
+
+| [![BulandaK](https://avatars.githubusercontent.com/BulandaK?s=100)](https://github.com/BulandaK) | [![altughan09](https://avatars.githubusercontent.com/altughan09?s=100)](https://github.com/altughan09) | [![guilhermedclima](https://avatars.githubusercontent.com/guilhermedclima?s=100)](https://github.com/guilhermedclima) |
+|:---:|:---:|:---:|
+| [BulandaK](https://github.com/BulandaK) | [altughan09](https://github.com/altughan09) | [guilhermedclima](https://github.com/guilhermedclima) |
+
+You can find the full list of contributors [here](https://github.com/thiagoloureiro/AlertHawk/graphs/contributors).
