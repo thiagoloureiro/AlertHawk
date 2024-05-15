@@ -241,7 +241,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag FROM [Monitor] {whereClause}";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
-    
+
     public async Task<IEnumerable<Monitor>> GetMonitorListbyTag(string Tag)
     {
         await using var db = new SqlConnection(_connstring);
@@ -312,6 +312,12 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
         string sql = @"UPDATE [Monitor] SET paused=@paused WHERE Id=@id";
         await db.ExecuteAsync(sql, new { id, paused }, commandType: CommandType.Text);
+
+        if (paused)
+        {
+            var sqlRemoveTasks = @"DELETE FROM [MonitorAgentTasks] WHERE MonitorId=@id";
+            await db.ExecuteAsync(sqlRemoveTasks, new { id }, commandType: CommandType.Text);
+        }
     }
 
     public async Task<int> CreateMonitorHttp(MonitorHttp monitorHttp)
@@ -359,7 +365,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             @$"SELECT MonitorId, Status, TimeStamp, ResponseTime FROM [MonitorHistory] WHERE MonitorId=@id AND TimeStamp >= DATEADD(day, -{days}, GETUTCDATE())  ORDER BY TimeStamp DESC";
         return await db.QueryAsync<MonitorHistory>(sql, new { id, days }, commandType: CommandType.Text);
     }
-    
+
     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndHours(int id, int hours)
     {
         await using var db = new SqlConnection(_connstring);
@@ -413,7 +419,6 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return await db.QueryAsync<MonitorHttp>(sql, commandType: CommandType.Text);
     }
 
-   
 
     public async Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days)
     {
