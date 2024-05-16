@@ -13,8 +13,9 @@ public class HttpClientScreenshot : IHttpClientScreenshot
         string? screenshotUrl = string.Empty;
         if (screenshotEnabled)
         {
+            var screenshotPath =  Environment.GetEnvironmentVariable("screenshot_folder") ?? "/screenshots/";
             // Set the path to the directory where you want to save the screenshot
-            string screenshotDirectory = $@"/screenshots/{monitorId}_{monitorName}";
+            string screenshotDirectory = $@"{screenshotPath}{monitorId}_{monitorName}";
             // Ensure the directory exists, create it if necessary
             Directory.CreateDirectory(screenshotDirectory);
 
