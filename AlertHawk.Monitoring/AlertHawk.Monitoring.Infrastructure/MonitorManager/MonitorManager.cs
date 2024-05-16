@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
@@ -11,6 +12,7 @@ using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorManager;
 
+[ExcludeFromCodeCoverage]
 public class MonitorManager : IMonitorManager
 {
     private readonly IMonitorAgentRepository _monitorAgentRepository;
