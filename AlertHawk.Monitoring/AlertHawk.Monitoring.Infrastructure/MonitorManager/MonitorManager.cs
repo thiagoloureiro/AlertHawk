@@ -64,10 +64,13 @@ public class MonitorManager : IMonitorManager
 
             foreach (var monitorHttp in monitorHttps)
             {
-                monitorHttp.LastStatus =
-                    monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Status;
-                monitorHttp.Name = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Name;
-                monitorHttp.Retries = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Retries;
+                if (monitorByHttpType != null)
+                {
+                    monitorHttp.LastStatus =
+                        monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Status;
+                    monitorHttp.Name = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Name;
+                    monitorHttp.Retries = monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Retries;
+                }
 
                 JsonUtils.ConvertJsonToTuple(monitorHttp);
 
