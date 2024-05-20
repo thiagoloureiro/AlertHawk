@@ -39,7 +39,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 INNER JOIN Monitor M on M.Id = MA.MonitorId
                 INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id
                 WHERE MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0
-                AND MGI.MonitorGroupId in ({string.Join(",", @groupIds)})
+                AND MGI.MonitorGroupId in @groupIds
                 ORDER BY MA.TimeStamp DESC";
 
         return await db.QueryAsync<MonitorAlert>(sql, new { days, groupIds }, commandType: CommandType.Text);
