@@ -224,12 +224,12 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
 
-        string whereClause = $"WHERE MonitorId IN ({string.Join(",", ids)})";
+        string whereClause = $"WHERE MonitorId IN ({string.Join(",", @ids)})";
 
         string sql =
             $@"SELECT MonitorId, Port, IP, Timeout, LastStatus  FROM [MonitorTcp] {whereClause}";
 
-        return await db.QueryAsync<MonitorTcp>(sql, commandType: CommandType.Text);
+        return await db.QueryAsync<MonitorTcp>(sql, new { ids }, commandType: CommandType.Text);
     }
 
     public async Task<IEnumerable<Monitor>> GetMonitorListByIds(List<int> ids)
