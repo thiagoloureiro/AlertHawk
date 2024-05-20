@@ -223,11 +223,9 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     public async Task<IEnumerable<MonitorTcp>> GetTcpMonitorByIds(List<int> ids)
     {
         await using var db = new SqlConnection(_connstring);
-
-        string whereClause = $"WHERE MonitorId IN ({string.Join(",", @ids)})";
-
+        
         string sql =
-            $@"SELECT MonitorId, Port, IP, Timeout, LastStatus  FROM [MonitorTcp] {whereClause}";
+            $@"SELECT MonitorId, Port, IP, Timeout, LastStatus  FROM [MonitorTcp] WHERE MonitorId IN @ids";
 
         return await db.QueryAsync<MonitorTcp>(sql, new { ids }, commandType: CommandType.Text);
     }
@@ -235,10 +233,8 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     public async Task<IEnumerable<Monitor>> GetMonitorListByIds(List<int> ids)
     {
         await using var db = new SqlConnection(_connstring);
-        string whereClause = $"WHERE Id IN ({string.Join(",", @ids)})";
-
         string sql =
-            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag FROM [Monitor] {whereClause}";
+            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag FROM [Monitor] WHERE Id IN @ids";
         return await db.QueryAsync<Monitor>(sql, new { ids }, commandType: CommandType.Text);
     }
 
@@ -411,10 +407,8 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
 
-        string whereClause = $"WHERE MonitorId IN ({string.Join(",", @ids)})";
-
         string sql =
-            $@"SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp] {whereClause}";
+            $@"SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp] WHERE MonitorId IN @ids";
 
         return await db.QueryAsync<MonitorHttp>(sql, new { ids }, commandType: CommandType.Text);
     }
