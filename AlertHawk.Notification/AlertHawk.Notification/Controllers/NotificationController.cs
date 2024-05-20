@@ -1,5 +1,6 @@
 ﻿using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Services;
+using AlertHawk.Notification.Domain.Utils;
 using AlertHawk.Notification.Infrastructure.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,6 +25,7 @@ namespace AlertHawk.Notification.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         public async Task<IActionResult> SendNotification(NotificationSend notification)
         {
+            notification.NotificationEmail.Password = AesEncryption.EncryptString(notification.NotificationEmail.Password);
             var result = await _notificationService.Send(notification);
             return Ok(result);
         }
