@@ -45,7 +45,7 @@ namespace AlertHawk.Notification.Domain.Classes
                 {
                     case 1: // Email SMTP
                         notificationSend.NotificationEmail.Password =
-                            AesEncryption.DecryptString(notificationSend.NotificationEmail.Password);
+                           notificationSend.NotificationEmail.Password;
 
                         notificationSend.NotificationEmail.Body += notificationSend.Message;
                         notificationLog.Message =

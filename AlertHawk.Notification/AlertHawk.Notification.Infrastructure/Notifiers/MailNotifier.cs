@@ -33,17 +33,17 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
             var emailCcList = emailNotification.ToCCEmail?.Split(";").ToList();
             var emailBccList = emailNotification.ToBCCEmail?.Split(";").ToList();
 
-            if (emailTo != null)
+            if (!string.IsNullOrEmpty(emailNotification.ToEmail))
             {
                 emailRecipients.AddRange(emailTo);
             }
 
-            if (emailCcList != null)
+            if (!string.IsNullOrEmpty(emailNotification.ToCCEmail) != null)
             {
                 emailRecipients.AddRange(emailCcList);
             }
 
-            if (emailBccList != null)
+            if (!string.IsNullOrEmpty(emailNotification.ToBCCEmail))
             {
                 emailRecipients.AddRange(emailBccList);
             }
