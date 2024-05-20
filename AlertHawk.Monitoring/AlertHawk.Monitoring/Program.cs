@@ -22,7 +22,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AlertHawk.Monitoring.Infrastructure.Utils;
-using CustomLog.Client;
 using Hangfire.InMemory;
 
 [assembly: ExcludeFromCodeCoverage]
@@ -119,7 +118,6 @@ builder.Services.AddResponseCompression(options =>
 
 // Add HttpClientFactory
 builder.Services.AddHttpClient();
-builder.Services.AddCustomLogClient(builder.Configuration.GetSection("CustomLogger"));
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.DefaultIgnoreCondition =
@@ -166,7 +164,7 @@ recurringJobManager.AddOrUpdate<IMonitorManager>("StartMasterMonitorAgentTaskMan
 recurringJobManager.AddOrUpdate<IMonitorManager>("StartRunnerManager", x => x.StartRunnerManager(), "*/25 * * * * *");
 
 recurringJobManager.AddOrUpdate<IMonitorService>("SetMonitorDashboardDataCacheList",
-    x => x.SetMonitorDashboardDataCacheList(), "*/5 * * * *");
+    x => x.SetMonitorDashboardDataCacheList(), "*/2 * * * *");
 
 // Resolve the service and run the method immediately
 using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())

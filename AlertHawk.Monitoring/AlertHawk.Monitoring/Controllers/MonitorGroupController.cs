@@ -30,7 +30,7 @@ namespace AlertHawk.Monitoring.Controllers
         }
 
         [SwaggerOperation(Summary =
-            "Retrieves a List of all Monitor Groups (including monitor list + dashboard data) By User Token")]
+            "Retrieves a List of all Monitor Groups By User Token")]
         [ProducesResponseType(typeof(IEnumerable<MonitorGroup>), StatusCodes.Status200OK)]
         [HttpGet("monitorGroupListByUser")]
         [Authorize]
@@ -49,9 +49,26 @@ namespace AlertHawk.Monitoring.Controllers
         [SwaggerOperation(Summary =
             "Retrieves a List of all Monitor Groups (including monitor list + dashboard data) By User Token")]
         [ProducesResponseType(typeof(IEnumerable<MonitorGroup>), StatusCodes.Status200OK)]
-        [HttpGet("monitorGroupListByUser/{environment}")]
+        [HttpGet("monitorDashboardGroupListByUser")]
         [Authorize]
-        public async Task<IActionResult> GetMonitorGroupListByEnvironment(
+        public async Task<IActionResult> GetMonitorDashboardGroupListByUser()
+        {
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (jwtToken == null)
+            {
+                return BadRequest("Invalid Token");
+            }
+
+            var result = await _monitorGroupService.GetMonitorDashboardGroupListByUser(jwtToken);
+            return Ok(result);
+        }
+
+        [SwaggerOperation(Summary =
+            "Retrieves a List of all Monitor Groups (including monitor list + dashboard data) By User Token and Environment")]
+        [ProducesResponseType(typeof(IEnumerable<MonitorGroup>), StatusCodes.Status200OK)]
+        [HttpGet("monitorDashboardGroupListByUser/{environment}")]
+        [Authorize]
+        public async Task<IActionResult> GetMonitorDashboardGroupListByUser(
             MonitorEnvironment environment = MonitorEnvironment.Production)
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
@@ -116,7 +133,7 @@ namespace AlertHawk.Monitoring.Controllers
             {
                 return BadRequest("monitorGroups.monitorNotFound");
             }
-            else if(monitorGroup.Monitors != null && monitorGroup.Monitors.Any())
+            else if (monitorGroup.Monitors != null && monitorGroup.Monitors.Any())
             {
                 return BadRequest("monitorGroups.hasItemsFound");
             }

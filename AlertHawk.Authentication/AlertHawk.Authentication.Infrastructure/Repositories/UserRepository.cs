@@ -20,30 +20,37 @@ public class UserRepository : BaseRepository, IUserRepository
 
     public async Task<UserDto?> Get(Guid id)
     {
-        const string sql = "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE Id = @Id";
+        const string sql =
+            "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE Id = @Id";
         var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { Id = id });
         return _mapper.Map<UserDto>(user);
     }
 
     public async Task<UserDto?> GetByEmail(string email)
     {
-        const string sql = "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE LOWER(Email) = LOWER(@Email)";
-        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { Email = email.ToLower(CultureInfo.InvariantCulture) });
+        const string sql =
+            "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE LOWER(Email) = LOWER(@Email)";
+        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql,
+            new { Email = email.ToLower(CultureInfo.InvariantCulture) });
         return _mapper.Map<UserDto>(user);
     }
 
     public async Task<UserDto?> GetByUsername(string username)
     {
-        const string sql = "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE LOWER(Username) = LOWER(@Username)";
-        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { Username = username.ToLower(CultureInfo.InvariantCulture) });
+        const string sql =
+            "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE LOWER(Username) = LOWER(@Username)";
+        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql,
+            new { Username = username.ToLower(CultureInfo.InvariantCulture) });
         return _mapper.Map<UserDto>(user);
     }
+
     public async Task<IEnumerable<UserDto>?> GetAll()
     {
         const string sql = "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon FROM Users";
         var user = await ExecuteQueryAsync<User>(sql);
         return _mapper.Map<List<UserDto>?>(user);
     }
+
     public async Task Create(UserCreation userCreation)
     {
         string checkExistingUserSql = "SELECT Id FROM Users WHERE LOWER(Email) = @Email";
@@ -56,6 +63,7 @@ public class UserRepository : BaseRepository, IUserRepository
         {
             throw new InvalidOperationException("The email is already registered, please choose another.");
         }
+
         checkExistingUserSql = "SELECT Id FROM Users WHERE LOWER(Username) = @Username";
         existingUser = await ExecuteQueryFirstOrDefaultAsync<Guid?>(checkExistingUserSql, new
         {
@@ -65,6 +73,7 @@ public class UserRepository : BaseRepository, IUserRepository
         {
             throw new InvalidOperationException("The username is already registered, please choose another.");
         }
+
         var salt = PasswordHasher.GenerateSalt();
         var hashedPassword = PasswordHasher.HashPassword(userCreation.Password, salt);
 
@@ -80,20 +89,21 @@ public class UserRepository : BaseRepository, IUserRepository
             Salt = salt,
             userCreation.IsAdmin,
             CreatedAt = DateTime.UtcNow
-
         });
     }
+
     public async Task CreateFromAzure(UserCreationFromAzure userCreation)
     {
         const string insertUserSql = @"
-            INSERT INTO Users (Id, Username, Email,  IsAdmin, CreatedAt) 
-            VALUES (NEWID(), @Username, @Email, 0, @CreatedAt)";
+            INSERT INTO Users (Id, Username, Email, IsAdmin, CreatedAt) 
+            VALUES (NEWID(), @Username, @Email, @IsAdmin, @CreatedAt)";
 
         await ExecuteNonQueryAsync(insertUserSql, new
         {
             userCreation.Username,
             Email = userCreation.Email.ToLower(CultureInfo.InvariantCulture),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            userCreation.IsAdmin
         });
     }
 
@@ -127,11 +137,13 @@ public class UserRepository : BaseRepository, IUserRepository
             {
                 throw new InvalidOperationException("Email already exists.");
             }
+
             if (updateEmail)
             {
                 conditions.Add("LOWER(Email) = LOWER(@Email)");
                 parameters.Add("Email", userUpdate.Email?.ToLower(CultureInfo.InvariantCulture));
             }
+
             existingUser = await ExecuteQueryFirstOrDefaultAsync<Guid?>(checkUserSql, parameters);
             if (existingUser.HasValue)
             {
@@ -170,7 +182,8 @@ public class UserRepository : BaseRepository, IUserRepository
         var salt = PasswordHasher.GenerateSalt();
         var hashedPassword = PasswordHasher.HashPassword(newPassword, salt);
 
-        const string insertUserSql = @"UPDATE User SET Password = @Password, Salt = @Salt, UpdatedAt = @UpdatedAt WHERE LOWER(Username) = LOWER(@Username)";
+        const string insertUserSql =
+            @"UPDATE User SET Password = @Password, Salt = @Salt, UpdatedAt = @UpdatedAt WHERE LOWER(Username) = LOWER(@Username)";
 
         await ExecuteNonQueryAsync(insertUserSql, new
         {
@@ -184,8 +197,10 @@ public class UserRepository : BaseRepository, IUserRepository
 
     public async Task<UserDto?> Login(string username, string password)
     {
-        const string sql = "SELECT Id, Email, Username, IsAdmin, Password, Salt, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE LOWER(Username) = LOWER(@username)";
-        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { username = username.ToLower(CultureInfo.InvariantCulture) });
+        const string sql =
+            "SELECT Id, Email, Username, IsAdmin, Password, Salt, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE LOWER(Username) = LOWER(@username)";
+        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql,
+            new { username = username.ToLower(CultureInfo.InvariantCulture) });
 
         if (user is null || !PasswordHasher.VerifyPassword(password, user.Password, user.Salt))
         {

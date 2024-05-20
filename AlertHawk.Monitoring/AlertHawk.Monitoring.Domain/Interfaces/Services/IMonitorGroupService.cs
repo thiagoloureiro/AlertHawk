@@ -15,4 +15,6 @@ public interface IMonitorGroupService
     Task DeleteMonitorGroup(string jwtToken, int id);
     Task<List<int>?> GetUserGroupMonitorListIds(string token);
     Task<IEnumerable<MonitorGroup>> GetMonitorGroupList();
+    Task<IEnumerable<MonitorGroup>>  GetMonitorDashboardGroupListByUser(string jwtToken);
+    Task<MonitorGroup?> GetMonitorGroupByName(string monitorGroupName);
 }

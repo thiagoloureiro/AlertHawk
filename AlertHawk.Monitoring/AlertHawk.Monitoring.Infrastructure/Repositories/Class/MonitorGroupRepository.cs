@@ -76,6 +76,10 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
     public async Task AddMonitorToGroup(MonitorGroupItems monitorGroupItems)
     {
         await using var db = new SqlConnection(_connstring);
+        
+        string sqlRemove = @"DELETE FROM [MonitorGroupItems] WHERE MonitorId = @MonitorId";
+        await db.QueryAsync(sqlRemove, new { monitorGroupItems.MonitorId }, commandType: CommandType.Text);
+        
         string sqlInsert =
             @"INSERT INTO [monitorGroupItems] (MonitorId, MonitorGroupId) VALUES (@MonitorId, @MonitorGroupId)";
         await db.QueryAsync<MonitorGroup>(sqlInsert,
@@ -112,7 +116,15 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
     public async Task DeleteMonitorGroup(int id)
     {
         await using var db = new SqlConnection(_connstring);
+        
         string sqlDeleteGroup = @"DELETE FROM [MonitorGroup] WHERE id = @id";
         await db.QueryAsync<MonitorGroup>(sqlDeleteGroup, new { id }, commandType: CommandType.Text);
+    }
+
+    public async Task<MonitorGroup?> GetMonitorGroupByName(string monitorGroupName)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = @"SELECT Id, Name FROM [MonitorGroup] WHERE Name=@monitorGroupName";
+        return await db.QueryFirstOrDefaultAsync<MonitorGroup>(sql, new { monitorGroupName }, commandType: CommandType.Text);
     }
 }
