@@ -64,7 +64,7 @@ public class MonitorManager : IMonitorManager
 
             foreach (var monitorHttp in monitorHttps)
             {
-                if (monitorByHttpType != null)
+                if (monitorHttp != null)
                 {
                     monitorHttp.LastStatus =
                         monitorByHttpType.FirstOrDefault(x => x.Id == monitorHttp.MonitorId).Status;
