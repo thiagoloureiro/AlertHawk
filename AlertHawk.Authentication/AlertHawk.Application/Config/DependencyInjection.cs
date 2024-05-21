@@ -14,6 +14,7 @@ public static class DependencyInjection
         services.AddTransient<IJwtTokenService, JwtTokenService>();
         services.AddTransient<IUsersMonitorGroupService, UsersMonitorGroupService>();
         services.AddTransient<IUserActionService, UserActionService>();
+        services.AddTransient<IGetOrCreateUserService, GetOrCreateUserService>();
         return services;
     }
 }

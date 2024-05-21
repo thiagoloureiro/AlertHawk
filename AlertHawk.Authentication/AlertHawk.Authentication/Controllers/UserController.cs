@@ -1,4 +1,5 @@
 using AlertHawk.Application.Interfaces;
+using AlertHawk.Application.Services;
 using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -15,12 +16,12 @@ namespace AlertHawk.Authentication.Controllers;
 public class UserController : Controller
 {
     private readonly IUserService _userService;
-    private readonly GetOrCreateUserHelper _getOrCreateUserHelper;
+    private readonly IGetOrCreateUserService _getOrCreateUserService;
 
-    public UserController(IUserService userService)
+    public UserController(IUserService userService, IGetOrCreateUserService getOrCreateUserService)
     {
         _userService = userService;
-        _getOrCreateUserHelper = new GetOrCreateUserHelper(_userService);
+        _getOrCreateUserService = getOrCreateUserService;
     }
 
     [HttpPost("create")]
@@ -112,7 +113,7 @@ public class UserController : Controller
 
     private async Task<ObjectResult?> IsUserAdmin()
     {
-        var usr = await _getOrCreateUserHelper.GetUserOrCreateUser(User);
+        var usr = await _getOrCreateUserService.GetUserOrCreateUser(User);
         if (!usr.IsAdmin)
         {
             return StatusCode(StatusCodes.Status403Forbidden,
@@ -161,7 +162,7 @@ public class UserController : Controller
         var result = await _userService.GetByEmail(email);
         if (ReferenceEquals(result, null))
         {
-            result = await _getOrCreateUserHelper.GetUserOrCreateUser(User);
+            result = await _getOrCreateUserService.GetUserOrCreateUser(User);
         }
 
         return Ok(result);

@@ -1,7 +1,6 @@
 ﻿using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
-using AlertHawk.Authentication.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -12,11 +11,11 @@ namespace AlertHawk.Authentication.Controllers
     public class UserActionController : Controller
     {
         private readonly IUserActionService _userActionService;
-        private readonly GetOrCreateUserHelper _getOrCreateUserHelper;
+        private readonly IGetOrCreateUserService _getOrCreateUserHelper;
 
-        public UserActionController(IUserService userService, IUserActionService userActionService)
+        public UserActionController(IUserActionService userActionService, IGetOrCreateUserService getOrCreateUserHelper)
         {
-            _getOrCreateUserHelper = new GetOrCreateUserHelper(userService);
+            _getOrCreateUserHelper = getOrCreateUserHelper;
             _userActionService = userActionService;
         }
 
