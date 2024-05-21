@@ -9,5 +9,5 @@ public static class GlobalVariables
     public static int NodeId { get; set; }
     public static List<int>? HttpTaskList { get; set; }
     public static List<int>? TcpTaskList { get; set; }
-    public static string RandomString { get; set; }
+    public static string? RandomString { get; set; }
 }
