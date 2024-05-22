@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -6,6 +7,7 @@ namespace AlertHawk.Authentication.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [ExcludeFromCodeCoverage]
     public class VersionController : ControllerBase
     {
         [HttpGet]

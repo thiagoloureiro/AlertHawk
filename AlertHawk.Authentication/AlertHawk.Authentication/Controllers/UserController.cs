@@ -1,13 +1,10 @@
 using AlertHawk.Application.Interfaces;
-using AlertHawk.Application.Services;
 using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.Annotations;
 using AlertHawk.Authentication.Domain.Dto;
-using AlertHawk.Authentication.Helpers;
-using Sentry;
 
 namespace AlertHawk.Authentication.Controllers;
 
