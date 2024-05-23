@@ -3,6 +3,7 @@ using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Controllers;
 using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
+using AlertHawk.Authentication.Tests.Builders;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -63,7 +64,7 @@ public class UserActionControllerTests
     {
         // Arrange
         var userAction = new UserAction { Action = "TestAction" };
-        var userDto = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: false);
+        var userDto = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
         _mockGetOrCreateUserHelper.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(userDto);
 
 

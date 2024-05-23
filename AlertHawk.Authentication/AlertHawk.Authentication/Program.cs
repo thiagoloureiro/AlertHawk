@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Application.Config;
 using AlertHawk.Authentication.Helpers;
 using AlertHawk.Authentication.Infrastructure.Config;

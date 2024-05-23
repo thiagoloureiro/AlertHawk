@@ -4,7 +4,7 @@ using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using AlertHawk.Authentication.Domain.Custom;
-
+using AlertHawk.Authentication.Tests.Builders;
 using Moq;
 
 namespace AlertHawk.Authentication.Tests.ControllerTests;
@@ -27,11 +27,9 @@ public class AuthControllerTests
     public async Task PostUserAuth_ValidCredentials_ReturnsOkResultWithToken()
     {
         // Arrangehjisso
-        var userAuth = new UserAuth { Username = "testuser", Password = "password" };
-        var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: false);
-        
+        var userAuth = new UsersBuilder().WithUserAuth();
+        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
         var token = "test_token";
-
         _mockUserService.Setup(x => x.Login(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(user);
         _mockJwtTokenService.Setup(x => x.GenerateToken(It.IsAny<UserDto>())).Returns(token);
 
@@ -48,8 +46,7 @@ public class AuthControllerTests
     public async Task PostUserAuth_InvalidCredentials_ReturnsBadRequest()
     {
         // Arrange
-        var userAuth = new UserAuth { Username = "testuser", Password = "wrongpassword" };
-
+        var userAuth = new UsersBuilder().WithUserAuth();
         _mockUserService.Setup(x => x.Login(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync((UserDto)null);
 
         // Act
@@ -67,8 +64,7 @@ public class AuthControllerTests
     public async Task PostUserAuth_ExceptionThrown_ReturnsInternalServerError()
     {
         // Arrange
-        var userAuth = new UserAuth { Username = "testuser", Password = "password" };
-
+        var userAuth = new UsersBuilder().WithUserAuth();
         _mockUserService.Setup(x => x.Login(It.IsAny<string>(), It.IsAny<string>())).ThrowsAsync(new System.Exception("Test exception"));
 
         // Act

@@ -4,6 +4,7 @@ using AlertHawk.Authentication.Controllers;
 using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
+using AlertHawk.Authentication.Tests.Builders;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -35,8 +36,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             // Arrange
             var usersMonitorGroup = new List<UsersMonitorGroup>();
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
-
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
 
@@ -52,8 +52,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             // Arrange
             var usersMonitorGroup = new List<UsersMonitorGroup>();
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: false);
-
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
 
@@ -63,7 +62,6 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             var forbiddenResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(StatusCodes.Status403Forbidden, forbiddenResult.StatusCode);
-
             var message = Assert.IsType<Message>(forbiddenResult.Value);
             Assert.Equal((string?)"This user is not authorized to do this operation", message.Content);
         }
@@ -87,11 +85,9 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             // Arrange
             var usersMonitorGroup = new List<UsersMonitorGroup>();
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
-
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
-
             _mockUsersMonitorGroupService.Setup(s => s.CreateOrUpdateAsync(usersMonitorGroup))
                 .ThrowsAsync(new Exception("Unexpected error"));
 
@@ -101,7 +97,6 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             var objectResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(StatusCodes.Status500InternalServerError, objectResult.StatusCode);
-
             var message = Assert.IsType<Message>(objectResult.Value);
             Assert.Equal("Something went wrong.", message.Content);
         }
@@ -110,12 +105,10 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         public async Task GetAll_ReturnsOkWithUserGroups()
         {
             // Arrange
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
             var userGroups = new List<UsersMonitorGroup>();
-
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
-
             _mockUsersMonitorGroupService.Setup(s => s.GetAsync(user.Id))
                 .ReturnsAsync(userGroups);
 
@@ -130,11 +123,9 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         public async Task GetAll_ReturnsOkWithNoUserGroups()
         {
             // Arrange
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
             var userGroups = new List<UsersMonitorGroup>();
-
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()));
-
             _mockUsersMonitorGroupService.Setup(s => s.GetAsync(user.Id))
                 .ReturnsAsync(userGroups);
 
@@ -143,7 +134,6 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
 
             // Assert
             Assert.IsType<OkResult>(result);
-            
         }
         [Fact]
         public async Task GetAllByUserId_UnauthorizedUser_ReturnsForbidden()
@@ -151,7 +141,6 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Arrange
             var userId = Guid.NewGuid();
             var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: false);
-
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
 
@@ -161,7 +150,6 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             var forbiddenResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(StatusCodes.Status403Forbidden, forbiddenResult.StatusCode);
-
             var message = Assert.IsType<Message>(forbiddenResult.Value);
             Assert.Equal("This user is not authorized to do this operation", message.Content);
         }
@@ -170,8 +158,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             // Arrange
             var userId = Guid.NewGuid();
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
-
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
 
@@ -181,15 +168,13 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(StatusCodes.Status200OK, okResult.StatusCode);
-
         }
         [Fact]
         public async Task AssignUserToGroup_ThrowsInvalidOperationException_ReturnsBadRequest()
         {
             // Arrange
             var usersMonitorGroup = new List<UsersMonitorGroup>();
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
-
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
 
@@ -210,8 +195,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             // Arrange
             var groupMonitorId = 1;
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: false);
-
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
 
@@ -221,7 +205,6 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             var forbiddenResult = Assert.IsType<ObjectResult>(result);
             Assert.Equal(StatusCodes.Status403Forbidden, forbiddenResult.StatusCode);
-
             var message = Assert.IsType<Message>(forbiddenResult.Value);
             Assert.Equal("This user is not authorized to do this operation", message.Content);
         }
@@ -231,7 +214,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             // Arrange
             var groupMonitorId = 1;
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
 
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
