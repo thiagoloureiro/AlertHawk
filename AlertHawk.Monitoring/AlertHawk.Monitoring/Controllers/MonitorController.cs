@@ -135,6 +135,24 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorService.RemoveMonitorNotification(monitorNotification);
             return Ok();
         }
+        
+        [SwaggerOperation(Summary = "Add Notification to Monitor Group")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [HttpPost("addMonitorGroupNotification")]
+        public async Task<IActionResult> AddMonitorGroupNotification([FromBody] MonitorGroupNotification monitorGroupNotification)
+        {
+            await _monitorService.AddMonitorGroupNotification(monitorGroupNotification);
+            return Ok();
+        }
+
+        [SwaggerOperation(Summary = "Remove Notification from Monitor Group")]
+        [ProducesResponseType(typeof(IEnumerable<MonitorNotification>), StatusCodes.Status200OK)]
+        [HttpPost("removeMonitorGroupNotification")]
+        public async Task<IActionResult> RemoveMonitorGroupNotification([FromBody] MonitorGroupNotification monitorGroupNotification)
+        {
+            await _monitorService.RemoveMonitorGroupNotification(monitorGroupNotification);
+            return Ok();
+        }
 
         [SwaggerOperation(Summary = "Create a new monitor Http")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
