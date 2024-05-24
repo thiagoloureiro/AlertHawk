@@ -166,4 +166,15 @@ public class UserController : Controller
 
         return Ok(result);
     }
+    
+    [HttpGet("GetUserCount")]
+    [SwaggerOperation(Summary = "Get Count")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetUserCount()
+    {
+       var users = await _userService.GetAll();
+       return Ok(users?.Count());
+    }
 }

@@ -184,6 +184,11 @@ namespace AlertHawk.Notification.Domain.Classes
             await _notificationRepository.InsertNotificationLog(notificationLog);
         }
 
+        public async Task<long> GetNotificationLogCount()
+        {
+            return await _notificationRepository.GetNotificationLogCount();
+        }
+
         private static void ConvertJsonToTuple(NotificationWebHook webHook)
         {
             try

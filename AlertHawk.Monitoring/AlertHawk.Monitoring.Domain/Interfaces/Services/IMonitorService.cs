@@ -29,4 +29,5 @@ public interface IMonitorService
     Task RemoveMonitorNotification(MonitorNotification monitorNotification);
     Task<IEnumerable<Monitor?>> GetMonitorListByTag(string tag);
     Task<IEnumerable<string?>> GetMonitorTagList();
+    Task<long> GetMonitorHistoryCount();
 }

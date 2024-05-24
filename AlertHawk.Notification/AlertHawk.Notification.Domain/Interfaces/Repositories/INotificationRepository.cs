@@ -17,4 +17,5 @@ public interface INotificationRepository
     Task DeleteNotificationItem(int id);
     Task<IEnumerable<NotificationItem?>> SelectNotificationItemByMonitorGroupId(int id);
     Task InsertNotificationLog(NotificationLog notificationLog);
+    Task<long> GetNotificationLogCount();
 }
