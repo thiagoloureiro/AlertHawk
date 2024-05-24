@@ -34,4 +34,5 @@ public interface IMonitorRepository
     Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndHours(int id, int hours);
     Task<IEnumerable<Monitor>> GetMonitorListbyTag(string Tag);
     Task<IEnumerable<string?>> GetMonitorTagList();
+    Task<long> GetMonitorHistoryCount();
 }

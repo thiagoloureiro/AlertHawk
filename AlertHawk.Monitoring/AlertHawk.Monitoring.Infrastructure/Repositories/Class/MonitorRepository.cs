@@ -254,6 +254,13 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return await db.QueryAsync<string>(sql, commandType: CommandType.Text);
     }
 
+    public async Task<long> GetMonitorHistoryCount()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = "SELECT COUNT(*) FROM [MonitorHistory]";
+        return await db.ExecuteScalarAsync<long>(sql, commandType: CommandType.Text);
+    }
+
     public async Task<Monitor> GetMonitorById(int id)
     {
         await using var db = new SqlConnection(_connstring);

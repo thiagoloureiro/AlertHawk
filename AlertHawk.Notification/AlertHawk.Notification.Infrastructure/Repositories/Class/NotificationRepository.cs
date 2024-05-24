@@ -292,6 +292,14 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         string sql = "INSERT INTO [NotificationLog] (TimeStamp, NotificationTypeId, Message) VALUES (@TimeStamp, @NotificationTypeId, @Message)";
         await db.ExecuteAsync(sql, new { notificationLog.TimeStamp, notificationLog.NotificationTypeId, notificationLog.Message }, commandType: CommandType.Text);
     }
+    
+    public async Task<long> GetNotificationLogCount()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = "SELECT COUNT(*) FROM [NotificationLog]";
+        var result = await db.ExecuteScalarAsync<long>(sql, commandType: CommandType.Text);
+        return result;
+    }
 
     public async Task<int> InsertNotificationItem(NotificationItem notificationItem)
     {

@@ -122,5 +122,14 @@ namespace AlertHawk.Notification.Controllers
 
             return Ok(result);
         }
+        
+        [HttpGet("GetNotificationCount")]
+        [SwaggerOperation(Summary = "Get Notification Count")]
+        [ProducesResponseType(typeof(NotificationItem), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetNotificationCount()
+        {
+            var result = await _notificationService.GetNotificationLogCount();
+            return Ok(result);
+        }
     }
 }

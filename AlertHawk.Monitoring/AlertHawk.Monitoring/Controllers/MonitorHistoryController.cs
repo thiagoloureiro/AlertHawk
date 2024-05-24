@@ -62,5 +62,14 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorService.DeleteMonitorHistory(days);
             return Ok();
         }
+        
+        [SwaggerOperation(Summary = "Monitor History count")]
+        [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
+        [HttpGet("GetMonitorHistoryCount")]
+        public async Task<IActionResult> GetMonitorHistoryCount()
+        {
+            var result = await _monitorService.GetMonitorHistoryCount();
+            return Ok(result);
+        }
     }
 }
