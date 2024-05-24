@@ -66,9 +66,9 @@ namespace AlertHawk.Monitoring.Controllers
         [SwaggerOperation(Summary = "Monitor History count")]
         [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
         [HttpGet("GetMonitorHistoryCount")]
-        public IActionResult GetMonitorHistoryCount()
+        public async Task<IActionResult> GetMonitorHistoryCount()
         {
-            var result = _monitorService.GetMonitorHistoryCount();
+            var result = await _monitorService.GetMonitorHistoryCount();
             return Ok(result);
         }
     }
