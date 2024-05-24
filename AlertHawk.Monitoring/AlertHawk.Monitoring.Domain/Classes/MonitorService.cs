@@ -117,7 +117,7 @@ public class MonitorService : IMonitorService
                       lst24Hrs.Min(x => x.TimeStamp) <= DateTime.UtcNow.AddDays(-1).AddSeconds(120);
               }
              */
-            
+
             // Check if last 7 days data is present
             bool containsLast7DaysData = false;
             if (lst7Days.Any())
@@ -427,6 +427,47 @@ public class MonitorService : IMonitorService
         var count = await _caching.GetOrSetObjectFromCacheAsync(_monitorHistoryCount, 20,
             () => _monitorRepository.GetMonitorHistoryCount());
         return count;
+    }
+
+    public async Task AddMonitorGroupNotification(MonitorGroupNotification monitorGroupNotification)
+    {
+        var monitorList = await _monitorGroupService.GetMonitorGroupById(monitorGroupNotification.MonitorGroupId);
+
+        if (monitorList != null)
+        {
+            foreach (var monitor in monitorList.Monitors)
+            {
+                var monitorNotification = new MonitorNotification
+                {
+                    MonitorId = monitor.Id,
+                    NotificationId = monitorGroupNotification.NotificationId
+                };
+
+                var notificationExist = await _monitorRepository.GetMonitorNotifications(monitor.Id);
+                if (notificationExist.All(x => x.NotificationId != monitorGroupNotification.NotificationId))
+                {
+                    await AddMonitorNotification(monitorNotification);
+                }
+            }
+        }
+    }
+
+    public async Task RemoveMonitorGroupNotification(MonitorGroupNotification monitorGroupNotification)
+    {
+        var monitorList = await _monitorGroupService.GetMonitorGroupById(monitorGroupNotification.MonitorGroupId);
+
+        if (monitorList != null)
+        {
+            foreach (var monitor in monitorList.Monitors)
+            {
+                var monitorNotification = new MonitorNotification
+                {
+                    MonitorId = monitor.Id,
+                    NotificationId = monitorGroupNotification.NotificationId
+                };
+                await RemoveMonitorNotification(monitorNotification);
+            }
+        }
     }
 
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)

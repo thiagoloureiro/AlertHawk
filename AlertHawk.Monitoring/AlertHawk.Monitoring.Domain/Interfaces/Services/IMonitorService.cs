@@ -30,4 +30,6 @@ public interface IMonitorService
     Task<IEnumerable<Monitor?>> GetMonitorListByTag(string tag);
     Task<IEnumerable<string?>> GetMonitorTagList();
     Task<long> GetMonitorHistoryCount();
+    Task AddMonitorGroupNotification(MonitorGroupNotification monitorGroupNotification);
+    Task RemoveMonitorGroupNotification(MonitorGroupNotification monitorGroupNotification);
 }

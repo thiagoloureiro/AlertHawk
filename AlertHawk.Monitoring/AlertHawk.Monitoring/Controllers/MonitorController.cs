@@ -101,41 +101,7 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorAgentService.GetAllMonitorAgents();
             return Ok(result);
         }
-
-        [SwaggerOperation(Summary = "Retrieves a List of all Notifications by Monitor")]
-        [ProducesResponseType(typeof(IEnumerable<MonitorNotification>), StatusCodes.Status200OK)]
-        [HttpGet("monitorNotifications/{id}")]
-        public async Task<IActionResult> GetMonitorNotification(int id)
-        {
-            var result = await _monitorService.GetMonitorNotifications(id);
-            return Ok(result);
-        }
-
-        [SwaggerOperation(Summary = "Add Notification to Monitor")]
-        [ProducesResponseType(typeof(IEnumerable<MonitorNotification>), StatusCodes.Status200OK)]
-        [HttpPost("addMonitorNotification")]
-        public async Task<IActionResult> AddMonitorNotification([FromBody] MonitorNotification monitorNotification)
-        {
-            var notifications = await _monitorService.GetMonitorNotifications(monitorNotification.MonitorId);
-
-            if (notifications.Any(x => x.NotificationId == monitorNotification.NotificationId))
-            {
-                return BadRequest("Notification already exists for this monitor");
-            }
-
-            await _monitorService.AddMonitorNotification(monitorNotification);
-            return Ok();
-        }
-
-        [SwaggerOperation(Summary = "Remove Notification from Monitor")]
-        [ProducesResponseType(typeof(IEnumerable<MonitorNotification>), StatusCodes.Status200OK)]
-        [HttpPost("removeMonitorNotification")]
-        public async Task<IActionResult> RemoveMonitorNotification([FromBody] MonitorNotification monitorNotification)
-        {
-            await _monitorService.RemoveMonitorNotification(monitorNotification);
-            return Ok();
-        }
-
+        
         [SwaggerOperation(Summary = "Create a new monitor Http")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [HttpPost("createMonitorHttp")]
