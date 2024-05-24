@@ -18,6 +18,7 @@ public class MonitorService : IMonitorService
     private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
     private readonly IMonitorGroupService _monitorGroupService;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly string _monitorHistoryCount = "MonitorHistoryCountKey";
 
     public MonitorService(IMonitorRepository monitorRepository, ICaching caching,
         IMonitorGroupService monitorGroupService, IHttpClientFactory httpClientFactory)
@@ -423,7 +424,9 @@ public class MonitorService : IMonitorService
 
     public async Task<long> GetMonitorHistoryCount()
     {
-        return await _monitorRepository.GetMonitorHistoryCount();
+        var count = await _caching.GetOrSetObjectFromCacheAsync(_monitorHistoryCount, 20,
+            () => _monitorRepository.GetMonitorHistoryCount());
+        return count;
     }
 
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
