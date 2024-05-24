@@ -118,12 +118,35 @@ public class MonitorGroupService : IMonitorGroupService
                     .Where(x => x > 0) // Filter out values greater than zero
                     .Average();
 
-                monitorGroup.AvgUptime1Hr = avg1hr;
-                monitorGroup.AvgUptime24Hrs = avg24hrs;
-                monitorGroup.AvgUptime7Days = avg7days;
-                monitorGroup.AvgUptime30Days = avg30days;
-                monitorGroup.AvgUptime3Months = avg3months;
-                monitorGroup.AvgUptime6Months = avg6months;
+                if (avg1hr != null)
+                {
+                    monitorGroup.AvgUptime1Hr = Math.Round((double)avg1hr, 2);
+                }
+
+                if (avg24hrs != null)
+                {
+                    monitorGroup.AvgUptime24Hrs = Math.Round((double)avg24hrs, 2);
+                }
+
+                if (avg7days != null)
+                {
+                    monitorGroup.AvgUptime7Days = Math.Round((double)avg7days, 2);
+                }
+
+                if (avg30days != null)
+                {
+                    monitorGroup.AvgUptime30Days = Math.Round((double)avg30days, 2);
+                }
+
+                if (avg3months != null)
+                {
+                    monitorGroup.AvgUptime3Months = Math.Round((double)avg3months, 2);
+                }
+
+                if (avg6months != null)
+                {
+                    monitorGroup.AvgUptime6Months = Math.Round((double)avg6months, 2);
+                }
             }
         }
 

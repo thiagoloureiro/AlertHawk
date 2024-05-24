@@ -223,23 +223,19 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     public async Task<IEnumerable<MonitorTcp>> GetTcpMonitorByIds(List<int> ids)
     {
         await using var db = new SqlConnection(_connstring);
-
-        string whereClause = $"WHERE MonitorId IN ({string.Join(",", ids)})";
-
+        
         string sql =
-            $@"SELECT MonitorId, Port, IP, Timeout, LastStatus  FROM [MonitorTcp] {whereClause}";
+            $@"SELECT MonitorId, Port, IP, Timeout, LastStatus  FROM [MonitorTcp] WHERE MonitorId IN @ids";
 
-        return await db.QueryAsync<MonitorTcp>(sql, commandType: CommandType.Text);
+        return await db.QueryAsync<MonitorTcp>(sql, new { ids }, commandType: CommandType.Text);
     }
 
     public async Task<IEnumerable<Monitor>> GetMonitorListByIds(List<int> ids)
     {
         await using var db = new SqlConnection(_connstring);
-        string whereClause = $"WHERE Id IN ({string.Join(",", ids)})";
-
         string sql =
-            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag FROM [Monitor] {whereClause}";
-        return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
+            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag FROM [Monitor] WHERE Id IN @ids";
+        return await db.QueryAsync<Monitor>(sql, new { ids }, commandType: CommandType.Text);
     }
 
     public async Task<IEnumerable<Monitor>> GetMonitorListbyTag(string Tag)
@@ -362,7 +358,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @$"SELECT MonitorId, Status, TimeStamp, ResponseTime FROM [MonitorHistory] WHERE MonitorId=@id AND TimeStamp >= DATEADD(day, -{days}, GETUTCDATE())  ORDER BY TimeStamp DESC";
+            @$"SELECT MonitorId, Status, TimeStamp, ResponseTime FROM [MonitorHistory] WHERE MonitorId=@id AND TimeStamp >= DATEADD(day, -@days, GETUTCDATE())  ORDER BY TimeStamp DESC";
         return await db.QueryAsync<MonitorHistory>(sql, new { id, days }, commandType: CommandType.Text);
     }
 
@@ -370,7 +366,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @$"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion FROM [MonitorHistory] WHERE MonitorId=@id AND TimeStamp >= DATEADD(hour, -{hours}, GETUTCDATE())  ORDER BY TimeStamp DESC";
+            @$"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion FROM [MonitorHistory] WHERE MonitorId=@id AND TimeStamp >= DATEADD(hour, -@hours, GETUTCDATE())  ORDER BY TimeStamp DESC";
         return await db.QueryAsync<MonitorHistory>(sql, new { id, hours }, commandType: CommandType.Text);
     }
 
@@ -411,12 +407,10 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
 
-        string whereClause = $"WHERE MonitorId IN ({string.Join(",", ids)})";
-
         string sql =
-            $@"SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp] {whereClause}";
+            $@"SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp] WHERE MonitorId IN @ids";
 
-        return await db.QueryAsync<MonitorHttp>(sql, commandType: CommandType.Text);
+        return await db.QueryAsync<MonitorHttp>(sql, new { ids }, commandType: CommandType.Text);
     }
 
 
@@ -426,7 +420,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string sql =
             @$"SELECT MonitorId, COUNT(Status) AS FailureCount
             FROM MonitorAlert
-            WHERE Status = 'false' AND TimeStamp >= DATEADD(DAY, -{days}, GETDATE())
+            WHERE Status = 'false' AND TimeStamp >= DATEADD(DAY, -@days, GETDATE())
             GROUP BY MonitorId;";
 
         return await db.QueryAsync<MonitorFailureCount>(sql, new { days }, commandType: CommandType.Text);

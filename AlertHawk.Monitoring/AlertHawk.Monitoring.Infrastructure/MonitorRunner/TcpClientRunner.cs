@@ -56,7 +56,7 @@ public class TcpClientRunner : ITcpClientRunner
                     continue;
                 }
             }
-            catch (SocketException err)
+            catch (Exception err)
             {
                 retries++;
                 // Wait for the specified interval before retrying
@@ -94,9 +94,9 @@ public class TcpClientRunner : ITcpClientRunner
 
     public bool MakeTcpCall(MonitorTcp monitorTcp)
     {
-        using var tcpClient = new TcpClient();
         try
         {
+            using var tcpClient = new TcpClient();
             var timeoutInSeconds = monitorTcp.Timeout;
 
             var task = tcpClient.ConnectAsync(monitorTcp.IP, monitorTcp.Port);

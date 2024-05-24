@@ -28,9 +28,9 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl, MA.Environment
                     FROM MonitorAlert MA 
                     INNER JOIN Monitor M on M.Id = MA.MonitorId 
-                    WHERE MA.MonitorId = {monitorId} AND MA.TimeStamp >= DATEADD(day, -{days}, GETDATE()) AND MA.[Status] = 0 
+                    WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0 
                     ORDER BY MA.TimeStamp DESC";
-            return await db.QueryAsync<MonitorAlert>(sql, commandType: CommandType.Text);
+            return await db.QueryAsync<MonitorAlert>(sql, new { monitorId, days }, commandType: CommandType.Text);
         }
 
         sql =
@@ -38,11 +38,11 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 FROM MonitorAlert MA
                 INNER JOIN Monitor M on M.Id = MA.MonitorId
                 INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id
-                WHERE MA.TimeStamp >= DATEADD(day, -{days}, GETDATE()) AND MA.[Status] = 0
-                AND MGI.MonitorGroupId in ({string.Join(",", groupIds)})
+                WHERE MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0
+                AND MGI.MonitorGroupId in @groupIds
                 ORDER BY MA.TimeStamp DESC";
 
-        return await db.QueryAsync<MonitorAlert>(sql, commandType: CommandType.Text);
+        return await db.QueryAsync<MonitorAlert>(sql, new { days, groupIds }, commandType: CommandType.Text);
     }
 
     public async Task<MemoryStream> CreateExcelFileAsync(IEnumerable<MonitorAlert> alerts)
@@ -62,7 +62,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
             worksheet.Cells[1, col++].Value = "Environment";
             worksheet.Cells[1, col++].Value = "Message";
             worksheet.Cells[1, col].Value = "Screenshot URL";
- 
+
 
             var row = 2;
             foreach (var alert in alerts)
@@ -73,7 +73,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 worksheet.Cells[row, col++].Value = alert.Environment.ToString();
                 worksheet.Cells[row, col++].Value = alert.Message;
                 worksheet.Cells[row, col].Value = alert.ScreenShotUrl;
-   
+
                 row++;
             }
 
@@ -83,7 +83,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
         stream.Position = 0;
         return stream;
     }
-    
+
     public async Task SaveMonitorAlert(MonitorHistory monitorHistory, MonitorEnvironment environment)
     {
         await using var db = new SqlConnection(_connstring);

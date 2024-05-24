@@ -64,8 +64,8 @@ public class MonitorService : IMonitorService
         try
         {
             var result = await _monitorRepository.GetMonitorHistoryByIdAndDays(id, 90);
-            var enumerable = result.ToList();
-            if (!enumerable.Any())
+            var monitorHistories = result.ToList();
+            if (!monitorHistories.Any())
             {
                 return new MonitorDashboard
                 {
@@ -101,7 +101,6 @@ public class MonitorService : IMonitorService
                 };
             }
 
-            var monitorHistories = enumerable.ToList();
             var lst1Hr = monitorHistories.Where(x => x.TimeStamp > DateTime.UtcNow.AddHours(-1)).ToList();
             var lst24Hrs = monitorHistories.Where(x => x.TimeStamp > DateTime.UtcNow.AddDays(-1)).ToList();
             var lst7Days = monitorHistories.Where(x => x.TimeStamp > DateTime.UtcNow.AddDays(-7)).ToList();
@@ -110,13 +109,14 @@ public class MonitorService : IMonitorService
             var lst6Months = monitorHistories.Where(x => x.TimeStamp > DateTime.UtcNow.AddDays(-180)).ToList();
 
             // Check if last 24 hours data is present
-            bool containsLast24HoursData = false;
-            if (lst24Hrs.Any())
-            {
-                containsLast24HoursData =
-                    lst24Hrs.Min(x => x.TimeStamp) <= DateTime.UtcNow.AddDays(-1).AddSeconds(120);
-            }
-
+            /*  bool containsLast24HoursData = false;
+              if (lst24Hrs.Any())
+              {
+                  containsLast24HoursData =
+                      lst24Hrs.Min(x => x.TimeStamp) <= DateTime.UtcNow.AddDays(-1).AddSeconds(120);
+              }
+             */
+            
             // Check if last 7 days data is present
             bool containsLast7DaysData = false;
             if (lst7Days.Any())
@@ -156,7 +156,7 @@ public class MonitorService : IMonitorService
             }
 
             double uptime24Hrs = -1;
-            if (lst24Hrs.Count > 0 && containsLast24HoursData)
+            if (lst24Hrs.Count > 0)
             {
                 uptime24Hrs = (double)lst24Hrs.Count(item => item.Status) / lst24Hrs.Count * 100;
             }
