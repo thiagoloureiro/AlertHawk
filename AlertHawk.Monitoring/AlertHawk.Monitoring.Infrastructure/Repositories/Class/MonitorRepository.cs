@@ -139,6 +139,12 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
 
         string sqlTcp = @"DELETE FROM [MonitorTcp] WHERE MonitorId=@id";
         await db.ExecuteAsync(sqlTcp, new { id }, commandType: CommandType.Text);
+        
+        string sqlNotification = @"DELETE FROM [MonitorNotification] WHERE MonitorId=@id";
+        await db.ExecuteAsync(sqlNotification, new { id }, commandType: CommandType.Text);
+        
+        string sqlMonitorGroupItems = @"DELETE FROM [MonitorGroupItems] WHERE MonitorId=@id";
+        await db.ExecuteAsync(sqlMonitorGroupItems, new { id }, commandType: CommandType.Text);
 
         string sqlHistory = @"DELETE FROM [MonitorHistory] WHERE MonitorId=@id";
         await db.ExecuteAsync(sqlHistory, new { id }, commandType: CommandType.Text, commandTimeout: 600);
