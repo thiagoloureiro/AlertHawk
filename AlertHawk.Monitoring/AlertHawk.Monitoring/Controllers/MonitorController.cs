@@ -232,5 +232,14 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorService.SetMonitorDashboardDataCacheList();
             return Ok("OK");
         }
+        
+        [SwaggerOperation(Summary = "Monitor Count")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [HttpGet("GetMonitorCount")]
+        public async Task<IActionResult> GetMonitorCount()
+        {
+            var monitorList = await _monitorService.GetMonitorList();
+            return Ok(monitorList.Count());
+        }
     }
 }
