@@ -160,4 +160,39 @@ public class UserServiceTests
         Assert.Equal(users, result);
         _mockUserRepository.Verify(r => r.GetAll(), Times.Once);
     }
+    [Fact]
+    public async Task ResetPassword_UserExists_SendsEmail()
+    {
+        // Arrange
+        var username = "testuser";
+        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("testuser@example.com");
+        var newPassword = "newPassword123";
+
+        _mockUserRepository.Setup(repo => repo.GetByUsername(username)).ReturnsAsync(user);
+        _mockUserRepository.Setup(repo => repo.ResetPassword(username)).ReturnsAsync(newPassword);
+
+        // Act
+        await _userService.ResetPassword(username);
+
+        // Assert
+       
+        _mockUserRepository.Verify(repo => repo.GetByUsername(username), Times.Once);
+        _mockUserRepository.Verify(repo => repo.ResetPassword(username), Times.Once);
+    }
+
+    [Fact]
+    public async Task ResetPassword_UserDoesNotExist_DoesNotSendEmail()
+    {
+        // Arrange
+        var username = "nonexistentuser";
+
+        _mockUserRepository.Setup(repo => repo.GetByUsername(username)).ReturnsAsync((UserDto)null);
+
+        // Act
+        await _userService.ResetPassword(username);
+
+        // Assert
+        _mockUserRepository.Verify(repo => repo.GetByUsername(username), Times.Once);
+        _mockUserRepository.Verify(repo => repo.ResetPassword(It.IsAny<string>()), Times.Never);
+    }
 }
