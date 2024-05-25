@@ -341,5 +341,22 @@ namespace AlertHawk.Authentication.Tests.Controllers
             Assert.Null(okResult.Value);
             
         }
+        [Fact]
+        public async Task GetUserCount_ValidRequest_ReturnsOkWithUsers()
+        {
+            // Arrange
+            var users = new List<UserDto> { new UsersBuilder().WithUserEmailAndAdminIsFalse(null) };
+            _mockUserService.Setup(s => s.GetAll()).ReturnsAsync(users);
+            var user = new  UsersBuilder().WithUserEmailAndAdminIsTrue(null);
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            // Act
+            var result = await _controller.GetUserCount();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedUsers = Assert.IsType<int>(okResult.Value);
+            Assert.Equal(1, returnedUsers);
+        }
     }
 }
