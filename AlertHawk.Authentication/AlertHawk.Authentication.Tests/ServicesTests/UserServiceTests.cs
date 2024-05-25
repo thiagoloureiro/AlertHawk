@@ -175,8 +175,7 @@ public class UserServiceTests
         await _userService.ResetPassword(username);
 
         // Assert
-        // Since EmailSender is excluded from code coverage, we cannot verify it directly here.
-        // Ensure that the ResetPassword method doesn't throw any exceptions and completes successfully.
+       
         _mockUserRepository.Verify(repo => repo.GetByUsername(username), Times.Once);
         _mockUserRepository.Verify(repo => repo.ResetPassword(username), Times.Once);
     }
@@ -193,7 +192,6 @@ public class UserServiceTests
         await _userService.ResetPassword(username);
 
         // Assert
-        // Ensure that the ResetPassword method doesn't throw any exceptions and completes successfully.
         _mockUserRepository.Verify(repo => repo.GetByUsername(username), Times.Once);
         _mockUserRepository.Verify(repo => repo.ResetPassword(It.IsAny<string>()), Times.Never);
     }
