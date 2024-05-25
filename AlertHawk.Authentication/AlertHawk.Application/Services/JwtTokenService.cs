@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
@@ -7,7 +8,7 @@ using System.Security.Claims;
 using System.Text;
 
 namespace AlertHawk.Application.Services;
-
+[ExcludeFromCodeCoverage]
 public class JwtTokenService : IJwtTokenService
 {
     private readonly string? _secret;

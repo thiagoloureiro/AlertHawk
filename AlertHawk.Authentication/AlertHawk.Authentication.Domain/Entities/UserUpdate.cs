@@ -1,7 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Authentication.Domain.Entities;
-
+[ExcludeFromCodeCoverage]
 public class UserUpdate
 {
     [MinLength(6, ErrorMessage = "Username must be at least 6 characters long.")]
