@@ -1,8 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Mail;
 
 namespace AlertHawk.Authentication.Infrastructure.EmailSender;
-
+[ExcludeFromCodeCoverage]
 public static class EmailSender
 {
     public static void SendEmail(string to, string subject, string body)

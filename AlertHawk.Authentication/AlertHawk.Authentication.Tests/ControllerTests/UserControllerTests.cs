@@ -110,8 +110,9 @@ namespace AlertHawk.Authentication.Tests.Controllers
             {
                 Password = "password",
                 RepeatPassword = "password",
-                Username = null,
-                UserEmail = null
+                Username = "userName",
+                UserEmail = "email@email.com",
+                IsAdmin = false
             };
             var user = new  UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true) ;
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
