@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using System.Reflection;
 using Microsoft.Identity.Web;
 
+[assembly: ExcludeFromCodeCoverage]
 var builder = WebApplication.CreateBuilder(args);
 
 var configuration = new ConfigurationBuilder()
