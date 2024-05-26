@@ -73,6 +73,22 @@ public class NotificationServiceTests
         // Assert
         await notificationRepository.Received(1).InsertNotificationLog(Arg.Is(notificationLog));
     }
+    
+    [Fact]
+    public async Task GetNotificationLogCount_ShouldReturnCorrectCount()
+    {
+        // Arrange
+        var notificationLog = CreateMockNotificationLog(out var notificationRepository, out var notificationService, 2);
+        
+        var expectedCount = 10L;
+        notificationRepository.GetNotificationLogCount().Returns(Task.FromResult(expectedCount));
+
+        // Act
+        var result = await notificationService.GetNotificationLogCount();
+
+        // Assert
+        Assert.Equal(expectedCount, result);
+    }
 
     [Fact]
     public async Task InsertNotificationItemWebHook_Calls_Correct_Method()

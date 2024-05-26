@@ -1,6 +1,10 @@
 ﻿using System.Security.Cryptography;
+using AlertHawk.Notification.Domain.Classes;
+using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Utils;
 using AlertHawk.Notification.Infrastructure.Utils;
+using Newtonsoft.Json.Linq;
+using NSubstitute;
 
 namespace AlertHawk.Notification.Tests.UtilsTests
 {
@@ -92,6 +96,38 @@ namespace AlertHawk.Notification.Tests.UtilsTests
 
             // Assert
             Assert.Null(result);
+        }
+        
+        [Fact]
+        public void ConvertJsonToTuple_ShouldHandleNullHeadersJson()
+        {
+            // Arrange
+            var webHook = new NotificationWebHook { HeadersJson = null };
+
+            // Act
+            JsonUtils.ConvertJsonToTuple(webHook);
+
+            // Assert
+            Assert.Null(webHook.Headers);
+        }
+
+        [Fact]
+        public void ConvertJsonToTuple_ShouldConvertValidJsonToTuples()
+        {
+            // Arrange
+            var webHook = new NotificationWebHook
+            {
+                HeadersJson = "{ \"Header1\": \"Value1\", \"Header2\": \"Value2\" }"
+            };
+
+            // Act
+            JsonUtils.ConvertJsonToTuple(webHook);
+
+            // Assert
+            Assert.NotNull(webHook.Headers);
+            Assert.Equal(2, webHook.Headers.Count);
+            Assert.Contains(Tuple.Create("Header1", "Value1"), webHook.Headers);
+            Assert.Contains(Tuple.Create("Header2", "Value2"), webHook.Headers);
         }
     }
 }
