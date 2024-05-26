@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace AlertHawk.Authentication.Infrastructure.Repositories;
 
+[ExcludeFromCodeCoverage]
 public class UserRepository : BaseRepository, IUserRepository
 {
     private readonly IMapper _mapper;

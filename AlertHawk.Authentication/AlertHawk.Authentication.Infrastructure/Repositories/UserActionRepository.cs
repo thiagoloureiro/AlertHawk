@@ -1,9 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Authentication.Infrastructure.Interfaces;
 using Microsoft.Extensions.Configuration;
 
 namespace AlertHawk.Authentication.Infrastructure.Repositories;
-
+[ExcludeFromCodeCoverage]
 public class UserActionRepository : BaseRepository, IUserActionRepository
 {
     public UserActionRepository(IConfiguration configuration) : base(configuration)

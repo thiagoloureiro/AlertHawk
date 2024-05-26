@@ -1,12 +1,13 @@
-﻿using AlertHawk.Application.Interfaces;
-using AlertHawk.Authentication.Domain.Entities;
-using System.Security.Claims;
+﻿using System.Security.Claims;
+using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Domain.Dto;
+using AlertHawk.Authentication.Domain.Entities;
 
-namespace AlertHawk.Authentication.Helpers;
+namespace AlertHawk.Application.Services;
 
-public class GetOrCreateUserHelper(IUserService userService)
+public class GetOrCreateUserService(IUserService userService) : IGetOrCreateUserService
 {
+ 
     public async Task<UserDto> GetUserOrCreateUser(ClaimsPrincipal claims)
     {
         string? userEmail = "";

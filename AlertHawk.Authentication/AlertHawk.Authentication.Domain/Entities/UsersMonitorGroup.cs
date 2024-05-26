@@ -1,5 +1,8 @@
-﻿namespace AlertHawk.Authentication.Domain.Entities
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace AlertHawk.Authentication.Domain.Entities
 {
+    [ExcludeFromCodeCoverage]
     public class UsersMonitorGroup
     {
         public Guid Id { get; set; }

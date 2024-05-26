@@ -81,7 +81,7 @@ namespace AlertHawk.Notification.Domain.Classes
                     case 5: // WebHook
                         notificationLog.Message =
                             $"Telegram Message:{notificationSend.Message} WebHookUrl: {notificationSend.NotificationWebHook.WebHookUrl}";
-                        ConvertJsonToTuple(notificationSend.NotificationWebHook);
+                        JsonUtils.ConvertJsonToTuple(notificationSend.NotificationWebHook);
                         await _webHookNotifier.SendNotification(notificationSend.NotificationWebHook.Message,
                             notificationSend.NotificationWebHook.WebHookUrl,
                             notificationSend.NotificationWebHook.Body, notificationSend.NotificationWebHook.Headers);
@@ -166,7 +166,8 @@ namespace AlertHawk.Notification.Domain.Classes
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ?? "https://dev.api.monitoring.electrificationtools.abb.com/auth/";
+            var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
+                          "https://dev.api.monitoring.electrificationtools.abb.com/auth/";
             var content = await client.GetAsync($"{authApi}api/UsersMonitorGroup/GetAll");
             var result = await content.Content.ReadAsStringAsync();
             var groupMonitorIds = JsonConvert.DeserializeObject<List<UsersMonitorGroup>>(result);
@@ -187,31 +188,6 @@ namespace AlertHawk.Notification.Domain.Classes
         public async Task<long> GetNotificationLogCount()
         {
             return await _notificationRepository.GetNotificationLogCount();
-        }
-
-        private static void ConvertJsonToTuple(NotificationWebHook webHook)
-        {
-            try
-            {
-                if (webHook.HeadersJson != null)
-                {
-                    JObject jsonObj = JObject.Parse(webHook.HeadersJson);
-
-                    // Extract values and create Tuple
-                    List<Tuple<string, string>>? properties = new List<Tuple<string, string>>();
-
-                    foreach (var property in jsonObj.Properties())
-                    {
-                        properties.Add(Tuple.Create(property.Name, property.Value.ToString()));
-                    }
-
-                    webHook.Headers = properties;
-                }
-            }
-            catch (Exception e)
-            {
-                SentrySdk.CaptureException(e);
-            }
         }
     }
 }

@@ -60,6 +60,35 @@ public class NotificationServiceTests
         // Assert
         await notificationRepository.Received(1).InsertNotificationItemMsTeams(Arg.Is(notificationItem));
     }
+    
+    [Fact]
+    public async Task InsertNotificationLog_Calls_Correct_Method()
+    {
+        // Arrange
+        var notificationLog = CreateMockNotificationLog(out var notificationRepository, out var notificationService, 2);
+
+        // Act
+        await notificationService.InsertNotificationLog(notificationLog);
+
+        // Assert
+        await notificationRepository.Received(1).InsertNotificationLog(Arg.Is(notificationLog));
+    }
+    
+    [Fact]
+    public async Task GetNotificationLogCount_ShouldReturnCorrectCount()
+    {
+        // Arrange
+        var notificationLog = CreateMockNotificationLog(out var notificationRepository, out var notificationService, 2);
+        
+        var expectedCount = 10L;
+        notificationRepository.GetNotificationLogCount().Returns(Task.FromResult(expectedCount));
+
+        // Act
+        var result = await notificationService.GetNotificationLogCount();
+
+        // Assert
+        Assert.Equal(expectedCount, result);
+    }
 
     [Fact]
     public async Task InsertNotificationItemWebHook_Calls_Correct_Method()
@@ -141,6 +170,33 @@ public class NotificationServiceTests
         );
         return notificationItem;
     }
+    
+     private static NotificationLog CreateMockNotificationLog(out INotificationRepository notificationRepository,
+        out NotificationService notificationService, int typeId = 1)
+     {
+         var notificationLog = new NotificationLog
+         {
+             NotificationTypeId = typeId, TimeStamp = DateTime.Now, Message = "Notification Name",
+         };
+         
+         var mailNotifier = Substitute.For<IMailNotifier>();
+         var slackNotifier = Substitute.For<ISlackNotifier>();
+         var teamsNotifier = Substitute.For<ITeamsNotifier>();
+         var telegramNotifier = Substitute.For<ITelegramNotifier>();
+         notificationRepository = Substitute.For<INotificationRepository>();
+         var webHookNotifier = Substitute.For<IWebHookNotifier>();
+
+         notificationService = new NotificationService(
+             mailNotifier,
+             slackNotifier,
+             teamsNotifier,
+             telegramNotifier,
+             notificationRepository,
+             webHookNotifier
+         );
+         
+         return notificationLog;
+     }
 
     [Fact]
     public async Task UpdateNotificationItem_Calls_Correct_Method()

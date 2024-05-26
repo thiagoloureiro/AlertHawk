@@ -1,9 +1,11 @@
-﻿using AlertHawk.Authentication.Domain.Entities;
+﻿using System.Diagnostics.CodeAnalysis;
+using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Authentication.Infrastructure.Interfaces;
 using Microsoft.Extensions.Configuration;
 
 namespace AlertHawk.Authentication.Infrastructure.Repositories;
 
+[ExcludeFromCodeCoverage]
 public class UsersMonitorGroupRepository : BaseRepository, IUsersMonitorGroupRepository
 {
     public UsersMonitorGroupRepository(IConfiguration configuration) : base(configuration)
