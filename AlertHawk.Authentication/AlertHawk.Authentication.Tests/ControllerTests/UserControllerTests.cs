@@ -1,4 +1,3 @@
-
 using System.Security.Claims;
 using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Controllers;
@@ -37,7 +36,7 @@ namespace AlertHawk.Authentication.Tests.Controllers
         {
             // Arrange
             _controller.ModelState.AddModelError("error", "some error");
-            var user = new  UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true) ;
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
@@ -64,7 +63,7 @@ namespace AlertHawk.Authentication.Tests.Controllers
                 Username = null,
                 UserEmail = null
             };
-            var user = new  UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true) ;
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
@@ -88,8 +87,9 @@ namespace AlertHawk.Authentication.Tests.Controllers
                 Username = null,
                 UserEmail = null
             };
-            _mockUserService.Setup(s => s.Create(userCreation)).ThrowsAsync(new InvalidOperationException("User already exists"));
-            var user = new  UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true) ;
+            _mockUserService.Setup(s => s.Create(userCreation))
+                .ThrowsAsync(new InvalidOperationException("User already exists"));
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
@@ -114,7 +114,7 @@ namespace AlertHawk.Authentication.Tests.Controllers
                 UserEmail = "email@email.com",
                 IsAdmin = false
             };
-            var user = new  UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true) ;
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
@@ -132,15 +132,17 @@ namespace AlertHawk.Authentication.Tests.Controllers
         {
             // Arrange
             _controller.ModelState.AddModelError("error", "some error");
-            var user = new  UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true) ;
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
-            var result = await _controller.PutUserUpdate(new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: false));
+            var result = await _controller.PutUserUpdate(new UserDto(Id: Guid.NewGuid(), Username: "testuser",
+                Email: null, IsAdmin: false));
 
             // Assert
             Assert.IsType<BadRequestObjectResult>(result);
         }
+
         [Fact]
         public async Task PutUserUpdate_ThrowsException_ReturnsInternalServerError()
         {
@@ -166,7 +168,7 @@ namespace AlertHawk.Authentication.Tests.Controllers
         {
             // Arrange
             var userUpdate = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: false);
-            var user = new  UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true) ;
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
@@ -183,8 +185,9 @@ namespace AlertHawk.Authentication.Tests.Controllers
         {
             // Arrange
             var userUpdate = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: false);
-            _mockUserService.Setup(s => s.Update(userUpdate)).ThrowsAsync(new InvalidOperationException("User not found"));
-            var user = new  UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true) ;
+            _mockUserService.Setup(s => s.Update(userUpdate))
+                .ThrowsAsync(new InvalidOperationException("User not found"));
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
@@ -215,7 +218,7 @@ namespace AlertHawk.Authentication.Tests.Controllers
             var message = Assert.IsType<Message>(objectResult.Value);
             Assert.Equal("Something went wrong.", message.Content);
         }
-        
+
         [Fact]
         public async Task ResetPassword_ValidUsername_ReturnsOk()
         {
@@ -235,7 +238,7 @@ namespace AlertHawk.Authentication.Tests.Controllers
             // Arrange
             var users = new List<UserDto> { new UsersBuilder().WithUserEmailAndAdminIsFalse(null) };
             _mockUserService.Setup(s => s.GetAll()).ReturnsAsync(users);
-            var user = new  UsersBuilder().WithUserEmailAndAdminIsTrue(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
@@ -285,7 +288,7 @@ namespace AlertHawk.Authentication.Tests.Controllers
         public async Task GetByUsername_ValidUserName_ReturnsOkWithUser()
         {
             // Arrange
-       
+
             var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
             _mockUserService.Setup(s => s.GetByUsername(user.Username)).ReturnsAsync(user);
 
@@ -297,6 +300,7 @@ namespace AlertHawk.Authentication.Tests.Controllers
             var returnedUser = Assert.IsType<UserDto>(okResult.Value);
             Assert.Equal(user, returnedUser);
         }
+
         [Fact]
         public async Task GetByEmail_ValidEmail_ReturnsOkWithUser()
         {
@@ -313,13 +317,15 @@ namespace AlertHawk.Authentication.Tests.Controllers
             var returnedUser = Assert.IsType<UserDto>(okResult.Value);
             Assert.Equal(user, returnedUser);
         }
+
         [Fact]
         public async Task GetByEmail_ValidEmail_ReturnsOkWithUserFromToken()
         {
             // Arrange
             var userEmail = "user@example.com";
             var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(userEmail);
-            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
             // Act
             var result = await _controller.Get(userEmail);
 
@@ -328,7 +334,8 @@ namespace AlertHawk.Authentication.Tests.Controllers
             var returnedUser = Assert.IsType<UserDto>(okResult.Value);
             Assert.Equal(user, returnedUser);
         }
-       [ Fact]
+
+        [Fact]
         public async Task GetByEmail_ValidEmail_ReturnsOkWithNoUser()
         {
             // Arrange
@@ -339,15 +346,15 @@ namespace AlertHawk.Authentication.Tests.Controllers
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Null(okResult.Value);
-            
         }
+
         [Fact]
         public async Task GetUserCount_ValidRequest_ReturnsOkWithUsers()
         {
             // Arrange
             var users = new List<UserDto> { new UsersBuilder().WithUserEmailAndAdminIsFalse(null) };
             _mockUserService.Setup(s => s.GetAll()).ReturnsAsync(users);
-            var user = new  UsersBuilder().WithUserEmailAndAdminIsTrue(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
@@ -358,5 +365,23 @@ namespace AlertHawk.Authentication.Tests.Controllers
             var returnedUsers = Assert.IsType<int>(okResult.Value);
             Assert.Equal(1, returnedUsers);
         }
+
+        [Fact]
+        public async Task GetUserCount_ValidRequest_ReturnsOkWithNoUsers()
+        {
+            // Arrange
+            _mockUserService.Setup(s => s.GetAll());
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            // Act
+            var result = await _controller.GetUserCount();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedUsers = Assert.IsType<int>(okResult.Value);
+            Assert.Equal(0, returnedUsers);
+        }
     }
 }
+

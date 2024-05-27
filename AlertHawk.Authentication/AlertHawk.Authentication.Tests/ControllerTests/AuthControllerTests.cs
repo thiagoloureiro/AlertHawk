@@ -26,7 +26,7 @@ public class AuthControllerTests
     [Fact]
     public async Task PostUserAuth_ValidCredentials_ReturnsOkResultWithToken()
     {
-        // Arrangehjisso
+        // Arrange
         var userAuth = new UsersBuilder().WithUserAuth();
         var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
         var token = "test_token";

@@ -33,6 +33,21 @@ public class GetOrCreateUserServiceTests
         Assert.NotNull(result);
         Assert.Equal(existingUser, result);
     }
+    [Fact]
+    public async Task GetUserOrCreateUser_UserExists_FetchDataFromNameLoggedReturnsUser()
+    {
+        // Arrange
+        var claims = new ClaimsBuilder().NameTypeClaimsPrincipal(_email);
+        var existingUser = new UsersBuilder().WithUserEmailAndAdminIsFalse(_email);
+        _mockUserService.Setup(s => s.GetByEmail(_email)).ReturnsAsync(existingUser);
+
+        // Act
+        var result = await _getOrCreateUserService.GetUserOrCreateUser(claims);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(existingUser, result);
+    }
 
 
     [Fact]
@@ -97,5 +112,55 @@ public class GetOrCreateUserServiceTests
         
         // Assert
         Assert.Null(result);
+    }
+    [Fact]
+    public async Task GetUserOrCreateUser_UserDoesNotExist_CreatesOnlyWithGivenNameAndReturnsUser()
+    {
+        // Arrange
+        var claims = new ClaimsBuilder().DefaulClaimsPrincipalWithgivenName(_email);
+        var returnUser = new UsersBuilder().WithUserEmailAndAdminIsFalse(_email);
+        _mockUserService.SetupSequence(s => s.GetByEmail(_email)).ReturnsAsync((UserDto?)null).ReturnsAsync(returnUser);
+
+        // Act
+        var result = await _getOrCreateUserService.GetUserOrCreateUser(claims);
+
+        // Assert
+        _mockUserService.Verify(s => s.CreateFromAzure(It.IsAny<UserCreationFromAzure>()), Times.Once);
+        _mockUserService.Verify(s => s.GetByEmail(_email), Times.Exactly(2));
+        Assert.NotNull(result);
+        Assert.Equal(_email, result.Email);
+    }
+    [Fact]
+    public async Task GetUserOrCreateUser_UserDoesNotExist_CreatesOnlyWithSurNameAndReturnsUser()
+    {
+        // Arrange
+        var claims = new ClaimsBuilder().DefaulClaimsPrincipalWithsurName(_email);
+        var returnUser = new UsersBuilder().WithUserEmailAndAdminIsFalse(_email);
+        _mockUserService.SetupSequence(s => s.GetByEmail(_email)).ReturnsAsync((UserDto?)null).ReturnsAsync(returnUser);
+
+        // Act
+        var result = await _getOrCreateUserService.GetUserOrCreateUser(claims);
+
+        // Assert
+        _mockUserService.Verify(s => s.CreateFromAzure(It.IsAny<UserCreationFromAzure>()), Times.Once);
+        _mockUserService.Verify(s => s.GetByEmail(_email), Times.Exactly(2));
+        Assert.NotNull(result);
+        Assert.Equal(_email, result.Email);
+    } [Fact]
+    public async Task GetUserOrCreateUser_UserDoesNotExist_CreatesOnlyWithGivenNameAndSurNameAndReturnsUser()
+    {
+        // Arrange
+        var claims = new ClaimsBuilder().DefaulClaimsPrincipalWithsurNameAndGivenName(_email);
+        var returnUser = new UsersBuilder().WithUserEmailAndAdminIsFalse(_email);
+        _mockUserService.SetupSequence(s => s.GetByEmail(_email)).ReturnsAsync((UserDto?)null).ReturnsAsync(returnUser);
+
+        // Act
+        var result = await _getOrCreateUserService.GetUserOrCreateUser(claims);
+
+        // Assert
+        _mockUserService.Verify(s => s.CreateFromAzure(It.IsAny<UserCreationFromAzure>()), Times.Once);
+        _mockUserService.Verify(s => s.GetByEmail(_email), Times.Exactly(2));
+        Assert.NotNull(result);
+        Assert.Equal(_email, result.Email);
     }
 }
