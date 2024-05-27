@@ -5,6 +5,6 @@ namespace AlertHawk.Application.Interfaces;
 
 public interface IGetOrCreateUserService
 {
-    Task<UserDto?> GetUserOrCreateUser(ClaimsPrincipal user);
+    Task<UserDto?> GetUserOrCreateUser(ClaimsPrincipal claims);
 
 }
