@@ -6,7 +6,7 @@ public static class MonitorUtils
 {
     public static MonitorRegion GetMonitorRegionVariable()
     {
-        string? monitorRegion = Environment.GetEnvironmentVariable("monitor_region");
+        string? monitorRegion = Environment.GetEnvironmentVariable(" ");
         if (!string.IsNullOrEmpty(monitorRegion) && int.TryParse(monitorRegion, out int result))
         {
             MonitorRegion value = (MonitorRegion)result;
