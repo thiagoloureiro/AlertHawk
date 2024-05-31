@@ -9,6 +9,26 @@ namespace AlertHawk.Notification.Tests.ServiceTests;
 
 public class NotificationServiceTests
 {
+    private readonly IMailNotifier _mailNotifier;
+    private readonly ITeamsNotifier _teamsNotifier;
+    private readonly ITelegramNotifier _telegramNotifier;
+    private readonly ISlackNotifier _slackNotifier;
+    private readonly IWebHookNotifier _webHookNotifier;
+    private readonly NotificationService _notificationService;
+    private readonly INotificationRepository _notificationRepository;
+
+    public NotificationServiceTests()
+    {
+        _notificationRepository = Substitute.For<INotificationRepository>();
+        _mailNotifier = Substitute.For<IMailNotifier>();
+        _teamsNotifier = Substitute.For<ITeamsNotifier>();
+        _telegramNotifier = Substitute.For<ITelegramNotifier>();
+        _slackNotifier = Substitute.For<ISlackNotifier>();
+        _webHookNotifier = Substitute.For<IWebHookNotifier>();
+        _notificationService = new NotificationService(
+            _mailNotifier, _slackNotifier, _teamsNotifier, _telegramNotifier, _notificationRepository, _webHookNotifier);
+    }
+    
     [Fact]
     public async Task InsertNotificationItemSmtp_Calls_Correct_Method()
     {
@@ -257,4 +277,100 @@ public class NotificationServiceTests
         await notificationRepository.Received(1).SelectNotificationItemById(id);
         Assert.Same(notificationItem, result);
     }
+
+    [Fact]
+    public async Task Send_TeamsNotification_ReturnsTrue()
+    {
+        // Arrange
+        var notificationSend = new NotificationSend
+        {
+            NotificationTypeId = 2,
+            NotificationTeams = new NotificationTeams
+            {
+                WebHookUrl = "http://example.com"
+            },
+            Message = "Teams Message"
+        };
+
+        _teamsNotifier.SendNotification(Arg.Any<string>(), Arg.Any<string>()).Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _notificationService.Send(notificationSend);
+
+        // Assert
+        Assert.True(result);
+        await _teamsNotifier.Received(1).SendNotification(notificationSend.Message, notificationSend.NotificationTeams.WebHookUrl);
+    }
+
+    [Fact]
+    public async Task Send_SlackNotification_ReturnsTrue()
+    {
+        // Arrange
+        var notificationSend = new NotificationSend
+        {
+            NotificationTypeId = 4,
+            NotificationSlack = new NotificationSlack
+            {
+                Channel = "channel",
+                WebHookUrl = "http://example.com"
+            },
+            Message = "Slack Message"
+        };
+
+        _slackNotifier.SendNotification(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _notificationService.Send(notificationSend);
+
+        // Assert
+        Assert.True(result);
+        await _slackNotifier.Received(1).SendNotification(notificationSend.NotificationSlack.Channel, notificationSend.Message, notificationSend.NotificationSlack.WebHookUrl);
+    }
+
+    [Fact]
+    public async Task Send_WebHookNotification_ReturnsTrue()
+    {
+        // Arrange
+        var notificationSend = new NotificationSend
+        {
+            NotificationTypeId = 5,
+            Message = "Message",
+            NotificationWebHook = new NotificationWebHook
+            {
+                WebHookUrl = "http://example.com",
+                Message = "WebHook Message",
+                Body = "{}",
+                Headers = new List<Tuple<string, string>>()
+            }
+        };
+        
+        var headers = new List<Tuple<string, string>>();
+
+        _webHookNotifier.SendNotification(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), headers).Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _notificationService.Send(notificationSend);
+
+        // Assert
+        Assert.True(result);
+        await _webHookNotifier.Received(1).SendNotification(notificationSend.NotificationWebHook.Message, notificationSend.NotificationWebHook.WebHookUrl, notificationSend.NotificationWebHook.Body, notificationSend.NotificationWebHook.Headers);
+    }
+
+    [Fact]
+    public async Task Send_UnknownNotificationType_ReturnsFalse()
+    {
+        // Arrange
+        var notificationSend = new NotificationSend
+        {
+            Message = "Test",
+            NotificationTypeId = 999
+        };
+
+        // Act
+        var result = await _notificationService.Send(notificationSend);
+
+        // Assert
+        Assert.False(result);
+    }
+    
 }
