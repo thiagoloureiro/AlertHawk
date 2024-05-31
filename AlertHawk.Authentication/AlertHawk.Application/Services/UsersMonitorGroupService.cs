@@ -19,9 +19,21 @@ public class UsersMonitorGroupService(IUsersMonitorGroupRepository _repository) 
         }
     }
 
+    public async Task AssignUserToGroup(UsersMonitorGroup userMonitorGroup)
+    {
+        await DeleteAllByUserIdAsync(userMonitorGroup.UserId);
+
+        if (userMonitorGroup.GroupMonitorId > 0)
+        {
+            userMonitorGroup.Id = Guid.NewGuid();
+            await _repository.CreateAsync(userMonitorGroup);
+        }
+    }
+
     public async Task DeleteAllByUserIdAsync(Guid userId) => await _repository.DeleteAllByUserIdAsync(userId);
 
     public async Task<IEnumerable<UsersMonitorGroup>> GetAsync(Guid userId) => await _repository.GetAsync(userId);
+
     public async Task DeleteAllByGroupMonitorIdAsync(int groupId)
     {
         await _repository.DeleteAllByGroupMonitorIdAsync(groupId);

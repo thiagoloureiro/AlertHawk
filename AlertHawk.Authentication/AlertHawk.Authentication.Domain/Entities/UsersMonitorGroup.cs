@@ -12,5 +12,4 @@ namespace AlertHawk.Authentication.Domain.Entities
         public int GroupMonitorId { get; set; }
 
     }
-
 }

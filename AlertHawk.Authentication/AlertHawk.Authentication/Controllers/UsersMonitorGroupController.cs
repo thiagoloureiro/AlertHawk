@@ -23,9 +23,40 @@ namespace AlertHawk.Authentication.Controllers
             _getOrCreateUserServicer = getOrCreateUserServicer;
             _usersMonitorGroupService = usersMonitorGroupService;
         }
+        
+        [HttpPost("AssignUserToGroup")]
+        [SwaggerOperation(Summary = "AssignUserToGroup after group Creation")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> AssignUserToGroup([FromBody] UsersMonitorGroup usersMonitorGroup)
+        {
+            var usr = await GetUserByToken();
+            usersMonitorGroup.UserId = usr.Id;
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                await _usersMonitorGroupService.AssignUserToGroup(usersMonitorGroup);
+                return Ok();
+            }
+            catch (InvalidOperationException ex)
+            {
+                // If user already exists, return 400
+                return BadRequest(new Message(ex.Message));
+            }
+            catch (Exception err)
+            {
+                SentrySdk.CaptureException(err);
+                return StatusCode(StatusCodes.Status500InternalServerError, new Message("Something went wrong."));
+            }
+        }
 
         [HttpPost("create")]
-        [SwaggerOperation(Summary = "Create UsersMonitorGroupController")]
+        [SwaggerOperation(Summary = "AssignUserToGroups")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> AssignUserToGroup([FromBody] List<UsersMonitorGroup> usersMonitorGroup)
