@@ -21,8 +21,6 @@ public class UsersMonitorGroupService(IUsersMonitorGroupRepository _repository) 
 
     public async Task AssignUserToGroup(UsersMonitorGroup userMonitorGroup)
     {
-        await DeleteAllByUserIdAsync(userMonitorGroup.UserId);
-
         if (userMonitorGroup.GroupMonitorId > 0)
         {
             userMonitorGroup.Id = Guid.NewGuid();
