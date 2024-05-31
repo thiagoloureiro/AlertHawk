@@ -8,4 +8,5 @@ public interface IUsersMonitorGroupService
     Task DeleteAllByUserIdAsync(Guid userId);
     Task<IEnumerable<UsersMonitorGroup>> GetAsync(Guid userId);
     Task DeleteAllByGroupMonitorIdAsync(int groupMonitorId);
+    Task AssignUserToGroup(UsersMonitorGroup userMonitorGroup);
 }

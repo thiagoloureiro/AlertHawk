@@ -7,26 +7,19 @@ public static class JsonUtils
 {
     public static void ConvertJsonToTuple(NotificationWebHook webHook)
     {
-        try
+        if (webHook.HeadersJson != null)
         {
-            if (webHook.HeadersJson != null)
+            JObject jsonObj = JObject.Parse(webHook.HeadersJson);
+
+            // Extract values and create Tuple
+            List<Tuple<string, string>>? properties = new List<Tuple<string, string>>();
+
+            foreach (var property in jsonObj.Properties())
             {
-                JObject jsonObj = JObject.Parse(webHook.HeadersJson);
-
-                // Extract values and create Tuple
-                List<Tuple<string, string>>? properties = new List<Tuple<string, string>>();
-
-                foreach (var property in jsonObj.Properties())
-                {
-                    properties.Add(Tuple.Create(property.Name, property.Value.ToString()));
-                }
-
-                webHook.Headers = properties;
+                properties.Add(Tuple.Create(property.Name, property.Value.ToString()));
             }
-        }
-        catch (Exception e)
-        {
-            SentrySdk.CaptureException(e);
+
+            webHook.Headers = properties;
         }
     }
 }
