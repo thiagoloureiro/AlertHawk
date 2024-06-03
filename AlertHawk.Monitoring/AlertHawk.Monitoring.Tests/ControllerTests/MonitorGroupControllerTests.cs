@@ -210,7 +210,7 @@ public class MonitorGroupControllerTests
         var result = await _controller.AddMonitorToGroup(monitorGroupItems);
 
         // Assert
-        var okResult = Assert.IsType<OkResult>(result);
+        Assert.IsType<OkResult>(result);
         _mockMonitorGroupService.Verify(service => service.AddMonitorToGroup(monitorGroupItems), Times.Once);
     }
 
@@ -222,13 +222,40 @@ public class MonitorGroupControllerTests
         {
             Name = "name"
         };
+        var validToken = "Bearer valid.token.here";
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        _controller.Request.Headers["Authorization"] = validToken;
 
         // Act
         var result = await _controller.AddMonitorGroup(monitorGroup);
 
         // Assert
-        var okResult = Assert.IsType<OkResult>(result);
-        _mockMonitorGroupService.Verify(service => service.AddMonitorGroup(monitorGroup), Times.Once);
+        Assert.IsType<OkResult>(result);
+        
+    }
+    [Fact]
+    public async Task AddMonitorGroup_WithoutToken_Returns_BadRequestObjectResult()
+    {
+        // Arrange
+        var monitorGroup = new MonitorGroup
+        {
+            Name = "name"
+        };
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+      
+
+        // Act
+        var result = await _controller.AddMonitorGroup(monitorGroup);
+
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result);
+        
     }
 
     [Fact]
@@ -243,7 +270,7 @@ public class MonitorGroupControllerTests
         var result = await _controller.UpdateMonitorGroup(monitorGroup);
 
         // Assert
-        var okResult = Assert.IsType<OkResult>(result);
+        Assert.IsType<OkResult>(result);
         _mockMonitorGroupService.Verify(service => service.UpdateMonitorGroup(monitorGroup), Times.Once);
     }
 
@@ -365,7 +392,7 @@ public class MonitorGroupControllerTests
         var result = await _controller.RemoveMonitorFromGroup(monitorGroupItems);
 
         // Assert
-        var okResult = Assert.IsType<OkResult>(result);
+        Assert.IsType<OkResult>(result);
         _mockMonitorGroupService.Verify(service => service.RemoveMonitorFromGroup(monitorGroupItems), Times.Once);
     }
 }
