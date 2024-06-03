@@ -13,7 +13,6 @@ public class UsersMonitorGroupRepository : BaseRepository, IUsersMonitorGroupRep
     }
     public async Task CreateAsync(UsersMonitorGroup usersMonitorGroup)
     {
-        await DeleteAllByGroupMonitorIdAsync(usersMonitorGroup.GroupMonitorId);
         const string sql = "INSERT INTO [dbo].[UsersMonitorGroup] ([Id], [UserId], [GroupMonitorId]) VALUES (@Id, @UserId, @GroupMonitorId)";
         await ExecuteNonQueryAsync(sql, new { usersMonitorGroup.Id, usersMonitorGroup.UserId, usersMonitorGroup.GroupMonitorId });
     }
