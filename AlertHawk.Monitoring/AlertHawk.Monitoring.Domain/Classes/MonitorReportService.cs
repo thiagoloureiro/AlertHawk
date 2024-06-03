@@ -29,12 +29,6 @@ public class MonitorReportService : IMonitorReportService
         {
             monitorReportUptimes = monitorReportUptimes.Where(x => x.MonitorName.Contains(filter, StringComparison.CurrentCultureIgnoreCase)).ToList();
         }
-        
-        Console.WriteLine($"Filter: {filter}");
-        foreach (var item in monitorReportUptimes)
-        {
-            Console.WriteLine(item.MonitorName);
-        }
 
         return monitorReportUptimes;
     }
