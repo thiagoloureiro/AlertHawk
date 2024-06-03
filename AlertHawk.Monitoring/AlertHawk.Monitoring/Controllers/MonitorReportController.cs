@@ -20,8 +20,17 @@ public class MonitorReportController: ControllerBase
     
     [SwaggerOperation(Summary = "Retrieves Total Online and Offline minutes, uptime % by GroupId")]
     [ProducesResponseType(typeof(IEnumerable<MonitorReportUptime>), StatusCodes.Status200OK)]
+    [HttpGet("Uptime/{groupId}/{hours}")]
+    public async Task<IActionResult> GetMonitorReportUptime(int groupId, int hours)
+    {
+        var result = await _monitorReportService.GetMonitorReportUptime(groupId, hours, null);
+        return Ok(result);
+    }
+    
+    [SwaggerOperation(Summary = "Retrieves Total Online and Offline minutes, uptime % by GroupId")]
+    [ProducesResponseType(typeof(IEnumerable<MonitorReportUptime>), StatusCodes.Status200OK)]
     [HttpGet("Uptime/{groupId}/{hours}/{filter}")]
-    public async Task<IActionResult> GetMonitorReportUptime(int groupId, int hours, string? filter)
+    public async Task<IActionResult> GetMonitorReportUptimeWithFilter(int groupId, int hours, string? filter)
     {
         var result = await _monitorReportService.GetMonitorReportUptime(groupId, hours, filter);
         return Ok(result);
