@@ -24,10 +24,16 @@ public class MonitorReportService : IMonitorReportService
                 (report.TotalOnlineMinutes + report.TotalOfflineMinutes) * 100;
             report.UptimePercentage = uptimePercentage;
         }
-
+        
         if (!string.IsNullOrWhiteSpace(filter))
         {
             monitorReportUptimes = monitorReportUptimes.Where(x => x.MonitorName.Contains(filter, StringComparison.CurrentCultureIgnoreCase)).ToList();
+        }
+        
+        Console.WriteLine($"Filter: {filter}");
+        foreach (var item in monitorReportUptimes)
+        {
+            Console.WriteLine(item.MonitorName);
         }
 
         return monitorReportUptimes;
