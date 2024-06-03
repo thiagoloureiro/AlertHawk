@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Text;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
@@ -233,9 +234,10 @@ public class MonitorGroupService : IMonitorGroupService
         _caching.Invalidate(_cacheKeyMonitorGroupList);
     }
 
-    public async Task AddMonitorGroup(MonitorGroup monitorGroup)
+    public async Task AddMonitorGroup(MonitorGroup monitorGroup, string jwtToken)
     {
-        await _monitorGroupRepository.AddMonitorGroup(monitorGroup);
+        var groupId = await _monitorGroupRepository.AddMonitorGroup(monitorGroup);
+        await AddUserToGroup(jwtToken, groupId);
         _caching.Invalidate(_cacheKeyMonitorGroupList);
     }
 
@@ -254,13 +256,7 @@ public class MonitorGroupService : IMonitorGroupService
 
     public async Task<List<int>?> GetUserGroupMonitorListIds(string token)
     {
-        var client = _httpClientFactory.CreateClient();
-        client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
-        client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
-        client.DefaultRequestHeaders.Add("Connection", "keep-alive");
-        client.DefaultRequestHeaders.Add("Accept", "*/*");
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
+        var client = CreteHttpClient(token);
         var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
                       "https://api.monitoring.electrificationtools.abb.com/auth/";
         var content = await client.GetAsync($"{authApi}api/UsersMonitorGroup/GetAll");
@@ -277,7 +273,29 @@ public class MonitorGroupService : IMonitorGroupService
         return listGroupMonitorIds;
     }
 
+    private async Task AddUserToGroup(string token, int groupId)
+    {
+        var client = CreteHttpClient(token);
+
+        var payload = new UsersMonitorGroup { GroupMonitorId = groupId };
+
+        var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+
+        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
+                      "https://api.monitoring.electrificationtools.abb.com/auth/";
+        await client.PostAsync($"{authApi}api/UsersMonitorGroup/AssignUserToGroup", content);
+    }
+
     public async Task DeleteUserGroupMonitorListIds(string token, int userGroupMonitorId)
+    {
+        var client = CreteHttpClient(token);
+
+        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
+                      "https://api.monitoring.electrificationtools.abb.com/auth/";
+        await client.DeleteAsync($"{authApi}api/UsersMonitorGroup/{userGroupMonitorId}");
+    }
+
+    private HttpClient CreteHttpClient(string token)
     {
         var client = _httpClientFactory.CreateClient();
         client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
@@ -285,10 +303,7 @@ public class MonitorGroupService : IMonitorGroupService
         client.DefaultRequestHeaders.Add("Connection", "keep-alive");
         client.DefaultRequestHeaders.Add("Accept", "*/*");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
-                      "https://api.monitoring.electrificationtools.abb.com/auth/";
-        await client.DeleteAsync($"{authApi}api/UsersMonitorGroup/{userGroupMonitorId}");
+        return client;
     }
 
     private async Task<IEnumerable<MonitorDashboard>> GetMonitorDashboardDataList(List<int> ids)

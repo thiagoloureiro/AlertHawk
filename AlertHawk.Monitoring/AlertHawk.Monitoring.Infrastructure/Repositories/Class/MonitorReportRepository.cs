@@ -96,4 +96,48 @@ public class MonitorReportRepository : RepositoryBase, IMonitorReportRepository
                                 m.Name;";
         return await db.QueryAsync<MonitorReponseTime>(sqlAllMonitors, new { groupId, hours }, commandType: CommandType.Text);
     }
+
+    public async Task<IEnumerable<MonitorReportUptime>> GetMonitorReportUptime(int groupId, DateTime startDate, DateTime endDate)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlAllMonitors = @"WITH StatusChanges AS (
+                                SELECT
+                                    MonitorId,
+                                    Status,
+                                    TimeStamp,
+                                    LEAD(TimeStamp) OVER (PARTITION BY MonitorId ORDER BY TimeStamp) AS NextTimeStamp
+                                FROM
+                                    MonitorHistory
+                                WHERE
+                                    MonitorId IN (SELECT monitorid FROM MonitorGroupItems WHERE MonitorGroupId = @groupId) AND
+                                    TimeStamp >= @startDate AND
+                                    TimeStamp < @endDate
+                            ),
+                            Durations AS (
+                                SELECT
+                                    MonitorId,
+                                    Status,
+                                    TimeStamp,
+                                    NextTimeStamp,
+                                    DATEDIFF(minute, TimeStamp, NextTimeStamp) AS DurationInMinutes
+                                FROM
+                                    StatusChanges
+                                WHERE
+                                    NextTimeStamp IS NOT NULL
+                            )
+                            SELECT
+                                m.name AS MonitorName,
+                                d.MonitorId,
+                                SUM(CASE WHEN d.Status = 'true' THEN d.DurationInMinutes ELSE 0 END) AS TotalOnlineMinutes,
+                                SUM(CASE WHEN d.Status = 'false' THEN d.DurationInMinutes ELSE 0 END) AS TotalOfflineMinutes
+                            FROM
+                                Durations d
+                            JOIN
+                                Monitor m ON d.MonitorId = m.id
+                            GROUP BY
+                                d.MonitorId, m.name";
+        
+        return await db.QueryAsync<MonitorReportUptime>(sqlAllMonitors, new { groupId, startDate, endDate },
+            commandType: CommandType.Text);
+    }
 }

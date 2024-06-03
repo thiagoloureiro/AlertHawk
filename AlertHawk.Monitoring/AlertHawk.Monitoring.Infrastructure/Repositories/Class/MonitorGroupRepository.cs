@@ -95,12 +95,12 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
             new { monitorGroupItems.MonitorId, monitorGroupItems.MonitorGroupId }, commandType: CommandType.Text);
     }
 
-    public async Task AddMonitorGroup(MonitorGroup monitorGroup)
+    public async Task<int> AddMonitorGroup(MonitorGroup monitorGroup)
     {
         await using var db = new SqlConnection(_connstring);
         string sqlInsert =
-            @"INSERT INTO [MonitorGroup] (Name) VALUES (@Name)";
-        await db.QueryAsync<MonitorGroup>(sqlInsert,
+            @"INSERT INTO [MonitorGroup] (Name) VALUES (@Name); SELECT CAST(SCOPE_IDENTITY() as int)";
+        return await db.ExecuteScalarAsync<int>(sqlInsert,
             new { monitorGroup.Name }, commandType: CommandType.Text);
     }
 

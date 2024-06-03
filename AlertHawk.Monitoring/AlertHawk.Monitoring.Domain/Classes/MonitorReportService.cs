@@ -4,7 +4,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Services;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
 
-public class MonitorReportService: IMonitorReportService
+public class MonitorReportService : IMonitorReportService
 {
     private IMonitorReportRepository _monitorReportRepository;
 
@@ -13,14 +13,15 @@ public class MonitorReportService: IMonitorReportService
         _monitorReportRepository = monitorReportRepository;
     }
 
-    public async Task<IEnumerable<MonitorReportUptime>>GetMonitorReportUptime(int groupId, int hours)
+    public async Task<IEnumerable<MonitorReportUptime>> GetMonitorReportUptime(int groupId, int hours)
     {
-        var result =  await _monitorReportRepository.GetMonitorReportUptime(groupId, hours);
+        var result = await _monitorReportRepository.GetMonitorReportUptime(groupId, hours);
 
         var monitorReportUptimes = result.ToList();
         foreach (var report in monitorReportUptimes)
         {
-            double uptimePercentage = (double)report.TotalOnlineMinutes / (report.TotalOnlineMinutes + report.TotalOfflineMinutes) * 100;
+            double uptimePercentage = (double)report.TotalOnlineMinutes /
+                (report.TotalOnlineMinutes + report.TotalOfflineMinutes) * 100;
             report.UptimePercentage = uptimePercentage;
         }
 
@@ -35,5 +36,21 @@ public class MonitorReportService: IMonitorReportService
     public async Task<IEnumerable<MonitorReponseTime>> GetMonitorResponseTime(int groupId, int hours)
     {
         return await _monitorReportRepository.GetMonitorResponseTime(groupId, hours);
+    }
+
+    public async Task<IEnumerable<MonitorReportUptime>> GetMonitorReportUptime(int groupId, DateTime startDate,
+        DateTime endDate)
+    {
+        var result = await _monitorReportRepository.GetMonitorReportUptime(groupId, startDate, endDate);
+
+        var monitorReportUptimes = result.ToList();
+        foreach (var report in monitorReportUptimes)
+        {
+            double uptimePercentage = (double)report.TotalOnlineMinutes /
+                (report.TotalOnlineMinutes + report.TotalOfflineMinutes) * 100;
+            report.UptimePercentage = uptimePercentage;
+        }
+
+        return monitorReportUptimes;
     }
 }

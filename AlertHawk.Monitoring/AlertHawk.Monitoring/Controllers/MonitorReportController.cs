@@ -27,6 +27,15 @@ public class MonitorReportController: ControllerBase
         return Ok(result);
     }
     
+    [SwaggerOperation(Summary = "Retrieves Total Online and Offline minutes, uptime % by GroupId - Start Date and End Date")]
+    [ProducesResponseType(typeof(IEnumerable<MonitorReportUptime>), StatusCodes.Status200OK)]
+    [HttpGet("UptimeByStartAndEndDate/{groupId}/{startDate}/{endDate}")]
+    public async Task<IActionResult> GetMonitorReportUptime(int groupId, DateTime startDate, DateTime endDate)
+    {
+        var result = await _monitorReportService.GetMonitorReportUptime(groupId, startDate, endDate);
+        return Ok(result);
+    }
+    
     [SwaggerOperation(Summary = "Retrieves Total Monitor Alerts by GroupId")]
     [ProducesResponseType(typeof(IEnumerable<MonitorReportAlerts>), StatusCodes.Status200OK)]
     [HttpGet("Alert/{groupId}/{hours}")]

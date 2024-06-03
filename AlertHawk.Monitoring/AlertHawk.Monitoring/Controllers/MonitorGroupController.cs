@@ -104,7 +104,13 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("addMonitorGroup")]
         public async Task<IActionResult> AddMonitorGroup([FromBody] MonitorGroup monitorGroup)
         {
-            await _monitorGroupService.AddMonitorGroup(monitorGroup);
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (jwtToken == null)
+            {
+                return BadRequest("Invalid Token");
+            }
+            
+            await _monitorGroupService.AddMonitorGroup(monitorGroup, jwtToken);
             return Ok();
         }
 
