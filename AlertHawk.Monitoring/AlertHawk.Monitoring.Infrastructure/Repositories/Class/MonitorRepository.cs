@@ -39,9 +39,9 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @"SELECT M.Id, M.Name, HTTP.UrlToCheck, CAST(IP AS VARCHAR(255)) + ':' + CAST(Port AS VARCHAR(10)) AS MonitorTcp, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag FROM [Monitor] M
+            @"SELECT M.Id, M.Name, HTTP.UrlToCheck, CAST(IP AS VARCHAR(255)) + ':' + CAST(Port AS VARCHAR(10)) AS MonitorTcp, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag, HTTP.CheckCertExpiry FROM [Monitor] M
                 LEFT JOIN MonitorHttp HTTP on HTTP.MonitorId = M.Id
-                LEFT JOIN MonitorTcp TCP ON TCP.MonitorId = M.Id 
+                LEFT JOIN MonitorTcp TCP ON TCP.MonitorId = M.Id
                 WHERE MonitorEnvironment = @environment";
         return await db.QueryAsync<Monitor>(sql, new { environment }, commandType: CommandType.Text);
     }
