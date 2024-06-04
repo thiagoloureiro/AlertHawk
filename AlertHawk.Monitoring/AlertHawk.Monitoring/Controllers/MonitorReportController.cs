@@ -59,7 +59,16 @@ public class MonitorReportController: ControllerBase
     [HttpGet("ResponseTime/{groupId}/{hours}")]
     public async Task<IActionResult> GetMonitorResponseTime(int groupId, int hours)
     {
-        var result = await _monitorReportService.GetMonitorResponseTime(groupId, hours);
+        var result = await _monitorReportService.GetMonitorResponseTime(groupId, hours, null);
+        return Ok(result);
+    }
+    
+    [SwaggerOperation(Summary = "Retrieves ResponseTime Metrics by GroupId + Filter By Name")]
+    [ProducesResponseType(typeof(IEnumerable<MonitorReponseTime>), StatusCodes.Status200OK)]
+    [HttpGet("ResponseTime/{groupId}/{hours}/{filter}")]
+    public async Task<IActionResult> GetMonitorResponseTimeWithFilter(int groupId, int hours, string filter)
+    {
+        var result = await _monitorReportService.GetMonitorResponseTime(groupId, hours, filter);
         return Ok(result);
     }
 }
