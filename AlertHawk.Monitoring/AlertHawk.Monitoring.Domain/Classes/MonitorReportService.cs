@@ -38,9 +38,16 @@ public class MonitorReportService : IMonitorReportService
         return await _monitorReportRepository.GetMonitorAlerts(groupId, hours);
     }
 
-    public async Task<IEnumerable<MonitorReponseTime>> GetMonitorResponseTime(int groupId, int hours)
+    public async Task<IEnumerable<MonitorReponseTime>> GetMonitorResponseTime(int groupId, int hours, string? filter)
     {
-        return await _monitorReportRepository.GetMonitorResponseTime(groupId, hours);
+        var result =  await _monitorReportRepository.GetMonitorResponseTime(groupId, hours);
+        
+        if (!string.IsNullOrWhiteSpace(filter))
+        {
+            result = result.Where(x => x.MonitorName.Contains(filter, StringComparison.CurrentCultureIgnoreCase)).ToList();
+        }
+
+        return result;
     }
 
     public async Task<IEnumerable<MonitorReportUptime>> GetMonitorReportUptime(int groupId, DateTime startDate,
