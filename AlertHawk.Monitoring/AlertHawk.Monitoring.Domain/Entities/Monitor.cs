@@ -17,4 +17,5 @@ public class Monitor
     public MonitorEnvironment MonitorEnvironment { get; set; }
     public MonitorDashboard? MonitorStatusDashboard { get; set; }
     public string? Tag { get;set; }
+    public bool CheckCertExpiry { get; set; }
 }
