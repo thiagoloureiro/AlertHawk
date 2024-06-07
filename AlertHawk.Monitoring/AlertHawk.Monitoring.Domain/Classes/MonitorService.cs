@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Entities;
+using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Domain.Utils;
@@ -19,14 +20,16 @@ public class MonitorService : IMonitorService
     private readonly IMonitorGroupService _monitorGroupService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _monitorHistoryCount = "MonitorHistoryCountKey";
+    private readonly IHttpClientRunner _httpClientRunner;
 
     public MonitorService(IMonitorRepository monitorRepository, ICaching caching,
-        IMonitorGroupService monitorGroupService, IHttpClientFactory httpClientFactory)
+        IMonitorGroupService monitorGroupService, IHttpClientFactory httpClientFactory, IHttpClientRunner httpClientRunner)
     {
         _monitorRepository = monitorRepository;
         _caching = caching;
         _monitorGroupService = monitorGroupService;
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _httpClientRunner = httpClientRunner;
     }
 
     public async Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id)
@@ -290,7 +293,13 @@ public class MonitorService : IMonitorService
             monitorHttp.HeadersJson = JsonUtils.ConvertTupleToJson(monitorHttp.Headers);
         }
 
-        return await _monitorRepository.CreateMonitorHttp(monitorHttp);
+        var id = await _monitorRepository.CreateMonitorHttp(monitorHttp);
+        monitorHttp.MonitorId = id;
+        monitorHttp.Status = true;
+        monitorHttp.Retries = 1;
+        monitorHttp.Timeout = 5000;
+        await _httpClientRunner.CheckUrlsAsync(monitorHttp);
+        return id;
     }
 
     public async Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days)
