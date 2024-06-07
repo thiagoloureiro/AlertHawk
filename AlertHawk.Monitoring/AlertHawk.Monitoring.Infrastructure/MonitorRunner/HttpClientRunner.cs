@@ -36,7 +36,7 @@ public class HttpClientRunner : IHttpClientRunner
         var monitor = await _monitorRepository.GetMonitorById(monitorHttp.MonitorId);
         monitorHttp.LastStatus = monitor.Status;
 
-        while (retryCount < maxRetries)
+        while (retryCount <= maxRetries)
         {
             try
             {
