@@ -17,32 +17,60 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
         _connstring = GetConnectionString();
     }
 
-    public async Task<IEnumerable<MonitorAlert>> GetMonitorAlerts(int? monitorId, int? days, List<int>? groupIds)
+    public async Task<IEnumerable<MonitorAlert>> GetMonitorAlerts(int? monitorId, int? days,
+        MonitorEnvironment? environment, List<int>? groupIds)
     {
         await using var db = new SqlConnection(_connstring);
         string sql;
 
         if (monitorId > 0)
         {
-            sql =
-                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl, MA.Environment
+            if (environment == MonitorEnvironment.All)
+            {
+                sql =
+                    @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl, MA.Environment
                     FROM MonitorAlert MA 
                     INNER JOIN Monitor M on M.Id = MA.MonitorId 
-                    WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0 
+                    WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0
                     ORDER BY MA.TimeStamp DESC";
-            return await db.QueryAsync<MonitorAlert>(sql, new { monitorId, days }, commandType: CommandType.Text);
+            }
+            else
+            {
+                sql =
+                    @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl, MA.Environment
+                    FROM MonitorAlert MA 
+                    INNER JOIN Monitor M on M.Id = MA.MonitorId 
+                    WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0 AND MA.environment = @environment
+                    ORDER BY MA.TimeStamp DESC";
+            }
+           
+            return await db.QueryAsync<MonitorAlert>(sql, new { monitorId, days, environment }, commandType: CommandType.Text);
         }
 
-        sql =
-            @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl, MA.Environment
+        if (environment == MonitorEnvironment.All)
+        {
+            sql =
+                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl, MA.Environment
                 FROM MonitorAlert MA
                 INNER JOIN Monitor M on M.Id = MA.MonitorId
                 INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id
                 WHERE MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0
                 AND MGI.MonitorGroupId in @groupIds
                 ORDER BY MA.TimeStamp DESC";
+        }
+        else
+        {
+            sql =
+                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl, MA.Environment
+                FROM MonitorAlert MA
+                INNER JOIN Monitor M on M.Id = MA.MonitorId
+                INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id
+                WHERE MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0 AND MA.environment = @environment
+                AND MGI.MonitorGroupId in @groupIds
+                ORDER BY MA.TimeStamp DESC";
+        }
 
-        return await db.QueryAsync<MonitorAlert>(sql, new { days, groupIds }, commandType: CommandType.Text);
+        return await db.QueryAsync<MonitorAlert>(sql, new { days, groupIds, environment }, commandType: CommandType.Text);
     }
 
     public async Task<MemoryStream> CreateExcelFileAsync(IEnumerable<MonitorAlert> alerts)
