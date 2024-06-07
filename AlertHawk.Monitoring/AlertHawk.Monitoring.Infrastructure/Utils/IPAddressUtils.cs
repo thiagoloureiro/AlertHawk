@@ -23,7 +23,7 @@ public static class IPAddressUtils
             var json = await client.GetStringAsync(apiUrl);
             dynamic data = JObject.Parse(json);
 
-            switch (data.continent_name)
+            switch (data.continent_name.ToString())
             {
                 case "Europe":
                     region = MonitorRegion.Europe;
