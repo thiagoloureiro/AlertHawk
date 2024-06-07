@@ -18,11 +18,27 @@ namespace AlertHawk.Monitoring.Controllers
         {
             _monitorAlertService = monitorAlertService;
         }
+        
+        
+        [SwaggerOperation(Summary = "Retrieves a list of Monitor Alerts")]
+        [ProducesResponseType(typeof(List<MonitorAlert>), StatusCodes.Status200OK)]
+        [HttpGet("monitorAlerts/{monitorId}/{days}")]
+        public async Task<IActionResult> GetMonitorAlerts(int? monitorId = 0, int? days = 30, MonitorEnvironment? environment = MonitorEnvironment.All)
+        {
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (jwtToken == null)
+            {
+                return BadRequest("Invalid Token");
+            }
+
+            var result = await _monitorAlertService.GetMonitorAlerts(monitorId, days, environment, jwtToken);
+            return Ok(result);
+        }
 
         [SwaggerOperation(Summary = "Retrieves a list of Monitor Alerts")]
         [ProducesResponseType(typeof(List<MonitorAlert>), StatusCodes.Status200OK)]
         [HttpGet("monitorAlerts/{monitorId}/{days}/{environment}")]
-        public async Task<IActionResult> GetMonitorAlerts(int? monitorId = 0, int? days = 30, MonitorEnvironment? environment = MonitorEnvironment.All)
+        public async Task<IActionResult> GetMonitorAlertsByEnvironment(int? monitorId = 0, int? days = 30, MonitorEnvironment? environment = MonitorEnvironment.All)
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
             if (jwtToken == null)
