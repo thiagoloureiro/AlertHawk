@@ -294,6 +294,7 @@ public class MonitorService : IMonitorService
         }
 
         var id = await _monitorRepository.CreateMonitorHttp(monitorHttp);
+        monitorHttp.Status = true;
         await _httpClientRunner.CheckUrlsAsync(monitorHttp);
         return id;
     }
