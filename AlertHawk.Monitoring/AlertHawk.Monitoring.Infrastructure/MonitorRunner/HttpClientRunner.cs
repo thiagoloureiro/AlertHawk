@@ -30,13 +30,13 @@ public class HttpClientRunner : IHttpClientRunner
 
     public async Task CheckUrlsAsync(MonitorHttp monitorHttp)
     {
-        int maxRetries = monitorHttp.Retries;
+        int maxRetries = monitorHttp.Retries + 1;
         int retryCount = 0;
 
         var monitor = await _monitorRepository.GetMonitorById(monitorHttp.MonitorId);
         monitorHttp.LastStatus = monitor.Status;
 
-        while (retryCount <= maxRetries)
+        while (retryCount < maxRetries)
         {
             try
             {
