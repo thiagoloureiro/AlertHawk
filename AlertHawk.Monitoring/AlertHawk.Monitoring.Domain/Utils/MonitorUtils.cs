@@ -14,7 +14,5 @@ public static class MonitorUtils
         }
 
         return MonitorRegion.Europe;
-        // Default value if environment variable is not set or not a valid boolean
-        return MonitorRegion.Custom;
     }
 }
