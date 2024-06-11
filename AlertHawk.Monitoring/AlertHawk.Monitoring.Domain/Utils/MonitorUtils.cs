@@ -6,6 +6,7 @@ public static class MonitorUtils
 {
     public static MonitorRegion GetMonitorRegionVariable()
     {
+        return MonitorRegion.Asia;
         string? monitorRegion = Environment.GetEnvironmentVariable("monitor_region");
         if (!string.IsNullOrEmpty(monitorRegion) && int.TryParse(monitorRegion, out int result))
         {

@@ -20,7 +20,7 @@ public class MonitorReportControllerTests
     {
         // Arrange
         var uptimeReports = new List<MonitorReportUptime> { new MonitorReportUptime() };
-        _mockMonitorReportService.Setup(service => service.GetMonitorReportUptime(It.IsAny<int>(), It.IsAny<int>()))
+        _mockMonitorReportService.Setup(service => service.GetMonitorReportUptime(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>()))
             .ReturnsAsync(uptimeReports);
 
         // Act
@@ -35,7 +35,7 @@ public class MonitorReportControllerTests
     {
         // Arrange
         var uptimeReports = new List<MonitorReportUptime> { new MonitorReportUptime() };
-        _mockMonitorReportService.Setup(service => service.GetMonitorReportUptime(It.IsAny<int>(), It.IsAny<int>()))
+        _mockMonitorReportService.Setup(service => service.GetMonitorReportUptime(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>()))
             .ReturnsAsync(uptimeReports);
 
         // Act
@@ -66,7 +66,7 @@ public class MonitorReportControllerTests
     {
         // Arrange
         var responseTimeReports = new List<MonitorReponseTime> { new MonitorReponseTime() };
-        _mockMonitorReportService.Setup(service => service.GetMonitorResponseTime(It.IsAny<int>(), It.IsAny<int>()))
+        _mockMonitorReportService.Setup(service => service.GetMonitorResponseTime(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>()))
             .ReturnsAsync(responseTimeReports);
 
         // Act

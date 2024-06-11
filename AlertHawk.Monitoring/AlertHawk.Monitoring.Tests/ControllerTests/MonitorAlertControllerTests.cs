@@ -51,7 +51,7 @@ public class MonitorAlertControllerTests
         //TokenUtils.SetJwtToken(validToken); // Mock this method if necessary
 
         _mockMonitorAlertService.Setup(service =>
-                service.GetMonitorAlerts(It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>()))
+                service.GetMonitorAlerts(It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<MonitorEnvironment?>(), It.IsAny<string>()))
             .ReturnsAsync(monitorAlerts);
 
         // Act
