@@ -9,7 +9,6 @@ public class MonitorReportControllerTests
 {
     private readonly Mock<IMonitorReportService> _mockMonitorReportService;
     private readonly MonitorReportController _controller;
-'e'
     public MonitorReportControllerTests()
     {
         _mockMonitorReportService = new Mock<IMonitorReportService>();
