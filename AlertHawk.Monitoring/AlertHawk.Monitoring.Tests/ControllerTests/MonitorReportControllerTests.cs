@@ -9,7 +9,7 @@ public class MonitorReportControllerTests
 {
     private readonly Mock<IMonitorReportService> _mockMonitorReportService;
     private readonly MonitorReportController _controller;
-
+'e'
     public MonitorReportControllerTests()
     {
         _mockMonitorReportService = new Mock<IMonitorReportService>();
@@ -31,7 +31,21 @@ public class MonitorReportControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(uptimeReports, okResult.Value);
     }
+    [Fact]
+    public async Task GetMonitorReportUptimeByDate_ReturnsOk()
+    {
+        // Arrange
+        var uptimeReports = new List<MonitorReportUptime> { new MonitorReportUptime() };
+        _mockMonitorReportService.Setup(service => service.GetMonitorReportUptime(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(uptimeReports);
 
+        // Act
+        var result = await _controller.GetMonitorReportUptime(1, 24);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(uptimeReports, okResult.Value);
+    }
     [Fact]
     public async Task GetMonitorAlerts_ReturnsOk()
     {
