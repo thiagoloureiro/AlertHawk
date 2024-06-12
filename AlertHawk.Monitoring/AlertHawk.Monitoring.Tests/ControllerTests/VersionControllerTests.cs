@@ -29,16 +29,5 @@ public class VersionControllerTests
         // Assert
         Assert.NotNull(result);
     }
-    [Fact]
-    public void Should_Get_Test()
-    {
-        // Arrange
-        var controller = new VersionController();
-
-        // Act
-        var result = controller.GetTest();
-
-        // Assert
-        Assert.NotNull(result);
-    }
+  
 }
