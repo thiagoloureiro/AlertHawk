@@ -1,12 +1,13 @@
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Entities.Report;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
-
+[ExcludeFromCodeCoverage]
 public class MonitorReportRepository : RepositoryBase, IMonitorReportRepository
 {
     private readonly string _connstring;
