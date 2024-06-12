@@ -23,6 +23,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using Hangfire.InMemory;
+[assembly: ExcludeFromCodeCoverage]
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseSentry(options =>
