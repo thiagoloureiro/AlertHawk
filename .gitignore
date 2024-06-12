@@ -364,3 +364,4 @@ FodyWeavers.xsd
 *appsettings.Local.json
 AlertHawk.Notification/.idea/.idea.AlertHawk.Notification/.idea/indexLayout.xml
 AlertHawk.Notification/.idea/.idea.AlertHawk.Notification/.idea/workspace.xml
+/AlertHawk.Authentication/.idea/.idea.AlertHawk.Authentication/.idea

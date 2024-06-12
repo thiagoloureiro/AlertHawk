@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
@@ -8,6 +9,7 @@ using OfficeOpenXml;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 
+[ExcludeFromCodeCoverage]
 public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
 {
     private readonly string _connstring;
