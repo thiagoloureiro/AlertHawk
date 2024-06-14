@@ -27,7 +27,7 @@ public class TcpClientRunner : ITcpClientRunner
         {
             try
             {
-                isConnected = MakeTcpCall(monitorTcp);
+                isConnected = await MakeTcpCall(monitorTcp);
 
                 var monitorHistory = new MonitorHistory
                 {
@@ -92,21 +92,20 @@ public class TcpClientRunner : ITcpClientRunner
         return isConnected;
     }
 
-    public bool MakeTcpCall(MonitorTcp monitorTcp)
+    public async Task<bool> MakeTcpCall(MonitorTcp monitorTcp)
     {
+        using var tcpClient = new TcpClient();
+        using var cancellationTokenSource = new CancellationTokenSource();
+        var timeoutMilliseconds = monitorTcp.Timeout * 1000;
+            
+        cancellationTokenSource.CancelAfter(timeoutMilliseconds * 1000);
+        
         try
         {
-            using var tcpClient = new TcpClient();
-            var timeoutInSeconds = monitorTcp.Timeout;
+            var connectTask = tcpClient.ConnectAsync(monitorTcp.IP, monitorTcp.Port);
+            var completedTask = await Task.WhenAny(connectTask, Task.Delay(timeoutMilliseconds, cancellationTokenSource.Token));
 
-            var task = tcpClient.ConnectAsync(monitorTcp.IP, monitorTcp.Port);
-            if (Task.WaitAny(new Task[] { task }, timeoutInSeconds * 1000) == -1)
-            {
-                // Timeout, connection attempt was not successful within the given timeframe
-                return false;
-            }
-
-            return tcpClient.Connected; // Return true if connected, false otherwise
+            return completedTask == connectTask && tcpClient.Connected; // Return true if connected, false otherwise
         }
         catch (SocketException)
         {
