@@ -81,7 +81,7 @@ public class MonitorGroupServiceTests
                 It.IsAny<Func<Task<IEnumerable<MonitorGroup>>>>(), 
                 It.IsAny<bool>(), 
                 It.IsAny<CacheTimeInterval>()))
-            .Returns((string key, int duration, Func<Task<IEnumerable<MonitorGroup>>> fetchFunction, bool arg4, CacheTimeInterval arg5) => fetchFunction());
+            .Returns((string _, int duration, Func<Task<IEnumerable<MonitorGroup>>> fetchFunction, bool arg4, CacheTimeInterval arg5) => fetchFunction());
 
         _monitorGroupRepositoryMock.Setup(repo => repo.GetMonitorGroupList())
             .ReturnsAsync(monitorGroups);
@@ -128,8 +128,6 @@ public class MonitorGroupServiceTests
                 }
             }
         };
-
-        var groupIds = new List<int> { 1 };
 
         _monitorGroupRepositoryMock.Setup(repo => repo.GetMonitorGroupListByEnvironment(It.IsAny<MonitorEnvironment>()))
             .ReturnsAsync(monitorGroups);
