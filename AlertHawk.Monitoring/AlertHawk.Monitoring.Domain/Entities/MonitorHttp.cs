@@ -1,7 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
 namespace AlertHawk.Monitoring.Domain.Entities;
-
+[ExcludeFromCodeCoverage]
 public class MonitorHttp : Monitor
 {
     public int MonitorId { get; set; }

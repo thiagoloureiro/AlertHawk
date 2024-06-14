@@ -1,5 +1,7 @@
-namespace AlertHawk.Monitoring.Domain.Entities;
+using System.Diagnostics.CodeAnalysis;
 
+namespace AlertHawk.Monitoring.Domain.Entities;
+[ExcludeFromCodeCoverage]
 public class MonitorGroupNotification
 {
     public int MonitorGroupId { get; set; }
