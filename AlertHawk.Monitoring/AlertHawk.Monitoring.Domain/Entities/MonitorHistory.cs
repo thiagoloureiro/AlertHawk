@@ -1,7 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 namespace AlertHawk.Monitoring.Domain.Entities;
-
+[ExcludeFromCodeCoverage]
 public class MonitorHistory
 {
     [JsonIgnore]

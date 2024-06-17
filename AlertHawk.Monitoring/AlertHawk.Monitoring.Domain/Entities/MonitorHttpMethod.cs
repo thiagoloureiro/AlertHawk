@@ -1,5 +1,4 @@
 namespace AlertHawk.Monitoring.Domain.Entities;
-
 public enum MonitorHttpMethod
 {
     Get=1,

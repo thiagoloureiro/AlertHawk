@@ -1,5 +1,7 @@
-namespace AlertHawk.Monitoring.Domain.Entities;
+using System.Diagnostics.CodeAnalysis;
 
+namespace AlertHawk.Monitoring.Domain.Entities;
+[ExcludeFromCodeCoverage]
 public class MonitorTcp : Monitor
 {
     public int MonitorId { get; set; }

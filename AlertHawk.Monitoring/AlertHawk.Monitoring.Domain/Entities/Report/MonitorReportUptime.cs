@@ -1,5 +1,7 @@
-namespace AlertHawk.Monitoring.Domain.Entities.Report;
+using System.Diagnostics.CodeAnalysis;
 
+namespace AlertHawk.Monitoring.Domain.Entities.Report;
+[ExcludeFromCodeCoverage]
 public class MonitorReportUptime
 {
     public string GroupName { get; set; }
