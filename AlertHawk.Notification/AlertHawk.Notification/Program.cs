@@ -14,7 +14,6 @@ using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using SharedModels;
 
-[assembly: ExcludeFromCodeCoverage]
 var builder = WebApplication.CreateBuilder(args);
 
 var configuration = new ConfigurationBuilder()
