@@ -298,6 +298,7 @@ public class MonitorService : IMonitorService
         monitorHttp.Status = true;
         monitorHttp.Retries = 1;
         monitorHttp.Timeout = 5000;
+        monitorHttp.MaxRedirects = 5;
         await _httpClientRunner.CheckUrlsAsync(monitorHttp);
         return id;
     }
