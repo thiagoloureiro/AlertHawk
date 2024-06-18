@@ -3,6 +3,7 @@ using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Domain.Interfaces.Repositories;
 using AlertHawk.Notification.Domain.Interfaces.Services;
+using AlertHawk.Notification.Domain.Utils;
 using NSubstitute;
 
 namespace AlertHawk.Notification.Tests.ServiceTests;

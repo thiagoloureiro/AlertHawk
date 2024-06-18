@@ -1,10 +1,6 @@
-﻿using System.Security.Cryptography;
-using AlertHawk.Notification.Domain.Classes;
-using AlertHawk.Notification.Domain.Entities;
+﻿using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Utils;
 using AlertHawk.Notification.Infrastructure.Utils;
-using Newtonsoft.Json.Linq;
-using NSubstitute;
 
 namespace AlertHawk.Notification.Tests.UtilsTests
 {
@@ -26,6 +22,37 @@ namespace AlertHawk.Notification.Tests.UtilsTests
 
             // Assert
             Assert.Equal(originalString, decryptedString);
+        }
+        
+        [Fact]
+        public void EncryptAndDecrypt_ReturnsArgumentNullException()
+        {
+            // Arrange
+            var keys = Utils.GenerateAesKeyAndIv();
+
+            string originalString = "";
+            Environment.SetEnvironmentVariable("AesKey", keys.Item1);
+            Environment.SetEnvironmentVariable("AesIV", keys.Item2);
+
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() => AesEncryption.EncryptString(originalString));
+        }
+        
+        [Fact]
+        public void EncryptAndDecrypt_ReturnsArgumentNullExceptionOnDecrypt()
+        {
+            // Arrange
+            var keys = Utils.GenerateAesKeyAndIv();
+
+            string originalString = "test123";
+            Environment.SetEnvironmentVariable("AesKey", keys.Item1);
+            Environment.SetEnvironmentVariable("AesIV", keys.Item2);
+
+            // Act 
+            string? encrypted = AesEncryption.EncryptString(originalString);
+            
+            // Assert
+            Assert.Throws<ArgumentNullException>(() => AesEncryption.DecryptString(null));
         }
 
         [Fact]

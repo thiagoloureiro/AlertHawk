@@ -1,6 +1,7 @@
 using AlertHawk.Notification.Controllers;
 using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
+using AlertHawk.Notification.Domain.Utils;
 
 namespace AlertHawk.Notification.Tests.NotifierTests;
 
@@ -165,8 +166,8 @@ public class NotifierTests : IClassFixture<NotificationController>
         var channel = "alerthawk-test";
 
         var body = $"{{\"channel\": \"{channel}\", \"text\": \"{message}\"}}";
-        var headers = "{User-Agent: \"Mozilla/5.0\"}";
-
+        var headers = "{\"User-Agent\": \"Mozilla/5.0\"}";
+     
         var notificationSend = new NotificationSend
         {
             Message = "Message",
@@ -181,6 +182,7 @@ public class NotifierTests : IClassFixture<NotificationController>
             },
             NotificationTimeStamp = DateTime.UtcNow
         };
+        JsonUtils.ConvertJsonToTuple(notificationSend.NotificationWebHook);
 
         // Act
         await _webHookNotifier.SendNotification(notificationSend.Message, notificationSend.NotificationWebHook.WebHookUrl, notificationSend.NotificationWebHook.Body, notificationSend.NotificationWebHook.Headers);
