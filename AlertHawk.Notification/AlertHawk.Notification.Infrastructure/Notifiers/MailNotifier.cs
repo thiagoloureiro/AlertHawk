@@ -68,20 +68,17 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
                     await smtpClient.SendMailAsync(mailMessage);
                     return true; // Email sent successfully, exit method
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    Console.WriteLine($"Failed to send email (attempt {retryCount + 1}/{maxRetries}): {ex.Message}");
                     if (retryCount < maxRetries - 1)
                     {
-                        Console.WriteLine($"Retrying in {retryIntervalSeconds} seconds...");
                         await Task.Delay(TimeSpan.FromSeconds(retryIntervalSeconds));
                     }
                 }
 
                 retryCount++;
             }
-
-            Console.WriteLine("Failed to send email after retries.");
+            
             return false;
         }
     }

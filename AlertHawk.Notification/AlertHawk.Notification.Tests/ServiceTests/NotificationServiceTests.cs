@@ -3,6 +3,7 @@ using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Domain.Interfaces.Repositories;
 using AlertHawk.Notification.Domain.Interfaces.Services;
+using AlertHawk.Notification.Domain.Utils;
 using NSubstitute;
 
 namespace AlertHawk.Notification.Tests.ServiceTests;
@@ -128,6 +129,7 @@ public class NotificationServiceTests
     {
         var notificationItem = new NotificationItem
         {
+            MonitorGroupId = 1,
             NotificationTypeId = typeId, Description = "Description", Name = "Notification Name",
             NotificationEmail = new NotificationEmail
             {
