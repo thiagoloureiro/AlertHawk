@@ -129,6 +129,7 @@ public class NotificationServiceTests
     {
         var notificationItem = new NotificationItem
         {
+            MonitorGroupId = 1,
             NotificationTypeId = typeId, Description = "Description", Name = "Notification Name",
             NotificationEmail = new NotificationEmail
             {

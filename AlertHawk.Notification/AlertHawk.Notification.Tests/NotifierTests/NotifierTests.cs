@@ -45,6 +45,30 @@ public class NotifierTests : IClassFixture<NotificationController>
         // Assert
         Assert.NotNull(result);
     }
+    
+    [Fact]
+    public async Task Should_Send_Success_Telegram_Notification()
+    {
+        // Arrange
+        var notificationSend = new NotificationSend
+        {
+            Message = "Success",
+            NotificationTypeId = 3, // Telegram
+            NotificationTelegram = new NotificationTelegram
+            {
+                ChatId = GlobalVariables.TelegramChatId,
+                NotificationId = 1,
+                TelegramBotToken = GlobalVariables.TelegramWebHook,
+            },
+            NotificationTimeStamp = DateTime.UtcNow
+        };
+
+        // Act
+        var result = await _telegramNotifier.SendNotification(notificationSend.NotificationTelegram.ChatId, notificationSend.Message, notificationSend.NotificationTelegram.TelegramBotToken);
+
+        // Assert
+        Assert.NotNull(result);
+    }
 
     [Fact]
     public async Task Should_Send_EmailSmtp_Notification()
@@ -134,6 +158,30 @@ public class NotifierTests : IClassFixture<NotificationController>
         // Assert
         Assert.True(true);
     }
+    
+    [Fact]
+    public async Task Should_Send_Success_Slack_Notification()
+    {
+        // Arrange
+        var notificationSend = new NotificationSend
+        {
+            Message = "Success",
+            NotificationTypeId = 4, // Slack
+            NotificationSlack = new NotificationSlack()
+            {
+                NotificationId = 1,
+                WebHookUrl = GlobalVariables.SlackWebHookUrl,
+                Channel = "alerthawk-test"
+            },
+            NotificationTimeStamp = DateTime.UtcNow
+        };
+
+        // Act
+        await _slackNotifier.SendNotification(notificationSend.NotificationSlack.Channel, notificationSend.Message, notificationSend.NotificationSlack.WebHookUrl);
+
+        // Assert
+        Assert.True(true);
+    }
 
     [Fact]
     public async Task Should_Send_Teams_Notification()
@@ -142,6 +190,29 @@ public class NotifierTests : IClassFixture<NotificationController>
         var notificationSend = new NotificationSend
         {
             Message = "Test from Unit testing",
+            NotificationTypeId = 2, // Teams
+            NotificationTeams = new NotificationTeams()
+            {
+                NotificationId = 1,
+                WebHookUrl = GlobalVariables.TeamsWebHookUrl
+            },
+            NotificationTimeStamp = DateTime.UtcNow
+        };
+
+        // Act
+        await _teamsNotifier.SendNotification(notificationSend.Message, notificationSend.NotificationTeams.WebHookUrl);
+
+        // Assert
+        Assert.True(true);
+    }
+    
+    [Fact]
+    public async Task Should_Send_Success_Teams_Notification()
+    {
+        // Arrange
+        var notificationSend = new NotificationSend
+        {
+            Message = "Success Test from Unit testing",
             NotificationTypeId = 2, // Teams
             NotificationTeams = new NotificationTeams()
             {
