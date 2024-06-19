@@ -62,6 +62,16 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
     {
         var notificationId = notificationItem.Id;
 
+        if (string.IsNullOrEmpty(notificationItem.NotificationEmail?.ToCCEmail))
+        {
+            if (notificationItem.NotificationEmail != null) notificationItem.NotificationEmail.ToCCEmail = null;
+        }
+        
+        if (string.IsNullOrEmpty(notificationItem.NotificationEmail?.ToBCCEmail))
+        {
+            if (notificationItem.NotificationEmail != null) notificationItem.NotificationEmail.ToBCCEmail = null;
+        }
+
         if (notificationItem.NotificationEmail != null)
         {
             notificationItem.NotificationEmail.Password =
