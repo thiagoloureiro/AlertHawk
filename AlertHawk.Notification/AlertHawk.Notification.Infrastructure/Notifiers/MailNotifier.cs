@@ -38,12 +38,12 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
                 emailRecipients.AddRange(emailTo);
             }
 
-            if (emailNotification.ToCCEmail != null)
+            if (!string.IsNullOrEmpty(emailNotification.ToCCEmail))
             {
                 emailRecipients.AddRange(emailCcList);
             }
 
-            if (emailNotification.ToBCCEmail != null)
+            if (!string.IsNullOrEmpty(emailNotification.ToBCCEmail))
             {
                 emailRecipients.AddRange(emailBccList);
             }
