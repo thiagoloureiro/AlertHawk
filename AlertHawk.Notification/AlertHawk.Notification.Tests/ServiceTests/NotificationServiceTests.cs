@@ -1,9 +1,9 @@
+using System.Net;
 using AlertHawk.Notification.Domain.Classes;
 using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Domain.Interfaces.Repositories;
 using AlertHawk.Notification.Domain.Interfaces.Services;
-using AlertHawk.Notification.Domain.Utils;
 using NSubstitute;
 
 namespace AlertHawk.Notification.Tests.ServiceTests;
@@ -279,6 +279,23 @@ public class NotificationServiceTests
         await notificationRepository.Received(1).SelectNotificationItemById(id);
         Assert.Same(notificationItem, result);
     }
+    
+    [Fact]
+    public async Task SelectNotificationItemByMonitorGroupId_Calls_Repository_Method()
+    {
+        // Arrange
+        int id = 1;
+        var notificationItem = CreateMock(out var notificationRepository, out var notificationService);
+        var lstNotificationItem = new List<NotificationItem> { notificationItem };
+        notificationRepository.SelectNotificationItemByMonitorGroupId(id).Returns(lstNotificationItem);
+
+        // Act
+        var result = await notificationService.SelectNotificationItemByMonitorGroupId(id);
+
+        // Assert
+        await notificationRepository.Received(1).SelectNotificationItemByMonitorGroupId(id);
+        Assert.Same(lstNotificationItem, result);
+    }
 
     [Fact]
     public async Task Send_TeamsNotification_ReturnsTrue()
@@ -374,5 +391,4 @@ public class NotificationServiceTests
         // Assert
         Assert.False(result);
     }
-    
 }
