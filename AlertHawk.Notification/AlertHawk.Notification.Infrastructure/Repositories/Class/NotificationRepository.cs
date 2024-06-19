@@ -60,6 +60,8 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     public async Task InsertNotificationItemEmailSmtp(NotificationItem notificationItem)
     {
+        var notificationId = notificationItem.Id;
+
         if (notificationItem.NotificationEmail != null)
         {
             notificationItem.NotificationEmail.Password =
@@ -72,7 +74,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
             await db.ExecuteAsync(sqlDetails, new
             {
-                noteificationId = notificationItem.Id,
+                notificationId,
                 notificationItem.NotificationEmail?.FromEmail,
                 notificationItem.NotificationEmail?.ToEmail,
                 notificationItem.NotificationEmail?.Hostname,
