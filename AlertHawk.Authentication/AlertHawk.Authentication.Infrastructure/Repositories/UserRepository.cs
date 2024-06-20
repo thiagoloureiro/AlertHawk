@@ -166,7 +166,7 @@ public class UserRepository : BaseRepository, IUserRepository
             parameters.Add("Email", userUpdate.Email?.ToLower(CultureInfo.InvariantCulture));
         }
 
-        if (updateFields.Any())
+        if (updateFields.Count != 0)
         {
             updateFields.Add("UpdatedAt = @UpdatedAt");
             updateFields.Add("IsAdmin = @IsAdmin");
