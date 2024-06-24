@@ -236,6 +236,9 @@ public class MonitorGroupService : IMonitorGroupService
 
     public async Task AddMonitorGroup(MonitorGroup monitorGroup, string jwtToken)
     {
+        monitorGroup.Name = monitorGroup.Name.TrimStart();
+        monitorGroup.Name = monitorGroup.Name.TrimEnd();
+
         var groupId = await _monitorGroupRepository.AddMonitorGroup(monitorGroup);
         await AddUserToGroup(jwtToken, groupId);
         _caching.Invalidate(_cacheKeyMonitorGroupList);
@@ -243,6 +246,9 @@ public class MonitorGroupService : IMonitorGroupService
 
     public async Task UpdateMonitorGroup(MonitorGroup monitorGroup)
     {
+        monitorGroup.Name = monitorGroup.Name.TrimStart();
+        monitorGroup.Name = monitorGroup.Name.TrimEnd();
+
         await _monitorGroupRepository.UpdateMonitorGroup(monitorGroup);
         _caching.Invalidate(_cacheKeyMonitorGroupList);
     }

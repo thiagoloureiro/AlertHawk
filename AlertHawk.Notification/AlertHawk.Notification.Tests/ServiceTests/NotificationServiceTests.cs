@@ -124,7 +124,7 @@ public class NotificationServiceTests
         await notificationRepository.Received(1).InsertNotificationItemWebHook(Arg.Is(notificationItem));
     }
 
-    private static NotificationItem CreateMock(out INotificationRepository notificationRepository,
+    private static NotificationItem? CreateMock(out INotificationRepository notificationRepository,
         out NotificationService notificationService, int typeId = 1)
     {
         var notificationItem = new NotificationItem
@@ -251,7 +251,7 @@ public class NotificationServiceTests
     {
         // Arrange
         List<int> ids = new List<int> { 1, 2, 3 };
-        var expectedNotificationList = new List<NotificationItem>();
+        var expectedNotificationList = new List<NotificationItem?>();
         var notificationItem = CreateMock(out var notificationRepository, out var notificationService);
         expectedNotificationList.Add(notificationItem);
         notificationRepository.SelectNotificationItemList(ids).Returns(expectedNotificationList);
