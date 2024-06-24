@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ namespace AlertHawk.Monitoring.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 [AllowAnonymous]
+[ExcludeFromCodeCoverage]
 public class HealthCheckController: ControllerBase
 {
     [HttpGet]

@@ -8,10 +8,11 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
         public async Task SendNotification(string message, string webHookUrl)
         {
             using HttpClient httpClient = new HttpClient();
+            
+            message = message.Contains("Success") ? "(checkmarkbutton) " + message : "(crossmark) " + message;
+            
             string payload = $"{{\"text\": \"{message}\"}}";
-            
-            message = message.Contains("Success") ? ":white_check_mark: " + message : ":x: " + message;
-            
+       
             StringContent content = new StringContent(payload, Encoding.UTF8, "application/json");
 
             HttpResponseMessage response = await httpClient.PostAsync(webHookUrl, content);

@@ -15,12 +15,13 @@ public class MonitorAlertService : IMonitorAlertService
         _monitorGroupService = monitorGroupService;
     }
 
-    public async Task<IEnumerable<MonitorAlert>> GetMonitorAlerts(int? monitorId, int? days, string jwtToken)
+    public async Task<IEnumerable<MonitorAlert>> GetMonitorAlerts(int? monitorId, int? days,
+        MonitorEnvironment? environment, string jwtToken)
     {
         var groupIds = await _monitorGroupService.GetUserGroupMonitorListIds(jwtToken);
         if (groupIds != null && groupIds.Any())
         {
-            return await _monitorAlertRepository.GetMonitorAlerts(monitorId, days, groupIds);
+            return await _monitorAlertRepository.GetMonitorAlerts(monitorId, days, environment, groupIds);
         }
 
         return new List<MonitorAlert>();
@@ -29,7 +30,7 @@ public class MonitorAlertService : IMonitorAlertService
     public async Task<MemoryStream> GetMonitorAlertsReport(int? monitorId, int? days, string jwtToken,
         ReportType reportType)
     {
-        var monitorAlerts = await GetMonitorAlerts(monitorId, days, jwtToken);
+        var monitorAlerts = await GetMonitorAlerts(monitorId, days, MonitorEnvironment.All, jwtToken);
 
         return reportType switch
         {

@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace AlertHawk.Monitoring.Attributes;
 
+[ExcludeFromCodeCoverage]
 public class ApiKeyAuthAttribute : Attribute, IAsyncActionFilter
 {
     private const string Apikeyname = "ApiKey";
