@@ -33,7 +33,7 @@ namespace AlertHawk.Notification.Controllers
         [HttpPost("CreateNotificationItem")]
         [SwaggerOperation(Summary = "Create notification item")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-        public async Task<IActionResult> InsertNotificationItem(NotificationItem notificationItem)
+        public async Task<IActionResult> InsertNotificationItem(NotificationItem? notificationItem)
         {
             await _notificationService.InsertNotificationItem(notificationItem);
             return Ok("Notification Created Successfully");
@@ -42,7 +42,7 @@ namespace AlertHawk.Notification.Controllers
         [HttpPut("UpdateNotificationItem")]
         [SwaggerOperation(Summary = "Update notification item")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-        public async Task<IActionResult> UpdateNotificationItem(NotificationItem notificationItem)
+        public async Task<IActionResult> UpdateNotificationItem(NotificationItem? notificationItem)
         {
             await _notificationService.UpdateNotificationItem(notificationItem);
             return Ok("Notification Updated Successfully");

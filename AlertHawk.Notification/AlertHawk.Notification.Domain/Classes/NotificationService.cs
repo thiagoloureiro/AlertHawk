@@ -102,41 +102,53 @@ namespace AlertHawk.Notification.Domain.Classes
             }
         }
 
-        public async Task InsertNotificationItem(NotificationItem notificationItem)
+        public async Task InsertNotificationItem(NotificationItem? notificationItem)
         {
-            if (notificationItem.Id == 0)
+            if (notificationItem != null)
             {
-                notificationItem.Id = await _notificationRepository.InsertNotificationItem(notificationItem);
-            }
+                notificationItem.Name = notificationItem.Name?.TrimStart();
+                notificationItem.Name = notificationItem.Name?.TrimEnd();
+                
+                if (notificationItem.Id == 0)
+                {
+                    notificationItem.Id = await _notificationRepository.InsertNotificationItem(notificationItem);
+                }
 
-            switch (notificationItem.NotificationTypeId)
-            {
-                case 1: // Email SMTP
-                    await _notificationRepository.InsertNotificationItemEmailSmtp(notificationItem);
-                    break;
+                switch (notificationItem.NotificationTypeId)
+                {
+                    case 1: // Email SMTP
+                        await _notificationRepository.InsertNotificationItemEmailSmtp(notificationItem);
+                        break;
 
-                case 2: // MS Teams
-                    await _notificationRepository.InsertNotificationItemMsTeams(notificationItem);
-                    break;
+                    case 2: // MS Teams
+                        await _notificationRepository.InsertNotificationItemMsTeams(notificationItem);
+                        break;
 
-                case 3: // Telegram
-                    await _notificationRepository.InsertNotificationItemTelegram(notificationItem);
-                    break;
+                    case 3: // Telegram
+                        await _notificationRepository.InsertNotificationItemTelegram(notificationItem);
+                        break;
 
-                case 4: // Slack
-                    await _notificationRepository.InsertNotificationItemSlack(notificationItem);
-                    break;
+                    case 4: // Slack
+                        await _notificationRepository.InsertNotificationItemSlack(notificationItem);
+                        break;
 
-                case 5: // WebHook
-                    await _notificationRepository.InsertNotificationItemWebHook(notificationItem);
-                    break;
+                    case 5: // WebHook
+                        await _notificationRepository.InsertNotificationItemWebHook(notificationItem);
+                        break;
+                }
             }
         }
 
-        public async Task UpdateNotificationItem(NotificationItem notificationItem)
+        public async Task UpdateNotificationItem(NotificationItem? notificationItem)
         {
-            await _notificationRepository.UpdateNotificationItem(notificationItem);
-            await InsertNotificationItem(notificationItem);
+            if (notificationItem != null)
+            {
+                notificationItem.Name = notificationItem.Name?.TrimStart();
+                notificationItem.Name = notificationItem.Name?.TrimEnd();
+
+                await _notificationRepository.UpdateNotificationItem(notificationItem);
+                await InsertNotificationItem(notificationItem);
+            }
         }
 
         public async Task DeleteNotificationItem(int id)
@@ -151,7 +163,7 @@ namespace AlertHawk.Notification.Domain.Classes
             return items.Where(x => groupIds != null && groupIds.Contains(x.MonitorGroupId)).ToList();
         }
 
-        public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList(List<int> ids)
+        public async Task<IEnumerable<NotificationItem?>> SelectNotificationItemList(List<int> ids)
         {
             return await _notificationRepository.SelectNotificationItemList(ids);
         }

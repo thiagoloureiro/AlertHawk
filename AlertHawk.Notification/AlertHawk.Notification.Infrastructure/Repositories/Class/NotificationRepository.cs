@@ -58,7 +58,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         return selectNotificationItemList;
     }
 
-    public async Task InsertNotificationItemEmailSmtp(NotificationItem notificationItem)
+    public async Task InsertNotificationItemEmailSmtp(NotificationItem? notificationItem)
     {
         var notificationId = await InsertNotificationItem(notificationItem);
 
@@ -91,7 +91,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         }
     }
 
-    public async Task UpdateNotificationItem(NotificationItem notificationItem)
+    public async Task UpdateNotificationItem(NotificationItem? notificationItem)
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
@@ -110,7 +110,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         await DeleteNotificationItemFromChilds(notificationItem.Id);
     }
 
-    public async Task InsertNotificationItemMsTeams(NotificationItem notificationItem)
+    public async Task InsertNotificationItemMsTeams(NotificationItem? notificationItem)
     {
         await using var db = new SqlConnection(_connstring);
         string sqlDetails =
@@ -123,7 +123,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         }, commandType: CommandType.Text);
     }
 
-    public async Task InsertNotificationItemTelegram(NotificationItem notificationItem)
+    public async Task InsertNotificationItemTelegram(NotificationItem? notificationItem)
     {
         await using var db = new SqlConnection(_connstring);
         string sqlDetails =
@@ -137,7 +137,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         }, commandType: CommandType.Text);
     }
 
-    public async Task InsertNotificationItemSlack(NotificationItem notificationItem)
+    public async Task InsertNotificationItemSlack(NotificationItem? notificationItem)
     {
         await using var db = new SqlConnection(_connstring);
         string sqlDetails =
@@ -151,7 +151,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         }, commandType: CommandType.Text);
     }
 
-    public async Task InsertNotificationItemWebHook(NotificationItem notificationItem)
+    public async Task InsertNotificationItemWebHook(NotificationItem? notificationItem)
     {
 
         await using var db = new SqlConnection(_connstring);
@@ -213,13 +213,13 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         return notificationItem;
     }
 
-    public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList(List<int> ids)
+    public async Task<IEnumerable<NotificationItem?>> SelectNotificationItemList(List<int> ids)
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
             "SELECT Id, MonitorGroupId, Name, Description, NotificationTypeId FROM [NotificationItem] WHERE id IN @ids";
 
-        var notificationItemList =
+        IEnumerable<NotificationItem?> notificationItemList =
             await db.QueryAsync<NotificationItem>(sql, new { ids }, commandType: CommandType.Text);
 
         var notificationEmailList = await SelectNotificationEmailList();
@@ -301,7 +301,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         return result;
     }
 
-    public async Task<int> InsertNotificationItem(NotificationItem notificationItem)
+    public async Task<int> InsertNotificationItem(NotificationItem? notificationItem)
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
