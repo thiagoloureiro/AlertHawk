@@ -288,6 +288,9 @@ public class MonitorService : IMonitorService
 
     public async Task<int> CreateMonitorHttp(MonitorHttp monitorHttp)
     {
+        monitorHttp.Name = monitorHttp.Name.TrimStart();
+        monitorHttp.Name = monitorHttp.Name.TrimEnd();
+        
         if (monitorHttp!.Headers != null)
         {
             monitorHttp.HeadersJson = JsonUtils.ConvertTupleToJson(monitorHttp.Headers);
@@ -352,6 +355,9 @@ public class MonitorService : IMonitorService
 
     public async Task UpdateMonitorHttp(MonitorHttp monitorHttp)
     {
+        monitorHttp.Name = monitorHttp.Name.TrimStart();
+        monitorHttp.Name = monitorHttp.Name.TrimEnd();
+        
         if (monitorHttp!.Headers != null)
         {
             monitorHttp.HeadersJson = JsonUtils.ConvertTupleToJson(monitorHttp.Headers);
@@ -382,11 +388,17 @@ public class MonitorService : IMonitorService
 
     public async Task<int> CreateMonitorTcp(MonitorTcp monitorTcp)
     {
+        monitorTcp.Name = monitorTcp.Name.TrimStart();
+        monitorTcp.Name = monitorTcp.Name.TrimEnd();
+        
         return await _monitorRepository.CreateMonitorTcp(monitorTcp);
     }
 
     public async Task UpdateMonitorTcp(MonitorTcp monitorTcp)
     {
+        monitorTcp.Name = monitorTcp.Name.TrimStart();
+        monitorTcp.Name = monitorTcp.Name.TrimEnd();
+        
         await _monitorRepository.UpdateMonitorTcp(monitorTcp);
     }
 
