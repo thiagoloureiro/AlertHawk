@@ -291,6 +291,9 @@ public class MonitorService : IMonitorService
         monitorHttp.Name = monitorHttp.Name.TrimStart();
         monitorHttp.Name = monitorHttp.Name.TrimEnd();
         
+        monitorHttp.UrlToCheck = monitorHttp.Name.TrimStart();
+        monitorHttp.UrlToCheck = monitorHttp.Name.TrimEnd();
+        
         if (monitorHttp!.Headers != null)
         {
             monitorHttp.HeadersJson = JsonUtils.ConvertTupleToJson(monitorHttp.Headers);
@@ -358,6 +361,9 @@ public class MonitorService : IMonitorService
         monitorHttp.Name = monitorHttp.Name.TrimStart();
         monitorHttp.Name = monitorHttp.Name.TrimEnd();
         
+        monitorHttp.UrlToCheck = monitorHttp.Name.TrimStart();
+        monitorHttp.UrlToCheck = monitorHttp.Name.TrimEnd();
+        
         if (monitorHttp!.Headers != null)
         {
             monitorHttp.HeadersJson = JsonUtils.ConvertTupleToJson(monitorHttp.Headers);
@@ -390,6 +396,9 @@ public class MonitorService : IMonitorService
     {
         monitorTcp.Name = monitorTcp.Name.TrimStart();
         monitorTcp.Name = monitorTcp.Name.TrimEnd();
+
+        monitorTcp.IP = monitorTcp.IP.TrimStart();
+        monitorTcp.IP = monitorTcp.IP.TrimEnd();
         
         return await _monitorRepository.CreateMonitorTcp(monitorTcp);
     }
@@ -398,6 +407,9 @@ public class MonitorService : IMonitorService
     {
         monitorTcp.Name = monitorTcp.Name.TrimStart();
         monitorTcp.Name = monitorTcp.Name.TrimEnd();
+        
+        monitorTcp.IP = monitorTcp.IP.TrimStart();
+        monitorTcp.IP = monitorTcp.IP.TrimEnd();
         
         await _monitorRepository.UpdateMonitorTcp(monitorTcp);
     }
