@@ -53,6 +53,12 @@ public class UserRepository : BaseRepository, IUserRepository
         return _mapper.Map<List<UserDto>?>(user);
     }
 
+    public async Task Delete(Guid id)
+    {
+        const string sql = "DELETE FROM Users WHERE Id = @Id";
+        await ExecuteNonQueryAsync(sql, new { Id = id });
+    }
+
     public async Task Create(UserCreation userCreation)
     {
         string checkExistingUserSql = "SELECT Id FROM Users WHERE LOWER(Email) = @Email";

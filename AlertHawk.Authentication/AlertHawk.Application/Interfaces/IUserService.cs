@@ -8,6 +8,7 @@ public interface IUserService
     Task Create(UserCreation userCreation);
     Task CreateFromAzure(UserCreationFromAzure userCreation);
     Task Update(UserDto userUpdate);
+    Task Delete(Guid id);
     
     Task ResetPassword(string username);
 
