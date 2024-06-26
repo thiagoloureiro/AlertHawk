@@ -291,8 +291,8 @@ public class MonitorService : IMonitorService
         monitorHttp.Name = monitorHttp.Name.TrimStart();
         monitorHttp.Name = monitorHttp.Name.TrimEnd();
         
-        monitorHttp.UrlToCheck = monitorHttp.Name.TrimStart();
-        monitorHttp.UrlToCheck = monitorHttp.Name.TrimEnd();
+        monitorHttp.UrlToCheck = monitorHttp.UrlToCheck.TrimStart();
+        monitorHttp.UrlToCheck = monitorHttp.UrlToCheck.TrimEnd();
         
         if (monitorHttp!.Headers != null)
         {
@@ -361,8 +361,8 @@ public class MonitorService : IMonitorService
         monitorHttp.Name = monitorHttp.Name.TrimStart();
         monitorHttp.Name = monitorHttp.Name.TrimEnd();
         
-        monitorHttp.UrlToCheck = monitorHttp.Name.TrimStart();
-        monitorHttp.UrlToCheck = monitorHttp.Name.TrimEnd();
+        monitorHttp.UrlToCheck = monitorHttp.UrlToCheck.TrimStart();
+        monitorHttp.UrlToCheck = monitorHttp.UrlToCheck.TrimEnd();
         
         if (monitorHttp!.Headers != null)
         {
