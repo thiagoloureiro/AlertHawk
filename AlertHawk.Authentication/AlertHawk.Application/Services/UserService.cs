@@ -36,6 +36,11 @@ public class UserService : IUserService
         await _userRepository.Update(userUpdate);
     }
 
+    public async Task Delete(Guid id)
+    {
+        await _userRepository.Delete(id);
+    }
+
     public async Task ResetPassword(string username)
     {
         var user = await GetByUsername(username);

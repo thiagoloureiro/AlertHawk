@@ -56,6 +56,23 @@ public class UserController : Controller
         }
     }
 
+    [HttpDelete("delete/{userId}")]
+    [SwaggerOperation(Summary = "Delete User")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> DeleteUser(Guid userId)
+    {
+        var user = await _userService.Get(userId);
+        if (user == null)
+        {
+            return BadRequest("User not found");
+        }
+        
+        await _userService.Delete(userId);
+        return Ok();
+    }
+    
     [HttpPut("update")]
     [SwaggerOperation(Summary = "Update User")]
     [ProducesResponseType(StatusCodes.Status200OK)]

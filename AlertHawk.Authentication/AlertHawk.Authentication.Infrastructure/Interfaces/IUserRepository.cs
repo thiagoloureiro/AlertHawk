@@ -18,4 +18,5 @@ public interface IUserRepository
     Task<UserDto?> GetByEmail(string email);
     Task<UserDto?> GetByUsername(string username);
     Task<IEnumerable<UserDto>?> GetAll();
+    Task Delete(Guid id);
 }
