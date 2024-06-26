@@ -22,6 +22,7 @@ public class UserController : Controller
         _getOrCreateUserService = getOrCreateUserService;
     }
     
+    [AllowAnonymous]
     [HttpPost("create")]
     [SwaggerOperation(Summary = "Create User")]
     [ProducesResponseType(StatusCodes.Status200OK)]
