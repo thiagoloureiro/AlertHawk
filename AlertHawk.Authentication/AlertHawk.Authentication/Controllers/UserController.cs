@@ -8,6 +8,7 @@ using AlertHawk.Authentication.Domain.Dto;
 
 namespace AlertHawk.Authentication.Controllers;
 
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class UserController : Controller
@@ -20,7 +21,7 @@ public class UserController : Controller
         _userService = userService;
         _getOrCreateUserService = getOrCreateUserService;
     }
-
+    
     [HttpPost("create")]
     [SwaggerOperation(Summary = "Create User")]
     [ProducesResponseType(StatusCodes.Status200OK)]

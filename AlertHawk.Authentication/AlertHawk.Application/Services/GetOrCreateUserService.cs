@@ -28,6 +28,11 @@ public class GetOrCreateUserService(IUserService userService) : IGetOrCreateUser
             userEmail = claims.Claims?.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
         }
         
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            userEmail = claims.Claims?.FirstOrDefault(c => c.Type == "emailaddress")?.Value;
+        }
+        
         var user = await userService.GetByEmail(userEmail);
 
         // This is for AD First Login only
