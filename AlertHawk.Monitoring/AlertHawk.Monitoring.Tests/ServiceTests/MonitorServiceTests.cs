@@ -258,7 +258,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                         "value")
                 },
                 MaxRedirects = 0,
-                UrlToCheck = null,
+                UrlToCheck = "http://www.google.com",
                 Timeout = 0,
                 HeartBeatInterval = 0,
                 Retries = 0
