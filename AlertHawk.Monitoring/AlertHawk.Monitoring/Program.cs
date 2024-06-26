@@ -74,12 +74,12 @@ builder.Services.AddMassTransit(x =>
 });
 
 var issuer = configuration["Jwt:Issuer"] ??
-             throw new ArgumentException("Configuration value for 'Jwt:Issuer' not found.");
+             "issuer";
 
 var audience = configuration["Jwt:Audience"] ??
-               throw new ArgumentException("Configuration value for 'Jwt:Audience' not found.");
+               "aud";
 
-var key = configuration["Jwt:Key"] ?? throw new ArgumentException("Configuration value for 'Jwt:Key' not found.");
+var key = configuration["Jwt:Key"] ?? "fakeKey";
 
 // Add services to the container
 builder.Services.AddAuthentication(options =>
