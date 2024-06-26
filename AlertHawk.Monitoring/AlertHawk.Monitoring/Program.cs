@@ -19,10 +19,14 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net.Security;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using Hangfire.InMemory;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseSentry(options =>
@@ -69,12 +73,47 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
-var azureEnabled = Environment.GetEnvironmentVariable("AZURE_AD_AUTH_ENABLED", EnvironmentVariableTarget.Process) ??
-                   "true";
-if (azureEnabled == "true")
+var issuer = configuration["Jwt:Issuer"] ??
+             throw new ArgumentException("Configuration value for 'Jwt:Issuer' not found.");
+
+var audience = configuration["Jwt:Audience"] ??
+               throw new ArgumentException("Configuration value for 'Jwt:Audience' not found.");
+
+var key = configuration["Jwt:Key"] ?? throw new ArgumentException("Configuration value for 'Jwt:Key' not found.");
+
+// Add services to the container
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer("JwtBearer", options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = issuer,
+            ValidateAudience = true,
+            ValidAudience = audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+            RequireExpirationTime = true,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
+        };
+    })
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"), jwtBearerScheme: "AzureAd");
+
+builder.Services.AddAuthorization(options =>
 {
-    builder.Services.AddMicrosoftIdentityWebApiAuthentication(configuration, jwtBearerScheme: "AzureAd");
-}
+    var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(
+        "JwtBearer",
+        "AzureAd"
+    );
+    defaultAuthorizationPolicyBuilder = defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
+    options.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
+});
+
 
 builder.Services.AddHangfire(config => config.UseInMemoryStorage(new InMemoryStorageOptions
 {
