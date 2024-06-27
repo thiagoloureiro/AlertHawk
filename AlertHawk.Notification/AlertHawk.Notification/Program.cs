@@ -106,13 +106,15 @@ builder.WebHost.UseSentry(options =>
     }
 );
 
-var issuer = configuration["Jwt:Issuer"] ??
-             throw new ArgumentException("Configuration value for 'Jwt:Issuer' not found.");
+var issuers = configuration["Jwt:Issuers"] ??
+             "issuer";
 
-var audience = configuration["Jwt:Audience"] ??
-               throw new ArgumentException("Configuration value for 'Jwt:Audience' not found.");
+var audiences = configuration["Jwt:Audiences"] ??
+               "aud";
 
-var key = configuration["Jwt:Key"] ?? throw new ArgumentException("Configuration value for 'Jwt:Key' not found.");
+var key = configuration["Jwt:Key"] ?? "fakeKey";
+
+Console.WriteLine(issuers);
 
 // Add services to the container
 builder.Services.AddAuthentication(options =>
@@ -125,9 +127,9 @@ builder.Services.AddAuthentication(options =>
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidIssuer = issuer,
+            ValidIssuers = issuers.Split(","),
             ValidateAudience = true,
-            ValidAudience = audience,
+            ValidAudiences = audiences.Split(","),
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
             RequireExpirationTime = true,
