@@ -73,7 +73,7 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
-var issuer = configuration["Jwt:Issuer"] ??
+var issuers = configuration["Jwt:Issuers"] ??
              "issuer";
 
 var audience = configuration["Jwt:Audience"] ??
@@ -91,8 +91,8 @@ builder.Services.AddAuthentication(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,
-            ValidIssuer = issuer,
+            ValidateIssuer = false,
+            ValidIssuers = issuers.Split(","),
             ValidateAudience = true,
             ValidAudience = audience,
             ValidateIssuerSigningKey = true,
