@@ -22,14 +22,7 @@ RUN dotnet publish "./AlertHawk.Monitoring.csproj" -c $BUILD_CONFIGURATION -o /a
 
 FROM base AS final
 USER root
-RUN apk update \
-    && apk add --no-cache wget gnupg \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --import - \
-    && echo "https://dl-ssl.google.com/linux/linux_signing_key.pub" >> /etc/apk/keys/google-chrome.pub \
-    && echo "@edge http://dl-3.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
-    && apk update \
-    && apk add --no-cache google-chrome-stable \
-    && rm -rf /var/cache/apk/*
+RUN apk update && apk upgrade && apk add chromium
 
 WORKDIR /app
 COPY --from=publish /app/publish .
