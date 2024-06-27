@@ -22,7 +22,14 @@ RUN dotnet publish "./AlertHawk.Monitoring.csproj" -c $BUILD_CONFIGURATION -o /a
 
 FROM base AS final
 USER root
-RUN apk update && apk upgrade && apk add chromium
+RUN apk update && apk upgrade && apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    dbus
 
 WORKDIR /app
 COPY --from=publish /app/publish .
