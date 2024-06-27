@@ -28,9 +28,10 @@ public class MonitorAlertService : IMonitorAlertService
     }
 
     public async Task<MemoryStream> GetMonitorAlertsReport(int? monitorId, int? days, string jwtToken,
+        MonitorEnvironment? environment,
         ReportType reportType)
     {
-        var monitorAlerts = await GetMonitorAlerts(monitorId, days, MonitorEnvironment.All, jwtToken);
+        var monitorAlerts = await GetMonitorAlerts(monitorId, days, environment, jwtToken);
 
         return reportType switch
         {

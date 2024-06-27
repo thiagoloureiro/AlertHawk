@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
+
 namespace AlertHawk.Monitoring.Tests.ControllerTests;
 
 public class MonitorAlertControllerTests
@@ -51,7 +52,8 @@ public class MonitorAlertControllerTests
         //TokenUtils.SetJwtToken(validToken); // Mock this method if necessary
 
         _mockMonitorAlertService.Setup(service =>
-                service.GetMonitorAlerts(It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<MonitorEnvironment?>(), It.IsAny<string>()))
+                service.GetMonitorAlerts(It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<MonitorEnvironment?>(),
+                    It.IsAny<string>()))
             .ReturnsAsync(monitorAlerts);
 
         // Act
@@ -74,7 +76,7 @@ public class MonitorAlertControllerTests
         _controller.Request.Headers["Authorization"] = invalidToken;
 
         // Act
-        var result = await _controller.GetMonitorAlertsReport(0, 30, ReportType.Excel);
+        var result = await _controller.GetMonitorAlertsReport(0, 30, MonitorEnvironment.All, ReportType.Excel);
 
         // Assert
         Assert.IsType<BadRequestObjectResult>(result);
@@ -91,10 +93,10 @@ public class MonitorAlertControllerTests
             HttpContext = new DefaultHttpContext()
         };
         _controller.Request.Headers["Authorization"] = validToken;
-       // TokenUtils.SetJwtToken(validToken); // Mock this method if necessary
+        // TokenUtils.SetJwtToken(validToken); // Mock this method if necessary
 
         // Act
-        var result = await _controller.GetMonitorAlertsReport(0, 30, (ReportType)99); // Invalid ReportType
+        var result = await _controller.GetMonitorAlertsReport(0, 30, MonitorEnvironment.All, (ReportType)99); // Invalid ReportType
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
@@ -112,15 +114,16 @@ public class MonitorAlertControllerTests
             HttpContext = new DefaultHttpContext()
         };
         _controller.Request.Headers["Authorization"] = validToken;
-       // TokenUtils.SetJwtToken(validToken); // Mock this method if necessary
+        // TokenUtils.SetJwtToken(validToken); // Mock this method if necessary
 
         _mockMonitorAlertService.Setup(service =>
                 service.GetMonitorAlertsReport(It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(),
+                    MonitorEnvironment.All,
                     ReportType.Excel))
             .ReturnsAsync(reportStream);
 
         // Act
-        var result = await _controller.GetMonitorAlertsReport(0, 30, ReportType.Excel);
+        var result = await _controller.GetMonitorAlertsReport(0, 30, MonitorEnvironment.All, ReportType.Excel);
 
         // Assert
         var fileResult = Assert.IsType<FileStreamResult>(result);

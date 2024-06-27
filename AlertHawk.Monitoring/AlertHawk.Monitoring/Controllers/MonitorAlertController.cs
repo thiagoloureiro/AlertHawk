@@ -52,8 +52,8 @@ namespace AlertHawk.Monitoring.Controllers
 
         [SwaggerOperation(Summary = "Retrieves a list of Monitor Alerts in Excel format")]
         [ProducesResponseType(typeof(List<MonitorAlert>), StatusCodes.Status200OK)]
-        [HttpGet("monitorAlertsReport/{monitorId}/{days}/{reportType}")]
-        public async Task<IActionResult> GetMonitorAlertsReport(int? monitorId = 0, int? days = 30,
+        [HttpGet("monitorAlertsReport/{monitorId}/{days}/{environment}/{reportType}")]
+        public async Task<IActionResult> GetMonitorAlertsReport(int? monitorId = 0, int? days = 30, MonitorEnvironment? environment = MonitorEnvironment.All,
             ReportType reportType = ReportType.Excel)
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
@@ -62,7 +62,7 @@ namespace AlertHawk.Monitoring.Controllers
                 return BadRequest("Invalid Token");
             }
 
-            var stream = await _monitorAlertService.GetMonitorAlertsReport(monitorId, days, jwtToken, reportType);
+            var stream = await _monitorAlertService.GetMonitorAlertsReport(monitorId, days, jwtToken, environment, reportType);
 
             if (reportType == ReportType.Excel)
             {
