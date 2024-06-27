@@ -76,7 +76,7 @@ builder.Services.AddMassTransit(x =>
 var issuers = configuration["Jwt:Issuers"] ??
              "issuer";
 
-var audience = configuration["Jwt:Audience"] ??
+var audiences = configuration["Jwt:Audiences"] ??
                "aud";
 
 var key = configuration["Jwt:Key"] ?? "fakeKey";
@@ -96,7 +96,7 @@ builder.Services.AddAuthentication(options =>
             ValidateIssuer = true,
             ValidIssuers = issuers.Split(","),
             ValidateAudience = true,
-            ValidAudience = audience,
+            ValidAudiences = audiences.Split(","),
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
             RequireExpirationTime = true,
