@@ -23,13 +23,39 @@ RUN dotnet publish "./AlertHawk.Monitoring.csproj" -c $BUILD_CONFIGURATION -o /a
 FROM base AS final
 USER root
 RUN apk update \
-    && apk add --no-cache wget gnupg \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --import - \
-    && echo "https://dl-ssl.google.com/linux/linux_signing_key.pub" >> /etc/apk/keys/google-chrome.pub \
-    && echo "@edge http://dl-3.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
-    && apk update \
-    && apk add --no-cache google-chrome-stable \
-    && rm -rf /var/cache/apk/*
+    && apk add --no-cache \
+    wget \
+    gnupg \
+    libc6-compat \
+    nss \
+    alsa-lib \
+    at-spi2-atk \
+    cups-libs \
+    dbus-libs \
+    eudev-libs \
+    expat \
+    flac \
+    harfbuzz \
+    libevent \
+    libffi \
+    libjpeg-turbo \
+    libpng \
+    libwebp \
+    libxcomposite \
+    libxrandr \
+    libxscrnsaver \
+    nodejs \
+    ttf-freefont
+
+    # Download and install Google Chrome
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+&& mkdir -p /opt/google/chrome \
+&& dpkg -x google-chrome-stable_current_amd64.deb /opt/google/chrome \
+&& ln -s /opt/google/chrome/opt/google/chrome/chrome /usr/bin/google-chrome \
+&& rm google-chrome-stable_current_amd64.deb
+
+# Cleanup
+RUN rm -rf /var/cache/apk/*
 
 WORKDIR /app
 COPY --from=publish /app/publish .
