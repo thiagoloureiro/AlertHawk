@@ -8,12 +8,12 @@ namespace AlertHawk.Monitoring.Tests.ControllerTests;
 
 public class MonitorNotificationControllerTests
 {
-    private readonly Mock<IMonitorService> _mockMonitorService;
+    private readonly Mock<IMonitorNotificationService> _mockMonitorService;
     private readonly MonitorNotificationController _controller;
 
     public MonitorNotificationControllerTests()
     {
-        _mockMonitorService = new Mock<IMonitorService>();
+        _mockMonitorService = new Mock<IMonitorNotificationService>();
         _controller = new MonitorNotificationController(_mockMonitorService.Object);
     }
 

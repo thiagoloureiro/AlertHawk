@@ -19,43 +19,28 @@ public class MonitorService : IMonitorService
     private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
     private readonly IMonitorGroupService _monitorGroupService;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly string _monitorHistoryCount = "MonitorHistoryCountKey";
+    private readonly IMonitorHistoryRepository _monitorHistoryRepository;
+
     private readonly IHttpClientRunner _httpClientRunner;
 
     public MonitorService(IMonitorRepository monitorRepository, ICaching caching,
-        IMonitorGroupService monitorGroupService, IHttpClientFactory httpClientFactory, IHttpClientRunner httpClientRunner)
+        IMonitorGroupService monitorGroupService, IHttpClientFactory httpClientFactory,
+        IHttpClientRunner httpClientRunner, IMonitorHistoryRepository monitorHistoryRepository)
     {
         _monitorRepository = monitorRepository;
         _caching = caching;
         _monitorGroupService = monitorGroupService;
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _httpClientRunner = httpClientRunner;
+        _monitorHistoryRepository = monitorHistoryRepository;
     }
 
-    public async Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id)
-    {
-        return await _monitorRepository.GetMonitorNotifications(id);
-    }
-
-    public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id)
-    {
-        return await _monitorRepository.GetMonitorHistory(id);
-    }
-
-    public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days)
-    {
-        return await _monitorRepository.GetMonitorHistoryByIdAndDays(id, days);
-    }
 
     public async Task<IEnumerable<Monitor?>> GetMonitorList()
     {
         return await _monitorRepository.GetMonitorList();
     }
 
-    public async Task DeleteMonitorHistory(int days)
-    {
-        await _monitorRepository.DeleteMonitorHistory(days);
-    }
 
     public async Task PauseMonitor(int id, bool paused)
     {
@@ -67,7 +52,7 @@ public class MonitorService : IMonitorService
     {
         try
         {
-            var result = await _monitorRepository.GetMonitorHistoryByIdAndDays(id, 90);
+            var result = await _monitorHistoryRepository.GetMonitorHistoryByIdAndDays(id, 90);
             var monitorHistories = result.ToList();
             if (!monitorHistories.Any())
             {
@@ -290,10 +275,10 @@ public class MonitorService : IMonitorService
     {
         monitorHttp.Name = monitorHttp.Name.TrimStart();
         monitorHttp.Name = monitorHttp.Name.TrimEnd();
-        
+
         monitorHttp.UrlToCheck = monitorHttp.UrlToCheck.TrimStart();
         monitorHttp.UrlToCheck = monitorHttp.UrlToCheck.TrimEnd();
-        
+
         if (monitorHttp!.Headers != null)
         {
             monitorHttp.HeadersJson = JsonUtils.ConvertTupleToJson(monitorHttp.Headers);
@@ -360,10 +345,10 @@ public class MonitorService : IMonitorService
     {
         monitorHttp.Name = monitorHttp.Name.TrimStart();
         monitorHttp.Name = monitorHttp.Name.TrimEnd();
-        
+
         monitorHttp.UrlToCheck = monitorHttp.UrlToCheck.TrimStart();
         monitorHttp.UrlToCheck = monitorHttp.UrlToCheck.TrimEnd();
-        
+
         if (monitorHttp!.Headers != null)
         {
             monitorHttp.HeadersJson = JsonUtils.ConvertTupleToJson(monitorHttp.Headers);
@@ -399,7 +384,7 @@ public class MonitorService : IMonitorService
 
         monitorTcp.IP = monitorTcp.IP.TrimStart();
         monitorTcp.IP = monitorTcp.IP.TrimEnd();
-        
+
         return await _monitorRepository.CreateMonitorTcp(monitorTcp);
     }
 
@@ -407,10 +392,10 @@ public class MonitorService : IMonitorService
     {
         monitorTcp.Name = monitorTcp.Name.TrimStart();
         monitorTcp.Name = monitorTcp.Name.TrimEnd();
-        
+
         monitorTcp.IP = monitorTcp.IP.TrimStart();
         monitorTcp.IP = monitorTcp.IP.TrimEnd();
-        
+
         await _monitorRepository.UpdateMonitorTcp(monitorTcp);
     }
 
@@ -436,16 +421,6 @@ public class MonitorService : IMonitorService
         }
     }
 
-    public async Task AddMonitorNotification(MonitorNotification monitorNotification)
-    {
-        await _monitorRepository.AddMonitorNotification(monitorNotification);
-    }
-
-    public async Task RemoveMonitorNotification(MonitorNotification monitorNotification)
-    {
-        await _monitorRepository.RemoveMonitorNotification(monitorNotification);
-    }
-
     public async Task<IEnumerable<Monitor?>> GetMonitorListByTag(string tag)
     {
         return await _monitorRepository.GetMonitorListbyTag(tag);
@@ -456,53 +431,6 @@ public class MonitorService : IMonitorService
         return await _monitorRepository.GetMonitorTagList();
     }
 
-    public async Task<long> GetMonitorHistoryCount()
-    {
-        var count = await _caching.GetOrSetObjectFromCacheAsync(_monitorHistoryCount, 20,
-            () => _monitorRepository.GetMonitorHistoryCount());
-        return count;
-    }
-
-    public async Task AddMonitorGroupNotification(MonitorGroupNotification monitorGroupNotification)
-    {
-        var monitorList = await _monitorGroupService.GetMonitorGroupById(monitorGroupNotification.MonitorGroupId);
-
-        if (monitorList != null)
-        {
-            foreach (var monitor in monitorList.Monitors)
-            {
-                var monitorNotification = new MonitorNotification
-                {
-                    MonitorId = monitor.Id,
-                    NotificationId = monitorGroupNotification.NotificationId
-                };
-
-                var notificationExist = await _monitorRepository.GetMonitorNotifications(monitor.Id);
-                if (notificationExist.All(x => x.NotificationId != monitorGroupNotification.NotificationId))
-                {
-                    await AddMonitorNotification(monitorNotification);
-                }
-            }
-        }
-    }
-
-    public async Task RemoveMonitorGroupNotification(MonitorGroupNotification monitorGroupNotification)
-    {
-        var monitorList = await _monitorGroupService.GetMonitorGroupById(monitorGroupNotification.MonitorGroupId);
-
-        if (monitorList != null)
-        {
-            foreach (var monitor in monitorList.Monitors)
-            {
-                var monitorNotification = new MonitorNotification
-                {
-                    MonitorId = monitor.Id,
-                    NotificationId = monitorGroupNotification.NotificationId
-                };
-                await RemoveMonitorNotification(monitorNotification);
-            }
-        }
-    }
 
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
     {

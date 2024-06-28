@@ -19,16 +19,28 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
         private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
         private readonly Mock<IHttpClientRunner> _httpClientRunnerMock;
         private readonly MonitorService _monitorService;
+        private readonly MonitorHistoryService _monitorHistoryService;
+        private readonly MonitorNotificationService _monitorNotificationService;
+        private readonly Mock<IMonitorNotificationRepository> _monitorNotificationRepositoryMock;
+        private readonly Mock<IMonitorNotificationService> _monitorNotificationServiceMock;
+        private readonly Mock<IMonitorHistoryService> _monitorHistoryServiceMock;
+        private readonly Mock<IMonitorHistoryRepository> _monitorHistoryRepositoryMock;
 
-        public MonitorServiceTests()
+        public MonitorServiceTests(Mock<IMonitorNotificationRepository> monitorNotificationRepositoryMock, Mock<IMonitorNotificationService> monitorNotificationServiceMock, Mock<IMonitorHistoryService> monitorHistoryServiceMock, Mock<IMonitorHistoryRepository> monitorHistoryRepositoryMock, MonitorHistoryService monitorHistoryService)
         {
+            _monitorNotificationRepositoryMock = monitorNotificationRepositoryMock;
+            _monitorNotificationServiceMock = monitorNotificationServiceMock;
+            _monitorHistoryServiceMock = monitorHistoryServiceMock;
+            _monitorHistoryRepositoryMock = monitorHistoryRepositoryMock;
+            _monitorHistoryService = new MonitorHistoryService(_cachingMock.Object, _monitorHistoryRepositoryMock.Object);
+           _monitorNotificationService = new MonitorNotificationService(_monitorGroupServiceMock.Object, _monitorNotificationRepositoryMock.Object);
             _monitorRepositoryMock = new Mock<IMonitorRepository>();
             _cachingMock = new Mock<ICaching>();
             _monitorGroupServiceMock = new Mock<IMonitorGroupService>();
             _httpClientFactoryMock = new Mock<IHttpClientFactory>();
             _httpClientRunnerMock = new Mock<IHttpClientRunner>();
             _monitorService = new MonitorService(_monitorRepositoryMock.Object, _cachingMock.Object,
-                _monitorGroupServiceMock.Object, _httpClientFactoryMock.Object, _httpClientRunnerMock.Object);
+                _monitorGroupServiceMock.Object, _httpClientFactoryMock.Object, _httpClientRunnerMock.Object, _monitorHistoryRepositoryMock.Object);
         }
 
         [Fact]
@@ -36,10 +48,10 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
         {
             // Arrange
             var notifications = new List<MonitorNotification> { new MonitorNotification() };
-            _monitorRepositoryMock.Setup(repo => repo.GetMonitorNotifications(It.IsAny<int>())).ReturnsAsync(notifications);
+            _monitorNotificationRepositoryMock.Setup(repo => repo.GetMonitorNotifications(It.IsAny<int>())).ReturnsAsync(notifications);
 
             // Act
-            var result = await _monitorService.GetMonitorNotifications(1);
+            var result = await _monitorNotificationService.GetMonitorNotifications(1);
 
             // Assert
             Assert.Equal(notifications, result);
@@ -50,10 +62,10 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
         {
             // Arrange
             var history = new List<MonitorHistory> { new MonitorHistory() };
-            _monitorRepositoryMock.Setup(repo => repo.GetMonitorHistory(It.IsAny<int>())).ReturnsAsync(history);
+            _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistory(It.IsAny<int>())).ReturnsAsync(history);
 
             // Act
-            var result = await _monitorService.GetMonitorHistory(1);
+            var result = await _monitorHistoryService.GetMonitorHistory(1);
 
             // Assert
             Assert.Equal(history, result);
@@ -64,10 +76,10 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
         {
             // Arrange
             var history = new List<MonitorHistory> { new MonitorHistory() };
-            _monitorRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(history);
+            _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(history);
 
             // Act
-            var result = await _monitorService.GetMonitorHistory(1, 7);
+            var result = await _monitorHistoryService.GetMonitorHistory(1, 7);
 
             // Assert
             Assert.Equal(history, result);
@@ -101,7 +113,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             var monitor = new Monitor()
                 { Id = monitorId, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
 
-            _monitorRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(monitorId, 90))
+            _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(monitorId, 90))
                 .ReturnsAsync(monitorHistory);
             _monitorRepositoryMock.Setup(repo => repo.GetMonitorById(monitorId)).ReturnsAsync(monitor);
             _cachingMock.Setup(caching => caching.GetOrSetObjectFromCacheAsync(
@@ -127,7 +139,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Arrange
             var monitorId = 1;
             var monitorHistory = new List<MonitorHistory>();
-            _monitorRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(monitorId, 90))
+            _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(monitorId, 90))
                 .ReturnsAsync(monitorHistory);
 
             // Act
@@ -166,10 +178,10 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             var days = 7;
 
             // Act
-            await _monitorService.DeleteMonitorHistory(days);
+            await _monitorHistoryService.DeleteMonitorHistory(days);
 
             // Assert
-            _monitorRepositoryMock.Verify(repo => repo.DeleteMonitorHistory(days), Times.Once);
+            _monitorHistoryRepositoryMock.Verify(repo => repo.DeleteMonitorHistory(days), Times.Once);
         }
 
         [Fact]

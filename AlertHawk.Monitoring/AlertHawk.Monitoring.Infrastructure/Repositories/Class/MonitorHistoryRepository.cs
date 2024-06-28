@@ -1,0 +1,75 @@
+using System.Data;
+using System.Data.SqlClient;
+using AlertHawk.Monitoring.Domain.Entities;
+using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using Dapper;
+using Microsoft.Extensions.Configuration;
+
+namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
+
+public class MonitorHistoryRepository: RepositoryBase, IMonitorHistoryRepository
+{
+    private readonly string _connstring;
+
+    public MonitorHistoryRepository(IConfiguration configuration) : base(configuration)
+    {
+        _connstring = GetConnectionString();
+    }
+    
+     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndDays(int id, int days)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @$"SELECT MonitorId, Status, TimeStamp, ResponseTime FROM [MonitorHistory] WHERE MonitorId=@id AND TimeStamp >= DATEADD(day, -@days, GETUTCDATE())  ORDER BY TimeStamp DESC";
+        return await db.QueryAsync<MonitorHistory>(sql, new { id, days }, commandType: CommandType.Text);
+    }
+
+    public async Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndHours(int id, int hours)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @$"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion FROM [MonitorHistory] WHERE MonitorId=@id AND TimeStamp >= DATEADD(hour, -@hours, GETUTCDATE())  ORDER BY TimeStamp DESC";
+        return await db.QueryAsync<MonitorHistory>(sql, new { id, hours }, commandType: CommandType.Text);
+    }
+
+    public async Task SaveMonitorHistory(MonitorHistory monitorHistory)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @"INSERT INTO [MonitorHistory] (MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion, ResponseMessage) VALUES (@MonitorId, @Status, @TimeStamp, @StatusCode, @ResponseTime, @HttpVersion, @ResponseMessage)";
+        await db.ExecuteAsync(sql,
+            new
+            {
+                monitorHistory.MonitorId,
+                monitorHistory.Status,
+                monitorHistory.TimeStamp,
+                monitorHistory.StatusCode,
+                monitorHistory.ResponseTime,
+                monitorHistory.HttpVersion,
+                monitorHistory.ResponseMessage
+            }, commandType: CommandType.Text);
+    }
+
+    public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @"SELECT TOP 10000 MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion, ResponseMessage FROM [MonitorHistory] WHERE MonitorId=@id ORDER BY TimeStamp DESC";
+        return await db.QueryAsync<MonitorHistory>(sql, new { id }, commandType: CommandType.Text);
+    }
+
+    public async Task DeleteMonitorHistory(int days)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = @"DELETE FROM [MonitorHistory] WHERE TimeStamp < DATEADD(DAY, -@days, GETDATE())";
+        await db.QueryAsync<MonitorHistory>(sql, new { days }, commandType: CommandType.Text);
+    }
+    
+    public async Task<long> GetMonitorHistoryCount()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = "SELECT COUNT(*) FROM [MonitorHistory]";
+        return await db.ExecuteScalarAsync<long>(sql, commandType: CommandType.Text);
+    }
+
+}
