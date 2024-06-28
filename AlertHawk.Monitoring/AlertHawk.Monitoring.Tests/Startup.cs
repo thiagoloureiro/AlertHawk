@@ -32,10 +32,13 @@ public class Startup
         services.AddTransient<IMonitorService, MonitorService>();
         services.AddTransient<IMonitorGroupService, MonitorGroupService>();
         services.AddTransient<IMonitorAgentService, MonitorAgentService>();
-
-
+        services.AddTransient<IMonitorNotificationService, MonitorNotificationService>();
+        services.AddTransient<IMonitorHistoryService, MonitorHistoryService>();
+        
         services.AddTransient<IMonitorTypeRepository, MonitorTypeRepository>();
         services.AddTransient<IMonitorRepository, MonitorRepository>();
+        services.AddTransient<IMonitorHistoryRepository, MonitorHistoryRepository>();
+        services.AddTransient<IMonitorNotificationRepository, MonitorNotificationRepository>();
         services.AddTransient<IMonitorAgentRepository, MonitorAgentRepository>();
         services.AddTransient<IMonitorManager, MonitorManager>();
         services.AddTransient<IMonitorGroupRepository, MonitorGroupRepository>();
