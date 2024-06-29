@@ -12,10 +12,13 @@ namespace AlertHawk.Monitoring.Controllers
     public class MonitorHistoryController : ControllerBase
     {
         private readonly IMonitorService _monitorService;
+        private readonly IMonitorHistoryService _monitorHistoryService;
 
-        public MonitorHistoryController(IMonitorService monitorService)
+
+        public MonitorHistoryController(IMonitorService monitorService, IMonitorHistoryService monitorHistoryService)
         {
             _monitorService = monitorService;
+            _monitorHistoryService = monitorHistoryService;
         }
 
         [SwaggerOperation(Summary = "Retrieves the history of the Monitor, limited to 10k rows")]
@@ -23,7 +26,7 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpGet("MonitorHistory/{id}")]
         public async Task<IActionResult> GetMonitorHistory(int id)
         {
-            var result = await _monitorService.GetMonitorHistory(id);
+            var result = await _monitorHistoryService.GetMonitorHistory(id);
             return Ok(result);
         }
 
@@ -32,7 +35,7 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpGet("MonitorHistoryByIdDays/{id}/{days}")]
         public async Task<IActionResult> GetMonitorHistory(int id, int days)
         {
-            var result = await _monitorService.GetMonitorHistory(id, days);
+            var result = await _monitorHistoryService.GetMonitorHistory(id, days);
             return Ok(result);
         }
 
@@ -59,16 +62,16 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteMonitorHistory(int days)
         {
-            await _monitorService.DeleteMonitorHistory(days);
+            await _monitorHistoryService.DeleteMonitorHistory(days);
             return Ok();
         }
-        
+
         [SwaggerOperation(Summary = "Monitor History count")]
         [ProducesResponseType(typeof(long), StatusCodes.Status200OK)]
         [HttpGet("GetMonitorHistoryCount")]
         public async Task<IActionResult> GetMonitorHistoryCount()
         {
-            var result = await _monitorService.GetMonitorHistoryCount();
+            var result = await _monitorHistoryService.GetMonitorHistoryCount();
             return Ok(result);
         }
     }
