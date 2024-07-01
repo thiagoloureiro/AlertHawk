@@ -17,9 +17,9 @@ public class AuthControllerTests
     private readonly Mock<IGetOrCreateUserService> _mockGetOrCreateUserService;
     private readonly AuthController _controller;
 
-    public AuthControllerTests(Mock<IGetOrCreateUserService> mockGetOrCreateUserService)
+    public AuthControllerTests()
     {
-        _mockGetOrCreateUserService = mockGetOrCreateUserService;
+        _mockGetOrCreateUserService = new Mock<IGetOrCreateUserService>();
         _mockUserService = new Mock<IUserService>();
         _mockJwtTokenService = new Mock<IJwtTokenService>();
         
