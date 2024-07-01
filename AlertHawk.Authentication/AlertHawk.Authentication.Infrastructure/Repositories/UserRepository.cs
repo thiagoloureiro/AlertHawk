@@ -63,8 +63,7 @@ public class UserRepository : BaseRepository, IUserRepository
     {
         const string sql = "SELECT Username, Email, IsAdmin FROM Users WHERE Token = @jwtToken";
         var user =  await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { jwtToken });
-        var userDto = new UserDto(user.Id, user.Username, user.Email, user.IsAdmin);
-        return userDto;
+        return _mapper.Map<UserDto>(user);
     }
 
     public async Task UpdateUserToken(string token, string username)
