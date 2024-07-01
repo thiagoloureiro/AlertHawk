@@ -14,13 +14,16 @@ public class AuthControllerTests
 {
     private readonly Mock<IUserService> _mockUserService;
     private readonly Mock<IJwtTokenService> _mockJwtTokenService;
+    private readonly Mock<IGetOrCreateUserService> _mockGetOrCreateUserService;
     private readonly AuthController _controller;
 
-    public AuthControllerTests()
+    public AuthControllerTests(Mock<IGetOrCreateUserService> mockGetOrCreateUserService)
     {
+        _mockGetOrCreateUserService = mockGetOrCreateUserService;
         _mockUserService = new Mock<IUserService>();
         _mockJwtTokenService = new Mock<IJwtTokenService>();
-        _controller = new AuthController(_mockUserService.Object, _mockJwtTokenService.Object);
+        
+        _controller = new AuthController(_mockUserService.Object, _mockJwtTokenService.Object, _mockGetOrCreateUserService.Object);
     }
 
     [Fact]

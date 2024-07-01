@@ -22,7 +22,7 @@ public class JwtTokenService : IJwtTokenService
         _audiences = configuration["Jwt:Audiences"];
     }
 
-    public string GenerateToken(UserDto user)
+    public string GenerateToken(UserDto? user)
     {
         var claims = new[]
         {

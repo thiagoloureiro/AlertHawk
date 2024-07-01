@@ -59,6 +59,18 @@ public class UserRepository : BaseRepository, IUserRepository
         await ExecuteNonQueryAsync(sql, new { Id = id });
     }
 
+    public async Task<UserDto?> GetUserByToken(string? jwtToken)
+    {
+        const string sql = "SELECT Username, Email, IsAdmin FROM Users WHERE Token = @jwtToken";
+        return await ExecuteQueryFirstOrDefaultAsync<UserDto>(sql, new { jwtToken });
+    }
+
+    public async Task UpdateUserToken(string token, string username)
+    {
+        const string sql = "UPDATE Users SET Token = @token WHERE LOWER(Username) = @username";
+        await ExecuteNonQueryAsync(sql, new { token, username });
+    }
+
     public async Task Create(UserCreation userCreation)
     {
         string checkExistingUserSql = "SELECT Id FROM Users WHERE LOWER(Email) = @Email";
