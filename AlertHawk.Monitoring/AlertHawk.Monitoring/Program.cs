@@ -19,10 +19,15 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net.Security;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AlertHawk.Monitoring;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using Hangfire.InMemory;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseSentry(options =>
@@ -69,12 +74,49 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
-var azureEnabled = Environment.GetEnvironmentVariable("AZURE_AD_AUTH_ENABLED", EnvironmentVariableTarget.Process) ??
-                   "true";
-if (azureEnabled == "true")
+var issuers = configuration["Jwt:Issuers"] ??
+             "issuer";
+
+var audiences = configuration["Jwt:Audiences"] ??
+               "aud";
+
+var key = configuration["Jwt:Key"] ?? "fakeKey";
+
+Console.WriteLine(issuers);
+
+// Add services to the container
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer("JwtBearer", options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuers = issuers.Split(","),
+            ValidateAudience = true,
+            ValidAudiences = audiences.Split(","),
+            ValidateIssuerSigningKey = false,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+            RequireExpirationTime = true,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
+        };
+    })
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"), jwtBearerScheme: "AzureAd");
+
+builder.Services.AddAuthorization(options =>
 {
-    builder.Services.AddMicrosoftIdentityWebApiAuthentication(configuration, jwtBearerScheme: "AzureAd");
-}
+    var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(
+        "JwtBearer",
+        "AzureAd"
+    );
+    defaultAuthorizationPolicyBuilder = defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
+    options.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
+});
+
 
 builder.Services.AddHangfire(config => config.UseInMemoryStorage(new InMemoryStorageOptions
 {
@@ -84,22 +126,8 @@ builder.Services.AddHangfireServer();
 
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
 
-builder.Services.AddTransient<IMonitorTypeService, MonitorTypeService>();
-builder.Services.AddTransient<IMonitorService, MonitorService>();
-builder.Services.AddTransient<IMonitorGroupService, MonitorGroupService>();
-builder.Services.AddTransient<IMonitorAgentService, MonitorAgentService>();
-builder.Services.AddTransient<IMonitorAlertService, MonitorAlertService>();
-builder.Services.AddTransient<IHealthCheckService, HealthCheckService>();
-builder.Services.AddTransient<IMonitorReportService, MonitorReportService>();
-
-builder.Services.AddTransient<IMonitorTypeRepository, MonitorTypeRepository>();
-builder.Services.AddTransient<IMonitorRepository, MonitorRepository>();
-builder.Services.AddTransient<IMonitorAgentRepository, MonitorAgentRepository>();
-builder.Services.AddTransient<IMonitorManager, MonitorManager>();
-builder.Services.AddTransient<IMonitorGroupRepository, MonitorGroupRepository>();
-builder.Services.AddTransient<IMonitorAlertRepository, MonitorAlertRepository>();
-builder.Services.AddTransient<IHealthCheckRepository, HealthCheckRepository>();
-builder.Services.AddTransient<IMonitorReportRepository, MonitorReportRepository>();
+builder.Services.AddCustomServices();
+builder.Services.AddCustomRepositories();
 
 builder.Services.AddTransient<IHttpClientRunner, HttpClientRunner>();
 builder.Services.AddTransient<ITcpClientRunner, TcpClientRunner>();

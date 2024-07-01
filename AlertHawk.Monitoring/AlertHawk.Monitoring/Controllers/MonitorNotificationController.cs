@@ -13,11 +13,11 @@ namespace AlertHawk.Monitoring.Controllers
     [Authorize]
     public class MonitorNotificationController : ControllerBase
     {
-        private readonly IMonitorService _monitorService;
+        private readonly IMonitorNotificationService _monitorNotificationService;
 
-        public MonitorNotificationController(IMonitorService monitorService)
+        public MonitorNotificationController(IMonitorNotificationService monitorNotificationService)
         {
-            _monitorService = monitorService;
+            _monitorNotificationService = monitorNotificationService;
         }
 
         [SwaggerOperation(Summary = "Retrieves a List of all Notifications by Monitor")]
@@ -25,7 +25,7 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpGet("monitorNotifications/{id}")]
         public async Task<IActionResult> GetMonitorNotification(int id)
         {
-            var result = await _monitorService.GetMonitorNotifications(id);
+            var result = await _monitorNotificationService.GetMonitorNotifications(id);
             return Ok(result);
         }
 
@@ -34,14 +34,14 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("addMonitorNotification")]
         public async Task<IActionResult> AddMonitorNotification([FromBody] MonitorNotification monitorNotification)
         {
-            var notifications = await _monitorService.GetMonitorNotifications(monitorNotification.MonitorId);
+            var notifications = await _monitorNotificationService.GetMonitorNotifications(monitorNotification.MonitorId);
 
             if (notifications.Any(x => x.NotificationId == monitorNotification.NotificationId))
             {
                 return BadRequest("Notification already exists for this monitor");
             }
 
-            await _monitorService.AddMonitorNotification(monitorNotification);
+            await _monitorNotificationService.AddMonitorNotification(monitorNotification);
             return Ok();
         }
 
@@ -50,7 +50,7 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("removeMonitorNotification")]
         public async Task<IActionResult> RemoveMonitorNotification([FromBody] MonitorNotification monitorNotification)
         {
-            await _monitorService.RemoveMonitorNotification(monitorNotification);
+            await _monitorNotificationService.RemoveMonitorNotification(monitorNotification);
             return Ok();
         }
 
@@ -60,7 +60,7 @@ namespace AlertHawk.Monitoring.Controllers
         public async Task<IActionResult> AddMonitorGroupNotification(
             [FromBody] MonitorGroupNotification monitorGroupNotification)
         {
-            await _monitorService.AddMonitorGroupNotification(monitorGroupNotification);
+            await _monitorNotificationService.AddMonitorGroupNotification(monitorGroupNotification);
             return Ok();
         }
 
@@ -70,7 +70,7 @@ namespace AlertHawk.Monitoring.Controllers
         public async Task<IActionResult> RemoveMonitorGroupNotification(
             [FromBody] MonitorGroupNotification monitorGroupNotification)
         {
-            await _monitorService.RemoveMonitorGroupNotification(monitorGroupNotification);
+            await _monitorNotificationService.RemoveMonitorGroupNotification(monitorGroupNotification);
             return Ok();
         }
     }

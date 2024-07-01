@@ -76,4 +76,14 @@ public class UserService : IUserService
     {
         return _userRepository.GetAll();
     }
+
+    public async Task<UserDto?> GetUserByToken(string? jwtToken)
+    {
+        return await _userRepository.GetUserByToken(jwtToken);
+    }
+
+    public async Task UpdateUserToken(string token, string username)
+    {
+        await _userRepository.UpdateUserToken(token, username);
+    }
 }

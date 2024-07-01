@@ -5,11 +5,7 @@ namespace AlertHawk.Monitoring.Domain.Interfaces.Services;
 
 public interface IMonitorService
 {
-    Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id);
-    Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id);
-    Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days);
     Task<IEnumerable<Monitor?>> GetMonitorList();
-    Task DeleteMonitorHistory(int days);
     Task PauseMonitor(int id, bool paused);
     Task<MonitorDashboard?> GetMonitorDashboardData(int id);
     IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids);
@@ -25,11 +21,7 @@ public interface IMonitorService
     Task<MonitorHttp> GetHttpMonitorByMonitorId(int id);
     Task<MonitorTcp> GetTcpMonitorByMonitorId(int id);
     Task PauseMonitorByGroupId(int groupId, bool paused);
-    Task AddMonitorNotification(MonitorNotification monitorNotification);
-    Task RemoveMonitorNotification(MonitorNotification monitorNotification);
+
     Task<IEnumerable<Monitor?>> GetMonitorListByTag(string tag);
     Task<IEnumerable<string?>> GetMonitorTagList();
-    Task<long> GetMonitorHistoryCount();
-    Task AddMonitorGroupNotification(MonitorGroupNotification monitorGroupNotification);
-    Task RemoveMonitorGroupNotification(MonitorGroupNotification monitorGroupNotification);
 }

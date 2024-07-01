@@ -19,4 +19,6 @@ public interface IUserRepository
     Task<UserDto?> GetByUsername(string username);
     Task<IEnumerable<UserDto>?> GetAll();
     Task Delete(Guid id);
+    Task<UserDto?> GetUserByToken(string? jwtToken);
+    Task UpdateUserToken(string token, string username);
 }

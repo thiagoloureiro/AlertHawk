@@ -18,14 +18,16 @@ public class MonitorGroupService : IMonitorGroupService
     private readonly string _cacheKeyMonitorDayHist = "CacheKeyMonitorDayHist_";
     private readonly IMonitorRepository _monitorRepository;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IMonitorHistoryRepository _monitorHistoryRepository;
 
     public MonitorGroupService(IMonitorGroupRepository monitorGroupRepository, ICaching caching,
-        IMonitorRepository monitorRepository, IHttpClientFactory httpClientFactory)
+        IMonitorRepository monitorRepository, IHttpClientFactory httpClientFactory, IMonitorHistoryRepository monitorHistoryRepository)
     {
         _monitorGroupRepository = monitorGroupRepository;
         _caching = caching;
         _monitorRepository = monitorRepository;
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _monitorHistoryRepository = monitorHistoryRepository;
     }
 
     public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList()
@@ -84,7 +86,7 @@ public class MonitorGroupService : IMonitorGroupService
 
                     var data = await _caching.GetOrSetObjectFromCacheAsync(_cacheKeyMonitorDayHist + monitor.Id, 10,
                         () =>
-                            _monitorRepository.GetMonitorHistoryByIdAndHours(monitor.Id, 1));
+                            _monitorHistoryRepository.GetMonitorHistoryByIdAndHours(monitor.Id, 1));
 
                     monitor.MonitorStatusDashboard.HistoryData = data;
                 }

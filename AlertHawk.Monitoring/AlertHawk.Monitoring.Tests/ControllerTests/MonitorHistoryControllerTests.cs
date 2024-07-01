@@ -1,23 +1,22 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using AlertHawk.Monitoring.Controllers;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using Xunit;
+
 namespace AlertHawk.Monitoring.Tests.ControllerTests;
 
 public class MonitorHistoryControllerTests
 {
     private readonly Mock<IMonitorService> _mockMonitorService;
+    private readonly Mock<IMonitorHistoryService> _mockMonitorHistoryService;
     private readonly MonitorHistoryController _controller;
 
     public MonitorHistoryControllerTests()
     {
         _mockMonitorService = new Mock<IMonitorService>();
-        _controller = new MonitorHistoryController(_mockMonitorService.Object);
+        _mockMonitorHistoryService = new Mock<IMonitorHistoryService>();
+        _controller = new MonitorHistoryController(_mockMonitorService.Object, _mockMonitorHistoryService.Object);
     }
 
     [Fact]
@@ -25,7 +24,7 @@ public class MonitorHistoryControllerTests
     {
         // Arrange
         var monitorHistory = new List<MonitorHistory> { new MonitorHistory() };
-        _mockMonitorService.Setup(service => service.GetMonitorHistory(It.IsAny<int>()))
+        _mockMonitorHistoryService.Setup(service => service.GetMonitorHistory(It.IsAny<int>()))
             .ReturnsAsync(monitorHistory);
 
         // Act
@@ -41,7 +40,7 @@ public class MonitorHistoryControllerTests
     {
         // Arrange
         var monitorHistory = new List<MonitorHistory> { new MonitorHistory() };
-        _mockMonitorService.Setup(service => service.GetMonitorHistory(It.IsAny<int>(), It.IsAny<int>()))
+        _mockMonitorHistoryService.Setup(service => service.GetMonitorHistory(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(monitorHistory);
 
         // Act
@@ -93,7 +92,7 @@ public class MonitorHistoryControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkResult>(result);
-        _mockMonitorService.Verify(service => service.DeleteMonitorHistory(7), Times.Once);
+        _mockMonitorHistoryService.Verify(service => service.DeleteMonitorHistory(7), Times.Once);
     }
 
     [Fact]
@@ -101,7 +100,7 @@ public class MonitorHistoryControllerTests
     {
         // Arrange
         var count = 100L;
-        _mockMonitorService.Setup(service => service.GetMonitorHistoryCount())
+        _mockMonitorHistoryService.Setup(service => service.GetMonitorHistoryCount())
             .ReturnsAsync(count);
 
         // Act

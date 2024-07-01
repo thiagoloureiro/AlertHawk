@@ -10,11 +10,13 @@ public class TcpClientRunner : ITcpClientRunner
 {
     private readonly INotificationProducer _notificationProducer;
     private readonly IMonitorRepository _monitorRepository;
+    private readonly IMonitorHistoryRepository _monitorHistoryRepository;
 
-    public TcpClientRunner(IMonitorRepository monitorRepository, INotificationProducer notificationProducer)
+    public TcpClientRunner(IMonitorRepository monitorRepository, INotificationProducer notificationProducer, IMonitorHistoryRepository monitorHistoryRepository)
     {
         _monitorRepository = monitorRepository;
         _notificationProducer = notificationProducer;
+        _monitorHistoryRepository = monitorHistoryRepository;
     }
 
     public async Task<bool> CheckTcpAsync(MonitorTcp monitorTcp)
@@ -42,7 +44,7 @@ public class TcpClientRunner : ITcpClientRunner
 
                 if (isConnected)
                 {
-                    await _monitorRepository.SaveMonitorHistory(monitorHistory);
+                    await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
                     await _monitorRepository.UpdateMonitorStatus(monitorTcp.MonitorId, isConnected, 0);
 
                     if (!monitorTcp.LastStatus)
@@ -80,7 +82,7 @@ public class TcpClientRunner : ITcpClientRunner
                 HttpVersion = ""
             };
 
-            await _monitorRepository.SaveMonitorHistory(monitorHistory);
+            await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
             await _monitorRepository.UpdateMonitorStatus(monitorTcp.MonitorId, isConnected, 0);
 
             if (monitorTcp.LastStatus)

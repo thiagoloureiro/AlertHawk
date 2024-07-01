@@ -81,7 +81,9 @@ public class MonitorAlertServiceTests
             .ReturnsAsync(new List<int> { 1, 2, 3 });
 
         // Act
-        var result = await _monitorAlertService.GetMonitorAlertsReport(1, 7, "jwtToken", ReportType.Excel);
+        var result =
+            await _monitorAlertService.GetMonitorAlertsReport(1, 7, "jwtToken", MonitorEnvironment.All,
+                ReportType.Excel);
 
         // Assert
         Assert.Equal(excelMemoryStream, result);
@@ -95,10 +97,10 @@ public class MonitorAlertServiceTests
             .ReturnsAsync(new List<int> { 1, 2, 3 });
 
         // Act
-        var result = await _monitorAlertService.GetMonitorAlertsReport(1, 7, "jwtToken", ReportType.Pdf);
+        var result =
+            await _monitorAlertService.GetMonitorAlertsReport(1, 7, "jwtToken", MonitorEnvironment.All, ReportType.Pdf);
 
         // Assert
         Assert.Empty(result.ToArray());
     }
-
 }

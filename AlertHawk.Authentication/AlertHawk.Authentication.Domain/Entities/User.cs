@@ -10,4 +10,5 @@ public class User
     public required string Password { get; set; }
     public required string Salt { get; set; }
     public bool IsAdmin { get; set; }
+    public string? Token { get; set; }
 }

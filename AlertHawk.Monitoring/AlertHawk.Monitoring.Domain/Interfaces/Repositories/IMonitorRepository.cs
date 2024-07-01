@@ -13,12 +13,7 @@ public interface IMonitorRepository
     Task<Monitor> GetMonitorById(int id);
     Task<MonitorHttp> GetHttpMonitorByMonitorId(int id);
     Task<MonitorTcp> GetTcpMonitorByMonitorId(int id);
-    Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id);
     Task UpdateMonitorStatus(int id, bool status, int daysToExpireCert);
-    Task SaveMonitorHistory(MonitorHistory monitorHistory);
-    Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id);
-    Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndDays(int id, int days);
-    Task DeleteMonitorHistory(int days);
     Task PauseMonitor(int id, bool paused);
     Task<int> CreateMonitorHttp(MonitorHttp monitorHttp);
     Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days);
@@ -29,10 +24,6 @@ public interface IMonitorRepository
     Task<int> CreateMonitorTcp(MonitorTcp monitorTcp);
     Task UpdateMonitorTcp(MonitorTcp monitorTcp);
     Task<IEnumerable<Monitor?>> GetMonitorList(MonitorEnvironment environment);
-    Task AddMonitorNotification(MonitorNotification monitorNotification);
-    Task RemoveMonitorNotification(MonitorNotification monitorNotification);
-    Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndHours(int id, int hours);
     Task<IEnumerable<Monitor>> GetMonitorListbyTag(string Tag);
     Task<IEnumerable<string?>> GetMonitorTagList();
-    Task<long> GetMonitorHistoryCount();
 }

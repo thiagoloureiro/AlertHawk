@@ -7,7 +7,6 @@ namespace AlertHawk.Application.Services;
 
 public class GetOrCreateUserService(IUserService userService) : IGetOrCreateUserService
 {
- 
     public async Task<UserDto> GetUserOrCreateUser(ClaimsPrincipal claims)
     {
         string? userEmail = "";
@@ -26,6 +25,11 @@ public class GetOrCreateUserService(IUserService userService) : IGetOrCreateUser
         if (string.IsNullOrWhiteSpace(userEmail))
         {
             userEmail = claims.Claims?.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
+        }
+        
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            userEmail = claims.Claims?.FirstOrDefault(c => c.Type == "emailaddress")?.Value;
         }
         
         var user = await userService.GetByEmail(userEmail);

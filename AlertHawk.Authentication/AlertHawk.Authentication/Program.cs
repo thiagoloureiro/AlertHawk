@@ -6,7 +6,11 @@ using AutoMapper.EquivalencyExpression;
 using EasyMemoryCache.Configuration;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,46 +29,60 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDomain();
 builder.Services.AddInfrastructure();
 
-builder.Services.AddAutoMapper((_, config) =>
+builder.Services.AddAutoMapper((_, config) => { config.AddCollectionMappers(); },
+    AppDomain.CurrentDomain.GetAssemblies());
+
+var issuers = configuration["Jwt:Issuers"] ??
+              "issuer";
+
+var audiences = configuration["Jwt:Audiences"] ??
+                "aud";
+
+var key = configuration["Jwt:Key"] ?? "fakeKey";
+
+Console.WriteLine(issuers);
+
+// Add services to the container
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer("JwtBearer", options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuers = issuers.Split(","),
+            ValidateAudience = true,
+            ValidAudiences = audiences.Split(","),
+            ValidateIssuerSigningKey = false,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+            RequireExpirationTime = true,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
+        };
+    })
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"), jwtBearerScheme: "AzureAd");
+
+builder.Services.AddAuthorization(options =>
 {
-    config.AddCollectionMappers();
-}, AppDomain.CurrentDomain.GetAssemblies());
-
-//var issuer = configuration["Jwt:Issuer"] ?? throw new ArgumentException("Configuration value for 'Jwt:Issuer' not found.");
-//var issuers = configuration["Jwt:Issuers"] ?? throw new ArgumentException("Configuration value for 'Jwt:Issuers' not found.");
-//var audience = configuration["Jwt:Audience"] ?? throw new ArgumentException("Configuration value for 'Jwt:Audience' not found.");
-//var audiences = configuration["Jwt:Audiences"] ?? throw new ArgumentException("Configuration value for 'Jwt:Audiences' not found.");
-//var key = configuration["Jwt:Key"] ?? throw new ArgumentException("Configuration value for 'Jwt:Key' not found.");
-
-//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//    .AddJwtBearer(options =>
-//    {
-//        options.TokenValidationParameters = new TokenValidationParameters
-//        {
-//            ValidateIssuer = true,
-//            ValidIssuers = issuers.Split(","),
-//            //ValidIssuer = issuer,
-//            ValidateAudience = true,
-//            ValidAudiences = audiences.Split(","),
-//            //ValidAudience = audience,
-//            ValidateIssuerSigningKey = true,
-//            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
-//            RequireExpirationTime = true,
-//            ValidateLifetime = true,
-//            ClockSkew = TimeSpan.Zero,
-//        };
-//        options.UseSecurityTokenValidators = true;
-//        options.MapInboundClaims = false;
-//        options.Audience = audience;
-//    });
-
-builder.Services.AddMicrosoftIdentityWebApiAuthentication(configuration, jwtBearerScheme: "AzureAd");
-
+    var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(
+        "JwtBearer",
+        "AzureAd"
+    );
+    defaultAuthorizationPolicyBuilder = defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
+    options.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
+});
 
 builder.Services.AddSwaggerGen(c =>
 {
     c.EnableAnnotations();
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "AlertHawk Authentication API", Version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() });
+    c.SwaggerDoc("v1",
+        new OpenApiInfo
+        {
+            Title = "AlertHawk Authentication API", Version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
+        });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -113,7 +131,8 @@ if (app.Environment.IsDevelopment())
         c.RouteTemplate = "swagger/{documentName}/swagger.json";
         c.PreSerializeFilters.Add((swaggerDoc, httpReq) =>
         {
-            swaggerDoc.Servers = new List<OpenApiServer> { new OpenApiServer { Url = $"https://{httpReq.Host.Value}{basePath}" } };
+            swaggerDoc.Servers = new List<OpenApiServer>
+                { new OpenApiServer { Url = $"https://{httpReq.Host.Value}{basePath}" } };
         });
     });
     app.UseSwaggerUI();

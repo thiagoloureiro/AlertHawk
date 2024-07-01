@@ -22,12 +22,14 @@ public class MonitorGroupServiceTests
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
     private readonly MonitorGroupService _monitorGroupService;
+    private readonly Mock<IMonitorHistoryRepository> _monitorHistoryRepositoryMock;
 
     public MonitorGroupServiceTests()
     {
         _monitorGroupRepositoryMock = new Mock<IMonitorGroupRepository>();
         _cachingMock = new Mock<ICaching>();
         _monitorRepositoryMock = new Mock<IMonitorRepository>();
+        _monitorHistoryRepositoryMock = new Mock<IMonitorHistoryRepository>();
         _httpClientFactoryMock = new Mock<IHttpClientFactory>();
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
         var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
@@ -38,7 +40,8 @@ public class MonitorGroupServiceTests
             _monitorGroupRepositoryMock.Object,
             _cachingMock.Object,
             _monitorRepositoryMock.Object,
-            _httpClientFactoryMock.Object
+            _httpClientFactoryMock.Object,
+            _monitorHistoryRepositoryMock.Object
         );
     }
 
@@ -90,7 +93,8 @@ public class MonitorGroupServiceTests
             _monitorGroupRepositoryMock.Object,
             _cachingMock.Object,
             _monitorRepositoryMock.Object,
-            _httpClientFactoryMock.Object
+            _httpClientFactoryMock.Object,
+            _monitorHistoryRepositoryMock.Object
         );
 
         // Act
