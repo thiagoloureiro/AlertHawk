@@ -22,7 +22,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AlertHawk.Monitoring;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using Hangfire.InMemory;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -74,15 +73,13 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
-var issuers = configuration["Jwt:Issuers"] ??
-             "issuer";
+var issuer = configuration["Jwt:Issuer"] ??
+             throw new ArgumentException("Configuration value for 'Jwt:Issuer' not found.");
 
-var audiences = configuration["Jwt:Audiences"] ??
-               "aud";
+var audience = configuration["Jwt:Audience"] ??
+               throw new ArgumentException("Configuration value for 'Jwt:Audience' not found.");
 
-var key = configuration["Jwt:Key"] ?? "fakeKey";
-
-Console.WriteLine(issuers);
+var key = configuration["Jwt:Key"] ?? throw new ArgumentException("Configuration value for 'Jwt:Key' not found.");
 
 // Add services to the container
 builder.Services.AddAuthentication(options =>
@@ -95,10 +92,10 @@ builder.Services.AddAuthentication(options =>
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidIssuers = issuers.Split(","),
+            ValidIssuer = issuer,
             ValidateAudience = true,
-            ValidAudiences = audiences.Split(","),
-            ValidateIssuerSigningKey = false,
+            ValidAudience = audience,
+            ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
             RequireExpirationTime = true,
             ValidateLifetime = true,
@@ -126,8 +123,22 @@ builder.Services.AddHangfireServer();
 
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
 
-builder.Services.AddCustomServices();
-builder.Services.AddCustomRepositories();
+builder.Services.AddTransient<IMonitorTypeService, MonitorTypeService>();
+builder.Services.AddTransient<IMonitorService, MonitorService>();
+builder.Services.AddTransient<IMonitorGroupService, MonitorGroupService>();
+builder.Services.AddTransient<IMonitorAgentService, MonitorAgentService>();
+builder.Services.AddTransient<IMonitorAlertService, MonitorAlertService>();
+builder.Services.AddTransient<IHealthCheckService, HealthCheckService>();
+builder.Services.AddTransient<IMonitorReportService, MonitorReportService>();
+
+builder.Services.AddTransient<IMonitorTypeRepository, MonitorTypeRepository>();
+builder.Services.AddTransient<IMonitorRepository, MonitorRepository>();
+builder.Services.AddTransient<IMonitorAgentRepository, MonitorAgentRepository>();
+builder.Services.AddTransient<IMonitorManager, MonitorManager>();
+builder.Services.AddTransient<IMonitorGroupRepository, MonitorGroupRepository>();
+builder.Services.AddTransient<IMonitorAlertRepository, MonitorAlertRepository>();
+builder.Services.AddTransient<IHealthCheckRepository, HealthCheckRepository>();
+builder.Services.AddTransient<IMonitorReportRepository, MonitorReportRepository>();
 
 builder.Services.AddTransient<IHttpClientRunner, HttpClientRunner>();
 builder.Services.AddTransient<ITcpClientRunner, TcpClientRunner>();
