@@ -12,14 +12,14 @@ namespace AlertHawk.Application.Services;
 public class JwtTokenService : IJwtTokenService
 {
     private readonly string? _secret;
-    private readonly string? _issuer;
-    private readonly string? _audience;
+    private readonly string? _issuers;
+    private readonly string? _audiences;
 
     public JwtTokenService(IConfiguration configuration)
     {
         _secret = configuration["Jwt:Key"];
-        _issuer = configuration["Jwt:Issuer"];
-        _audience = configuration["Jwt:Audience"];
+        _issuers = configuration["Jwt:Issuers"];
+        _audiences = configuration["Jwt:Audiences"];
     }
 
     public string GenerateToken(UserDto user)
@@ -35,10 +35,10 @@ public class JwtTokenService : IJwtTokenService
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret ?? throw new InvalidOperationException("Secret key is undefined.")));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
+        
         var token = new JwtSecurityToken(
-            _issuer,
-            _audience,
+            _issuers?.Split(",")[0],
+            _audiences?.Split(",")[0],
             claims,
             expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: credentials);
