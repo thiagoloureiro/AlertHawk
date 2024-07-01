@@ -6,7 +6,7 @@ namespace AlertHawk.Authentication.Domain.Entities;
 public class UserCreation
 {
     [Required]
-    [MinLength(6, ErrorMessage = "Username must be at least 6 characters long.")]
+    [MinLength(3, ErrorMessage = "Username must be at least 6 characters long.")]
     public required string Username { get; set; }
     
     [Required]
