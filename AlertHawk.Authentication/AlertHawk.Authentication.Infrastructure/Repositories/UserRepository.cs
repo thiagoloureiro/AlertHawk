@@ -14,10 +14,12 @@ namespace AlertHawk.Authentication.Infrastructure.Repositories;
 public class UserRepository : BaseRepository, IUserRepository
 {
     private readonly IMapper _mapper;
+    private readonly IUsersMonitorGroupRepository _usersMonitorGroupRepository;
 
-    public UserRepository(IConfiguration configuration, IMapper mapper) : base(configuration)
+    public UserRepository(IConfiguration configuration, IMapper mapper, IUsersMonitorGroupRepository usersMonitorGroupRepository) : base(configuration)
     {
         _mapper = mapper;
+        _usersMonitorGroupRepository = usersMonitorGroupRepository;
     }
 
     public async Task<UserDto?> Get(Guid id)
@@ -55,6 +57,8 @@ public class UserRepository : BaseRepository, IUserRepository
 
     public async Task Delete(Guid id)
     {
+        await _usersMonitorGroupRepository.DeleteAllByUserIdAsync(id);
+        
         const string sql = "DELETE FROM Users WHERE Id = @Id";
         await ExecuteNonQueryAsync(sql, new { Id = id });
     }
