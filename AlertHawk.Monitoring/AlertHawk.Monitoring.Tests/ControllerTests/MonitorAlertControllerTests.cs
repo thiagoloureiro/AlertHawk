@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using AlertHawk.Monitoring.Controllers;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
@@ -129,5 +130,30 @@ public class MonitorAlertControllerTests
         var fileResult = Assert.IsType<FileStreamResult>(result);
         Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileResult.ContentType);
         Assert.Equal($"MonitorAlerts_{DateTime.UtcNow:yyyyMMdd}.xlsx", fileResult.FileDownloadName);
+    }
+    
+    [Fact]
+    public async Task GetMonitorAlertsReportByEnvironment_ValidRequest_ReturnsFileResult()
+    {
+        // Arrange
+        var validToken = "Bearer valid.token.here";
+        var reportResult = new List<MonitorAlert>();
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        _controller.Request.Headers["Authorization"] = validToken;
+
+        _mockMonitorAlertService.Setup(service =>
+                service.GetMonitorAlerts(It.IsAny<int?>(), It.IsAny<int?>(),
+                    MonitorEnvironment.All,
+                    It.IsAny<string>()))
+            .ReturnsAsync(reportResult);
+
+        // Act
+        var result = await _controller.GetMonitorAlertsByEnvironment(0, 30, MonitorEnvironment.All);
+
+        // Assert
+        Assert.NotNull(result);
     }
 }
