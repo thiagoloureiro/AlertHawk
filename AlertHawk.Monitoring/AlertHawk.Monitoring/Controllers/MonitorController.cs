@@ -188,16 +188,6 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorService.GetTcpMonitorByMonitorId(monitorId);
             return Ok(result);
         }
-
-
-        [SwaggerOperation(Summary = "Force Cache Refresh for Dashboard")]
-        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-        [HttpGet("forceCacheRefresh")]
-        public async Task<IActionResult> ForceCashRefresh()
-        {
-            await _monitorService.SetMonitorDashboardDataCacheList();
-            return Ok("OK");
-        }
         
         [SwaggerOperation(Summary = "Monitor Count")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]

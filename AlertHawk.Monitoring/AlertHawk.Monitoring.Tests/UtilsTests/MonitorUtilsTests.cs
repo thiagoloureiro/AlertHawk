@@ -18,11 +18,23 @@ public class MonitorUtilsTests
     {
         // Arrange
         Environment.SetEnvironmentVariable("monitor_region", monitorRegionString);
-        
+
         // Act
         var monitorRegionVariable = MonitorUtils.GetMonitorRegionVariable();
-        
+
         // Assert
         Assert.True(monitorRegion == monitorRegionVariable);
+        
+        Environment.SetEnvironmentVariable("monitor_region", null);
+    }
+
+    [Fact]
+    public void Should_Return_MonitorRegion_Env_Variable2()
+    {
+        // Act
+        var monitorRegionVariable = MonitorUtils.GetMonitorRegionVariable();
+
+        // Assert
+        Assert.True(MonitorRegion.Europe == monitorRegionVariable);
     }
 }
