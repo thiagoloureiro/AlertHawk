@@ -2,6 +2,19 @@
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 RUN apt-get update && apt-get upgrade -y
+# Install required packages explicitly
+RUN apt-get install -y --no-install-recommends \
+    zlib1g \
+    libperl5.36 \
+    perl \
+    perl-base \
+    perl-modules-5.36 \
+    krb5-locales \
+    libexpat1
+
+# Clean up the package lists and cache to reduce the image size
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
 USER app
 WORKDIR /app
 EXPOSE 8080
