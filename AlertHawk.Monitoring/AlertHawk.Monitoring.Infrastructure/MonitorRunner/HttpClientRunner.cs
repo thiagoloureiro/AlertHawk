@@ -159,6 +159,11 @@ public class HttpClientRunner : IHttpClientRunner
                 return true;
             };
         }
+        
+        if(monitorHttp.IgnoreTlsSsl)
+        {
+            handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+        }
 
         // Set the maximum number of automatic redirects
         handler.MaxAutomaticRedirections = monitorHttp.MaxRedirects;

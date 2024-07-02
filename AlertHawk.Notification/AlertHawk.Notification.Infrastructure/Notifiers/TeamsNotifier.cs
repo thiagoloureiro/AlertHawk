@@ -9,7 +9,7 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
         {
             using HttpClient httpClient = new HttpClient();
             
-            message = message.Contains("Success") ? "(checkmarkbutton) " + message : "(crossmark) " + message;
+            message = message.Contains("Success") ? "\\n\u2705 " + message : "\\n\u274c " + message;
             
             string payload = $"{{\"text\": \"{message}\"}}";
        
