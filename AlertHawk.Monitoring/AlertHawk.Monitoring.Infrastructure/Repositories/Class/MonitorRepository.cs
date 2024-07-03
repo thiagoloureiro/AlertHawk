@@ -34,6 +34,16 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor] WHERE Paused = 0";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
+    
+    public async Task<IEnumerable<Monitor?>> GetFullMonitorList()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @"SELECT M.Id, M.Name, HTTP.UrlToCheck, CAST(IP AS VARCHAR(255)) + ':' + CAST(Port AS VARCHAR(10)) AS MonitorTcp, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag, HTTP.CheckCertExpiry FROM [Monitor] M
+                LEFT JOIN MonitorHttp HTTP on HTTP.MonitorId = M.Id
+                LEFT JOIN MonitorTcp TCP ON TCP.MonitorId = M.Id";
+        return await db.QueryAsync<Monitor>(sql, new {  }, commandType: CommandType.Text);
+    }
 
     public async Task<IEnumerable<Monitor?>> GetMonitorList(MonitorEnvironment environment)
     {
@@ -45,9 +55,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 WHERE MonitorEnvironment = @environment";
         return await db.QueryAsync<Monitor>(sql, new { environment }, commandType: CommandType.Text);
     }
-
-
-
+    
     public async Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(List<int> groupMonitorIds,
         MonitorEnvironment environment)
     {

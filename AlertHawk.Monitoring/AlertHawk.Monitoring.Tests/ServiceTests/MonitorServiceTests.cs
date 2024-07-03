@@ -6,6 +6,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using EasyMemoryCache;
 using EasyMemoryCache.Configuration;
 using Moq;
+using Newtonsoft.Json;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ServiceTests

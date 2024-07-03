@@ -1,10 +1,13 @@
-﻿using AlertHawk.Monitoring.Domain.Classes;
+﻿using System.Text;
+using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
+using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Controllers
 {
@@ -101,7 +104,7 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorAgentService.GetAllMonitorAgents();
             return Ok(result);
         }
-        
+
         [SwaggerOperation(Summary = "Create a new monitor Http")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [HttpPost("createMonitorHttp")]
@@ -188,7 +191,7 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorService.GetTcpMonitorByMonitorId(monitorId);
             return Ok(result);
         }
-        
+
         [SwaggerOperation(Summary = "Monitor Count")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [HttpGet("GetMonitorCount")]
@@ -197,6 +200,39 @@ namespace AlertHawk.Monitoring.Controllers
             var monitorList = await _monitorService.GetMonitorList();
             return Ok(monitorList.Count());
         }
-        
+
+        [SwaggerOperation(Summary = "Monitor Backup Json")]
+        [ProducesResponseType(typeof(File), StatusCodes.Status200OK)]
+        [HttpGet("GetMonitorJsonBackup")]
+        public async Task<IActionResult> GetMonitorBackupJson()
+        {
+            var json = await _monitorService.GetMonitorBackupJson();
+            var byteArray = Encoding.UTF8.GetBytes(json);
+
+            return File(byteArray, "application/json", "MonitorBackup.json");
+        }
+
+        [SwaggerOperation(Summary = "UploadMonitor Backup Json")]
+        [ProducesResponseType(typeof(File), StatusCodes.Status200OK)]
+        [HttpPost("UploadMonitorJsonBackup")]
+        public async Task<IActionResult> UploadMonitorJsonBackup(IFormFile? file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("Upload a valid JSON file.");
+
+            List<Monitor>? data;
+
+            using (var stream = new StreamReader(file.OpenReadStream()))
+            {
+                var json = await stream.ReadToEndAsync();
+                data = JsonConvert.DeserializeObject<List<Monitor>>(json);
+            }
+
+            await _monitorService.UploadMonitorJsonBackup(data);
+
+            // Process the data object as needed
+            // For example, you can return it or save it to a database
+            return Ok(data);
+        }
     }
 }

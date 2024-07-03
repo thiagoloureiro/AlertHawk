@@ -431,6 +431,35 @@ public class MonitorService : IMonitorService
         return await _monitorRepository.GetMonitorTagList();
     }
 
+    public async Task<string> GetMonitorBackupJson()
+    {
+        var monitorList = await _monitorRepository.GetFullMonitorList();
+        var json = JsonConvert.SerializeObject(monitorList, Formatting.Indented);
+        return json;
+    }
+
+    public async Task UploadMonitorJsonBackup(List<Monitor>? monitorList)
+    {
+        var existingMonitorList = await _monitorRepository.GetFullMonitorList();
+
+        if (monitorList != null)
+        {
+            var monitorToInsert = monitorList.Except(existingMonitorList).ToList();
+            
+            foreach (var monitor in monitorToInsert)
+            {
+                switch (monitor)
+                {
+                    case MonitorHttp monitorHttp:
+                        await CreateMonitorHttp(monitorHttp);
+                        break;
+                    case MonitorTcp monitorTcp:
+                        await CreateMonitorTcp(monitorTcp);
+                        break;
+                }
+            }
+        }
+    }
 
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
     {

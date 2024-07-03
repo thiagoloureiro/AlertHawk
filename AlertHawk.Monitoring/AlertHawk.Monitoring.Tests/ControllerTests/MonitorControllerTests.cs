@@ -495,6 +495,7 @@ public class MonitorControllerTests
         var count = Assert.IsAssignableFrom<int>(okResult.Value);
         Assert.Equal(monitorList.Count, count);
     }
+
     [Fact]
     public async Task GetMonitorAlertsByEnvironment_NullToken_ReturnsBadRequest()
     {

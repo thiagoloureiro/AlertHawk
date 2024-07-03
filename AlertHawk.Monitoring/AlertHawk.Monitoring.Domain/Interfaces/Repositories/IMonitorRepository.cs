@@ -26,4 +26,5 @@ public interface IMonitorRepository
     Task<IEnumerable<Monitor?>> GetMonitorList(MonitorEnvironment environment);
     Task<IEnumerable<Monitor>> GetMonitorListbyTag(string Tag);
     Task<IEnumerable<string?>> GetMonitorTagList();
+    Task<IEnumerable<Monitor?>> GetFullMonitorList();
 }
