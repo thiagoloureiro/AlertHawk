@@ -459,9 +459,10 @@ public class MonitorService : IMonitorService
 
     public async Task UploadMonitorJsonBackup(MonitorBackup monitorBackup)
     {
+        int monitorGroupId = 0;
         foreach (var monitorGroup in monitorBackup.MonitorGroupList)
         {
-            await _monitorGroupService.AddMonitorGroup(monitorGroup, null);
+            monitorGroupId = await _monitorGroupService.AddMonitorGroup(monitorGroup, null);
 
             foreach (var monitor in monitorGroup.Monitors)
             {
@@ -496,7 +497,7 @@ public class MonitorService : IMonitorService
                 }
                 await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
                 {
-                    MonitorGroupId = monitorGroup.Id,
+                    MonitorGroupId = monitorGroupId,
                     MonitorId = monitorId
                 });
                 
