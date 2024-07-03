@@ -106,12 +106,12 @@ public class UserController : Controller
         }
     }
 
-    [HttpPost("resetPassword/{username}")]
+    [HttpPost("resetPassword/{email}")]
     [SwaggerOperation(Summary = "Reset Password")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-    public async Task<IActionResult> ResetPassword(string username)
+    public async Task<IActionResult> ResetPassword(string email)
     {
-        await _userService.ResetPassword(username);
+        await _userService.ResetPassword(email);
         return Ok();
     }
 
