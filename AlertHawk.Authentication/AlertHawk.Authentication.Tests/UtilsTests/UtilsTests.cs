@@ -19,6 +19,19 @@ public class UtilsTests
     }
     
     [Fact]
+    public void TokenUtilsTests_GetJwtTokenFromRequest_InvalidRequest_ReturnsNull()
+    {
+        // Arrange
+        string? request = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
+        
+        // Act
+        var result = TokenUtils.GetJwtToken(request);
+
+        // Assert
+        Assert.Null(result);
+    }
+    
+    [Fact]
     public void TokenUtilsTests_GetJwtTokenFromRequest_ReturnsToken()
     {
         // Arrange
