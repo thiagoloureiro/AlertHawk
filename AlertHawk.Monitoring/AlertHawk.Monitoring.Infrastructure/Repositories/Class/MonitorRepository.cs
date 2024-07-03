@@ -93,6 +93,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         var sqlHistory = "TRUNCATE TABLE [MonitorHistory];";
         var sqlNotification = "TRUNCATE TABLE [MonitorNotification];";
         var sqlMonitorGroupItems = "TRUNCATE TABLE [MonitorGroupItems];";
+        var sqlMonitorGroup = "TRUNCATE TABLE [MonitorGroup];";
         await db.ExecuteAsync(sqlMonitor, commandType: CommandType.Text);
         await db.ExecuteAsync(sqlTcp, commandType: CommandType.Text);
         await db.ExecuteAsync(sqlHttp, commandType: CommandType.Text);
@@ -101,6 +102,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await db.ExecuteAsync(sqlHistory, commandType: CommandType.Text);
         await db.ExecuteAsync(sqlNotification, commandType: CommandType.Text);
         await db.ExecuteAsync(sqlMonitorGroupItems, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlMonitorGroup, commandType: CommandType.Text);
     }
 
     public async Task<IEnumerable<Monitor?>> GetMonitorList(MonitorEnvironment environment)
