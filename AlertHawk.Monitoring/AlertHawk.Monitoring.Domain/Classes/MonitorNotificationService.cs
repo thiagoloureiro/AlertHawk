@@ -34,21 +34,18 @@ public class MonitorNotificationService: IMonitorNotificationService
     {
         var monitorList = await _monitorGroupService.GetMonitorGroupById(monitorGroupNotification.MonitorGroupId);
 
-        if (monitorList != null)
+        foreach (var monitor in monitorList.Monitors)
         {
-            foreach (var monitor in monitorList.Monitors)
+            var monitorNotification = new MonitorNotification
             {
-                var monitorNotification = new MonitorNotification
-                {
-                    MonitorId = monitor.Id,
-                    NotificationId = monitorGroupNotification.NotificationId
-                };
+                MonitorId = monitor.Id,
+                NotificationId = monitorGroupNotification.NotificationId
+            };
 
-                var notificationExist = await _monitorNotificationRepository.GetMonitorNotifications(monitor.Id);
-                if (notificationExist.All(x => x.NotificationId != monitorGroupNotification.NotificationId))
-                {
-                    await AddMonitorNotification(monitorNotification);
-                }
+            var notificationExist = await _monitorNotificationRepository.GetMonitorNotifications(monitor.Id);
+            if (notificationExist.All(x => x.NotificationId != monitorGroupNotification.NotificationId))
+            {
+                await AddMonitorNotification(monitorNotification);
             }
         }
     }

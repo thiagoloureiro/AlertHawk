@@ -120,4 +120,69 @@ public class MonitorControllerTests
         var resultList = Assert.IsAssignableFrom<IEnumerable<Monitor>>(okResult.Value);
         Assert.Equal(expectedList, resultList);
     }
+    
+    [Fact]
+    public async Task GetMonitorListByTag_Returns_OkResult_With_Expected_Result()
+    {
+        // Arrange
+        var monitorService = Substitute.For<IMonitorService>();
+        var expectedList = new List<Monitor>(); // Assuming Monitor is your model
+        monitorService.GetMonitorListByTag("tag").Returns(expectedList);
+
+        var monitorServiceMock = Substitute.For<IMonitorService>();
+        var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+
+        // Act
+        var result = await controller.GetMonitorListByTag("tag");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var resultList = Assert.IsAssignableFrom<IEnumerable<Monitor>>(okResult.Value);
+        Assert.Equal(expectedList, resultList);
+    }
+    
+    [Fact]
+    public async Task GetMonitorTagList_Returns_OkResult_With_Expected_Result()
+    {
+        // Arrange
+        var monitorService = Substitute.For<IMonitorService>();
+        var expectedList = new List<string>(); // Assuming string is your model
+        monitorService.GetMonitorTagList().Returns(expectedList);
+
+        var monitorServiceMock = Substitute.For<IMonitorService>();
+        var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+
+        // Act
+        var result = await controller.GetMonitorTagList();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var resultList = Assert.IsAssignableFrom<IEnumerable<string>>(okResult.Value);
+        Assert.Equal(expectedList, resultList);
+    }
+    [Fact]
+    public async Task GetAllMonitorAgents_Returns_OkResult_With_Expected_Result()
+    {
+        // Arrange
+        var monitorService = Substitute.For<IMonitorAgentService>();
+        var expectedList = new List<MonitorAgent>(); // Assuming MonitorAgent is your model
+        monitorService.GetAllMonitorAgents().Returns(expectedList);
+
+        var monitorServiceMock = Substitute.For<IMonitorService>();
+        var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+
+        // Act
+        var result = await controller.GetAllMonitorAgents();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var resultList = Assert.IsAssignableFrom<IEnumerable<MonitorAgent>>(okResult.Value);
+        Assert.Equal(expectedList, resultList);
+    }
 }

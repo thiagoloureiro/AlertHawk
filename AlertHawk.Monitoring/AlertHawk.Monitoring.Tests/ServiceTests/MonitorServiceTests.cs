@@ -6,7 +6,6 @@ using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using EasyMemoryCache;
 using EasyMemoryCache.Configuration;
 using Moq;
-
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ServiceTests
@@ -20,6 +19,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
         private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
         private readonly MonitorService _monitorService;
         private readonly Mock<IMonitorGroupService> _monitorGroupServiceMock;
+
         public MonitorServiceTests()
         {
             _httpClientFactoryMock = new Mock<IHttpClientFactory>();
@@ -28,9 +28,11 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             _monitorGroupServiceMock = new Mock<IMonitorGroupService>();
             _cachingMock = new Mock<ICaching>();
             _httpClientRunnerMock = new Mock<IHttpClientRunner>();
-            _monitorService = new MonitorService(_monitorRepositoryMock.Object, _cachingMock.Object, _monitorGroupServiceMock.Object, _httpClientFactoryMock.Object, _httpClientRunnerMock.Object, _monitorHistoryRepositoryMock.Object);
+            _monitorService = new MonitorService(_monitorRepositoryMock.Object, _cachingMock.Object,
+                _monitorGroupServiceMock.Object, _httpClientFactoryMock.Object, _httpClientRunnerMock.Object,
+                _monitorHistoryRepositoryMock.Object);
         }
-        
+
         [Fact]
         public async Task PauseMonitor_UpdatesRepositoryAndInvalidatesCache()
         {
@@ -63,10 +65,10 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                 .ReturnsAsync(monitorHistory);
             _monitorRepositoryMock.Setup(repo => repo.GetMonitorById(monitorId)).ReturnsAsync(monitor);
             _cachingMock.Setup(caching => caching.GetOrSetObjectFromCacheAsync(
-                    $"Monitor_{monitorId}", 
-                    It.IsAny<int>(), 
-                    It.IsAny<Func<Task<Monitor>>>(), 
-                    It.IsAny<bool>(), 
+                    $"Monitor_{monitorId}",
+                    It.IsAny<int>(),
+                    It.IsAny<Func<Task<Monitor>>>(),
+                    It.IsAny<bool>(),
                     It.IsAny<CacheTimeInterval>()))
                 .ReturnsAsync(monitor);
 
@@ -101,7 +103,9 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
         public async Task GetMonitorList_ReturnsMonitorList()
         {
             // Arrange
-            var monitorList = new List<Monitor> { new Monitor
+            var monitorList = new List<Monitor>
+            {
+                new Monitor
                 {
                     Name = null,
                     HeartBeatInterval = 0,
@@ -116,7 +120,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             Assert.Equal(monitorList, result);
         }
-        
+
 
         [Fact]
         public async Task CreateMonitorHttp_SetsHeadersJsonAndCallsRunner()
@@ -186,10 +190,8 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
 
             // Assert
             _monitorRepositoryMock.Verify(repo => repo.DeleteMonitor(monitorId), Times.Once);
-            
         }
 
-      
 
         [Fact]
         public async Task CreateMonitor_SetsHeadersJsonAndCallsRepository()
@@ -217,6 +219,147 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             Assert.Equal(1, result);
             Assert.NotNull(monitor.HeadersJson);
+        }
+
+        [Fact]
+        public async Task CreateMonitorTcp_SetsHeadersJsonAndCallsRepository()
+        {
+            // Arrange
+            var monitor = new MonitorTcp
+            {
+                Name = "Test Monitor",
+                MonitorTcp = "www.google.com",
+                HeartBeatInterval = 0,
+                Retries = 0,
+                IP = "1.1.1.1",
+                Port = 80,
+                Timeout = 1000
+            };
+            _monitorRepositoryMock.Setup(repo => repo.CreateMonitorTcp(monitor)).ReturnsAsync(1);
+
+            // Act
+            var result = await _monitorService.CreateMonitorTcp(monitor);
+
+            // Assert
+            Assert.Equal(1, result);
+        }
+
+        [Fact]
+        public async Task GetHttpMonitorByMonitorId_ReturnsMonitor()
+        {
+            // Arrange
+            var monitorId = 1;
+            var monitor = new MonitorHttp
+            {
+                Id = monitorId,
+                Name = "Test Monitor",
+                Headers = new List<Tuple<string, string>>
+                {
+                    new Tuple<string, string>("key",
+                        "value")
+                },
+                MaxRedirects = 0,
+                UrlToCheck = "http://www.google.com",
+                Timeout = 0,
+                HeartBeatInterval = 0,
+                Retries = 0
+            };
+            _monitorRepositoryMock.Setup(repo => repo.GetHttpMonitorByMonitorId(monitorId)).ReturnsAsync(monitor);
+
+            // Act
+            var result = await _monitorService.GetHttpMonitorByMonitorId(monitorId);
+
+            // Assert
+            Assert.Equal(monitor, result);
+        }
+
+        [Fact]
+        public async Task GetTcpMonitorByMonitorId()
+        {
+            // Arrange
+            var monitorId = 1;
+            var monitor = new MonitorTcp
+            {
+                Name = "Test Monitor",
+                MonitorTcp = "www.google.com",
+                HeartBeatInterval = 0,
+                Retries = 0,
+                IP = "1.1.1.1",
+                Port = 80,
+                Timeout = 1000
+            };
+
+            _monitorRepositoryMock.Setup(repo => repo.GetTcpMonitorByMonitorId(monitorId)).ReturnsAsync(monitor);
+
+            // Act
+            var result = await _monitorService.GetTcpMonitorByMonitorId(monitorId);
+
+            // Assert
+            Assert.Equal(monitor, result);
+        }
+
+        [Fact]
+        public async Task GetMonitorTagList_ReturnsMonitorTagList()
+        {
+            // Arrange
+            var monitorTagList = new List<string>
+            {
+                "tag1",
+                "tag2"
+            };
+            _monitorRepositoryMock.Setup(repo => repo.GetMonitorTagList()).ReturnsAsync(monitorTagList);
+
+            // Act
+            var result = await _monitorService.GetMonitorTagList();
+
+            // Assert
+            Assert.Equal(monitorTagList, result);
+        }
+
+        [Fact]
+        public async Task GetMonitorListByTag_ReturnsMonitorList()
+        {
+            // Arrange
+            var monitorList = new List<Monitor>
+            {
+                new Monitor
+                {
+                    Name = "",
+                    HeartBeatInterval = 0,
+                    Retries = 0
+                }
+            };
+            var tag = "tag";
+            _monitorRepositoryMock.Setup(repo => repo.GetMonitorListbyTag(tag)).ReturnsAsync(monitorList);
+
+            // Act
+            var result = await _monitorService.GetMonitorListByTag(tag);
+
+            // Assert
+            Assert.Equal(monitorList, result);
+        }
+
+        [Fact]
+        public async Task GetMonitorFailureCount_ReturnsMonitorFailureCount()
+        {
+            // Arrange
+            var monitorId = 1;
+            var monitorFailureCountList = new List<MonitorFailureCount>
+            {
+                new MonitorFailureCount
+                {
+                    MonitorId = monitorId,
+                    FailureCount = 1
+                }
+            };
+            _monitorRepositoryMock.Setup(repo => repo.GetMonitorFailureCount(monitorId))
+                .ReturnsAsync(monitorFailureCountList);
+
+            // Act
+            var result = await _monitorService.GetMonitorFailureCount(monitorId);
+
+            // Assert
+            Assert.Equal(monitorFailureCountList, result);
         }
     }
 }
