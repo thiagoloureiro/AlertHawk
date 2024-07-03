@@ -482,6 +482,7 @@ public class MonitorService : IMonitorService
                         monitor.MonitorHttpItem.DaysToExpireCert = monitor.DaysToExpireCert;
                         monitor.MonitorHttpItem.Paused = monitor.Paused;
                         monitor.MonitorHttpItem.MonitorRegion = monitor.MonitorRegion;
+                        monitor.MonitorHttpItem.MonitorTypeId = monitor.MonitorTypeId;
 
                         monitorId = await _monitorRepository.CreateMonitorHttp(monitor.MonitorHttpItem);
                     }
@@ -496,7 +497,8 @@ public class MonitorService : IMonitorService
                         monitor.MonitorTcpItem.DaysToExpireCert = monitor.DaysToExpireCert;
                         monitor.MonitorTcpItem.Paused = monitor.Paused;
                         monitor.MonitorTcpItem.MonitorRegion = monitor.MonitorRegion;
-
+                        monitor.MonitorTcpItem.MonitorTypeId = monitor.MonitorTypeId;
+                        
                         monitorId = await _monitorRepository.CreateMonitorTcp(monitor.MonitorTcpItem);
                     }
 
