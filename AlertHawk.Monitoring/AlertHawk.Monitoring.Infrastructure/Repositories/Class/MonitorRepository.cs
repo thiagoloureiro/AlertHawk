@@ -45,6 +45,42 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return await db.QueryAsync<Monitor>(sql, new {  }, commandType: CommandType.Text);
     }
 
+    public async Task<IEnumerable<MonitorHttp>> GetMonitorHttpList()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = "SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp]";
+        return await db.QueryAsync<MonitorHttp>(sql, commandType: CommandType.Text);
+    }
+    
+    public async Task<IEnumerable<MonitorTcp>> GetMonitorTcpList()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = "SELECT MonitorId, Port, IP, Timeout, LastStatus FROM [MonitorTcp]";
+        return await db.QueryAsync<MonitorTcp>(sql, commandType: CommandType.Text);
+    }
+
+    public async Task<int> CreateMonitor(Monitor monitor)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlMonitor =
+            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag) 
+            VALUES (@Name, @MonitorTypeId, @HeartBeatInterval, @Retries, @Status, @DaysToExpireCert, @Paused, @MonitorRegion, @MonitorEnvironment, @Tag); SELECT CAST(SCOPE_IDENTITY() as int)";
+        var id = await db.ExecuteScalarAsync<int>(sqlMonitor,
+            new
+            {
+                monitor.Name,
+                monitor.MonitorTypeId,
+                monitor.HeartBeatInterval,
+                monitor.Retries,
+                monitor.Status,
+                monitor.DaysToExpireCert,
+                monitor.Paused,
+                monitor.MonitorRegion,
+                monitor.MonitorEnvironment
+            }, commandType: CommandType.Text);
+        return id;
+    }
+
     public async Task<IEnumerable<Monitor?>> GetMonitorList(MonitorEnvironment environment)
     {
         await using var db = new SqlConnection(_connstring);

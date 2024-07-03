@@ -1,4 +1,5 @@
-﻿using AlertHawk.Monitoring.Domain.Entities;
+﻿using System.Text;
+using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using Microsoft.AspNetCore.Authorization;
@@ -155,6 +156,17 @@ namespace AlertHawk.Monitoring.Controllers
         {
             await _monitorGroupService.RemoveMonitorFromGroup(monitorGroupItems);
             return Ok();
+        }
+        
+        [SwaggerOperation(Summary = "Monitor Group Backup Json")]
+        [ProducesResponseType(typeof(File), StatusCodes.Status200OK)]
+        [HttpGet("MonitorGroupBackupJson")]
+        public async Task<IActionResult> GetMonitorGroupBackupJson()
+        {
+            var json = await _monitorGroupService.GetMonitorGroupBackupJson();
+            var byteArray = Encoding.UTF8.GetBytes(json);
+
+            return File(byteArray, "application/json", "MonitorGroupBackup.json");
         }
     }
 }

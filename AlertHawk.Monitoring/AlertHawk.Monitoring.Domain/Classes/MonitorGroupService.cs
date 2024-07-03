@@ -215,6 +215,13 @@ public class MonitorGroupService : IMonitorGroupService
         return await _monitorGroupRepository.GetMonitorGroupByName(monitorGroupName);
     }
 
+    public async Task<string> GetMonitorGroupBackupJson()
+    {
+        var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupList();
+        var json = JsonConvert.SerializeObject(monitorGroupList);
+        return json;
+    }
+
     public async Task<MonitorGroup> GetMonitorGroupById(int id)
     {
         return await _monitorGroupRepository.GetMonitorGroupById(id);

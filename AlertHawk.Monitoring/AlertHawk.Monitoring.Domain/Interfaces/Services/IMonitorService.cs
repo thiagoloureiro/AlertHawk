@@ -25,5 +25,5 @@ public interface IMonitorService
     Task<IEnumerable<Monitor?>> GetMonitorListByTag(string tag);
     Task<IEnumerable<string?>> GetMonitorTagList();
     Task<string> GetMonitorBackupJson();
-    Task UploadMonitorJsonBackup(List<Monitor>? data);
+    Task UploadMonitorJsonBackup(List<MonitorBackup>? monitorBackups);
 }
