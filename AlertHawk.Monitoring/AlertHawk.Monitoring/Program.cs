@@ -30,27 +30,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.WebHost.UseSentry(options =>
-    {
-        options.SetBeforeSend(
-            (sentryEvent, _) =>
-            {
-                if (
-                    sentryEvent.Level == SentryLevel.Error
-                    && sentryEvent.Logger?.Equals("Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter",
-                        StringComparison.Ordinal) == true
-                    && sentryEvent.Message?.Message?.Contains("IDX10223", StringComparison.Ordinal) == true
-                )
-                {
-                    // Do not log 'IDX10223: Lifetime validation failed. The token is expired.'
-                    return null;
-                }
-
-                return sentryEvent;
-            }
-        );
-    }
-);
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -58,9 +37,36 @@ var configuration = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
+
 var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
 var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
 var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
+var sentryEnabled = configuration.GetValue<string>("Sentry:Enabled") ?? "false";
+
+if (string.Equals(sentryEnabled, "true", StringComparison.InvariantCultureIgnoreCase))
+{
+    builder.WebHost.UseSentry(options =>
+        {
+            options.SetBeforeSend(
+                (sentryEvent, _) =>
+                {
+                    if (
+                        sentryEvent.Level == SentryLevel.Error
+                        && sentryEvent.Logger?.Equals("Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter",
+                            StringComparison.Ordinal) == true
+                        && sentryEvent.Message?.Message?.Contains("IDX10223", StringComparison.Ordinal) == true
+                    )
+                    {
+                        // Do not log 'IDX10223: Lifetime validation failed. The token is expired.'
+                        return null;
+                    }
+
+                    return sentryEvent;
+                }
+            );
+        }
+    );
+}
 
 builder.Services.AddMassTransit(x =>
 {
@@ -75,10 +81,10 @@ builder.Services.AddMassTransit(x =>
 });
 
 var issuers = configuration["Jwt:Issuers"] ??
-             "issuer";
+              "issuer";
 
 var audiences = configuration["Jwt:Audiences"] ??
-               "aud";
+                "aud";
 
 var key = configuration["Jwt:Key"] ?? "fakeKey";
 

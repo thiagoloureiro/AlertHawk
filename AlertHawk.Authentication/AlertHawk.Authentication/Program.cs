@@ -39,8 +39,8 @@ var audiences = configuration["Jwt:Audiences"] ??
                 "aud";
 
 var key = configuration["Jwt:Key"] ?? "fakeKey";
+var sentryEnabled = configuration.GetValue<string>("Sentry:Enabled") ?? "false";
 
-Console.WriteLine(issuers);
 
 // Add services to the container
 builder.Services.AddAuthentication(options =>
@@ -97,27 +97,31 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
-builder.WebHost.UseSentry(options =>
-    {
-        options.SetBeforeSend(
-            (sentryEvent, _) =>
-            {
-                if (
-                    sentryEvent.Level == SentryLevel.Error
-                    && sentryEvent.Logger?.Equals("Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter",
-                        StringComparison.Ordinal) == true
-                    && sentryEvent.Message?.Message?.Contains("IDX10223", StringComparison.Ordinal) == true
-                )
-                {
-                    // Do not log 'IDX10223: Lifetime validation failed. The token is expired.'
-                    return null;
-                }
 
-                return sentryEvent;
-            }
-        );
-    }
-);
+if (string.Equals(sentryEnabled, "true", StringComparison.InvariantCultureIgnoreCase))
+{
+    builder.WebHost.UseSentry(options =>
+        {
+            options.SetBeforeSend(
+                (sentryEvent, _) =>
+                {
+                    if (
+                        sentryEvent.Level == SentryLevel.Error
+                        && sentryEvent.Logger?.Equals("Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter",
+                            StringComparison.Ordinal) == true
+                        && sentryEvent.Message?.Message?.Contains("IDX10223", StringComparison.Ordinal) == true
+                    )
+                    {
+                        // Do not log 'IDX10223: Lifetime validation failed. The token is expired.'
+                        return null;
+                    }
+
+                    return sentryEvent;
+                }
+            );
+        }
+    );
+}
 
 var app = builder.Build();
 
