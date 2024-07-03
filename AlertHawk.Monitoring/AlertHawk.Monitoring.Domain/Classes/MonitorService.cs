@@ -507,7 +507,8 @@ public class MonitorService : IMonitorService
                     });
                 }
         }
-        _caching.Invalidate(_cacheKeyMonitorGroupList);
+
+        await _caching.InvalidateAllAsync();
     }
 
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
