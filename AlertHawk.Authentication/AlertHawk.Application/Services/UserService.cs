@@ -41,12 +41,12 @@ public class UserService : IUserService
         await _userRepository.Delete(id);
     }
 
-    public async Task ResetPassword(string username)
+    public async Task ResetPassword(string email)
     {
-        var user = await GetByUsername(username);
+        var user = await GetByUsername(email);
         if (user != null)
         {
-            var password = await _userRepository.ResetPassword(username);
+            var password = await _userRepository.ResetPassword(email);
             EmailSender.SendEmail(user.Email, "Password Reset",
                 $"This is a password reset, your new password is {password}");
         }
