@@ -118,8 +118,6 @@ var audiences = configuration["Jwt:Audiences"] ??
 
 var key = configuration["Jwt:Key"] ?? "fakeKey";
 
-Console.WriteLine(issuers);
-
 // Add services to the container
 builder.Services.AddAuthentication(options =>
     {
