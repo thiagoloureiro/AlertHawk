@@ -20,6 +20,7 @@ public class MonitorService : IMonitorService
     private readonly IMonitorGroupService _monitorGroupService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IMonitorHistoryRepository _monitorHistoryRepository;
+    private readonly string _cacheKeyMonitorGroupList = "MonitorGroupList";
 
     private readonly IHttpClientRunner _httpClientRunner;
 
@@ -500,10 +501,9 @@ public class MonitorService : IMonitorService
                     MonitorGroupId = monitorGroupId,
                     MonitorId = monitorId
                 });
-                
             }
-            
         }
+        _caching.Invalidate(_cacheKeyMonitorGroupList);
     }
 
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
