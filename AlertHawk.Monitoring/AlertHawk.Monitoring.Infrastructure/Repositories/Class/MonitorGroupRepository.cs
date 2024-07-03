@@ -127,4 +127,14 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
         string sql = @"SELECT Id, Name FROM [MonitorGroup] WHERE Name=@monitorGroupName";
         return await db.QueryFirstOrDefaultAsync<MonitorGroup>(sql, new { monitorGroupName }, commandType: CommandType.Text);
     }
+
+    public async Task<IEnumerable<Monitor>?> GetMonitorListByGroupId(int monitorGroupId)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = @"select Id, Name, MonitorTypeId, HeartBeatInterval, Retries,
+            Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag from Monitor M
+            inner join MonitorGroupItems MGI on MGI.MonitorId = M.ID
+            where MGI.MonitorGroupId = @monitorGroupId";
+        return await db.QueryAsync<Monitor>(sql, new { monitorGroupId }, commandType: CommandType.Text);
+    }
 }

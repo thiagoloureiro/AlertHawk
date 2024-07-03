@@ -6,6 +6,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using EasyMemoryCache;
 using Newtonsoft.Json;
+using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
 
@@ -21,7 +22,8 @@ public class MonitorGroupService : IMonitorGroupService
     private readonly IMonitorHistoryRepository _monitorHistoryRepository;
 
     public MonitorGroupService(IMonitorGroupRepository monitorGroupRepository, ICaching caching,
-        IMonitorRepository monitorRepository, IHttpClientFactory httpClientFactory, IMonitorHistoryRepository monitorHistoryRepository)
+        IMonitorRepository monitorRepository, IHttpClientFactory httpClientFactory,
+        IMonitorHistoryRepository monitorHistoryRepository)
     {
         _monitorGroupRepository = monitorGroupRepository;
         _caching = caching;
@@ -222,6 +224,11 @@ public class MonitorGroupService : IMonitorGroupService
         return json;
     }
 
+    public async Task<IEnumerable<Monitor>?> GetMonitorListByGroupId(int monitorGroupId)
+    {
+        return await _monitorGroupRepository.GetMonitorListByGroupId(monitorGroupId);
+    }
+
     public async Task<MonitorGroup> GetMonitorGroupById(int id)
     {
         return await _monitorGroupRepository.GetMonitorGroupById(id);
@@ -239,14 +246,20 @@ public class MonitorGroupService : IMonitorGroupService
         _caching.Invalidate(_cacheKeyMonitorGroupList);
     }
 
-    public async Task AddMonitorGroup(MonitorGroup monitorGroup, string jwtToken)
+    public async Task<int> AddMonitorGroup(MonitorGroup monitorGroup, string? jwtToken)
     {
         monitorGroup.Name = monitorGroup.Name.TrimStart();
         monitorGroup.Name = monitorGroup.Name.TrimEnd();
 
         var groupId = await _monitorGroupRepository.AddMonitorGroup(monitorGroup);
-        await AddUserToGroup(jwtToken, groupId);
+       
+        if (jwtToken != null)
+        {
+            await AddUserToGroup(jwtToken, groupId);
+        }
+
         _caching.Invalidate(_cacheKeyMonitorGroupList);
+        return groupId;
     }
 
     public async Task UpdateMonitorGroup(MonitorGroup monitorGroup)

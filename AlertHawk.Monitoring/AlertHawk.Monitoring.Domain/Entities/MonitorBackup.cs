@@ -1,9 +1,6 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace AlertHawk.Monitoring.Domain.Entities;
 
-public class MonitorBackup: Monitor
+public class MonitorBackup
 {
-    public IEnumerable<MonitorHttp> MonitorHttpList { get; set; }
-    public IEnumerable<MonitorTcp> MonitorTcpList { get; set; }
+    public IEnumerable<MonitorGroup> MonitorGroupList { get; set; }
 }

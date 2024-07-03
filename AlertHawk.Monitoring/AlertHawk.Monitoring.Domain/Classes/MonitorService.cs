@@ -433,61 +433,59 @@ public class MonitorService : IMonitorService
 
     public async Task<string> GetMonitorBackupJson()
     {
-        var monitorList = await _monitorRepository.GetMonitorList();
         var monitorHttpList = await _monitorRepository.GetMonitorHttpList();
         var monitorTcpList = await _monitorRepository.GetMonitorTcpList();
-        var monitorBackupList = new List<MonitorBackup>();
+        var monitorGroupList = await _monitorGroupService.GetMonitorGroupList();
 
-        foreach (var monitor in monitorList)
+        foreach (var monitorGroup in monitorGroupList)
         {
-            monitorBackupList.Add(new MonitorBackup()
-            {
-                Id = monitor.Id,
-                HeartBeatInterval = monitor.HeartBeatInterval,
-                Retries = monitor.Retries,
-                Name = monitor.Name,
-                Status = monitor.Status,
-                Paused = monitor.Paused,
-                MonitorEnvironment = monitor.MonitorEnvironment,
-                MonitorType = monitor.MonitorType,
-                MonitorHttpList = monitorHttpList.Where(x => x.MonitorId == monitor.Id).ToList(),
-                MonitorTcpList = monitorTcpList.Where(x => x.MonitorId == monitor.Id).ToList()
-            });
+            monitorGroup.Monitors = await _monitorGroupService.GetMonitorListByGroupId(monitorGroup.Id);
+        }
+        
+        var monitorBackup = new MonitorBackup
+        {
+            MonitorGroupList = monitorGroupList
+        };
+
+        foreach (var monitor in monitorBackup.MonitorGroupList.SelectMany(group => group.Monitors))
+        {
+            monitor.MonitorHttpItem = monitorHttpList.Where(x => x.MonitorId == monitor.Id).FirstOrDefault();
+            monitor.MonitorTcpItem = monitorTcpList.Where(x => x.MonitorId == monitor.Id).FirstOrDefault();
         }
 
-        ;
-
-        var json = JsonConvert.SerializeObject(monitorBackupList, Formatting.Indented);
+        var json = JsonConvert.SerializeObject(monitorBackup, Formatting.Indented);
         return json;
     }
 
-    public async Task UploadMonitorJsonBackup(List<MonitorBackup>? monitorBackups)
+    public async Task UploadMonitorJsonBackup(MonitorBackup monitorBackup)
     {
-        foreach (var monitorBackup in monitorBackups)
+        foreach (var monitorGroup in monitorBackup.MonitorGroupList)
         {
-            var monitor = new Monitor
-            {
-                Name = monitorBackup.Name,
-                HeartBeatInterval = monitorBackup.HeartBeatInterval,
-                Retries = monitorBackup.Retries,
-                Status = monitorBackup.Status,
-                Paused = monitorBackup.Paused,
-                MonitorEnvironment = monitorBackup.MonitorEnvironment,
-                MonitorType = monitorBackup.MonitorType,
-            };
+            await _monitorGroupService.AddMonitorGroup(monitorGroup, null);
 
-            var monitorId = await _monitorRepository.CreateMonitor(monitor);
-            foreach (var monitorHttp in monitorBackup.MonitorHttpList)
+            foreach (var monitor in monitorGroup.Monitors)
             {
-                monitorHttp.MonitorId = monitorId;
-                await _monitorRepository.CreateMonitorHttp(monitorHttp);
+                var monitorId = await _monitorRepository.CreateMonitor(monitor);
+                
+                if (monitor.MonitorHttpItem != null)
+                {
+                    monitor.MonitorHttpItem.MonitorId = monitorId;
+                    await _monitorRepository.CreateMonitorHttp(monitor.MonitorHttpItem);
+                }
+                
+                if (monitor.MonitorTcpItem != null)
+                {
+                    monitor.MonitorTcpItem.MonitorId = monitorId;
+                    await _monitorRepository.CreateMonitorTcp(monitor.MonitorTcpItem);
+                }
+                await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
+                {
+                    MonitorGroupId = monitorGroup.Id,
+                    MonitorId = monitorId
+                });
+                
             }
-
-            foreach (var monitorTcp in monitorBackup.MonitorTcpList)
-            {
-                monitorTcp.MonitorId = monitorId;
-                await _monitorRepository.CreateMonitorTcp(monitorTcp);
-            }
+            
         }
     }
 

@@ -220,12 +220,12 @@ namespace AlertHawk.Monitoring.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("Upload a valid JSON file.");
 
-            List<MonitorBackup>? data;
+            MonitorBackup? data;
 
             using (var stream = new StreamReader(file.OpenReadStream()))
             {
                 var json = await stream.ReadToEndAsync();
-                data = JsonConvert.DeserializeObject<List<MonitorBackup>>(json);
+                data = JsonConvert.DeserializeObject<MonitorBackup>(json);
             }
 
             await _monitorService.UploadMonitorJsonBackup(data);
