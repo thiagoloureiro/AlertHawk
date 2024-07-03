@@ -147,8 +147,6 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseSentryTracing();
-
 app.MapControllers();
 
 app.Run();
