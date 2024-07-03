@@ -2,6 +2,10 @@
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 RUN apt-get update && apt-get upgrade -y
+
+# Clean up the package lists and cache to reduce the image size
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
 USER app
 WORKDIR /app
 EXPOSE 8080
