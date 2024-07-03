@@ -228,8 +228,13 @@ namespace AlertHawk.Monitoring.Controllers
                 data = JsonConvert.DeserializeObject<MonitorBackup>(json);
             }
 
+            if (data == null)
+            {
+                return BadRequest("Invalid file/format");
+            }
+
             await _monitorService.UploadMonitorJsonBackup(data);
-            
+
             return Ok();
         }
     }

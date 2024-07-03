@@ -460,48 +460,52 @@ public class MonitorService : IMonitorService
 
     public async Task UploadMonitorJsonBackup(MonitorBackup monitorBackup)
     {
+        await _monitorRepository.WipeMonitorData();
+        
         int monitorGroupId = 0;
         foreach (var monitorGroup in monitorBackup.MonitorGroupList)
         {
             monitorGroupId = await _monitorGroupService.AddMonitorGroup(monitorGroup, null);
 
-            foreach (var monitor in monitorGroup.Monitors)
-            {
-                int monitorId = 0;
-                
-                if (monitor.MonitorHttpItem != null)
+            if (monitorGroup.Monitors != null)
+                foreach (var monitor in monitorGroup.Monitors)
                 {
-                    monitor.MonitorHttpItem.Name = monitor.Name;
-                    monitor.MonitorHttpItem.MonitorEnvironment = monitor.MonitorEnvironment;
-                    monitor.MonitorHttpItem.HeartBeatInterval = monitor.HeartBeatInterval;
-                    monitor.MonitorHttpItem.Retries = monitor.Retries;
-                    monitor.MonitorHttpItem.Status = monitor.Status;
-                    monitor.MonitorHttpItem.DaysToExpireCert = monitor.DaysToExpireCert;
-                    monitor.MonitorHttpItem.Paused = monitor.Paused;
-                    monitor.MonitorHttpItem.MonitorRegion = monitor.MonitorRegion;
+                    int monitorId = 0;
 
-                   monitorId =  await _monitorRepository.CreateMonitorHttp(monitor.MonitorHttpItem);
+                    if (monitor.MonitorHttpItem != null)
+                    {
+                        monitor.MonitorHttpItem.Name = monitor.Name;
+                        monitor.MonitorHttpItem.MonitorEnvironment = monitor.MonitorEnvironment;
+                        monitor.MonitorHttpItem.HeartBeatInterval = monitor.HeartBeatInterval;
+                        monitor.MonitorHttpItem.Retries = monitor.Retries;
+                        monitor.MonitorHttpItem.Status = monitor.Status;
+                        monitor.MonitorHttpItem.DaysToExpireCert = monitor.DaysToExpireCert;
+                        monitor.MonitorHttpItem.Paused = monitor.Paused;
+                        monitor.MonitorHttpItem.MonitorRegion = monitor.MonitorRegion;
+
+                        monitorId = await _monitorRepository.CreateMonitorHttp(monitor.MonitorHttpItem);
+                    }
+
+                    if (monitor.MonitorTcpItem != null)
+                    {
+                        monitor.MonitorTcpItem.Name = monitor.Name;
+                        monitor.MonitorTcpItem.MonitorEnvironment = monitor.MonitorEnvironment;
+                        monitor.MonitorTcpItem.HeartBeatInterval = monitor.HeartBeatInterval;
+                        monitor.MonitorTcpItem.Retries = monitor.Retries;
+                        monitor.MonitorTcpItem.Status = monitor.Status;
+                        monitor.MonitorTcpItem.DaysToExpireCert = monitor.DaysToExpireCert;
+                        monitor.MonitorTcpItem.Paused = monitor.Paused;
+                        monitor.MonitorTcpItem.MonitorRegion = monitor.MonitorRegion;
+
+                        monitorId = await _monitorRepository.CreateMonitorTcp(monitor.MonitorTcpItem);
+                    }
+
+                    await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
+                    {
+                        MonitorGroupId = monitorGroupId,
+                        MonitorId = monitorId
+                    });
                 }
-                
-                if (monitor.MonitorTcpItem != null)
-                {
-                    monitor.MonitorTcpItem.Name = monitor.Name;
-                    monitor.MonitorTcpItem.MonitorEnvironment = monitor.MonitorEnvironment;
-                    monitor.MonitorTcpItem.HeartBeatInterval = monitor.HeartBeatInterval;
-                    monitor.MonitorTcpItem.Retries = monitor.Retries;
-                    monitor.MonitorTcpItem.Status = monitor.Status;
-                    monitor.MonitorTcpItem.DaysToExpireCert = monitor.DaysToExpireCert;
-                    monitor.MonitorTcpItem.Paused = monitor.Paused;
-                    monitor.MonitorTcpItem.MonitorRegion = monitor.MonitorRegion;
-                    
-                    monitorId = await _monitorRepository.CreateMonitorTcp(monitor.MonitorTcpItem);
-                }
-                await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
-                {
-                    MonitorGroupId = monitorGroupId,
-                    MonitorId = monitorId
-                });
-            }
         }
         _caching.Invalidate(_cacheKeyMonitorGroupList);
     }

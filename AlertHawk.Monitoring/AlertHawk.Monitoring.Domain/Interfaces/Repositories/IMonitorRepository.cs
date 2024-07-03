@@ -29,4 +29,5 @@ public interface IMonitorRepository
     Task<IEnumerable<MonitorHttp>> GetMonitorHttpList();
     Task<IEnumerable<MonitorTcp>> GetMonitorTcpList();
     Task<int> CreateMonitor(Monitor monitor);
+    Task WipeMonitorData();
 }

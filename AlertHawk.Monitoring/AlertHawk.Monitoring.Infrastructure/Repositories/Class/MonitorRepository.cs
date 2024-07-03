@@ -82,6 +82,27 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return id;
     }
 
+    public async Task WipeMonitorData()
+    {
+        await using var db = new SqlConnection(_connstring);
+        var sqlMonitor = "TRUNCATE TABLE [Monitor];";
+        var sqlTcp = "TRUNCATE TABLE [MonitorTcp];";
+        var sqlHttp = "TRUNCATE TABLE [MonitorHttp];";
+        var sqlAgentTasks = "TRUNCATE TABLE [MonitorAgentTasks];";
+        var sqlAlerts = "TRUNCATE TABLE [MonitorAlert];";
+        var sqlHistory = "TRUNCATE TABLE [MonitorHistory];";
+        var sqlNotification = "TRUNCATE TABLE [MonitorNotification];";
+        var sqlMonitorGroupItems = "TRUNCATE TABLE [MonitorGroupItems];";
+        await db.ExecuteAsync(sqlMonitor, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlTcp, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlHttp, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlAgentTasks, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlAlerts, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlHistory, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlNotification, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlMonitorGroupItems, commandType: CommandType.Text);
+    }
+
     public async Task<IEnumerable<Monitor?>> GetMonitorList(MonitorEnvironment environment)
     {
         await using var db = new SqlConnection(_connstring);
