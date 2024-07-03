@@ -1,7 +1,11 @@
 #See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-ubuntu AS base
 RUN apt-get update && apt-get upgrade -y
+
+# Clean up the package lists and cache to reduce the image size
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
 USER app
 WORKDIR /app
 EXPOSE 8080
