@@ -469,12 +469,29 @@ public class MonitorService : IMonitorService
                 
                 if (monitor.MonitorHttpItem != null)
                 {
-                   
+                    monitor.MonitorHttpItem.Name = monitor.Name;
+                    monitor.MonitorHttpItem.MonitorEnvironment = monitor.MonitorEnvironment;
+                    monitor.MonitorHttpItem.HeartBeatInterval = monitor.HeartBeatInterval;
+                    monitor.MonitorHttpItem.Retries = monitor.Retries;
+                    monitor.MonitorHttpItem.Status = monitor.Status;
+                    monitor.MonitorHttpItem.DaysToExpireCert = monitor.DaysToExpireCert;
+                    monitor.MonitorHttpItem.Paused = monitor.Paused;
+                    monitor.MonitorHttpItem.MonitorRegion = monitor.MonitorRegion;
+
                    monitorId =  await _monitorRepository.CreateMonitorHttp(monitor.MonitorHttpItem);
                 }
                 
                 if (monitor.MonitorTcpItem != null)
                 {
+                    monitor.MonitorTcpItem.Name = monitor.Name;
+                    monitor.MonitorTcpItem.MonitorEnvironment = monitor.MonitorEnvironment;
+                    monitor.MonitorTcpItem.HeartBeatInterval = monitor.HeartBeatInterval;
+                    monitor.MonitorTcpItem.Retries = monitor.Retries;
+                    monitor.MonitorTcpItem.Status = monitor.Status;
+                    monitor.MonitorTcpItem.DaysToExpireCert = monitor.DaysToExpireCert;
+                    monitor.MonitorTcpItem.Paused = monitor.Paused;
+                    monitor.MonitorTcpItem.MonitorRegion = monitor.MonitorRegion;
+                    
                     monitorId = await _monitorRepository.CreateMonitorTcp(monitor.MonitorTcpItem);
                 }
                 await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
