@@ -93,22 +93,18 @@ public class MonitorGroupService : IMonitorGroupService
 
                 var avg1hr = monitorGroup.Monitors
                     .Select(x => x.MonitorStatusDashboard?.Uptime1Hr)
-                    .Where(x => x > 0) // Filter out values greater than zero
                     .Average();
 
                 var avg24hrs = monitorGroup.Monitors
                     .Select(x => x.MonitorStatusDashboard?.Uptime24Hrs)
-                    .Where(x => x > 0) // Filter out values greater than zero
                     .Average();
 
                 var avg7days = monitorGroup.Monitors
                     .Select(x => x.MonitorStatusDashboard?.Uptime7Days)
-                    .Where(x => x > 0) // Filter out values greater than zero
                     .Average();
 
                 var avg30days = monitorGroup.Monitors
                     .Select(x => x.MonitorStatusDashboard?.Uptime30Days)
-                    .Where(x => x > 0) // Filter out values greater than zero
                     .Average();
 
                 var avg3months = monitorGroup.Monitors
