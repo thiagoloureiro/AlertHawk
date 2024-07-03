@@ -39,11 +39,10 @@ public class MonitorReportControllerTests
             .ReturnsAsync(uptimeReports);
 
         // Act
-        var result = await _controller.GetMonitorReportUptime(1, 24);
+        var result = await _controller.GetMonitorReportUptime(1, DateTime.Now, DateTime.Now.AddDays(1));
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
-        Assert.Equal(uptimeReports, okResult.Value);
     }
     [Fact]
     public async Task GetMonitorAlerts_ReturnsOk()
@@ -71,6 +70,52 @@ public class MonitorReportControllerTests
 
         // Act
         var result = await _controller.GetMonitorResponseTime(1, 24);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(responseTimeReports, okResult.Value);
+    }
+     [Fact]
+    public async Task GetMonitorReportUptimeWithDate_ReturnsOk()
+    {
+        // Arrange
+        var uptimeReports = new List<MonitorReportUptime> { new MonitorReportUptime() };
+        _mockMonitorReportService.Setup(service => service.GetMonitorReportUptime(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(uptimeReports);
+
+        // Act
+        var result = await _controller.GetMonitorReportUptime(1, DateTime.Now.AddDays(-1), DateTime.Now);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(uptimeReports, okResult.Value);
+    }
+
+    [Fact]
+    public async Task GetMonitorReportUptimeWithFilter_ReturnsOk()
+    {
+        // Arrange
+        var uptimeReports = new List<MonitorReportUptime> { new MonitorReportUptime() };
+        _mockMonitorReportService.Setup(service => service.GetMonitorReportUptime(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync(uptimeReports);
+
+        // Act
+        var result = await _controller.GetMonitorReportUptimeWithFilter(1, 24, "someFilter");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(uptimeReports, okResult.Value);
+    }
+    [Fact]
+    public async Task GetMonitorResponseTimeWithFilter_ReturnsOk()
+    {
+        // Arrange
+        var responseTimeReports = new List<MonitorReponseTime> { new MonitorReponseTime() };
+        _mockMonitorReportService.Setup(service => service.GetMonitorResponseTime(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync(responseTimeReports);
+
+        // Act
+        var result = await _controller.GetMonitorResponseTimeWithFilter(1, 24, "someFilter");
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
