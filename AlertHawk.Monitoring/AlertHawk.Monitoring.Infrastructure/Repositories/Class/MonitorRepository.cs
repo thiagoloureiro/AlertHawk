@@ -76,7 +76,8 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 monitor.DaysToExpireCert,
                 monitor.Paused,
                 monitor.MonitorRegion,
-                monitor.MonitorEnvironment
+                monitor.MonitorEnvironment,
+                monitor.Tag
             }, commandType: CommandType.Text);
         return id;
     }
