@@ -18,6 +18,5 @@ public interface IMonitorGroupService
     Task<IEnumerable<MonitorGroup>> GetMonitorGroupList();
     Task<IEnumerable<MonitorGroup>>  GetMonitorDashboardGroupListByUser(string jwtToken);
     Task<MonitorGroup?> GetMonitorGroupByName(string monitorGroupName);
-    Task<string> GetMonitorGroupBackupJson();
     Task<IEnumerable<Monitor>?> GetMonitorListByGroupId(int monitorGroupId);
 }
