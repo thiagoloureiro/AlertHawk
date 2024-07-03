@@ -156,4 +156,22 @@ public class MonitorAlertControllerTests
         // Assert
         Assert.NotNull(result);
     }
+    [Fact]
+    public async Task GetMonitorAlertsByEnvironment_NullToken_ReturnsBadRequest()
+    {
+        // Arrange
+        var invalidToken = string.Empty;
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        _controller.Request.Headers["Authorization"] = invalidToken;
+
+        // Act
+        var result = await _controller.GetMonitorAlertsByEnvironment(0, 30, MonitorEnvironment.All);
+
+        // Assert
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal("Invalid Token", badRequestResult.Value);
+    }
 }
