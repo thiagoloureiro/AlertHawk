@@ -29,6 +29,7 @@ var configuration = new ConfigurationBuilder()
 var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
 var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
 var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
+var sentryEnabled = configuration.GetValue<string>("Sentry:Enabled") ?? "false";
 
 builder.Services.AddControllers();
 
@@ -84,30 +85,33 @@ builder.Services.AddTransient<ITeamsNotifier, TeamsNotifier>();
 builder.Services.AddTransient<ITelegramNotifier, TelegramNotifier>();
 builder.Services.AddTransient<IWebHookNotifier, WebHookNotifier>();
 
-builder.WebHost.UseSentry(options =>
-    {
-        options.SetBeforeSend(
-            (sentryEvent, _) =>
-            {
-                if (
-                    sentryEvent.Level == SentryLevel.Error
-                    && sentryEvent.Logger?.Equals("Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter",
-                        StringComparison.Ordinal) == true
-                    && sentryEvent.Message?.Message?.Contains("IDX10223", StringComparison.Ordinal) == true
-                )
+if (string.Equals(sentryEnabled, "true", StringComparison.InvariantCultureIgnoreCase))
+{
+    builder.WebHost.UseSentry(options =>
+        {
+            options.SetBeforeSend(
+                (sentryEvent, _) =>
                 {
-                    // Do not log 'IDX10223: Lifetime validation failed. The token is expired.'
-                    return null;
-                }
+                    if (
+                        sentryEvent.Level == SentryLevel.Error
+                        && sentryEvent.Logger?.Equals("Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter",
+                            StringComparison.Ordinal) == true
+                        && sentryEvent.Message?.Message?.Contains("IDX10223", StringComparison.Ordinal) == true
+                    )
+                    {
+                        // Do not log 'IDX10223: Lifetime validation failed. The token is expired.'
+                        return null;
+                    }
 
-                return sentryEvent;
-            }
-        );
-    }
-);
+                    return sentryEvent;
+                }
+            );
+        }
+    );
+}
 
 var issuers = configuration["Jwt:Issuers"] ??
-             "issuer";
+              "issuer";
 
 var audiences = configuration["Jwt:Audiences"] ??
                "aud";
