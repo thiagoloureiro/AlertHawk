@@ -10,7 +10,7 @@ public interface IUserService
     Task Update(UserDto userUpdate);
     Task Delete(Guid id);
     
-    Task ResetPassword(string username);
+    Task ResetPassword(string email);
 
     Task<UserDto?> Login(string username, string password);
 
