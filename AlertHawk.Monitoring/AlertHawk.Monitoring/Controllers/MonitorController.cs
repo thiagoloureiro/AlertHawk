@@ -197,5 +197,6 @@ namespace AlertHawk.Monitoring.Controllers
             var monitorList = await _monitorService.GetMonitorList();
             return Ok(monitorList.Count());
         }
+        
     }
 }
