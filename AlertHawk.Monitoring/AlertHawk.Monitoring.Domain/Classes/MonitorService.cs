@@ -465,18 +465,17 @@ public class MonitorService : IMonitorService
 
             foreach (var monitor in monitorGroup.Monitors)
             {
-                var monitorId = await _monitorRepository.CreateMonitor(monitor);
+                int monitorId = 0;
                 
                 if (monitor.MonitorHttpItem != null)
                 {
-                    monitor.MonitorHttpItem.MonitorId = monitorId;
-                    await _monitorRepository.CreateMonitorHttp(monitor.MonitorHttpItem);
+                   
+                   monitorId =  await _monitorRepository.CreateMonitorHttp(monitor.MonitorHttpItem);
                 }
                 
                 if (monitor.MonitorTcpItem != null)
                 {
-                    monitor.MonitorTcpItem.MonitorId = monitorId;
-                    await _monitorRepository.CreateMonitorTcp(monitor.MonitorTcpItem);
+                    monitorId = await _monitorRepository.CreateMonitorTcp(monitor.MonitorTcpItem);
                 }
                 await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
                 {
