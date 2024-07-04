@@ -9,7 +9,7 @@ using Microsoft.Extensions.Configuration;
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 
 [ExcludeFromCodeCoverage]
-public class MonitorHistoryRepository: RepositoryBase, IMonitorHistoryRepository
+public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepository
 {
     private readonly string _connstring;
 
@@ -17,8 +17,8 @@ public class MonitorHistoryRepository: RepositoryBase, IMonitorHistoryRepository
     {
         _connstring = GetConnectionString();
     }
-    
-     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndDays(int id, int days)
+
+    public async Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndDays(int id, int days)
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
@@ -32,6 +32,20 @@ public class MonitorHistoryRepository: RepositoryBase, IMonitorHistoryRepository
         string sql =
             @$"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion FROM [MonitorHistory] WHERE MonitorId=@id AND TimeStamp >= DATEADD(hour, -@hours, GETUTCDATE())  ORDER BY TimeStamp DESC";
         return await db.QueryAsync<MonitorHistory>(sql, new { id, hours }, commandType: CommandType.Text);
+    }
+
+    public async Task<MonitorSettings> GetMonitorHistoryRetention()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = @"SELECT HistoryDaysRetention FROM MonitorSettings";
+        return await db.QueryFirstOrDefaultAsync<MonitorSettings>(sql, commandType: CommandType.Text);
+    }
+
+    public async Task SetMonitorHistoryRetention(int days)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = "UPDATE MonitorSettings SET HistoryDaysRetention = @days WHERE 1=1";
+        await db.ExecuteAsync(sql, new { days }, commandType: CommandType.Text);
     }
 
     public async Task SaveMonitorHistory(MonitorHistory monitorHistory)
@@ -64,14 +78,13 @@ public class MonitorHistoryRepository: RepositoryBase, IMonitorHistoryRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql = @"DELETE FROM [MonitorHistory] WHERE TimeStamp < DATEADD(DAY, -@days, GETDATE())";
-        await db.QueryAsync<MonitorHistory>(sql, new { days }, commandType: CommandType.Text);
+        await db.QueryAsync<MonitorHistory>(sql, new { days }, commandType: CommandType.Text, commandTimeout: 3600);
     }
-    
+
     public async Task<long> GetMonitorHistoryCount()
     {
         await using var db = new SqlConnection(_connstring);
         string sql = "SELECT COUNT(*) FROM [MonitorHistory]";
         return await db.ExecuteScalarAsync<long>(sql, commandType: CommandType.Text);
     }
-
 }

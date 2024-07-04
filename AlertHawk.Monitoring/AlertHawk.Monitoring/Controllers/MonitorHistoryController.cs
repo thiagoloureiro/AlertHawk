@@ -74,5 +74,23 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorHistoryService.GetMonitorHistoryCount();
             return Ok(result);
         }
+        
+        [SwaggerOperation(Summary = "Get Monitor History Retention")]
+        [ProducesResponseType(typeof(MonitorSettings), StatusCodes.Status200OK)]
+        [HttpGet("GetMonitorHistoryRetention")]
+        public async Task<IActionResult> GetMonitorHistoryRetention()
+        {
+            var result = await _monitorHistoryService.GetMonitorHistoryRetention();
+            return Ok(result);
+        }
+
+        [SwaggerOperation(Summary = "Set Monitor History Retention")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [HttpPost("SetMonitorHistoryRetention")]
+        public async Task<IActionResult> SetMonitorHistoryRetention([FromBody] MonitorSettings settings)
+        {
+            await _monitorHistoryService.SetMonitorHistoryRetention(settings.HistoryDaysRetention);
+            return Ok();
+        }
     }
 }

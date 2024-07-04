@@ -199,6 +199,9 @@ recurringJobManager.AddOrUpdate<IMonitorManager>("StartRunnerManager", x => x.St
 recurringJobManager.AddOrUpdate<IMonitorService>("SetMonitorDashboardDataCacheList",
     x => x.SetMonitorDashboardDataCacheList(), "*/2 * * * *");
 
+recurringJobManager.AddOrUpdate<IMonitorManager>("CleanMonitorHistoryTask",
+    x => x.CleanMonitorHistoryTask(), "0 0 * * *");
+
 // Resolve the service and run the method immediately
 using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
 {

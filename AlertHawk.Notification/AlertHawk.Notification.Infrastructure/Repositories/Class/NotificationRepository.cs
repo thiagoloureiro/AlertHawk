@@ -60,44 +60,47 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     public async Task InsertNotificationItemEmailSmtp(NotificationItem? notificationItem)
     {
-        var notificationId = notificationItem.Id;
-
-        if (string.IsNullOrEmpty(notificationItem.NotificationEmail?.ToCCEmail))
+        if (notificationItem != null)
         {
-            if (notificationItem.NotificationEmail != null) notificationItem.NotificationEmail.ToCCEmail = null;
-        }
+            var notificationId = notificationItem.Id;
+
+            if (string.IsNullOrEmpty(notificationItem.NotificationEmail?.ToCCEmail))
+            {
+                if (notificationItem.NotificationEmail != null) notificationItem.NotificationEmail.ToCCEmail = null;
+            }
         
-        if (string.IsNullOrEmpty(notificationItem.NotificationEmail?.ToBCCEmail))
-        {
-            if (notificationItem.NotificationEmail != null) notificationItem.NotificationEmail.ToBCCEmail = null;
-        }
+            if (string.IsNullOrEmpty(notificationItem.NotificationEmail?.ToBCCEmail))
+            {
+                if (notificationItem.NotificationEmail != null) notificationItem.NotificationEmail.ToBCCEmail = null;
+            }
 
-        if (notificationItem.NotificationEmail != null)
-        {
-            notificationItem.NotificationEmail.Password =
-                AesEncryption.EncryptString(notificationItem.NotificationEmail?.Password);
+            if (notificationItem.NotificationEmail != null)
+            {
+                notificationItem.NotificationEmail.Password =
+                    AesEncryption.EncryptString(notificationItem.NotificationEmail?.Password);
 
-            await using var db = new SqlConnection(_connstring);
-            string sqlDetails =
-                @"INSERT INTO [NotificationEmailSmtp] (NotificationId, FromEmail, ToEmail, HostName, Port, Username, Password, ToCCEmail, ToBCCEmail, EnableSSL, Subject, Body, IsHtmlBody)
+                await using var db = new SqlConnection(_connstring);
+                string sqlDetails =
+                    @"INSERT INTO [NotificationEmailSmtp] (NotificationId, FromEmail, ToEmail, HostName, Port, Username, Password, ToCCEmail, ToBCCEmail, EnableSSL, Subject, Body, IsHtmlBody)
         VALUES (@notificationId, @FromEmail, @ToEmail, @HostName, @Port, @Username, @Password, @ToCCEmail, @ToBCCEmail, @EnableSSL, @Subject, @Body, @IsHtmlBody)";
 
-            await db.ExecuteAsync(sqlDetails, new
-            {
-                notificationId,
-                notificationItem.NotificationEmail?.FromEmail,
-                notificationItem.NotificationEmail?.ToEmail,
-                notificationItem.NotificationEmail?.Hostname,
-                notificationItem.NotificationEmail?.Port,
-                notificationItem.NotificationEmail?.Username,
-                notificationItem.NotificationEmail?.Password,
-                notificationItem.NotificationEmail?.ToCCEmail,
-                notificationItem.NotificationEmail?.ToBCCEmail,
-                notificationItem.NotificationEmail?.EnableSsl,
-                notificationItem.NotificationEmail?.Subject,
-                notificationItem.NotificationEmail?.Body,
-                notificationItem.NotificationEmail?.IsHtmlBody
-            }, commandType: CommandType.Text);
+                await db.ExecuteAsync(sqlDetails, new
+                {
+                    notificationId,
+                    notificationItem.NotificationEmail?.FromEmail,
+                    notificationItem.NotificationEmail?.ToEmail,
+                    notificationItem.NotificationEmail?.Hostname,
+                    notificationItem.NotificationEmail?.Port,
+                    notificationItem.NotificationEmail?.Username,
+                    notificationItem.NotificationEmail?.Password,
+                    notificationItem.NotificationEmail?.ToCCEmail,
+                    notificationItem.NotificationEmail?.ToBCCEmail,
+                    notificationItem.NotificationEmail?.EnableSsl,
+                    notificationItem.NotificationEmail?.Subject,
+                    notificationItem.NotificationEmail?.Body,
+                    notificationItem.NotificationEmail?.IsHtmlBody
+                }, commandType: CommandType.Text);
+            }
         }
     }
 
@@ -155,9 +158,9 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
         await db.ExecuteAsync(sqlDetails, new
         {
-            notificationId = notificationItem.Id,
-            notificationItem.NotificationSlack?.WebHookUrl,
-            ChannelName = notificationItem.NotificationSlack?.Channel
+            notificationId = notificationItem?.Id,
+            notificationItem?.NotificationSlack?.WebHookUrl,
+            ChannelName = notificationItem?.NotificationSlack?.Channel
         }, commandType: CommandType.Text);
     }
 

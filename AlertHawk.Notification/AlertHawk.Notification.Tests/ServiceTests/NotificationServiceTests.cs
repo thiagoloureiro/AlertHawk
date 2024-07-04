@@ -286,7 +286,7 @@ public class NotificationServiceTests
         // Arrange
         int id = 1;
         var notificationItem = CreateMock(out var notificationRepository, out var notificationService);
-        var lstNotificationItem = new List<NotificationItem> { notificationItem };
+        var lstNotificationItem = new List<NotificationItem?> { notificationItem };
         notificationRepository.SelectNotificationItemByMonitorGroupId(id).Returns(lstNotificationItem);
 
         // Act

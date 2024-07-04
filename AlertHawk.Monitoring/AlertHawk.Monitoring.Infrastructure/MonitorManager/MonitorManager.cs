@@ -18,13 +18,15 @@ public class MonitorManager : IMonitorManager
     private readonly IMonitorAgentRepository _monitorAgentRepository;
     private readonly IMonitorRepository _monitorRepository;
     private readonly ICaching _caching;
+    private readonly IMonitorHistoryRepository _monitorHistoryRepository;
 
     public MonitorManager(IMonitorAgentRepository monitorAgentRepository, IMonitorRepository monitorRepository,
-        ICaching caching)
+        ICaching caching, IMonitorHistoryRepository monitorHistoryRepository)
     {
         _monitorAgentRepository = monitorAgentRepository;
         _monitorRepository = monitorRepository;
         _caching = caching;
+        _monitorHistoryRepository = monitorHistoryRepository;
     }
 
     public async Task StartRunnerManager()
@@ -159,9 +161,9 @@ public class MonitorManager : IMonitorManager
 
             if (agentLocationEnabled)
             {
-                
                 var region =
-                    await _caching.GetOrSetObjectFromCacheAsync($"locationDataKey_{Environment.MachineName}", 600, IPAddressUtils.GetLocation);
+                    await _caching.GetOrSetObjectFromCacheAsync($"locationDataKey_{Environment.MachineName}", 600,
+                        IPAddressUtils.GetLocation);
 
                 monitorAgent = new MonitorAgent
                 {
@@ -206,6 +208,15 @@ public class MonitorManager : IMonitorManager
         {
             SentrySdk.CaptureException(e);
             throw;
+        }
+    }
+
+    public async Task CleanMonitorHistoryTask()
+    {
+        var settings = await _monitorHistoryRepository.GetMonitorHistoryRetention();
+        if (settings.HistoryDaysRetention > 0)
+        {
+            await _monitorHistoryRepository.DeleteMonitorHistory(settings.HistoryDaysRetention);
         }
     }
 

@@ -34,6 +34,76 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor] WHERE Paused = 0";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
+    
+    public async Task<IEnumerable<Monitor?>> GetFullMonitorList()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql =
+            @"SELECT M.Id, M.Name, HTTP.UrlToCheck, CAST(IP AS VARCHAR(255)) + ':' + CAST(Port AS VARCHAR(10)) AS MonitorTcp, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag, HTTP.CheckCertExpiry FROM [Monitor] M
+                LEFT JOIN MonitorHttp HTTP on HTTP.MonitorId = M.Id
+                LEFT JOIN MonitorTcp TCP ON TCP.MonitorId = M.Id";
+        return await db.QueryAsync<Monitor>(sql, new {  }, commandType: CommandType.Text);
+    }
+
+    public async Task<IEnumerable<MonitorHttp>> GetMonitorHttpList()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = "SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp]";
+        return await db.QueryAsync<MonitorHttp>(sql, commandType: CommandType.Text);
+    }
+    
+    public async Task<IEnumerable<MonitorTcp>> GetMonitorTcpList()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = "SELECT MonitorId, Port, IP, Timeout, LastStatus FROM [MonitorTcp]";
+        return await db.QueryAsync<MonitorTcp>(sql, commandType: CommandType.Text);
+    }
+
+    public async Task<int> CreateMonitor(Monitor monitor)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlMonitor =
+            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag) 
+            VALUES (@Name, @MonitorTypeId, @HeartBeatInterval, @Retries, @Status, @DaysToExpireCert, @Paused, @MonitorRegion, @MonitorEnvironment, @Tag); SELECT CAST(SCOPE_IDENTITY() as int)";
+        var id = await db.ExecuteScalarAsync<int>(sqlMonitor,
+            new
+            {
+                monitor.Name,
+                monitor.MonitorTypeId,
+                monitor.HeartBeatInterval,
+                monitor.Retries,
+                monitor.Status,
+                monitor.DaysToExpireCert,
+                monitor.Paused,
+                monitor.MonitorRegion,
+                monitor.MonitorEnvironment,
+                monitor.Tag
+            }, commandType: CommandType.Text);
+        return id;
+    }
+
+    public async Task WipeMonitorData()
+    {
+        await using var db = new SqlConnection(_connstring);
+        var sqlMonitor = "TRUNCATE TABLE [Monitor];";
+        var sqlTcp = "TRUNCATE TABLE [MonitorTcp];";
+        var sqlHttp = "TRUNCATE TABLE [MonitorHttp];";
+        var sqlAgentTasks = "TRUNCATE TABLE [MonitorAgentTasks];";
+        var sqlAlerts = "TRUNCATE TABLE [MonitorAlert];";
+        var sqlHistory = "TRUNCATE TABLE [MonitorHistory];";
+        var sqlNotification = "TRUNCATE TABLE [MonitorNotification];";
+        var sqlMonitorGroupItems = "TRUNCATE TABLE [MonitorGroupItems];";
+        var sqlMonitorGroup = "TRUNCATE TABLE [MonitorGroup];";
+        await db.ExecuteAsync(sqlMonitor, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlTcp, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlHttp, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlAgentTasks, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlAlerts, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlHistory, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlNotification, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlMonitorGroupItems, commandType: CommandType.Text);
+        await db.ExecuteAsync(sqlMonitorGroup, commandType: CommandType.Text);
+    }
 
     public async Task<IEnumerable<Monitor?>> GetMonitorList(MonitorEnvironment environment)
     {
@@ -45,9 +115,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 WHERE MonitorEnvironment = @environment";
         return await db.QueryAsync<Monitor>(sql, new { environment }, commandType: CommandType.Text);
     }
-
-
-
+    
     public async Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(List<int> groupMonitorIds,
         MonitorEnvironment environment)
     {

@@ -6,7 +6,6 @@ using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Domain.Utils;
 using EasyMemoryCache;
-using Hangfire;
 using Newtonsoft.Json;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
@@ -20,6 +19,7 @@ public class MonitorService : IMonitorService
     private readonly IMonitorGroupService _monitorGroupService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IMonitorHistoryRepository _monitorHistoryRepository;
+    private readonly string _cacheKeyMonitorGroupList = "MonitorGroupList";
 
     private readonly IHttpClientRunner _httpClientRunner;
 
@@ -431,6 +431,86 @@ public class MonitorService : IMonitorService
         return await _monitorRepository.GetMonitorTagList();
     }
 
+    public async Task<string> GetMonitorBackupJson()
+    {
+        var monitorHttpList = await _monitorRepository.GetMonitorHttpList();
+        var monitorTcpList = await _monitorRepository.GetMonitorTcpList();
+        var monitorGroupList = await _monitorGroupService.GetMonitorGroupList();
+
+        foreach (var monitorGroup in monitorGroupList)
+        {
+            monitorGroup.Monitors = await _monitorGroupService.GetMonitorListByGroupId(monitorGroup.Id);
+        }
+        
+        var monitorBackup = new MonitorBackup
+        {
+            MonitorGroupList = monitorGroupList
+        };
+
+        foreach (var monitor in monitorBackup.MonitorGroupList.SelectMany(group => group.Monitors))
+        {
+            monitor.MonitorHttpItem = monitorHttpList.Where(x => x.MonitorId == monitor.Id).FirstOrDefault();
+            monitor.MonitorTcpItem = monitorTcpList.Where(x => x.MonitorId == monitor.Id).FirstOrDefault();
+        }
+
+        var json = JsonConvert.SerializeObject(monitorBackup, Formatting.Indented);
+        return json;
+    }
+
+    public async Task UploadMonitorJsonBackup(MonitorBackup monitorBackup)
+    {
+        await _monitorRepository.WipeMonitorData();
+        
+        int monitorGroupId = 0;
+        foreach (var monitorGroup in monitorBackup.MonitorGroupList)
+        {
+            monitorGroupId = await _monitorGroupService.AddMonitorGroup(monitorGroup, null);
+
+            if (monitorGroup.Monitors != null)
+                foreach (var monitor in monitorGroup.Monitors)
+                {
+                    int monitorId = 0;
+
+                    if (monitor.MonitorHttpItem != null)
+                    {
+                        monitor.MonitorHttpItem.Name = monitor.Name;
+                        monitor.MonitorHttpItem.MonitorEnvironment = monitor.MonitorEnvironment;
+                        monitor.MonitorHttpItem.HeartBeatInterval = monitor.HeartBeatInterval;
+                        monitor.MonitorHttpItem.Retries = monitor.Retries;
+                        monitor.MonitorHttpItem.Status = monitor.Status;
+                        monitor.MonitorHttpItem.DaysToExpireCert = monitor.DaysToExpireCert;
+                        monitor.MonitorHttpItem.Paused = monitor.Paused;
+                        monitor.MonitorHttpItem.MonitorRegion = monitor.MonitorRegion;
+                        monitor.MonitorHttpItem.MonitorTypeId = monitor.MonitorTypeId;
+
+                        monitorId = await _monitorRepository.CreateMonitorHttp(monitor.MonitorHttpItem);
+                    }
+
+                    if (monitor.MonitorTcpItem != null)
+                    {
+                        monitor.MonitorTcpItem.Name = monitor.Name;
+                        monitor.MonitorTcpItem.MonitorEnvironment = monitor.MonitorEnvironment;
+                        monitor.MonitorTcpItem.HeartBeatInterval = monitor.HeartBeatInterval;
+                        monitor.MonitorTcpItem.Retries = monitor.Retries;
+                        monitor.MonitorTcpItem.Status = monitor.Status;
+                        monitor.MonitorTcpItem.DaysToExpireCert = monitor.DaysToExpireCert;
+                        monitor.MonitorTcpItem.Paused = monitor.Paused;
+                        monitor.MonitorTcpItem.MonitorRegion = monitor.MonitorRegion;
+                        monitor.MonitorTcpItem.MonitorTypeId = monitor.MonitorTypeId;
+                        
+                        monitorId = await _monitorRepository.CreateMonitorTcp(monitor.MonitorTcpItem);
+                    }
+
+                    await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
+                    {
+                        MonitorGroupId = monitorGroupId,
+                        MonitorId = monitorId
+                    });
+                }
+        }
+
+        await _caching.InvalidateAllAsync();
+    }
 
     public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
     {

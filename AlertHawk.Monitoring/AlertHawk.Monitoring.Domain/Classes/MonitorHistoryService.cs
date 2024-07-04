@@ -38,4 +38,14 @@ public class MonitorHistoryService : IMonitorHistoryService
             () => _monitorHistoryRepository.GetMonitorHistoryCount());
         return count;
     }
+
+    public async Task SetMonitorHistoryRetention(int days)
+    {
+        await _monitorHistoryRepository.SetMonitorHistoryRetention(days);
+    }
+
+    public async Task<MonitorSettings> GetMonitorHistoryRetention()
+    {
+        return await _monitorHistoryRepository.GetMonitorHistoryRetention();
+    }
 }

@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
-namespace AlertHawk.Authentication.Tests.Controllers
+namespace AlertHawk.Authentication.Tests.ControllerTests
 {
     public class UserControllerTests
     {
@@ -36,16 +36,16 @@ namespace AlertHawk.Authentication.Tests.Controllers
         {
             // Arrange
             _controller.ModelState.AddModelError("error", "some error");
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "", IsAdmin: true);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
             var result = await _controller.PostUserCreation(new UserCreation
             {
-                Username = null,
-                Password = null,
-                RepeatPassword = null,
-                UserEmail = null
+                Username = "",
+                Password = "",
+                RepeatPassword = "",
+                UserEmail = ""
             });
 
             // Assert
@@ -60,10 +60,10 @@ namespace AlertHawk.Authentication.Tests.Controllers
             {
                 Password = "password1",
                 RepeatPassword = "password2",
-                Username = null,
-                UserEmail = null
+                Username = "",
+                UserEmail = ""
             };
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "", IsAdmin: true);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
@@ -84,12 +84,12 @@ namespace AlertHawk.Authentication.Tests.Controllers
             {
                 Password = "password",
                 RepeatPassword = "password",
-                Username = null,
-                UserEmail = null
+                Username = "",
+                UserEmail = ""
             };
             _mockUserService.Setup(s => s.Create(userCreation))
                 .ThrowsAsync(new InvalidOperationException("User already exists"));
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "", IsAdmin: true);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
@@ -114,7 +114,7 @@ namespace AlertHawk.Authentication.Tests.Controllers
                 UserEmail = "email@email.com",
                 IsAdmin = false
             };
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "", IsAdmin: true);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
@@ -132,12 +132,12 @@ namespace AlertHawk.Authentication.Tests.Controllers
         {
             // Arrange
             _controller.ModelState.AddModelError("error", "some error");
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "", IsAdmin: true);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
             var result = await _controller.PutUserUpdate(new UserDto(Id: Guid.NewGuid(), Username: "testuser",
-                Email: null, IsAdmin: false));
+                Email: "", IsAdmin: false));
 
             // Assert
             Assert.IsType<BadRequestObjectResult>(result);
@@ -147,7 +147,7 @@ namespace AlertHawk.Authentication.Tests.Controllers
         public async Task PutUserUpdate_ThrowsException_ReturnsInternalServerError()
         {
             // Arrange
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: false);
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "", IsAdmin: false);
             _mockUserService.Setup(s => s.Update(user)).ThrowsAsync(new Exception("Unexpected error"));
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
@@ -167,8 +167,8 @@ namespace AlertHawk.Authentication.Tests.Controllers
         public async Task PutUserUpdate_ValidUserUpdate_ReturnsOk()
         {
             // Arrange
-            var userUpdate = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: false);
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
+            var userUpdate = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "", IsAdmin: false);
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "", IsAdmin: true);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
@@ -204,7 +204,7 @@ namespace AlertHawk.Authentication.Tests.Controllers
         {
             // Arrange
             var userCreation = new UsersBuilder().WithUserCreationWithTheSamePasswordData();
-            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
             _mockUserService.Setup(s => s.Create(userCreation)).ThrowsAsync(new Exception("Unexpected error"));
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
@@ -236,9 +236,9 @@ namespace AlertHawk.Authentication.Tests.Controllers
         public async Task GetAll_ValidRequest_ReturnsOkWithUsers()
         {
             // Arrange
-            var users = new List<UserDto> { new UsersBuilder().WithUserEmailAndAdminIsFalse(null) };
+            var users = new List<UserDto> { new UsersBuilder().WithUserEmailAndAdminIsFalse("") };
             _mockUserService.Setup(s => s.GetAll()).ReturnsAsync(users);
-            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
@@ -255,7 +255,7 @@ namespace AlertHawk.Authentication.Tests.Controllers
         {
             // Arrange
             var userId = Guid.NewGuid();
-            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
             _mockUserService.Setup(s => s.Get(userId)).ReturnsAsync(user);
 
             // Act
@@ -289,7 +289,7 @@ namespace AlertHawk.Authentication.Tests.Controllers
         {
             // Arrange
 
-            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
             _mockUserService.Setup(s => s.GetByUsername(user.Username)).ReturnsAsync(user);
 
             // Act
@@ -352,9 +352,9 @@ namespace AlertHawk.Authentication.Tests.Controllers
         public async Task GetUserCount_ValidRequest_ReturnsOkWithUsers()
         {
             // Arrange
-            var users = new List<UserDto> { new UsersBuilder().WithUserEmailAndAdminIsFalse(null) };
+            var users = new List<UserDto> { new UsersBuilder().WithUserEmailAndAdminIsFalse("") };
             _mockUserService.Setup(s => s.GetAll()).ReturnsAsync(users);
-            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
@@ -371,7 +371,7 @@ namespace AlertHawk.Authentication.Tests.Controllers
         {
             // Arrange
             _mockUserService.Setup(s => s.GetAll());
-            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act

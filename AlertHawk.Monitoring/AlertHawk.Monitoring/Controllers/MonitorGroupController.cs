@@ -1,4 +1,5 @@
-﻿using AlertHawk.Monitoring.Domain.Entities;
+﻿using System.Text;
+using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using Microsoft.AspNetCore.Authorization;

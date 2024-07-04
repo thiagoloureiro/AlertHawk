@@ -5,6 +5,8 @@ using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Moq;
+using Newtonsoft.Json;
 using NSubstitute;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
@@ -495,6 +497,7 @@ public class MonitorControllerTests
         var count = Assert.IsAssignableFrom<int>(okResult.Value);
         Assert.Equal(monitorList.Count, count);
     }
+
     [Fact]
     public async Task GetMonitorAlertsByEnvironment_NullToken_ReturnsBadRequest()
     {
@@ -516,5 +519,85 @@ public class MonitorControllerTests
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal("Invalid Token", badRequestResult.Value);
+    }
+
+    [Fact]
+    public async Task GetMonitorBackupJson_Returns_OkResult_With_Expected_Result()
+    {
+        // Arrange
+        var monitorServiceMock = Substitute.For<IMonitorService>();
+        var expectedJson = "json";
+        monitorServiceMock.GetMonitorBackupJson().Returns(expectedJson);
+
+        var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+
+        // Act
+        var result = await controller.GetMonitorBackupJson();
+
+        // Assert
+        var fileResult = result as FileResult;
+
+        Assert.NotNull(fileResult);
+    }
+
+    [Fact]
+    public async Task UploadMonitorJsonBackup_Returns_BadRequestResult()
+    {
+        // Arrange
+        var monitorServiceMock = Substitute.For<IMonitorService>();
+        var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        var mockFile = new Mock<IFormFile>();
+        var monitorBackup = new MonitorBackup();
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+
+        // Act
+        var result = await controller.UploadMonitorJsonBackup(mockFile.Object);
+
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+    
+    [Fact]
+    public async Task UploadMonitorJsonBackup_Returns_OkObjectResult()
+    {
+        // Arrange
+        var monitorServiceMock = Substitute.For<IMonitorService>();
+        var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        var monitorBackup = new MonitorBackup
+        {
+            MonitorGroupList = new List<MonitorGroup>()
+        };
+
+        var contentJson = JsonConvert.SerializeObject(monitorBackup);
+        
+        IFormFile mockFile = CreateMockIFormFile("test.txt", contentJson);
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+
+        // Act
+        var result = await controller.UploadMonitorJsonBackup(mockFile);
+
+        // Assert
+        Assert.IsType<OkResult>(result);
+    }
+    
+    public IFormFile CreateMockIFormFile(string fileName, string content)
+    {
+        var fileMock = new Mock<IFormFile>();
+
+        var ms = new MemoryStream();
+        var writer = new StreamWriter(ms);
+        writer.Write(content);
+        writer.Flush();
+        ms.Position = 0;
+
+        fileMock.Setup(_ => _.OpenReadStream()).Returns(ms);
+        fileMock.Setup(_ => _.FileName).Returns(fileName);
+        fileMock.Setup(_ => _.Length).Returns(ms.Length);
+
+        return fileMock.Object;
     }
 }

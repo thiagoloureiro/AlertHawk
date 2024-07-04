@@ -1,11 +1,8 @@
 ﻿using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Domain.Custom;
-using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Authentication.Infrastructure.Utils;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Sentry;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace AlertHawk.Authentication.Controllers
@@ -16,14 +13,11 @@ namespace AlertHawk.Authentication.Controllers
     {
         private readonly IUserService _userService;
         private readonly IJwtTokenService _jwtTokenService;
-        private readonly IGetOrCreateUserService _getOrCreateUserService;
 
-        public AuthController(IUserService userService, IJwtTokenService jwtTokenService,
-            IGetOrCreateUserService getOrCreateUserService)
+        public AuthController(IUserService userService, IJwtTokenService jwtTokenService)
         {
             _userService = userService;
             _jwtTokenService = jwtTokenService;
-            _getOrCreateUserService = getOrCreateUserService;
         }
         
         [HttpPost("refreshToken")]
