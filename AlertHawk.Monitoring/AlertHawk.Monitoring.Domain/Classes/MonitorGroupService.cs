@@ -60,39 +60,44 @@ public class MonitorGroupService : IMonitorGroupService
         var allDashboardData = await GetMonitorDashboardDataList(allMonitorIds);
         var monitorDashboards = allDashboardData.ToList();
 
+        var tasks = new List<Task>();
+
         foreach (var monitorGroup in monitorGroups)
         {
             if (monitorGroup.Monitors != null && monitorGroup.Monitors.Any())
             {
                 monitorGroup.Monitors = monitorGroup.Monitors.OrderBy(x => x.Name).ToList();
+
                 foreach (var monitor in monitorGroup.Monitors)
                 {
                     var dashboardData = monitorDashboards.Find(x => x.MonitorId == monitor.Id);
-                    monitor.MonitorStatusDashboard = dashboardData;
-
-                    if (monitor.MonitorStatusDashboard == null)
+                    monitor.MonitorStatusDashboard = dashboardData ?? new MonitorDashboard
                     {
-                        monitor.MonitorStatusDashboard = new MonitorDashboard
-                        {
-                            MonitorId = monitor.Id,
-                            Uptime1Hr = 0,
-                            Uptime6Months = 0,
-                            Uptime7Days = 0,
-                            Uptime3Months = 0,
-                            Uptime30Days = 0,
-                            Uptime24Hrs = 0,
-                            CertExpDays = 0,
-                            ResponseTime = 0
-                        };
-                    }
+                        MonitorId = monitor.Id,
+                        Uptime1Hr = 0,
+                        Uptime6Months = 0,
+                        Uptime7Days = 0,
+                        Uptime3Months = 0,
+                        Uptime30Days = 0,
+                        Uptime24Hrs = 0,
+                        CertExpDays = 0,
+                        ResponseTime = 0
+                    };
 
-                    var data = await _caching.GetOrSetObjectFromCacheAsync(_cacheKeyMonitorDayHist + monitor.Id, 10,
-                        () =>
-                            _monitorHistoryRepository.GetMonitorHistoryByIdAndHours(monitor.Id, 1));
-
-                    monitor.MonitorStatusDashboard.HistoryData = data;
+                    // Create tasks to fetch data asynchronously
+                    tasks.Add(FetchMonitorHistoryAsync(monitor));
                 }
+            }
+        }
 
+        // Wait for all tasks to complete
+        await Task.WhenAll(tasks);
+
+        // Now process the results
+        foreach (var monitorGroup in monitorGroups)
+        {
+            if (monitorGroup.Monitors != null && monitorGroup.Monitors.Any())
+            {
                 var avg1hr = monitorGroup.Monitors
                     .Select(x => x.MonitorStatusDashboard?.Uptime1Hr)
                     .Average();
@@ -111,12 +116,12 @@ public class MonitorGroupService : IMonitorGroupService
 
                 var avg3months = monitorGroup.Monitors
                     .Select(x => x.MonitorStatusDashboard?.Uptime3Months)
-                    .Where(x => x > 0) // Filter out values greater than zero
+                    .Where(x => x > 0)
                     .Average();
 
                 var avg6months = monitorGroup.Monitors
                     .Select(x => x.MonitorStatusDashboard?.Uptime6Months)
-                    .Where(x => x > 0) // Filter out values greater than zero
+                    .Where(x => x > 0)
                     .Average();
 
                 if (avg1hr != null)
@@ -150,6 +155,14 @@ public class MonitorGroupService : IMonitorGroupService
                 }
             }
         }
+
+        async Task FetchMonitorHistoryAsync(Monitor monitor)
+        {
+            var data = await _caching.GetOrSetObjectFromCacheAsync(_cacheKeyMonitorDayHist + monitor.Id, 10,
+                () => _monitorHistoryRepository.GetMonitorHistoryByIdAndHours(monitor.Id, 1));
+            monitor.MonitorStatusDashboard.HistoryData = data;
+        }
+
 
         return monitorGroups;
     }
@@ -245,7 +258,7 @@ public class MonitorGroupService : IMonitorGroupService
         monitorGroup.Name = monitorGroup.Name.TrimEnd();
 
         var groupId = await _monitorGroupRepository.AddMonitorGroup(monitorGroup);
-       
+
         if (jwtToken != null)
         {
             await AddUserToGroup(jwtToken, groupId);
