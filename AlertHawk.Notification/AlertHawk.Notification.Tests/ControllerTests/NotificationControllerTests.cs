@@ -85,7 +85,7 @@ namespace AlertHawk.Notification.Tests.ControllerTests
             Assert.NotNull(result);
             Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
             var item = Assert.IsType<NotificationItem>(result.Value);
-            Assert.Equal("", item.NotificationEmail.Password); // Password should be cleared
+            Assert.Equal("", item.NotificationEmail?.Password); // Password should be cleared
         }
 
         [Fact]
@@ -107,7 +107,7 @@ namespace AlertHawk.Notification.Tests.ControllerTests
             Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
             var items = Assert.IsType<List<NotificationItem>>(result.Value);
             Assert.Single(items);
-            Assert.Equal("", items[0].NotificationEmail.Password); // Password should be cleared
+            Assert.Equal("", items[0].NotificationEmail?.Password); // Password should be cleared
         }
 
         [Fact]
