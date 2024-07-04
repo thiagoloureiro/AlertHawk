@@ -146,5 +146,65 @@ namespace AlertHawk.Notification.Tests.ControllerTests
             Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
             Assert.Equal(count, Convert.ToInt32(result.Value));
         }
+        
+        [Fact]
+        public async Task GetNotificationCount_ShouldReturnOk_WithZeroNotificationCount()
+        {
+            // Arrange
+            _notificationService.GetNotificationLogCount().Returns(0);
+
+            // Act
+            var result = await _controller.GetNotificationCount() as OkObjectResult;
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+            Assert.Equal(0, Convert.ToInt32(result.Value));
+        }
+        
+        [Fact]
+        public async Task SelectNotificationItemByMonitorGroupId_ShouldReturnOk_WithEmptyNotificationItems()
+        {
+            // Arrange
+            var id = 1;
+            var notificationItems = new List<NotificationItem>();
+            _notificationService.SelectNotificationItemByMonitorGroupId(id).Returns(notificationItems);
+
+            // Act
+            var result = await _controller.SelectNotificationItemByMonitorGroupId(id) as OkObjectResult;
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+            var items = Assert.IsType<List<NotificationItem>>(result.Value);
+            Assert.Empty(items);
+        }
+        
+        [Fact]
+        public async Task SendNotification_ShouldReturnOk_WhenNotificationIsSent()
+        {
+            // Arrange
+            var keys = Utils.GenerateAesKeyAndIv();
+            Environment.SetEnvironmentVariable("AesKey", keys.Item1);
+            Environment.SetEnvironmentVariable("AesIV", keys.Item2);
+            
+            var notificationItem = new NotificationSend
+            {
+                Message = "Message",
+                NotificationEmail = new NotificationEmail
+                {
+                    FromEmail = "user@user.com",
+                    Password = "Password"
+                }
+            };
+            _notificationService.Send(notificationItem).Returns(true);
+
+            // Act
+            var result = await _controller.SendNotification(notificationItem) as OkObjectResult;
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+        }
     }
 }
