@@ -382,6 +382,36 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             var returnedUsers = Assert.IsType<int>(okResult.Value);
             Assert.Equal(0, returnedUsers);
         }
+        
+        [Fact]
+        public async Task DeleteUser_ValidUserId_ReturnsOk()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
+            _mockUserService.Setup(s => s.Get(userId)).ReturnsAsync(user);
+            _mockUserService.Setup(s => s.Delete(userId));
+
+            // Act
+            var result = await _controller.DeleteUser(userId);
+
+            // Assert
+            Assert.IsType<OkResult>(result);
+        }
+        
+        [Fact]
+        public async Task DeleteUser_InvalidUserId_ReturnsBadRequest()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            _mockUserService.Setup(s => s.Get(userId)).ReturnsAsync(It.IsAny<UserDto>());
+
+            // Act
+            var result = await _controller.DeleteUser(userId);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
     }
 }
 

@@ -166,7 +166,7 @@ public class UserRepository : BaseRepository, IUserRepository
             if (updateEmail)
             {
                 conditions.Add("LOWER(Email) = LOWER(@Email)");
-                parameters.Add("Email", userUpdate.Email?.ToLower(CultureInfo.InvariantCulture));
+                parameters.Add("Email", userUpdate.Email.ToLower(CultureInfo.InvariantCulture));
             }
 
             existingUser = await ExecuteQueryFirstOrDefaultAsync<Guid?>(checkUserSql, parameters);
