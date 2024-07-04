@@ -6,7 +6,6 @@ using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Domain.Utils;
 using EasyMemoryCache;
-using Hangfire;
 using Newtonsoft.Json;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 

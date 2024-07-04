@@ -110,4 +110,34 @@ public class MonitorHistoryControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(count, okResult.Value);
     }
+    
+    [Fact]
+    public async Task GetMonitorHistoryRetention_ReturnsOk()
+    {
+        // Arrange
+        var monitorSettings = new MonitorSettings();
+        _mockMonitorHistoryService.Setup(service => service.GetMonitorHistoryRetention())
+            .ReturnsAsync(monitorSettings);
+
+        // Act
+        var result = await _controller.GetMonitorHistoryRetention();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(monitorSettings, okResult.Value);
+    }
+    
+    [Fact]
+    public async Task SetMonitorHistoryRetention_ReturnsOk()
+    {
+        // Arrange
+        var monitorSettings = new MonitorSettings { HistoryDaysRetention = 7 };
+
+        // Act
+        var result = await _controller.SetMonitorHistoryRetention(monitorSettings);
+
+        // Assert
+        var okResult = Assert.IsType<OkResult>(result);
+        _mockMonitorHistoryService.Verify(service => service.SetMonitorHistoryRetention(7), Times.Once);
+    }
 }

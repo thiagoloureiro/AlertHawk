@@ -362,5 +362,26 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             Assert.Equal(monitorFailureCountList, result);
         }
+
+        [Fact]
+        public async Task GetMonitorBackupJson_ReturnsMonitorBackupJson()
+        {
+            // Arrange
+            var monitorId = 1;
+            var monitor = new Monitor
+            {
+                Id = monitorId,
+                Name = "Test Monitor",
+                HeartBeatInterval = 0,
+                Retries = 0
+            };
+            _monitorRepositoryMock.Setup(repo => repo.GetMonitorById(monitorId)).ReturnsAsync(monitor);
+
+            // Act
+            var result = await _monitorService.GetMonitorBackupJson();
+
+            // Assert
+            Assert.NotNull(result);
+        }
     }
 }

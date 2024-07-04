@@ -78,7 +78,7 @@ public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepositor
     {
         await using var db = new SqlConnection(_connstring);
         string sql = @"DELETE FROM [MonitorHistory] WHERE TimeStamp < DATEADD(DAY, -@days, GETDATE())";
-        await db.QueryAsync<MonitorHistory>(sql, new { days }, commandType: CommandType.Text);
+        await db.QueryAsync<MonitorHistory>(sql, new { days }, commandType: CommandType.Text, commandTimeout: 3600);
     }
 
     public async Task<long> GetMonitorHistoryCount()
