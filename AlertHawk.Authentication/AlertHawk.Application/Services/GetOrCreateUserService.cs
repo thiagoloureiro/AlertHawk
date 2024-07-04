@@ -7,13 +7,13 @@ namespace AlertHawk.Application.Services;
 
 public class GetOrCreateUserService(IUserService userService) : IGetOrCreateUserService
 {
-    public async Task<UserDto> GetUserOrCreateUser(ClaimsPrincipal claims)
+    public async Task<UserDto?> GetUserOrCreateUser(ClaimsPrincipal claims)
     {
         string? userEmail = "";
         var hasEmailIdentityNameLogged = claims.Identity?.Name;
         if (hasEmailIdentityNameLogged != null)
         {
-            userEmail = claims.Claims?.FirstOrDefault(s => s.Type.Contains("emailaddress"))?.Value ??
+            userEmail = claims.Claims.FirstOrDefault(s => s.Type.Contains("emailaddress"))?.Value ??
                         hasEmailIdentityNameLogged;
         }
 
@@ -31,20 +31,29 @@ public class GetOrCreateUserService(IUserService userService) : IGetOrCreateUser
         {
             userEmail = claims.Claims?.FirstOrDefault(c => c.Type == "emailaddress")?.Value;
         }
-        
-        var user = await userService.GetByEmail(userEmail);
 
-        // This is for AD First Login only
-        if (ReferenceEquals(null, user))
+        if (userEmail != null)
         {
-            var name = claims.Claims.FirstOrDefault(s => s.Type.Contains("givenname"))?.Value + " " +
-                       claims.Claims.FirstOrDefault(s => s.Type.Contains("surname"))?.Value;
-            var newUser = new UserCreationFromAzure(name, userEmail);
+            var user = await userService.GetByEmail(userEmail);
 
-            await userService.CreateFromAzure(newUser);
-            return (await userService.GetByEmail(userEmail))!;
+            // This is for AD First Login only
+            if (ReferenceEquals(null, user))
+            {
+                if (claims.Claims != null)
+                {
+                    var name = claims.Claims.FirstOrDefault(s => s.Type.Contains("givenname"))?.Value + " " +
+                               claims.Claims.FirstOrDefault(s => s.Type.Contains("surname"))?.Value;
+                    var newUser = new UserCreationFromAzure(name, userEmail);
+
+                    await userService.CreateFromAzure(newUser);
+                }
+
+                return (await userService.GetByEmail(userEmail))!;
+            }
+
+            return user;
         }
 
-        return user;
+        return null;
     }
 }

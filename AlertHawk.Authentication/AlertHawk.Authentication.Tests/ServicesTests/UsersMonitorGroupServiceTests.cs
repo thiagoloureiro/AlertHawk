@@ -99,4 +99,16 @@ public class UsersMonitorGroupServiceTests
         // Assert
         _mockRepository.Verify(r => r.DeleteAllByGroupMonitorIdAsync(groupId), Times.Once);
     }
+    [Fact]
+    public async Task AssignUserToGroup_CallsRepositoryMethod()
+    {
+        // Arrange
+        var userMonitorGroup = new UsersMonitorGroup { UserId = Guid.NewGuid(), GroupMonitorId = 1 };
+
+        // Act
+        await _service.AssignUserToGroup(userMonitorGroup);
+
+        // Assert
+        _mockRepository.Verify(r => r.CreateAsync(userMonitorGroup), Times.Once);
+    }
 }

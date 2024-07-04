@@ -10,7 +10,7 @@ namespace AlertHawk.Authentication.Tests.ServicesTests;
 
 public class UserServiceTests
 {
-     private readonly Mock<IUserRepository> _mockUserRepository;
+    private readonly Mock<IUserRepository> _mockUserRepository;
     private readonly UserService _userService;
 
     public UserServiceTests()
@@ -58,7 +58,8 @@ public class UserServiceTests
     {
         // Arrange
         var userCreation = new UserCreationFromAzure("Test User", "test@example.com");
-        _mockUserRepository.Setup(r => r.GetAll()).ReturnsAsync(new List<UserDto> { new UsersBuilder().WithUserEmailAndAdminIsFalse(userCreation.Email) });
+        _mockUserRepository.Setup(r => r.GetAll()).ReturnsAsync(new List<UserDto>
+            { new UsersBuilder().WithUserEmailAndAdminIsFalse(userCreation.Email) });
 
         // Act
         await _userService.CreateFromAzure(userCreation);
@@ -72,7 +73,7 @@ public class UserServiceTests
     public async Task Update_CallsRepositoryUpdate()
     {
         // Arrange
-        var userUpdate = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
+        var userUpdate = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
 
         // Act
         await _userService.Update(userUpdate);
@@ -87,7 +88,7 @@ public class UserServiceTests
         // Arrange
         var username = "testuser";
         var password = "testpassword";
-        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
+        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
         _mockUserRepository.Setup(r => r.Login(username, password)).ReturnsAsync(user);
 
         // Act
@@ -119,7 +120,7 @@ public class UserServiceTests
     {
         // Arrange
         var email = "test@example.com";
-        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
+        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
         _mockUserRepository.Setup(r => r.GetByEmail(email)).ReturnsAsync(user);
 
         // Act
@@ -135,7 +136,7 @@ public class UserServiceTests
     {
         // Arrange
         var username = "testuser";
-        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
+        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
         _mockUserRepository.Setup(r => r.GetByUsername(username)).ReturnsAsync(user);
 
         // Act
@@ -160,6 +161,7 @@ public class UserServiceTests
         Assert.Equal(users, result);
         _mockUserRepository.Verify(r => r.GetAll(), Times.Once);
     }
+
     [Fact]
     public async Task ResetPassword_UserExists_SendsEmail()
     {
@@ -175,7 +177,7 @@ public class UserServiceTests
         await _userService.ResetPassword(username);
 
         // Assert
-       
+
         _mockUserRepository.Verify(repo => repo.GetByUsername(username), Times.Once);
         _mockUserRepository.Verify(repo => repo.ResetPassword(username), Times.Once);
     }
@@ -186,7 +188,7 @@ public class UserServiceTests
         // Arrange
         var username = "nonexistentuser";
 
-        _mockUserRepository.Setup(repo => repo.GetByUsername(username)).ReturnsAsync((UserDto)null);
+        _mockUserRepository.Setup(repo => repo.GetByUsername(username)).ReturnsAsync(It.IsAny<UserDto>());
 
         // Act
         await _userService.ResetPassword(username);
@@ -194,5 +196,50 @@ public class UserServiceTests
         // Assert
         _mockUserRepository.Verify(repo => repo.GetByUsername(username), Times.Once);
         _mockUserRepository.Verify(repo => repo.ResetPassword(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Delete_CallsRepositoryDelete()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+
+        // Act
+        await _userService.Delete(userId);
+
+        // Assert
+        _mockUserRepository.Verify(r => r.Delete(userId), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetUserByToken_CallsRepositoryGetUserByToken()
+    {
+        // Arrange
+        var token = "token";
+        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
+
+        _mockUserRepository.Setup(x => x.GetUserByToken(token)).ReturnsAsync(user);
+
+        // Act
+        var result = await _userService.GetUserByToken(token);
+
+        // Assert
+        Assert.Equal(user, result);
+    }
+
+    [Fact]
+    public async Task UpdateUserToken_CallsRepositoryUpdateUserToken()
+    {
+        // Arrange
+        var token = "token";
+        var username = "username";
+
+        _mockUserRepository.Setup(x => x.UpdateUserToken(token, username));
+
+        // Act
+        await _userService.UpdateUserToken(token, username);
+
+        // Assert
+        _mockUserRepository.Verify(r => r.UpdateUserToken(token, username), Times.Once);
     }
 }

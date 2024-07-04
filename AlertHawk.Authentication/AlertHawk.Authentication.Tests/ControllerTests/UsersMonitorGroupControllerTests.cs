@@ -17,12 +17,13 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         private readonly Mock<IGetOrCreateUserService> _mockGetOrCreateUserService;
         private readonly UsersMonitorGroupController _controller;
 
-        public UsersMonitorGroupControllerTests() 
+        public UsersMonitorGroupControllerTests()
         {
             _mockUsersMonitorGroupService = new Mock<IUsersMonitorGroupService>();
             _mockGetOrCreateUserService = new Mock<IGetOrCreateUserService>();
 
-            _controller = new UsersMonitorGroupController(_mockUsersMonitorGroupService.Object, _mockGetOrCreateUserService.Object)
+            _controller = new UsersMonitorGroupController(_mockUsersMonitorGroupService.Object,
+                _mockGetOrCreateUserService.Object)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -32,7 +33,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         }
 
         [Fact]
-        public async Task AssignUserToGroup_ValidRequest_ReturnsOk()
+        public async Task AssignUserToGroups_ValidRequest_ReturnsOk()
         {
             // Arrange
             var usersMonitorGroup = new List<UsersMonitorGroup>();
@@ -48,7 +49,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         }
 
         [Fact]
-        public async Task AssignUserToGroup_InvalidUser_ReturnsForbidden()
+        public async Task AssignUserToGroups_InvalidUser_ReturnsForbidden()
         {
             // Arrange
             var usersMonitorGroup = new List<UsersMonitorGroup>();
@@ -67,7 +68,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         }
 
         [Fact]
-        public async Task AssignUserToGroup_ModelStateInvalid_ReturnsBadRequest()
+        public async Task AssignUserToGroups_ModelStateInvalid_ReturnsBadRequest()
         {
             // Arrange
             var usersMonitorGroup = new List<UsersMonitorGroup>();
@@ -81,7 +82,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         }
 
         [Fact]
-        public async Task AssignUserToGroup_ThrowsException_ReturnsInternalServerError()
+        public async Task AssignUserToGroups_ThrowsException_ReturnsInternalServerError()
         {
             // Arrange
             var usersMonitorGroup = new List<UsersMonitorGroup>();
@@ -119,6 +120,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(userGroups, okResult.Value);
         }
+
         [Fact]
         public async Task GetAll_ReturnsOkWithNoUserGroups()
         {
@@ -135,6 +137,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             Assert.IsType<OkResult>(result);
         }
+
         [Fact]
         public async Task GetAllByUserId_UnauthorizedUser_ReturnsForbidden()
         {
@@ -153,6 +156,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             var message = Assert.IsType<Message>(forbiddenResult.Value);
             Assert.Equal("This user is not authorized to do this operation", message.Content);
         }
+
         [Fact]
         public async Task GetAllByUserId()
         {
@@ -169,8 +173,9 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(StatusCodes.Status200OK, okResult.StatusCode);
         }
+
         [Fact]
-        public async Task AssignUserToGroup_ThrowsInvalidOperationException_ReturnsBadRequest()
+        public async Task AssignUserToGroups_ThrowsInvalidOperationException_ReturnsBadRequest()
         {
             // Arrange
             var usersMonitorGroup = new List<UsersMonitorGroup>();
@@ -190,6 +195,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             var message = Assert.IsType<Message>(badRequestResult.Value);
             Assert.Equal(exceptionMessage, message.Content);
         }
+
         [Fact]
         public async Task DeleteMonitorGroupByGroupMonitorId_UnauthorizedUser_ReturnsForbidden()
         {
@@ -225,10 +231,78 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             Assert.IsType<OkResult>(result);
         }
+
+        [Fact]
+        public async Task AssignUserToGroup_ValidRequest_ReturnsOk()
+        {
+            // Arrange
+            var usersMonitorGroup = new UsersMonitorGroup();
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+
+            // Act
+            var result = await _controller.AssignUserToGroup(usersMonitorGroup);
+
+            // Assert
+            Assert.IsType<OkResult>(result);
+        }
+        
+        [Fact]
+        public async Task AssignUserToGroup_BadRequest_ReturnsBadRequest()
+        {
+            // Arrange
+            var usersMonitorGroup = new UsersMonitorGroup();
+            _controller.ModelState.AddModelError("Error", "Invalid model state");
+
+            // Act
+            var result = await _controller.AssignUserToGroup(usersMonitorGroup);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+        
+        [Fact]
+        public async Task AssignUserToGroup_ThrowsException_ReturnsInternalServerError()
+        {
+            // Arrange
+            var usersMonitorGroup = new UsersMonitorGroup();
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            _mockUsersMonitorGroupService.Setup(s => s.AssignUserToGroup(usersMonitorGroup))
+                .ThrowsAsync(new Exception("Unexpected error"));
+
+            // Act
+            var result = await _controller.AssignUserToGroup(usersMonitorGroup);
+
+            // Assert
+            var objectResult = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(StatusCodes.Status500InternalServerError, objectResult.StatusCode);
+            var message = Assert.IsType<Message>(objectResult.Value);
+            Assert.Equal("Something went wrong.", message.Content);
+        }
+        
+        [Fact]
+        public async Task AssignUserToGroup_ThrowsInvalidOperationException_ReturnsBadRequest()
+        {
+            // Arrange
+            var usersMonitorGroup = new UsersMonitorGroup();
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+
+            var exceptionMessage = "User already exists";
+            _mockUsersMonitorGroupService.Setup(s => s.AssignUserToGroup(usersMonitorGroup))
+                .ThrowsAsync(new InvalidOperationException(exceptionMessage));
+
+            // Act
+            var result = await _controller.AssignUserToGroup(usersMonitorGroup);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            var message = Assert.IsType<Message>(badRequestResult.Value);
+            Assert.Equal(exceptionMessage, message.Content);
+        }
     }
 }
-
-    
-
-              
-        
