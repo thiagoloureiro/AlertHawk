@@ -45,7 +45,7 @@ public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepositor
     {
         await using var db = new SqlConnection(_connstring);
         string sql = "UPDATE MonitorSettings SET HistoryDaysRetention = @days WHERE 1=1";
-        await db.ExecuteAsync(sql, commandType: CommandType.Text);
+        await db.ExecuteAsync(sql, new { days }, commandType: CommandType.Text);
     }
 
     public async Task SaveMonitorHistory(MonitorHistory monitorHistory)
