@@ -1,7 +1,6 @@
 using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Controllers;
 using AlertHawk.Authentication.Domain.Dto;
-using AlertHawk.Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Authentication.Tests.Builders;
@@ -23,7 +22,7 @@ public class AuthControllerTests
         _mockUserService = new Mock<IUserService>();
         _mockJwtTokenService = new Mock<IJwtTokenService>();
         
-        _controller = new AuthController(_mockUserService.Object, _mockJwtTokenService.Object, _mockGetOrCreateUserService.Object);
+        _controller = new AuthController(_mockUserService.Object, _mockJwtTokenService.Object);
     }
 
     [Fact]
@@ -31,7 +30,7 @@ public class AuthControllerTests
     {
         // Arrange
         var userAuth = new UsersBuilder().WithUserAuth();
-        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
+        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
         var token = "test_token";
         _mockUserService.Setup(x => x.Login(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(user);
         _mockJwtTokenService.Setup(x => x.GenerateToken(It.IsAny<UserDto>())).Returns(token);
@@ -41,7 +40,7 @@ public class AuthControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var returnedToken = Assert.IsType<string>(okResult.Value.GetType().GetProperty("token").GetValue(okResult.Value));
+        var returnedToken = Assert.IsType<string>(okResult.Value?.GetType().GetProperty("token")?.GetValue(okResult.Value));
         Assert.Equal(token, returnedToken);
     }
 

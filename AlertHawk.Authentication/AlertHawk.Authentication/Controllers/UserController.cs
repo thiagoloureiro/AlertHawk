@@ -29,8 +29,6 @@ public class UserController : Controller
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> PostUserCreation([FromBody] UserCreation userCreation)
     {
-        //await IsUserAdmin();
-
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
@@ -130,7 +128,7 @@ public class UserController : Controller
     private async Task<ObjectResult?> IsUserAdmin()
     {
         var usr = await _getOrCreateUserService.GetUserOrCreateUser(User);
-        if (!usr.IsAdmin)
+        if (usr != null && !usr.IsAdmin)
         {
             return StatusCode(StatusCodes.Status403Forbidden,
                 new Message("This user is not authorized to do this operation"));

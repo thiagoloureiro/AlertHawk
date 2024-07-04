@@ -36,7 +36,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             // Arrange
             var usersMonitorGroup = new List<UsersMonitorGroup>();
-            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
 
@@ -52,7 +52,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             // Arrange
             var usersMonitorGroup = new List<UsersMonitorGroup>();
-            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
 
@@ -85,7 +85,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             // Arrange
             var usersMonitorGroup = new List<UsersMonitorGroup>();
-            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             _mockUsersMonitorGroupService.Setup(s => s.CreateOrUpdateAsync(usersMonitorGroup))
@@ -105,7 +105,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         public async Task GetAll_ReturnsOkWithUserGroups()
         {
             // Arrange
-            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
             var userGroups = new List<UsersMonitorGroup>();
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
@@ -123,7 +123,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         public async Task GetAll_ReturnsOkWithNoUserGroups()
         {
             // Arrange
-            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
             var userGroups = new List<UsersMonitorGroup>();
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()));
             _mockUsersMonitorGroupService.Setup(s => s.GetAsync(user.Id))
@@ -140,7 +140,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             // Arrange
             var userId = Guid.NewGuid();
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: false);
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "", IsAdmin: false);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
 
@@ -158,7 +158,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             // Arrange
             var userId = Guid.NewGuid();
-            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
 
@@ -174,7 +174,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             // Arrange
             var usersMonitorGroup = new List<UsersMonitorGroup>();
-            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
 
@@ -195,7 +195,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             // Arrange
             var groupMonitorId = 1;
-            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
 
@@ -214,7 +214,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             // Arrange
             var groupMonitorId = 1;
-            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue(null);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
 
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);

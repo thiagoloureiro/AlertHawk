@@ -4,7 +4,7 @@ namespace AlertHawk.Authentication.Tests.Builders;
 
 public class ClaimsBuilder
 {
-    private ClaimsPrincipal _claimsPrincipal;
+    private ClaimsPrincipal? _claimsPrincipal;
 
     public ClaimsPrincipal DefaulClaimsPrincipal(string email)
     {

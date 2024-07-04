@@ -5,9 +5,9 @@ namespace AlertHawk.Authentication.Tests.Builders;
 
 public class UsersBuilder
 {
-    private UserDto _userDto;
-    private UserCreation _userCreation;
-    private UserAuth _userAuth;
+    private UserDto? _userDto;
+    private UserCreation? _userCreation;
+    private UserAuth? _userAuth;
     public UserDto WithUserEmailAndAdminIsFalse(string email)
     {
         _userDto = new UserDto(Guid.NewGuid(), "testuser", email, false);
@@ -24,8 +24,8 @@ public class UsersBuilder
         {
             Password = "password",
             RepeatPassword = "password",
-            Username = null,
-            UserEmail = null
+            Username = "",
+            UserEmail = ""
         };
         return _userCreation;
     }    

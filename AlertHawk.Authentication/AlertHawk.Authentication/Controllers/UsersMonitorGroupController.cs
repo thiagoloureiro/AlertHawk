@@ -1,5 +1,4 @@
 ﻿using AlertHawk.Application.Interfaces;
-using AlertHawk.Application.Services;
 using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
@@ -30,7 +29,7 @@ namespace AlertHawk.Authentication.Controllers
         public async Task<IActionResult> AssignUserToGroup([FromBody] UsersMonitorGroup usersMonitorGroup)
         {
             var usr = await GetUserByToken();
-            usersMonitorGroup.UserId = usr.Id;
+            if (usr != null) usersMonitorGroup.UserId = usr.Id;
 
             if (!ModelState.IsValid)
             {
@@ -148,7 +147,7 @@ namespace AlertHawk.Authentication.Controllers
         private async Task<ObjectResult?> IsUserAdmin()
         {
             var usr = await _getOrCreateUserServicer.GetUserOrCreateUser(User);
-            if (!usr.IsAdmin)
+            if (usr != null && !usr.IsAdmin)
             {
                 return StatusCode(StatusCodes.Status403Forbidden,
                     new Message("This user is not authorized to do this operation"));
