@@ -1,12 +1,9 @@
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
-using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
-using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using EasyMemoryCache;
 using EasyMemoryCache.Configuration;
 using Moq;
-using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ServiceTests
 {
@@ -64,6 +61,53 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
 
             // Assert
             _monitorHistoryRepositoryMock.Verify(repo => repo.DeleteMonitorHistory(days), Times.Once);
+        }
+      
+        [Fact]
+        public async Task SetMonitorHistoryRetention_SetsRetention()
+        {
+            // Arrange
+            var days = 7;
+
+            // Act
+            await _monitorHistoryService.SetMonitorHistoryRetention(days);
+
+            // Assert
+            _monitorHistoryRepositoryMock.Verify(repo => repo.SetMonitorHistoryRetention(days), Times.Once);
+        }
+        
+        [Fact]
+        public async Task GetMonitorHistoryRetention_ReturnsRetention()
+        {
+            // Arrange
+            var retention = new MonitorSettings();
+            _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistoryRetention()).ReturnsAsync(retention);
+
+            // Act
+            var result = await _monitorHistoryService.GetMonitorHistoryRetention();
+
+            // Assert
+            Assert.Equal(retention, result);
+        }
+        
+        [Fact]
+        public async Task GetMonitorHistoryCount_ReturnsCount()
+        {
+            // Arrange
+            var count = 10;
+            _cachingMock.Setup(cache => cache.GetOrSetObjectFromCacheAsync(
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<Func<Task<long>>>(),
+                It.IsAny<bool>(),
+                It.IsAny<CacheTimeInterval>()
+            )).ReturnsAsync(count);
+
+            // Act
+            var result = await _monitorHistoryService.GetMonitorHistoryCount();
+
+            // Assert
+            Assert.Equal(count, result);
         }
     }
 }

@@ -4,12 +4,13 @@ using AlertHawk.Monitoring.Domain.Interfaces.Services;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
 
-public class MonitorNotificationService: IMonitorNotificationService
+public class MonitorNotificationService : IMonitorNotificationService
 {
     private readonly IMonitorGroupService _monitorGroupService;
     private readonly IMonitorNotificationRepository _monitorNotificationRepository;
 
-    public MonitorNotificationService(IMonitorGroupService monitorGroupService, IMonitorNotificationRepository monitorNotificationRepository)
+    public MonitorNotificationService(IMonitorGroupService monitorGroupService,
+        IMonitorNotificationRepository monitorNotificationRepository)
     {
         _monitorGroupService = monitorGroupService;
         _monitorNotificationRepository = monitorNotificationRepository;
@@ -29,33 +30,33 @@ public class MonitorNotificationService: IMonitorNotificationService
     {
         await _monitorNotificationRepository.RemoveMonitorNotification(monitorNotification);
     }
-    
+
     public async Task AddMonitorGroupNotification(MonitorGroupNotification monitorGroupNotification)
     {
         var monitorList = await _monitorGroupService.GetMonitorGroupById(monitorGroupNotification.MonitorGroupId);
 
-        foreach (var monitor in monitorList.Monitors)
-        {
-            var monitorNotification = new MonitorNotification
+        if (monitorList.Monitors != null)
+            foreach (var monitor in monitorList.Monitors)
             {
-                MonitorId = monitor.Id,
-                NotificationId = monitorGroupNotification.NotificationId
-            };
+                var monitorNotification = new MonitorNotification
+                {
+                    MonitorId = monitor.Id,
+                    NotificationId = monitorGroupNotification.NotificationId
+                };
 
-            var notificationExist = await _monitorNotificationRepository.GetMonitorNotifications(monitor.Id);
-            if (notificationExist.All(x => x.NotificationId != monitorGroupNotification.NotificationId))
-            {
-                await AddMonitorNotification(monitorNotification);
+                var notificationExist = await _monitorNotificationRepository.GetMonitorNotifications(monitor.Id);
+                if (notificationExist.All(x => x.NotificationId != monitorGroupNotification.NotificationId))
+                {
+                    await AddMonitorNotification(monitorNotification);
+                }
             }
-        }
     }
 
     public async Task RemoveMonitorGroupNotification(MonitorGroupNotification monitorGroupNotification)
     {
         var monitorList = await _monitorGroupService.GetMonitorGroupById(monitorGroupNotification.MonitorGroupId);
 
-        if (monitorList != null)
-        {
+        if (monitorList.Monitors != null)
             foreach (var monitor in monitorList.Monitors)
             {
                 var monitorNotification = new MonitorNotification
@@ -65,6 +66,5 @@ public class MonitorNotificationService: IMonitorNotificationService
                 };
                 await RemoveMonitorNotification(monitorNotification);
             }
-        }
     }
 }

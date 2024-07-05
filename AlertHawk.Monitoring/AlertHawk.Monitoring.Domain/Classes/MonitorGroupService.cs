@@ -32,7 +32,7 @@ public class MonitorGroupService : IMonitorGroupService
         _monitorHistoryRepository = monitorHistoryRepository;
     }
 
-    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList()
+    public async Task<IEnumerable<MonitorGroup>?> GetMonitorGroupList()
     {
         var monitorGroupList = await _caching.GetOrSetObjectFromCacheAsync(_cacheKeyMonitorGroupList, 10,
             () => _monitorGroupRepository.GetMonitorGroupList());
@@ -51,7 +51,7 @@ public class MonitorGroupService : IMonitorGroupService
         }
 
         monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id));
-        monitorGroupList = monitorGroupList.Where(x => x.Monitors.Any());
+        monitorGroupList = monitorGroupList.Where(x => x.Monitors != null && x.Monitors.Any());
 
         var monitorGroups = monitorGroupList.ToList();
 
@@ -160,14 +160,14 @@ public class MonitorGroupService : IMonitorGroupService
         {
             var data = await _caching.GetOrSetObjectFromCacheAsync(_cacheKeyMonitorDayHist + monitor.Id, 10,
                 () => _monitorHistoryRepository.GetMonitorHistoryByIdAndHours(monitor.Id, 1));
-            monitor.MonitorStatusDashboard.HistoryData = data;
+            if (monitor.MonitorStatusDashboard != null) monitor.MonitorStatusDashboard.HistoryData = data;
         }
 
 
         return monitorGroups;
     }
 
-    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList(string jwtToken)
+    public async Task<IEnumerable<MonitorGroup>?> GetMonitorGroupList(string jwtToken)
     {
         var ids = await GetUserGroupMonitorListIds(jwtToken);
         var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupList();
@@ -177,12 +177,12 @@ public class MonitorGroupService : IMonitorGroupService
             return null;
         }
 
-        monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id)).ToList();
+        monitorGroupList = monitorGroupList?.Where(x => ids.Contains(x.Id)).ToList();
 
         return monitorGroupList;
     }
 
-    public async Task<IEnumerable<MonitorGroup>> GetMonitorDashboardGroupListByUser(string jwtToken)
+    public async Task<IEnumerable<MonitorGroup>?> GetMonitorDashboardGroupListByUser(string jwtToken)
     {
         var ids = await GetUserGroupMonitorListIds(jwtToken);
         var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupList();
@@ -192,37 +192,42 @@ public class MonitorGroupService : IMonitorGroupService
             return new List<MonitorGroup> { new MonitorGroup { Id = 0, Name = "No Groups Found" } };
         }
 
-        monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id)).ToList();
-
-        var allMonitorIds = monitorGroupList
-            .SelectMany(group => group.Monitors?.Select(m => m.Id) ?? Enumerable.Empty<int>()).ToList();
-        var allDashboardData = await GetMonitorDashboardDataList(allMonitorIds);
-        var monitorDashboards = allDashboardData.ToList();
-
-        foreach (var monitorGroup in monitorGroupList)
+        if (monitorGroupList != null)
         {
-            if (monitorGroup.Monitors != null)
+            monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id)).ToList();
+
+            var allMonitorIds = monitorGroupList
+                .SelectMany(group => group.Monitors?.Select(m => m.Id) ?? Enumerable.Empty<int>()).ToList();
+            var allDashboardData = await GetMonitorDashboardDataList(allMonitorIds);
+            var monitorDashboards = allDashboardData.ToList();
+
+            foreach (var monitorGroup in monitorGroupList)
             {
-                foreach (var monitor in monitorGroup.Monitors)
+                if (monitorGroup.Monitors != null)
                 {
-                    var dashboardData = monitorDashboards.Find(x => x.MonitorId == monitor.Id);
-                    monitor.MonitorStatusDashboard = dashboardData ?? new MonitorDashboard
+                    foreach (var monitor in monitorGroup.Monitors)
                     {
-                        MonitorId = monitor.Id,
-                        Uptime1Hr = 0,
-                        Uptime6Months = 0,
-                        Uptime7Days = 0,
-                        Uptime3Months = 0,
-                        Uptime30Days = 0,
-                        Uptime24Hrs = 0,
-                        CertExpDays = 0,
-                        ResponseTime = 0
-                    };
+                        var dashboardData = monitorDashboards.Find(x => x.MonitorId == monitor.Id);
+                        monitor.MonitorStatusDashboard = dashboardData ?? new MonitorDashboard
+                        {
+                            MonitorId = monitor.Id,
+                            Uptime1Hr = 0,
+                            Uptime6Months = 0,
+                            Uptime7Days = 0,
+                            Uptime3Months = 0,
+                            Uptime30Days = 0,
+                            Uptime24Hrs = 0,
+                            CertExpDays = 0,
+                            ResponseTime = 0
+                        };
+                    }
                 }
             }
+
+            return monitorGroupList;
         }
 
-        return monitorGroupList;
+        return null;
     }
 
     public async Task<MonitorGroup?> GetMonitorGroupByName(string monitorGroupName)
@@ -303,7 +308,7 @@ public class MonitorGroupService : IMonitorGroupService
         return listGroupMonitorIds;
     }
 
-    private async Task AddUserToGroup(string token, int groupId)
+    public async Task AddUserToGroup(string token, int groupId)
     {
         var client = CreteHttpClient(token);
 

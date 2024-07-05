@@ -34,7 +34,7 @@ public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepositor
         return await db.QueryAsync<MonitorHistory>(sql, new { id, hours }, commandType: CommandType.Text);
     }
 
-    public async Task<MonitorSettings> GetMonitorHistoryRetention()
+    public async Task<MonitorSettings?> GetMonitorHistoryRetention()
     {
         await using var db = new SqlConnection(_connstring);
         string sql = @"SELECT HistoryDaysRetention FROM MonitorSettings";

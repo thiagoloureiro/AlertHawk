@@ -108,7 +108,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             {
                 new Monitor
                 {
-                    Name = null,
+                    Name = "Name",
                     HeartBeatInterval = 0,
                     Retries = 0
                 }
@@ -380,6 +380,39 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Act
             var result = await _monitorService.GetMonitorBackupJson();
 
+            // Assert
+            Assert.NotNull(result);
+        }
+        
+       
+        [Fact]
+        public void GetMonitorDashboardDataList_ReturnsMonitorDashboardDataList()
+        {
+            // Arrange
+            var monitorId = 1;
+            var monitorIds = new List<int> { 1 };
+            var monitorHistory = new List<MonitorHistory>
+            {
+                new MonitorHistory { TimeStamp = DateTime.UtcNow.AddDays(-1), Status = true, ResponseTime = 100 },
+                new MonitorHistory { TimeStamp = DateTime.UtcNow.AddDays(-2), Status = false, ResponseTime = 200 },
+            };
+            var monitor = new Monitor()
+                { Id = monitorId, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
+
+            _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(monitorId, 90))
+                .ReturnsAsync(monitorHistory);
+            _monitorRepositoryMock.Setup(repo => repo.GetMonitorById(monitorId)).ReturnsAsync(monitor);
+            _cachingMock.Setup(caching => caching.GetOrSetObjectFromCacheAsync(
+                    $"Monitor_{monitorId}",
+                    It.IsAny<int>(),
+                    It.IsAny<Func<Task<Monitor>>>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<CacheTimeInterval>()))
+                .ReturnsAsync(monitor);
+
+            // Act
+            var result = _monitorService.GetMonitorDashboardDataList(monitorIds);
+            
             // Assert
             Assert.NotNull(result);
         }

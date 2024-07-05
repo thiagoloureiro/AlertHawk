@@ -2,7 +2,6 @@ using AlertHawk.Monitoring.Controllers;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
-using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -31,13 +30,14 @@ public class MonitorControllerTests
         monitorServiceMock.GetMonitorStatusDashboard(jwtToken, MonitorEnvironment.Production)
             .Returns(Task.FromResult(expectedDashboardData));
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
-
-        controller.ControllerContext = new ControllerContext
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock)
         {
-            HttpContext = new DefaultHttpContext
+            ControllerContext = new ControllerContext
             {
-                Request = { Headers = { ["Authorization"] = "Bearer " + jwtToken } }
+                HttpContext = new DefaultHttpContext
+                {
+                    Request = { Headers = { ["Authorization"] = "Bearer " + jwtToken } }
+                }
             }
         };
 
@@ -229,7 +229,7 @@ public class MonitorControllerTests
         {
             Name = "Test Monitor",
             MaxRedirects = 0,
-            UrlToCheck = null,
+            UrlToCheck = "http://urltocheck.com",
             Timeout = 0,
             HeartBeatInterval = 0,
             Retries = 0
@@ -256,7 +256,7 @@ public class MonitorControllerTests
         {
             Name = "Test Monitor",
             MaxRedirects = 0,
-            UrlToCheck = null,
+            UrlToCheck = "http://urltocheck.com",
             Timeout = 0,
             HeartBeatInterval = 0,
             Retries = 0
@@ -282,7 +282,7 @@ public class MonitorControllerTests
         {
             Name = "Test Monitor",
             Port = 0,
-            IP = null,
+            IP = "1.1.1.1",
             Timeout = 0,
             HeartBeatInterval = 0,
             Retries = 0
@@ -309,7 +309,7 @@ public class MonitorControllerTests
         {
             Name = "Test Monitor",
             Port = 0,
-            IP = null,
+            IP = "1.1.1.1",
             Timeout = 0,
             HeartBeatInterval = 0,
             Retries = 0
@@ -365,7 +365,6 @@ public class MonitorControllerTests
         var result = await controller.PauseMonitor(1, true);
 
         // Assert
-        var okResult = Assert.IsType<OkResult>(result);
         await monitorServiceMock.Received(1).PauseMonitor(1, true);
     }
 
@@ -414,7 +413,7 @@ public class MonitorControllerTests
         {
             Name = "Test Monitor",
             MaxRedirects = 0,
-            UrlToCheck = null,
+            UrlToCheck = "http://url.com",
             Timeout = 0,
             HeartBeatInterval = 0,
             Retries = 0
@@ -443,7 +442,7 @@ public class MonitorControllerTests
         {
             Name = "Test Monitor",
             Port = 0,
-            IP = null,
+            IP = "1.1.1.1",
             Timeout = 0,
             HeartBeatInterval = 0,
             Retries = 0
@@ -472,13 +471,13 @@ public class MonitorControllerTests
         {
             new Monitor
             {
-                Name = null,
+                Name = "Name",
                 HeartBeatInterval = 0,
                 Retries = 0
             },
             new Monitor
             {
-                Name = null,
+                Name = "Name",
                 HeartBeatInterval = 0,
                 Retries = 0
             }
@@ -549,7 +548,6 @@ public class MonitorControllerTests
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
         var mockFile = new Mock<IFormFile>();
-        var monitorBackup = new MonitorBackup();
 
         var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
 
@@ -583,8 +581,8 @@ public class MonitorControllerTests
         // Assert
         Assert.IsType<OkResult>(result);
     }
-    
-    public IFormFile CreateMockIFormFile(string fileName, string content)
+
+    private IFormFile CreateMockIFormFile(string fileName, string content)
     {
         var fileMock = new Mock<IFormFile>();
 

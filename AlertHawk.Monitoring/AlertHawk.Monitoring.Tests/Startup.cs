@@ -59,8 +59,8 @@ public class Startup
             {
                 cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
                 {
-                    h.Username(rabbitMqUser);
-                    h.Password(rabbitMqPass);
+                    if (rabbitMqUser != null) h.Username(rabbitMqUser);
+                    if (rabbitMqPass != null) h.Password(rabbitMqPass);
                 });
             });
         });

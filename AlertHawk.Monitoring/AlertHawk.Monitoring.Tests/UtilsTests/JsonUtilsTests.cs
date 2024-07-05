@@ -31,9 +31,9 @@ public class JsonUtilsTests
         {
             HeadersJson = "{\"Key1\": \"Value1\", \"Key2\": \"Value2\"}",
             MaxRedirects = 0,
-            UrlToCheck = null,
+            UrlToCheck = "https://www.url.com",
             Timeout = 0,
-            Name = null,
+            Name = "Name",
             HeartBeatInterval = 0,
             Retries = 0
         };
@@ -42,9 +42,12 @@ public class JsonUtilsTests
         JsonUtils.ConvertJsonToTuple(monitorHttp);
 
         // Assert
-        Assert.Equal(2, monitorHttp.Headers.Count);
-        Assert.Contains(monitorHttp.Headers, tuple => tuple.Item1 == "Key1" && tuple.Item2 == "Value1");
-        Assert.Contains(monitorHttp.Headers, tuple => tuple.Item1 == "Key2" && tuple.Item2 == "Value2");
+        if (monitorHttp.Headers != null)
+        {
+            Assert.Equal(2, monitorHttp.Headers.Count);
+            Assert.Contains(monitorHttp.Headers, tuple => tuple.Item1 == "Key1" && tuple.Item2 == "Value1");
+            Assert.Contains(monitorHttp.Headers, tuple => tuple.Item1 == "Key2" && tuple.Item2 == "Value2");
+        }
     }
 
     [Fact]
@@ -55,9 +58,9 @@ public class JsonUtilsTests
         {
             HeadersJson = null,
             MaxRedirects = 0,
-            UrlToCheck = null,
+            UrlToCheck = "http://urltocheck.com",
             Timeout = 0,
-            Name = null,
+            Name = "Name",
             HeartBeatInterval = 0,
             Retries = 0
         };

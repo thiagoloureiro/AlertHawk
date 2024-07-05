@@ -22,7 +22,7 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
         _connstring = GetConnectionString();
     }
 
-    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupList()
+    public async Task<IEnumerable<MonitorGroup>?> GetMonitorGroupList()
     {
         await using var db = new SqlConnection(_connstring);
         string sql = @"SELECT Id, Name FROM [MonitorGroup]";
