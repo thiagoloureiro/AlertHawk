@@ -253,22 +253,27 @@ public class MonitorService : IMonitorService
         }
     }
 
-    public async Task<MonitorStatusDashboard> GetMonitorStatusDashboard(string jwtToken, MonitorEnvironment environment)
+    public async Task<MonitorStatusDashboard?> GetMonitorStatusDashboard(string jwtToken, MonitorEnvironment environment)
     {
         var monitorList = await GetMonitorListByMonitorGroupIds(jwtToken, environment);
 
-        var enumerable = monitorList.ToList();
-        var paused = enumerable.Count(x => x.Paused);
-
-        enumerable.RemoveAll(x => x.Paused);
-
-        var monitorDashboard = new MonitorStatusDashboard
+        if (monitorList != null)
         {
-            MonitorUp = enumerable.Count(x => x.Status),
-            MonitorDown = enumerable.Count(x => !x.Status),
-            MonitorPaused = paused
-        };
-        return monitorDashboard;
+            var enumerable = monitorList.ToList();
+            var paused = enumerable.Count(x => x.Paused);
+
+            enumerable.RemoveAll(x => x.Paused);
+
+            var monitorDashboard = new MonitorStatusDashboard
+            {
+                MonitorUp = enumerable.Count(x => x.Status),
+                MonitorDown = enumerable.Count(x => !x.Status),
+                MonitorPaused = paused
+            };
+            return monitorDashboard;
+        }
+
+        return null;
     }
 
     public async Task<int> CreateMonitorHttp(MonitorHttp monitorHttp)
@@ -374,7 +379,10 @@ public class MonitorService : IMonitorService
 
         await _monitorRepository.DeleteMonitor(id);
 
-        await CreateAction(action, jwtToken);
+        if (jwtToken != null)
+        {
+            await CreateAction(action, jwtToken);
+        }
     }
 
     public async Task<int> CreateMonitorTcp(MonitorTcp monitorTcp)
@@ -441,7 +449,7 @@ public class MonitorService : IMonitorService
         {
             monitorGroup.Monitors = await _monitorGroupService.GetMonitorListByGroupId(monitorGroup.Id);
         }
-        
+
         var monitorBackup = new MonitorBackup
         {
             MonitorGroupList = monitorGroupList
@@ -460,7 +468,7 @@ public class MonitorService : IMonitorService
     public async Task UploadMonitorJsonBackup(MonitorBackup monitorBackup)
     {
         await _monitorRepository.WipeMonitorData();
-        
+
         int monitorGroupId = 0;
         foreach (var monitorGroup in monitorBackup.MonitorGroupList)
         {
@@ -497,7 +505,7 @@ public class MonitorService : IMonitorService
                         monitor.MonitorTcpItem.Paused = monitor.Paused;
                         monitor.MonitorTcpItem.MonitorRegion = monitor.MonitorRegion;
                         monitor.MonitorTcpItem.MonitorTypeId = monitor.MonitorTypeId;
-                        
+
                         monitorId = await _monitorRepository.CreateMonitorTcp(monitor.MonitorTcpItem);
                     }
 

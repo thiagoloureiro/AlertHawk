@@ -10,7 +10,7 @@ public interface IMonitorService
     Task<MonitorDashboard?> GetMonitorDashboardData(int id);
     IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids);
     Task SetMonitorDashboardDataCacheList();
-    Task<MonitorStatusDashboard> GetMonitorStatusDashboard(string jwtToken, MonitorEnvironment environment);
+    Task<MonitorStatusDashboard?> GetMonitorStatusDashboard(string jwtToken, MonitorEnvironment environment);
     Task<int> CreateMonitorHttp(MonitorHttp monitorHttp);
     Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days);
     Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(string token, MonitorEnvironment environment);

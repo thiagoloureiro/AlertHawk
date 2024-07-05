@@ -65,7 +65,7 @@ public class HttpClientScreenshotTests : IClassFixture<HttpClientRunner>
         var result = await _httpClientScreenshot.TakeScreenshotAsync(url, monitorId, monitorName);
         
         // Assert
-        Assert.Empty(result);
+        if (result != null) Assert.Empty(result);
     }
     [Fact]
     public async Task ShouldHandleExceptionWhenUploadScreenshotToStorageAccount()

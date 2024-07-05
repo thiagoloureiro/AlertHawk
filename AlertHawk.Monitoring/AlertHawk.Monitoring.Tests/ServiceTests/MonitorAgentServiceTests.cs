@@ -27,14 +27,14 @@ public class MonitorAgentServiceTests
             {
                 Id = 2,
                 MonitorRegion = MonitorRegion.Oceania,
-                Hostname = null,
+                Hostname = "hostname",
                 TimeStamp = default
             },
             new MonitorAgent()
             {
                 Id = 1,
                 MonitorRegion = MonitorRegion.Europe,
-                Hostname = null,
+                Hostname = "hostname",
                 TimeStamp = default
             }
         };
@@ -85,14 +85,14 @@ public class MonitorAgentServiceTests
             {
                 Id = 2,
                 MonitorRegion = MonitorRegion.Oceania,
-                Hostname = null,
+                Hostname = "hostname",
                 TimeStamp = default
             },
             new MonitorAgent()
             {
                 Id = 1,
                 MonitorRegion = MonitorRegion.Europe,
-                Hostname = null,
+                Hostname = "hostname",
                 TimeStamp = default
             }
         };

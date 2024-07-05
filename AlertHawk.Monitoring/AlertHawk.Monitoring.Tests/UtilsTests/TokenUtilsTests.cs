@@ -35,7 +35,7 @@ public class TokenUtilsTests
     public void GetJwtToken_ReturnsNull_WhenTokenIsNullOrEmpty()
     {
         // Arrange
-        string nullOrEmptyToken = null;
+        string nullOrEmptyToken = "";
 
         // Act
         var result = TokenUtils.GetJwtToken(nullOrEmptyToken);

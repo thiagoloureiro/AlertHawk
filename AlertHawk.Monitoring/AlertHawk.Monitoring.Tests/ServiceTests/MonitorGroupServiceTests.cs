@@ -121,14 +121,14 @@ public class MonitorGroupServiceTests
             {
                 Id = 1, Name = "Group1", Monitors = new List<Monitor>
                 {
-                    new Monitor() { Id = 1, Name =  null, HeartBeatInterval = 0, Retries = 0}
+                    new Monitor() { Id = 1, Name =  "Name", HeartBeatInterval = 0, Retries = 0}
                 }
             },
             new MonitorGroup
             {
                 Id = 2, Name = "Group2", Monitors = new List<Monitor>
                 {
-                    new Monitor() { Id = 2, Name =  null, HeartBeatInterval = 0, Retries = 0}
+                    new Monitor() { Id = 2, Name =  "Name", HeartBeatInterval = 0, Retries = 0}
                 }
             }
         };
@@ -229,5 +229,66 @@ public class MonitorGroupServiceTests
 
         // Assert
         _cachingMock.Verify(caching => caching.Invalidate(It.IsAny<string>()), Times.Once);
+    }
+    
+    [Fact]
+    public async Task UpdateMonitorGroup_ShouldInvalidateCache()
+    {
+        // Arrange
+        var monitorGroup = new MonitorGroup { Id = 1, Name = "Group1" };
+
+        _monitorGroupRepositoryMock.Setup(repo => repo.UpdateMonitorGroup(It.IsAny<MonitorGroup>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _monitorGroupService.UpdateMonitorGroup(monitorGroup);
+
+        // Assert
+        _cachingMock.Verify(caching => caching.Invalidate(It.IsAny<string>()), Times.Once);
+    }
+    
+    [Fact]
+    public async Task AddUserToGroup_ShouldSendPostRequest()
+    {
+        // Arrange
+        var token = "fake-token";
+        var groupId = 123;
+        var authApi = "https://api.monitoring.electrificationtools.abb.com/auth/";
+
+        var expectedUri = new Uri($"{authApi}api/UsersMonitorGroup/AssignUserToGroup");
+        var payload = new UsersMonitorGroup { GroupMonitorId = groupId };
+        var expectedContent = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req =>
+                    req.Content != null &&
+                    req.Method == HttpMethod.Post &&
+                    req.RequestUri == expectedUri &&
+                    req.Content.ReadAsStringAsync().Result == expectedContent.ReadAsStringAsync().Result),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK
+            })
+            .Verifiable();
+
+
+        // Act
+        await _monitorGroupService.AddUserToGroup(token, groupId);
+
+        // Assert
+        _httpMessageHandlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(req =>
+                req.Content != null &&
+                req.Method == HttpMethod.Post &&
+                req.RequestUri == expectedUri &&
+                req.Content.ReadAsStringAsync().Result == expectedContent.ReadAsStringAsync().Result),
+            ItExpr.IsAny<CancellationToken>()
+        );
     }
 }

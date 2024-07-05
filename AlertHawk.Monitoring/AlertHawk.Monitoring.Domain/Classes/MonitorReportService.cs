@@ -27,7 +27,7 @@ public class MonitorReportService : IMonitorReportService
         
         if (!string.IsNullOrWhiteSpace(filter))
         {
-            monitorReportUptimes = monitorReportUptimes.Where(x => x.MonitorName.Contains(filter, StringComparison.CurrentCultureIgnoreCase)).ToList();
+            monitorReportUptimes = monitorReportUptimes.Where(x => x.MonitorName != null && x.MonitorName.Contains(filter, StringComparison.CurrentCultureIgnoreCase)).ToList();
         }
 
         return monitorReportUptimes;
@@ -44,7 +44,7 @@ public class MonitorReportService : IMonitorReportService
         
         if (!string.IsNullOrWhiteSpace(filter))
         {
-            result = result.Where(x => x.MonitorName.Contains(filter, StringComparison.CurrentCultureIgnoreCase)).ToList();
+            result = result.Where(x => x.MonitorName != null && x.MonitorName.Contains(filter, StringComparison.CurrentCultureIgnoreCase)).ToList();
         }
 
         return result;

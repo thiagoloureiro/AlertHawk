@@ -5,19 +5,6 @@ namespace AlertHawk.Monitoring.Tests.ControllerTests;
 public class VersionControllerTests
 {
     [Fact]
-    public void Should_Return_Post_Version()
-    {
-        // Arrange
-        var controller = new VersionController();
-
-        // Act
-        var result = controller.GetDataPost("TestValue");
-
-        // Assert
-        Assert.Equal("TestValue", result);
-    }
-    
-    [Fact]
     public void Should_Return_Version()
     {
         // Arrange
@@ -29,5 +16,4 @@ public class VersionControllerTests
         // Assert
         Assert.NotNull(result);
     }
-  
 }

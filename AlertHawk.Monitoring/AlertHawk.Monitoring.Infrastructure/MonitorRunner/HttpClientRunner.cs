@@ -222,7 +222,7 @@ public class HttpClientRunner : IHttpClientRunner
                 response?.Dispose();
             }
         }
-        catch (Exception e)
+        catch (Exception)
         {
             client?.Dispose();
         }

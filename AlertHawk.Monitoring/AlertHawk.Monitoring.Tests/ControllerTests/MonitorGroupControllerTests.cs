@@ -69,7 +69,7 @@ public class MonitorGroupControllerTests
         {
             new MonitorGroup
             {
-                Name = null
+                Name = "Name"
             }
         };
         _controller.ControllerContext = new ControllerContext
@@ -116,7 +116,7 @@ public class MonitorGroupControllerTests
         {
             new MonitorGroup
             {
-                Name = null
+                Name = "Name"
             }
         };
         _controller.ControllerContext = new ControllerContext
@@ -159,11 +159,13 @@ public class MonitorGroupControllerTests
     {
         // Arrange
         var validToken = "Bearer valid.token.here";
-        var monitorGroups = new List<MonitorGroup>();
-        monitorGroups.Add(new MonitorGroup
+        var monitorGroups = new List<MonitorGroup>
         {
-            Name = null
-        });
+            new MonitorGroup
+            {
+                Name = "Name"
+            }
+        };
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext()
@@ -187,7 +189,7 @@ public class MonitorGroupControllerTests
         // Arrange
         var monitorGroup = new MonitorGroup
         {
-            Name = null
+            Name = "Name"
         };
         _mockMonitorGroupService.Setup(service => service.GetMonitorGroupById(It.IsAny<int>()))
             .ReturnsAsync(monitorGroup);

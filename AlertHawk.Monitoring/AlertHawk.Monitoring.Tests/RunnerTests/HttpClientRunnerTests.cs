@@ -5,10 +5,6 @@ using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 using NSubstitute;
 using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Xunit;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.RunnerTests
@@ -120,7 +116,7 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
             {
                 Id = 1,
                 Status = false,
-                Name = null,
+                Name = "Name",
                 HeartBeatInterval = 0,
                 Retries = 0
             };

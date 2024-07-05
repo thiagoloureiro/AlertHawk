@@ -10,6 +10,6 @@ public interface IMonitorHistoryRepository
     Task DeleteMonitorHistory(int days);
     Task<long> GetMonitorHistoryCount();
     Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndHours(int id, int hours);
-    Task<MonitorSettings> GetMonitorHistoryRetention();
+    Task<MonitorSettings?> GetMonitorHistoryRetention();
     Task SetMonitorHistoryRetention(int days);
 }
