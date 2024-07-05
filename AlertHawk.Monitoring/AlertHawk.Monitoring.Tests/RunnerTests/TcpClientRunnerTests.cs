@@ -62,4 +62,27 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
         // Assert
         Assert.False(result);
     }
+    
+    [Theory]
+    [InlineData("127.0.0.1", 4434131)]
+    public async Task Should_Make_Tcp_Call_InvalidPort_Failed_Result(string ip, int port)
+    {
+        // Arrange
+        var monitorTcp = new MonitorTcp
+        {
+            Id = 1,
+            Name = "Test",
+            Timeout = 20,
+            Port = port,
+            IP = ip,
+            HeartBeatInterval = 1,
+            Retries = 0,
+        };
+
+        // Act
+        var result = await _tcpClientRunner.MakeTcpCall(monitorTcp);
+
+        // Assert
+        Assert.False(result);
+    }
 }
