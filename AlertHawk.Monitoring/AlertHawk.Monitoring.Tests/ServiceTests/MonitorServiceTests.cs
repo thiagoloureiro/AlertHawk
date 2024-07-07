@@ -439,5 +439,37 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             Assert.NotNull(result);
         }
+        
+        [Fact]
+        public async Task PauseMonitorByGroupId_UpdatesRepositoryAndInvalidatesCache()
+        {
+            // Arrange
+            var groupId = 1;
+            var paused = true;
+            var monitorGroup = new MonitorGroup
+            {
+                Name = "Name",
+                Id = groupId,
+                Monitors = new List<Monitor>
+                {
+                    new Monitor
+                    {
+                        Id = 1,
+                        Name = "Name",
+                        HeartBeatInterval = 0,
+                        Retries = 0,
+                        Paused = false
+                    }
+                }
+            };
+                
+            _monitorGroupServiceMock.Setup(x => x.GetMonitorGroupById(groupId)).ReturnsAsync(monitorGroup);
+
+            // Act
+            await _monitorService.PauseMonitorByGroupId(groupId, paused);
+
+            // Assert
+            _monitorRepositoryMock.Verify(repo => repo.PauseMonitor(groupId, paused), Times.Once);
+        }
     }
 }
