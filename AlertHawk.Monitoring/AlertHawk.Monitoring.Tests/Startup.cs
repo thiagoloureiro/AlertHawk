@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
@@ -15,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AlertHawk.Monitoring.Tests;
 
+[ExcludeFromCodeCoverage]
 public class Startup
 {
     public static void ConfigureServices(IServiceCollection services)
