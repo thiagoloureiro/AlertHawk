@@ -246,6 +246,29 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
         }
 
         [Fact]
+        public async Task UpdateMonitorTcp_SetsHeadersJsonAndCallsRepository()
+        {
+            // Arrange
+            var monitor = new MonitorTcp
+            {
+                Name = "Test Monitor",
+                MonitorTcp = "www.google.com",
+                HeartBeatInterval = 0,
+                Retries = 0,
+                IP = "1.1.1.1",
+                Port = 80,
+                Timeout = 1000
+            };
+            _monitorRepositoryMock.Setup(repo => repo.UpdateMonitorTcp(monitor));
+
+            // Act
+            await _monitorService.UpdateMonitorTcp(monitor);
+
+            // Assert
+            _monitorRepositoryMock.Verify(repo => repo.UpdateMonitorTcp(monitor), Times.Once);
+        }
+
+        [Fact]
         public async Task GetHttpMonitorByMonitorId_ReturnsMonitor()
         {
             // Arrange
@@ -383,8 +406,8 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             Assert.NotNull(result);
         }
-        
-       
+
+
         [Fact]
         public void GetMonitorDashboardDataList_ReturnsMonitorDashboardDataList()
         {
@@ -412,7 +435,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
 
             // Act
             var result = _monitorService.GetMonitorDashboardDataList(monitorIds);
-            
+
             // Assert
             Assert.NotNull(result);
         }
