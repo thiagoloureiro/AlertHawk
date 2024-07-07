@@ -10,6 +10,7 @@ using EasyMemoryCache.Extensions;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
+using NSubstitute;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ServiceTests;
@@ -290,5 +291,100 @@ public class MonitorGroupServiceTests
                 req.Content.ReadAsStringAsync().Result == expectedContent.ReadAsStringAsync().Result),
             ItExpr.IsAny<CancellationToken>()
         );
+    }
+    
+    [Fact]
+    public async Task RemoveMonitorFromGroup_ShouldInvalidateCache()
+    {
+        // Arrange
+        var monitorGroupItems = new MonitorGroupItems { MonitorId = 1, MonitorGroupId = 1 };
+
+        _monitorGroupRepositoryMock.Setup(repo => repo.RemoveMonitorFromGroup(It.IsAny<MonitorGroupItems>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _monitorGroupService.RemoveMonitorFromGroup(monitorGroupItems);
+
+        // Assert
+        _cachingMock.Verify(caching => caching.Invalidate(It.IsAny<string>()), Times.Once);
+    }
+    
+    [Fact]
+    public async Task GetMonitorGroupById_ShouldReturnMonitorGroup()
+    {
+        // Arrange
+        var monitorGroup = new MonitorGroup
+        {
+            Id = 1,
+            Name = "Group1",
+            Monitors = new List<Monitor>
+            {
+                new Monitor { Id = 1, Name = "Monitor1", Retries = 1, HeartBeatInterval = 1}
+            }
+        };
+
+        _monitorGroupRepositoryMock.Setup(repo => repo.GetMonitorGroupById(It.IsAny<int>()))
+            .ReturnsAsync(monitorGroup);
+
+        // Act
+        var result = await _monitorGroupService.GetMonitorGroupById(1);
+
+        // Assert
+        Assert.Equal(monitorGroup, result);
+    }
+    
+    [Fact]
+    public async Task GetMonitorListByGroupId_ShouldReturnMonitors()
+    {
+        // Arrange
+        var monitorGroupList = new List<MonitorGroup>
+        {
+            new MonitorGroup
+            {
+                Id = 1,
+                Name = "Group1",
+                Monitors = new List<Monitor>
+                {
+                    new Monitor { Id = 1, Name = "Monitor1", Retries = 1, HeartBeatInterval = 1}
+                }
+            }
+        };
+
+        _monitorGroupRepositoryMock.Setup(repo => repo.GetMonitorListByGroupId(It.IsAny<int>()))
+            .ReturnsAsync(monitorGroupList[0].Monitors);
+
+        // Act
+        var result = await _monitorGroupService.GetMonitorListByGroupId(It.IsAny<int>());
+
+        // Assert
+        if (result != null)
+        {
+            Assert.Single(result);
+            Assert.Equal("Monitor1", result.First().Name);
+        }
+    }
+    
+    [Fact]
+    public async Task GetMonitorGroupByName_ShouldReturnMonitorGroup()
+    {
+        // Arrange
+        var monitorGroup = new MonitorGroup
+        {
+            Id = 1,
+            Name = "Group1",
+            Monitors = new List<Monitor>
+            {
+                new Monitor { Id = 1, Name = "Monitor1", Retries = 1, HeartBeatInterval = 1, Status = true}
+            }
+        };
+
+        _monitorGroupRepositoryMock.Setup(repo => repo.GetMonitorGroupByName(It.IsAny<string>()))
+            .ReturnsAsync(monitorGroup);
+
+        // Act
+        var result = await _monitorGroupService.GetMonitorGroupByName("Group1");
+
+        // Assert
+        Assert.Equal(monitorGroup, result);
     }
 }
