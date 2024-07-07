@@ -15,7 +15,13 @@ namespace AlertHawk.Notification.Tests.ControllerTests
         public NotificationControllerTests()
         {
             _notificationService = Substitute.For<INotificationService>();
-            _controller = new NotificationController(_notificationService);
+            _controller = new NotificationController(_notificationService)
+            {
+                ControllerContext = new ControllerContext
+                {
+                    HttpContext = new DefaultHttpContext()
+                }
+            };
         }
 
         [Fact]
@@ -201,6 +207,41 @@ namespace AlertHawk.Notification.Tests.ControllerTests
 
             // Act
             var result = await _controller.SendNotification(notificationItem) as OkObjectResult;
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+        }
+        
+        [Fact]
+        public async Task SelectNotificationItemList_ShouldReturnOk_WithEmptyNotificationItems()
+        {
+            // Arrange
+            var ids = new List<int> { 1, 2, 3 };
+            var notificationItems = new List<NotificationItem>();
+            _notificationService.SelectNotificationItemList(ids).Returns(notificationItems);
+
+            // Act
+            var result = await _controller.SelectNotificationItemList(ids) as OkObjectResult;
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+            var items = Assert.IsType<List<NotificationItem>>(result.Value);
+            Assert.Empty(items);
+        }
+        
+        [Fact]
+        public async Task SelectNotificationItemList_ShouldReturnOk()
+        {
+            // Arrange
+            var notificationItems = new List<NotificationItem>();
+            var token = "token";
+            _notificationService.SelectNotificationItemList(token).Returns(notificationItems);
+            _controller.HttpContext.Request.Headers["Authorization"] = "Bearer validJwtToken";
+
+            // Act
+            var result = await _controller.SelectNotificationItemList() as OkObjectResult;
 
             // Assert
             Assert.NotNull(result);
