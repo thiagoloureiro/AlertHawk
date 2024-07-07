@@ -80,12 +80,14 @@ public class MonitorGroupServiceTests
 
         // Simulate the caching mechanism to call the repository method
         _cachingMock.Setup(caching => caching.GetOrSetObjectFromCacheAsync(
-                It.IsAny<string>(), 
-                It.IsAny<int>(), 
-                It.IsAny<Func<Task<IEnumerable<MonitorGroup>>>>(), 
-                It.IsAny<bool>(), 
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<Func<Task<IEnumerable<MonitorGroup>>>>(),
+                It.IsAny<bool>(),
                 It.IsAny<CacheTimeInterval>()))
-            .Returns((string _, int _, Func<Task<IEnumerable<MonitorGroup>>> fetchFunction, bool _, CacheTimeInterval _) => fetchFunction());
+            .Returns(
+                (string _, int _, Func<Task<IEnumerable<MonitorGroup>>> fetchFunction, bool _, CacheTimeInterval _) =>
+                    fetchFunction());
 
         _monitorGroupRepositoryMock.Setup(repo => repo.GetMonitorGroupList())
             .ReturnsAsync(monitorGroups);
@@ -105,10 +107,10 @@ public class MonitorGroupServiceTests
         Assert.Equal(monitorGroups, result);
         _monitorGroupRepositoryMock.Verify(repo => repo.GetMonitorGroupList(), Times.Once);
         _cachingMock.Verify(caching => caching.GetOrSetObjectFromCacheAsync(
-            It.IsAny<string>(), 
-            It.IsAny<int>(), 
-            It.IsAny<Func<Task<IEnumerable<MonitorGroup>>>>(), 
-            It.IsAny<bool>(), 
+            It.IsAny<string>(),
+            It.IsAny<int>(),
+            It.IsAny<Func<Task<IEnumerable<MonitorGroup>>>>(),
+            It.IsAny<bool>(),
             It.IsAny<CacheTimeInterval>()), Times.Once);
     }
 
@@ -122,14 +124,14 @@ public class MonitorGroupServiceTests
             {
                 Id = 1, Name = "Group1", Monitors = new List<Monitor>
                 {
-                    new Monitor() { Id = 1, Name =  "Name", HeartBeatInterval = 0, Retries = 0}
+                    new Monitor() { Id = 1, Name = "Name", HeartBeatInterval = 0, Retries = 0 }
                 }
             },
             new MonitorGroup
             {
                 Id = 2, Name = "Group2", Monitors = new List<Monitor>
                 {
-                    new Monitor() { Id = 2, Name =  "Name", HeartBeatInterval = 0, Retries = 0}
+                    new Monitor() { Id = 2, Name = "Name", HeartBeatInterval = 0, Retries = 0 }
                 }
             }
         };
@@ -231,7 +233,7 @@ public class MonitorGroupServiceTests
         // Assert
         _cachingMock.Verify(caching => caching.Invalidate(It.IsAny<string>()), Times.Once);
     }
-    
+
     [Fact]
     public async Task UpdateMonitorGroup_ShouldInvalidateCache()
     {
@@ -247,7 +249,7 @@ public class MonitorGroupServiceTests
         // Assert
         _cachingMock.Verify(caching => caching.Invalidate(It.IsAny<string>()), Times.Once);
     }
-    
+
     [Fact]
     public async Task AddUserToGroup_ShouldSendPostRequest()
     {
@@ -258,7 +260,8 @@ public class MonitorGroupServiceTests
 
         var expectedUri = new Uri($"{authApi}api/UsersMonitorGroup/AssignUserToGroup");
         var payload = new UsersMonitorGroup { GroupMonitorId = groupId };
-        var expectedContent = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+        var expectedContent =
+            new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
 
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -292,7 +295,7 @@ public class MonitorGroupServiceTests
             ItExpr.IsAny<CancellationToken>()
         );
     }
-    
+
     [Fact]
     public async Task RemoveMonitorFromGroup_ShouldInvalidateCache()
     {
@@ -308,7 +311,7 @@ public class MonitorGroupServiceTests
         // Assert
         _cachingMock.Verify(caching => caching.Invalidate(It.IsAny<string>()), Times.Once);
     }
-    
+
     [Fact]
     public async Task GetMonitorGroupById_ShouldReturnMonitorGroup()
     {
@@ -319,7 +322,7 @@ public class MonitorGroupServiceTests
             Name = "Group1",
             Monitors = new List<Monitor>
             {
-                new Monitor { Id = 1, Name = "Monitor1", Retries = 1, HeartBeatInterval = 1}
+                new Monitor { Id = 1, Name = "Monitor1", Retries = 1, HeartBeatInterval = 1 }
             }
         };
 
@@ -332,7 +335,7 @@ public class MonitorGroupServiceTests
         // Assert
         Assert.Equal(monitorGroup, result);
     }
-    
+
     [Fact]
     public async Task GetMonitorListByGroupId_ShouldReturnMonitors()
     {
@@ -345,7 +348,7 @@ public class MonitorGroupServiceTests
                 Name = "Group1",
                 Monitors = new List<Monitor>
                 {
-                    new Monitor { Id = 1, Name = "Monitor1", Retries = 1, HeartBeatInterval = 1}
+                    new Monitor { Id = 1, Name = "Monitor1", Retries = 1, HeartBeatInterval = 1 }
                 }
             }
         };
@@ -363,7 +366,7 @@ public class MonitorGroupServiceTests
             Assert.Equal("Monitor1", result.First().Name);
         }
     }
-    
+
     [Fact]
     public async Task GetMonitorGroupByName_ShouldReturnMonitorGroup()
     {
@@ -374,7 +377,7 @@ public class MonitorGroupServiceTests
             Name = "Group1",
             Monitors = new List<Monitor>
             {
-                new Monitor { Id = 1, Name = "Monitor1", Retries = 1, HeartBeatInterval = 1, Status = true}
+                new Monitor { Id = 1, Name = "Monitor1", Retries = 1, HeartBeatInterval = 1, Status = true }
             }
         };
 
@@ -386,5 +389,21 @@ public class MonitorGroupServiceTests
 
         // Assert
         Assert.Equal(monitorGroup, result);
+    }
+
+    [Fact]
+    public async Task AddMonitorGroup_ShouldInvalidateCache()
+    {
+        // Arrange
+        var monitorGroup = new MonitorGroup { Id = 1, Name = "Group1" };
+
+        _monitorGroupRepositoryMock.Setup(repo => repo.AddMonitorGroup(It.IsAny<MonitorGroup>()))
+            .ReturnsAsync(1);
+
+        // Act
+        await _monitorGroupService.AddMonitorGroup(monitorGroup, null);
+
+        // Assert
+        _cachingMock.Verify(caching => caching.Invalidate(It.IsAny<string>()), Times.Once);
     }
 }

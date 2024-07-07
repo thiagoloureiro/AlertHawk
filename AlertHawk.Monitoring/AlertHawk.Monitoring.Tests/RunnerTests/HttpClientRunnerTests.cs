@@ -134,6 +134,45 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
         }
         
         [Fact]
+        public async Task CheckUrlsAsync_Should_Update_Monitor_Status_On_Failure()
+        {
+            // Arrange
+            var monitorHttp = new MonitorHttp
+            {
+                UrlToCheck = "https://postman-echo1.com/get",
+                MonitorId = 1,
+                Name = "Test",
+                Id = 1,
+                CheckCertExpiry = true,
+                IgnoreTlsSsl = false,
+                Timeout = 10,
+                MonitorHttpMethod = MonitorHttpMethod.Get,
+                MaxRedirects = 5,
+                HeartBeatInterval = 1,
+                Retries = 1,
+                LastStatus = false,
+                ResponseTime = 10
+            };
+
+            var monitor = new Monitor
+            {
+                Id = 1,
+                Status = false,
+                Name = "Name",
+                HeartBeatInterval = 0,
+                Retries = 0
+            };
+
+            _monitorRepository.GetMonitorById(1).Returns(monitor);
+
+            // Act
+            await _httpClientRunner.CheckUrlsAsync(monitorHttp);
+
+            // Assert
+            await _monitorRepository.Received(1).UpdateMonitorStatus(1, false, Arg.Any<int>());
+        }
+        
+        [Fact]
         public async Task Should_Make_HttpClient_Call_Timeout()
         {
             // Arrange
