@@ -122,11 +122,6 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
             };
 
             _monitorRepository.GetMonitorById(1).Returns(monitor);
-            var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                ReasonPhrase = "OK",
-                Content = new StringContent("Response content")
-            };
 
             // Act
             await _httpClientRunner.CheckUrlsAsync(monitorHttp);
@@ -137,7 +132,31 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
             await _notificationProducer.Received(1).HandleSuccessNotifications(monitorHttp, "OK");
             await _monitorAlertRepository.Received(1).SaveMonitorAlert(Arg.Any<MonitorHistory>(), Arg.Any<MonitorEnvironment>());
         }
+        
+        [Fact]
+        public async Task Should_Make_HttpClient_Call_Timeout()
+        {
+            // Arrange
+            var monitorHttp = new MonitorHttp
+            {
+                UrlToCheck = "https://postman-echo.com/delay/10",
+                MonitorId = 1,
+                Name = "Test",
+                Id = 1,
+                CheckCertExpiry = true,
+                IgnoreTlsSsl = false,
+                Timeout = 1,
+                MonitorHttpMethod = MonitorHttpMethod.Get,
+                MaxRedirects = 5,
+                HeartBeatInterval = 1,
+                Retries = 0,
+            };
 
-       
+            // Act
+            var result = await _httpClientRunner.MakeHttpClientCall(monitorHttp);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.InternalServerError, result.StatusCode);
+        }
     }
 }
