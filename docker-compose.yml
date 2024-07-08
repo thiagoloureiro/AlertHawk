@@ -9,12 +9,33 @@ services:
       - "5672:5672"  # RabbitMQ default port
       - "15672:15672"  # RabbitMQ management plugin port
 
+  redis:
+    image: redis:latest
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"  # Redis default port
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      SA_PASSWORD: "YourStrong!Passw0rd"
+      ACCEPT_EULA: "Y"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    ports:
+      - "1433:1433"  # SQL Server default port
+
   authentication:
     build:
       context: ./AlertHawk.Authentication
       dockerfile: Dockerfile
     depends_on:
       - rabbitmq
+      - redis
+      - sqlserver
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
     ports:
       - "8085:80"  # Expose internal port 80 to host
 
@@ -24,6 +45,10 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - rabbitmq
+      - redis
+      - sqlserver
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
     ports:
       - "8086:80"  # Expose internal port 80 to host
 
@@ -33,8 +58,19 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - rabbitmq
+      - redis
+      - sqlserver
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
     ports:
       - "8087:80"  # Expose internal port 80 to host
 
+  ui:
+    image: thiagoguaru/alerthawk.ui
+    ports:
+      - "8080:80"  # Expose internal port 80 to host
+
 volumes:
   rabbitmq_data:
+  redis_data:
+  sqlserver_data:
