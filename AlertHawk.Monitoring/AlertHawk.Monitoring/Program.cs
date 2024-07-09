@@ -4,21 +4,15 @@ using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Helpers;
-using AlertHawk.Monitoring.Infrastructure;
-using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 using AlertHawk.Monitoring.Infrastructure.Producers;
-using AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 using EasyMemoryCache.Configuration;
 using Hangfire;
 using MassTransit;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
-using System.Diagnostics.CodeAnalysis;
-using System.Net.Security;
 using System.Reflection;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -70,12 +64,12 @@ if (string.Equals(sentryEnabled, "true", StringComparison.InvariantCultureIgnore
 
 builder.Services.AddMassTransit(x =>
 {
-    x.UsingRabbitMq((context, cfg) =>
+    x.UsingRabbitMq((_, cfg) =>
     {
         cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
         {
-            h.Username(rabbitMqUser);
-            h.Password(rabbitMqPass);
+            if (rabbitMqUser != null) h.Username(rabbitMqUser);
+            if (rabbitMqPass != null) h.Password(rabbitMqPass);
         });
     });
 });
@@ -154,7 +148,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.DefaultIgnoreCondition =
-        System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+        JsonIgnoreCondition.WhenWritingNull;
     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals;
 });

@@ -52,9 +52,9 @@ namespace AlertHawk.Monitoring.Controllers
             "Retrieves dashboard details like uptime % and cert information for a list of monitors")]
         [ProducesResponseType(typeof(List<MonitorDashboard>), StatusCodes.Status200OK)]
         [HttpPost("MonitorDashboardDataList")]
-        public IActionResult GetMonitorDashboardDataList([FromBody] List<int> ids)
+        public async Task<IActionResult> GetMonitorDashboardDataList([FromBody] List<int> ids)
         {
-            var result = _monitorService.GetMonitorDashboardDataList(ids);
+            var result = await _monitorService.GetMonitorDashboardDataList(ids);
             return Ok(result);
         }
 

@@ -6,6 +6,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Domain.Utils;
 using EasyMemoryCache;
+using EasyMemoryCache.Configuration;
 using Newtonsoft.Json;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
@@ -242,7 +243,7 @@ public class MonitorService : IMonitorService
                     }
                 }
 
-                await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20);
+                await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20, CacheTimeInterval.Minutes);
                 Console.WriteLine("Finished Caching Monitor Dashboard Data List");
             }
         }
@@ -326,12 +327,13 @@ public class MonitorService : IMonitorService
             if (monitors != null)
             {
                 var monitorList = monitors.ToList();
-                var dashboardDataList = GetMonitorDashboardDataList(monitorList.Select(x => x.Id).ToList()).ToList();
-                if (dashboardDataList.Any())
+                var dashboardDataList = await GetMonitorDashboardDataList(monitorList.Select(x => x.Id).ToList());
+                var monitorDashboards = dashboardDataList.ToList();
+                if (monitorDashboards.Any())
                 {
                     foreach (var monitor in monitorList)
                     {
-                        var dashboardData = dashboardDataList.FirstOrDefault(x => x.MonitorId == monitor.Id);
+                        var dashboardData = monitorDashboards.FirstOrDefault(x => x.MonitorId == monitor.Id);
                         if (dashboardData != null)
                         {
                             monitor.MonitorStatusDashboard = dashboardData;
@@ -520,9 +522,9 @@ public class MonitorService : IMonitorService
         await _caching.InvalidateAllAsync();
     }
 
-    public IEnumerable<MonitorDashboard> GetMonitorDashboardDataList(List<int> ids)
+    public async Task<IEnumerable<MonitorDashboard>> GetMonitorDashboardDataList(List<int> ids)
     {
-        var data = _caching.GetValueFromCache<List<MonitorDashboard?>>(_cacheKeyDashboardList);
+        var data = await _caching.GetValueFromCacheAsync<List<MonitorDashboard?>>(_cacheKeyDashboardList);
 
         if (data != null)
         {
