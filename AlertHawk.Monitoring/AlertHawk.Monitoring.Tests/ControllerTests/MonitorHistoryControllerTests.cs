@@ -68,16 +68,17 @@ public class MonitorHistoryControllerTests
     }
 
     [Fact]
-    public void GetMonitorDashboardDataList_ReturnsOk()
+    public async Task GetMonitorDashboardDataList_ReturnsOk()
     {
         // Arrange
         var monitorDashboardList = new List<MonitorDashboard> { new MonitorDashboard() };
         var ids = new List<int> { 1, 2, 3 };
+    
         _mockMonitorService.Setup(service => service.GetMonitorDashboardDataList(It.IsAny<List<int>>()))
-            .Returns(monitorDashboardList);
+            .ReturnsAsync(monitorDashboardList);
 
         // Act
-        var result = _controller.GetMonitorDashboardDataList(ids);
+        var result = await _controller.GetMonitorDashboardDataList(ids);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);

@@ -7,6 +7,7 @@ using EasyMemoryCache;
 using EasyMemoryCache.Configuration;
 using Moq;
 using Newtonsoft.Json;
+using NSubstitute;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ServiceTests
@@ -20,6 +21,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
         private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
         private readonly MonitorService _monitorService;
         private readonly Mock<IMonitorGroupService> _monitorGroupServiceMock;
+        private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
 
         public MonitorServiceTests()
         {
@@ -470,6 +472,178 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
 
             // Assert
             _monitorRepositoryMock.Verify(repo => repo.PauseMonitor(groupId, paused), Times.Once);
+        }
+        
+        [Fact]
+        public async Task GetMonitorListByMonitorGroupIds_ReturnsMonitorList()
+        {
+            // Arrange
+            string _cacheKeyDashboardList = "MonitorDashboardList";
+            var monitorGroupIds = new List<int> { 1 };
+            var token = "token";
+            var lstDashboardData = new List<MonitorDashboard?>
+            {
+                new MonitorDashboard
+                {
+                    CertExpDays = 10,
+                    MonitorId = 1,
+                    ResponseTime = 10,
+                    Uptime1Hr = 100,
+                    Uptime3Months = 100,
+                    Uptime6Months = 100,
+                    Uptime24Hrs = 100,
+                    Uptime7Days = 100,
+                    Uptime30Days = 100,
+                    HistoryData = new List<MonitorHistory>
+                    {
+                        new MonitorHistory
+                        {
+                            HttpVersion = "2.0",
+                            MonitorId = 1,
+                            ResponseTime = 10,
+                            Status = true,
+                            TimeStamp = DateTime.UtcNow,
+                            Id = 1,
+                            ResponseMessage = "Response",
+                            StatusCode = 200,
+                            ScreenShotUrl = "https://www.google.com"
+                        }
+                    }
+                }
+            };
+            
+            
+            var monitorList = new List<Monitor>
+            {
+                new Monitor
+                {
+                    Name = "Name",
+                    HeartBeatInterval = 0,
+                    Retries = 0,
+                    Paused = false,
+                    Id = 1
+                }
+            };
+            
+            _monitorGroupServiceMock.Setup(x => x.GetUserGroupMonitorListIds(token)).ReturnsAsync(monitorGroupIds);
+            _monitorRepositoryMock.Setup(x => x.GetMonitorListByMonitorGroupIds(monitorGroupIds, MonitorEnvironment.All)).ReturnsAsync(monitorList);
+            _cachingMock.Setup(caching => caching.GetValueFromCacheAsync<List<MonitorDashboard?>>(
+                    _cacheKeyDashboardList))
+                .ReturnsAsync(lstDashboardData);
+            
+            
+            // Act
+            var result = await _monitorService.GetMonitorListByMonitorGroupIds(token, MonitorEnvironment.All);
+
+            // Assert
+            Assert.Equal(monitorList, result);
+        }
+        
+        [Fact]
+        public async Task SetMonitorDashboardDataCacheList()
+        {
+            // Arrange
+            string _cacheKeyDashboardList = "MonitorDashboardList";
+            GlobalVariables.MasterNode = true;
+            
+            var monitorId = 1;
+            var monitorHistory = new List<MonitorHistory>
+            {
+                new MonitorHistory { TimeStamp = new DateTime(), Status = true, ResponseTime = 100 },
+                new MonitorHistory { TimeStamp =new DateTime(), Status = false, ResponseTime = 200 },
+            };
+            
+            var monitorList = new List<Monitor>
+            {
+                new Monitor
+                {
+                    Name = "Name",
+                    HeartBeatInterval = 0,
+                    Retries = 0,
+                    Id = 1
+                }
+            };
+            
+            var lstDashboardData = new List<MonitorDashboard?>
+            {
+                new MonitorDashboard
+                {
+                    CertExpDays = 10,
+                    MonitorId = 1,
+                    ResponseTime = 10,
+                    Uptime1Hr = 100,
+                    Uptime3Months = 100,
+                    Uptime6Months = 100,
+                    Uptime24Hrs = 100,
+                    Uptime7Days = 100,
+                    Uptime30Days = 100,
+                    HistoryData = new List<MonitorHistory>
+                    {
+                        new MonitorHistory
+                        {
+                            HttpVersion = "2.0",
+                            MonitorId = 1,
+                            ResponseTime = 10,
+                            Status = true,
+                            Id = 1,
+                            ResponseMessage = "Response",
+                            StatusCode = 200,
+                            ScreenShotUrl = "https://www.google.com",
+                            TimeStamp = new DateTime()
+                        }
+                    }
+                }
+            };
+            
+            _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(monitorId, 90))
+                .ReturnsAsync(monitorHistory);
+            _monitorRepositoryMock.Setup(repo => repo.GetMonitorList()).ReturnsAsync(monitorList);
+
+            _cachingMock.Setup(x => x.SetValueToCacheAsync(_cacheKeyDashboardList, lstDashboardData, It.IsAny<int>(),
+                It.IsAny<CacheTimeInterval>()));
+            
+            // Act
+            await _monitorService.SetMonitorDashboardDataCacheList();
+        }
+        
+        [Fact]
+        public async Task GetMonitorStatusDashboardData_ReturnsMonitorStatusDashboardData()
+        {
+            // Arrange
+            string _cacheKeyDashboardList = "MonitorDashboardList";
+            GlobalVariables.MasterNode = true;
+            string token = "token";
+            var monitorGroupIds = new List<int> { 1 };
+            var monitor = new Monitor()
+                { Id = 1, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
+            
+            var monitorHistory = new List<MonitorHistory>
+            {
+                new MonitorHistory { TimeStamp = DateTime.UtcNow.AddDays(-1), Status = true, ResponseTime = 100 },
+                new MonitorHistory { TimeStamp = DateTime.UtcNow.AddDays(-2), Status = false, ResponseTime = 200 },
+            };
+            var monitorId = 1;
+            _monitorGroupServiceMock.Setup(x => x.GetUserGroupMonitorListIds(token)).ReturnsAsync(monitorGroupIds);
+            _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(monitorId, 90))
+                .ReturnsAsync(monitorHistory);
+            
+            _monitorRepositoryMock.Setup(repo => repo.GetMonitorById(monitorId)).ReturnsAsync(monitor);
+            
+            _cachingMock.Setup(caching => caching.GetOrSetObjectFromCacheAsync(
+                    $"Monitor_{monitorId}",
+                    It.IsAny<int>(),
+                    It.IsAny<Func<Task<Monitor>>>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<CacheTimeInterval>()))
+                .ReturnsAsync(monitor);
+          
+            // Act
+            var result = await _monitorService.GetMonitorDashboardData(monitorId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(monitorId, result.MonitorId);
+            Assert.Equal(150, result.ResponseTime); // (100 + 200) / 2
         }
     }
 }
