@@ -12,6 +12,7 @@
 **Cloud Ready:** AlertHawk is designed to seamlessly integrate with cloud environments, providing flexibility and adaptability to your infrastructure. Whether you're hosted on-premises or in the cloud, AlertHawk has you covered.
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/20da64ba9f9d48abb0733064d2491da4)](https://app.codacy.com/gh/thiagoloureiro/AlertHawk/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![codebeat badge](https://codebeat.co/badges/793a050a-d71c-404a-8cef-f747c4114be8)](https://codebeat.co/projects/github-com-thiagoloureiro-alerthawk-main)
 
 ## AlertHawk.Notification - Docker Container
 ![Docker Image Size (tag)](https://img.shields.io/docker/image-size/thiagoguaru/alerthawk.notification/latest)
