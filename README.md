@@ -2,7 +2,8 @@
 **Overview**
 **AlertHawk** is a cutting-edge, easy-to-use self-hosted monitoring tool designed to empower you with real-time insights into the health and performance of your applications. Whether you're managing WebAPIs, websites, servers, or a variety of other components, AlertHawk is your go-to solution for comprehensive monitoring.
 
-** We're live!!! [https://alerthawk.devtools.dev.br/](https://alerthawk.net/) **
+** We're live!!! https://alerthawk.net **
+
 Create a new account or login with any personal Microsoft Account and try it!
 
 ## Screenshots
