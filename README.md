@@ -2,7 +2,19 @@
 **Overview**
 **AlertHawk** is a cutting-edge, easy-to-use self-hosted monitoring tool designed to empower you with real-time insights into the health and performance of your applications. Whether you're managing WebAPIs, websites, servers, or a variety of other components, AlertHawk is your go-to solution for comprehensive monitoring.
 
-**This project is in the initial phase of development, if you want to contribute please reach out**
+** We're live!!! [https://alerthawk.devtools.dev.br/](https://alerthawk.net/) **
+Create a new account or login with any personal Microsoft Account and try it!
+
+## Screenshots
+
+<img width="1462" alt="image" src="https://github.com/thiagoloureiro/AlertHawk/assets/29433794/240ef626-c195-452b-99b7-5c2240b320c1">
+
+<img width="929" alt="image" src="https://github.com/thiagoloureiro/AlertHawk/assets/29433794/c2ec386e-5183-4b5b-98d9-165a8c97329d">
+
+<img width="1362" alt="image" src="https://github.com/thiagoloureiro/AlertHawk/assets/29433794/c451da38-e02a-4d9e-8c8a-228be3704f22">
+
+<img width="442" alt="image" src="https://github.com/thiagoloureiro/AlertHawk/assets/29433794/357d0ce6-fc87-4998-b7bc-6c154867264a">
+
 
 ## Key Features
 **Versatile Component Monitoring:** AlertHawk provides seamless monitoring for a wide array of components, including WebAPIs, websites, databases, and many others. Gain deep insights into the performance and health of each component in real-time.
