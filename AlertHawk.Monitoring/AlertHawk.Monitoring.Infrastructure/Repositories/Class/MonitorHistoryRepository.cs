@@ -84,7 +84,7 @@ public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepositor
     public async Task<long> GetMonitorHistoryCount()
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = "SELECT COUNT(*) FROM [MonitorHistory]";
+        string sql = "SELECT COUNT(Id) FROM [MonitorHistory]";
         return await db.ExecuteScalarAsync<long>(sql, commandType: CommandType.Text, commandTimeout: 3600);
     }
 }
