@@ -1,11 +1,13 @@
 ﻿using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace AlertHawk.Authentication.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UserActionController : Controller
@@ -18,7 +20,7 @@ namespace AlertHawk.Authentication.Controllers
             _getOrCreateUserHelper = getOrCreateUserHelper;
             _userActionService = userActionService;
         }
-
+        
         [HttpPost("create")]
         [SwaggerOperation(Summary = "Create User Action")]
         [ProducesResponseType(StatusCodes.Status200OK)]
