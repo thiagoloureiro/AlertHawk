@@ -233,6 +233,20 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             Assert.IsType<OkResult>(result);
         }
+        
+        [Fact]
+        public async Task ResetPassword_InvalidValidUsername_ReturnsOk()
+        {
+            // Arrange
+            var userEmail = "user@example.com";
+            _mockUserService.Setup(s => s.GetByEmail(userEmail)).ReturnsAsync(It.IsAny<UserDto>());
+
+            // Act
+            var result = await _controller.ResetPassword(userEmail);
+
+            // Assert
+            Assert.IsType<OkResult>(result);
+        }
 
         [Fact]
         public async Task UpdatePassword_UpdateUserPassword_ReturnsOk()
