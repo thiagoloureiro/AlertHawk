@@ -9,7 +9,7 @@ public interface IUserRepository
     Task CreateFromAzure(UserCreationFromAzure userCreation);
     Task Update(UserDto userUpdate);
     
-    Task<string> ResetPassword(string email);
+    Task<string?> ResetPassword(string email);
 
     Task<UserDto?> Login(string username, string password);
 

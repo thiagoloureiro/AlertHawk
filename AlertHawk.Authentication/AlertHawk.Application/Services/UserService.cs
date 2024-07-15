@@ -47,8 +47,11 @@ public class UserService : IUserService
         if (user != null)
         {
             var password = await _userRepository.ResetPassword(email);
-            EmailSender.SendEmail(user.Email, "Password Reset",
-                $"This is a password reset, your new password is {password}");
+            if (password != null)
+            {
+                EmailSender.SendEmail(user.Email, "Password Reset",
+                    $"This is a password reset, your new password is {password}");
+            }
         }
     }
 
