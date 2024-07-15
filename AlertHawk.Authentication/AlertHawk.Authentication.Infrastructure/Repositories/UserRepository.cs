@@ -228,23 +228,24 @@ public class UserRepository : BaseRepository, IUserRepository
         }
     }
 
-    public async Task<string> ResetPassword(string email)
+    public async Task<string?> ResetPassword(string email)
     {
         var newPassword = PasswordHasher.GenerateRandomPassword(10);
         var salt = PasswordHasher.GenerateSalt();
         var hashedPassword = PasswordHasher.HashPassword(newPassword, salt);
 
         const string insertUserSql =
-            @"UPDATE [Users] SET Password = @Password, Salt = @Salt, UpdatedAt = @UpdatedAt WHERE LOWER(email) = LOWER(@email)";
+            @"UPDATE [Users] SET Password = @Password, Salt = @Salt, UpdatedAt = @UpdatedAt WHERE LOWER(email) = LOWER(@email) AND Password IS NOT NULL";
 
-        await ExecuteNonQueryAsync(insertUserSql, new
+        var affectedRows = await Execute(insertUserSql, new
         {
             Email = email.ToLower(CultureInfo.InvariantCulture),
             Password = hashedPassword,
             Salt = salt,
             UpdatedAt = DateTime.UtcNow
         });
-        return newPassword;
+        
+        return affectedRows > 0 ? newPassword : null;
     }
 
     public async Task<UserDto?> Login(string username, string password)
