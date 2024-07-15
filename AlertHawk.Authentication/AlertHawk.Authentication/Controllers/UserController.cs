@@ -114,7 +114,7 @@ public class UserController : Controller
         
         if(user == null)
         {
-            return BadRequest("User not found");
+            return Ok();
         }
         
         await _userService.ResetPassword(email);
