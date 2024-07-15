@@ -82,7 +82,7 @@ public class UserRepository : BaseRepository, IUserRepository
         var salt = PasswordHasher.GenerateSalt();
         var hashedPassword = PasswordHasher.HashPassword(password, salt);
 
-        const string sql = "UPDATE Users SET Password = @password, Salt = @salt WHERE LOWER(email) = @email";
+        const string sql = "UPDATE Users SET Password = @hashedPassword, Salt = @salt WHERE LOWER(email) = @email";
 
 
         await ExecuteNonQueryAsync(sql, new { email, hashedPassword, salt });
