@@ -35,9 +35,9 @@ public abstract class BaseRepository
         await connection.ExecuteAsync(sql, parameters);
     }
     
-    public async Task<int> ExecuteScalarAsync(string sql, object parameters)
+    public async Task<int> Execute(string sql, object parameters)
     {
         await using var connection = new SqlConnection(ConnectionString);
-        return await connection.ExecuteScalarAsync<int>(sql, parameters);
+        return await connection.ExecuteAsync(sql, parameters);
     }
 }

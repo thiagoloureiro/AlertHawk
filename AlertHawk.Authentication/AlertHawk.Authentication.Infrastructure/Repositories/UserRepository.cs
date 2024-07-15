@@ -237,7 +237,7 @@ public class UserRepository : BaseRepository, IUserRepository
         const string insertUserSql =
             @"UPDATE [Users] SET Password = @Password, Salt = @Salt, UpdatedAt = @UpdatedAt WHERE LOWER(email) = LOWER(@email) AND Password IS NOT NULL";
 
-        var affectedRows = await ExecuteScalarAsync(insertUserSql, new
+        var affectedRows = await Execute(insertUserSql, new
         {
             Email = email.ToLower(CultureInfo.InvariantCulture),
             Password = hashedPassword,
