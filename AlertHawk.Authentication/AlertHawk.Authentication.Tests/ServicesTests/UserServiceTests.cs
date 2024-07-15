@@ -272,4 +272,20 @@ public class UserServiceTests
         // Assert
         Assert.False(result);
     }
+    
+    [Fact]
+    public async Task UpdatePassword_CallsRepositoryUpdatePassword()
+    {
+        // Arrange
+        var password = "password";
+        var username = "username@user.com";
+
+        _mockUserRepository.Setup(x => x.UpdatePassword(username, password));
+
+        // Act
+        await _userService.UpdatePassword(username, password);
+
+        // Assert
+        _mockUserRepository.Verify(r => r.UpdatePassword(username, password), Times.Once);
+    }
 }
