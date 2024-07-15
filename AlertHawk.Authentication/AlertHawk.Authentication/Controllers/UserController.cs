@@ -109,6 +109,13 @@ public class UserController : Controller
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     public async Task<IActionResult> ResetPassword(string email)
     {
+        var user = await _userService.GetByEmail(email);
+        
+        if(user == null)
+        {
+            return BadRequest("User not found");
+        }
+        
         await _userService.ResetPassword(email);
         return Ok();
     }

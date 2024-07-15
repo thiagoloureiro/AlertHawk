@@ -43,7 +43,7 @@ public class UserService : IUserService
 
     public async Task ResetPassword(string email)
     {
-        var user = await GetByUsername(email);
+        var user = await GetByEmail(email);
         if (user != null)
         {
             var password = await _userRepository.ResetPassword(email);
