@@ -104,12 +104,42 @@ public class UserController : Controller
         }
     }
 
+    [AllowAnonymous]
     [HttpPost("resetPassword/{email}")]
     [SwaggerOperation(Summary = "Reset Password")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     public async Task<IActionResult> ResetPassword(string email)
     {
+        var user = await _userService.GetByEmail(email);
+        
+        if(user == null)
+        {
+            return BadRequest("User not found");
+        }
+        
         await _userService.ResetPassword(email);
+        return Ok();
+    }
+    
+    [HttpPost("updatePassword")]
+    [SwaggerOperation(Summary = "Reset Password")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdatePassword([FromBody] UserPassword userPassword)
+    {
+        var user = await _userService.GetByEmail(userPassword.Email);
+        var validUser = await _userService.LoginWithEmail(userPassword.Email, userPassword.CurrentPassword);
+        
+        if(!validUser)
+        {
+            return BadRequest("Invalid password");
+        }
+        
+        if(user == null)
+        {
+            return BadRequest("User not found");
+        }
+        
+        await _userService.UpdatePassword(userPassword.Email, userPassword.NewPassword);
         return Ok();
     }
 

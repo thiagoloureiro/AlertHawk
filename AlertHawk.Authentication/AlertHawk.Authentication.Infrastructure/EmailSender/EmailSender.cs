@@ -37,7 +37,6 @@ public static class EmailSender
                 {
                     smtp.Credentials = new NetworkCredential(username, password);
                     smtp.EnableSsl = useSsl;
-
                     smtp.Send(mail);
                 }
             }

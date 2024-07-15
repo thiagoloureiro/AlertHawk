@@ -184,10 +184,10 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         public async Task PutUserUpdate_UserNotFound_ReturnsBadRequest()
         {
             // Arrange
-            var userUpdate = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: false);
+            var userUpdate = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: false);
             _mockUserService.Setup(s => s.Update(userUpdate))
                 .ThrowsAsync(new InvalidOperationException("User not found"));
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: null, IsAdmin: true);
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: true);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
             // Act
@@ -223,14 +223,100 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         public async Task ResetPassword_ValidUsername_ReturnsOk()
         {
             // Arrange
-            var username = "testuser";
+            var userEmail = "user@example.com";
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(userEmail);
+            _mockUserService.Setup(s => s.GetByEmail(userEmail)).ReturnsAsync(user);
 
             // Act
-            var result = await _controller.ResetPassword(username);
+            var result = await _controller.ResetPassword(userEmail);
 
             // Assert
             Assert.IsType<OkResult>(result);
         }
+        
+        [Fact]
+        public async Task ResetPassword_InvalidValidUsername_ReturnsOk()
+        {
+            // Arrange
+            var userEmail = "user@example.com";
+            _mockUserService.Setup(s => s.GetByEmail(userEmail)).ReturnsAsync(It.IsAny<UserDto>());
+
+            // Act
+            var result = await _controller.ResetPassword(userEmail);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task UpdatePassword_UpdateUserPassword_ReturnsOk()
+        {
+            // Arrange
+            var userEmail = "user@example.com";
+            var password = "password";
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(userEmail);
+            _mockUserService.Setup(s => s.GetByEmail(userEmail)).ReturnsAsync(user);
+            _mockUserService.Setup(s => s.LoginWithEmail(userEmail, password)).ReturnsAsync(true);
+            _mockUserService.Setup(s => s.UpdatePassword(userEmail, password)).Returns(Task.CompletedTask);
+            
+            // Act
+            var result = await _controller.UpdatePassword(new UserPassword
+            {
+                CurrentPassword = password,
+                Email = userEmail,
+                NewPassword = password
+            });
+
+            // Assert
+            Assert.IsType<OkResult>(result);
+        }
+        
+        [Fact]
+        public async Task UpdatePassword_UpdateUserPassword_InvalidPasswordReturnsBadRequest()
+        {
+            // Arrange
+            var userEmail = "user@example.com";
+            var password = "password";
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(userEmail);
+            _mockUserService.Setup(s => s.GetByEmail(userEmail)).ReturnsAsync(user);
+            _mockUserService.Setup(s => s.LoginWithEmail(userEmail, password)).ReturnsAsync(false);
+            _mockUserService.Setup(s => s.UpdatePassword(userEmail, password)).Returns(Task.CompletedTask);
+            
+            // Act
+            var result = await _controller.UpdatePassword(new UserPassword
+            {
+                CurrentPassword = password,
+                Email = userEmail,
+                NewPassword = password
+            });
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+        
+        [Fact]
+        public async Task UpdatePassword_UpdateUserPassword_InvalidUserReturnsBadRequest()
+        {
+            // Arrange
+            var userEmail = "user@example.com";
+            var password = "password";
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(userEmail);
+            _mockUserService.Setup(s => s.GetByEmail(userEmail)).ReturnsAsync(It.IsAny<UserDto>());
+            _mockUserService.Setup(s => s.LoginWithEmail(userEmail, password)).ReturnsAsync(true);
+            _mockUserService.Setup(s => s.UpdatePassword(userEmail, password)).Returns(Task.CompletedTask);
+            
+            // Act
+            var result = await _controller.UpdatePassword(new UserPassword
+            {
+                CurrentPassword = password,
+                Email = userEmail,
+                NewPassword = password
+            });
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
 
         [Fact]
         public async Task GetAll_ValidRequest_ReturnsOkWithUsers()

@@ -16,7 +16,8 @@ public class UserRepository : BaseRepository, IUserRepository
     private readonly IMapper _mapper;
     private readonly IUsersMonitorGroupRepository _usersMonitorGroupRepository;
 
-    public UserRepository(IConfiguration configuration, IMapper mapper, IUsersMonitorGroupRepository usersMonitorGroupRepository) : base(configuration)
+    public UserRepository(IConfiguration configuration, IMapper mapper,
+        IUsersMonitorGroupRepository usersMonitorGroupRepository) : base(configuration)
     {
         _mapper = mapper;
         _usersMonitorGroupRepository = usersMonitorGroupRepository;
@@ -58,7 +59,7 @@ public class UserRepository : BaseRepository, IUserRepository
     public async Task Delete(Guid id)
     {
         await _usersMonitorGroupRepository.DeleteAllByUserIdAsync(id);
-        
+
         const string sql = "DELETE FROM Users WHERE Id = @Id";
         await ExecuteNonQueryAsync(sql, new { Id = id });
     }
@@ -66,7 +67,7 @@ public class UserRepository : BaseRepository, IUserRepository
     public async Task<UserDto?> GetUserByToken(string? jwtToken)
     {
         const string sql = "SELECT Username, Email, IsAdmin FROM Users WHERE Token = @jwtToken";
-        var user =  await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { jwtToken });
+        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { jwtToken });
         return _mapper.Map<UserDto>(user);
     }
 
@@ -74,6 +75,32 @@ public class UserRepository : BaseRepository, IUserRepository
     {
         const string sql = "UPDATE Users SET Token = @token WHERE LOWER(Username) = @username";
         await ExecuteNonQueryAsync(sql, new { token, username });
+    }
+
+    public async Task UpdatePassword(string email, string password)
+    {
+        var salt = PasswordHasher.GenerateSalt();
+        var hashedPassword = PasswordHasher.HashPassword(password, salt);
+
+        const string sql = "UPDATE Users SET Password = @hashedPassword, Salt = @salt WHERE LOWER(email) = @email";
+
+
+        await ExecuteNonQueryAsync(sql, new { email, hashedPassword, salt });
+    }
+
+    public async Task<bool> LoginWithEmail(string email, string password)
+    {
+        const string sql =
+            "SELECT Id, Email, Username, IsAdmin, Password, Salt, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE LOWER(email) = LOWER(@email)";
+        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql,
+            new { email = email.ToLower(CultureInfo.InvariantCulture) });
+
+        if (user is null || !PasswordHasher.VerifyPassword(password, user.Password, user.Salt))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public async Task Create(UserCreation userCreation)
@@ -208,7 +235,7 @@ public class UserRepository : BaseRepository, IUserRepository
         var hashedPassword = PasswordHasher.HashPassword(newPassword, salt);
 
         const string insertUserSql =
-            @"UPDATE User SET Password = @Password, Salt = @Salt, UpdatedAt = @UpdatedAt WHERE LOWER(email) = LOWER(@email)";
+            @"UPDATE [Users] SET Password = @Password, Salt = @Salt, UpdatedAt = @UpdatedAt WHERE LOWER(email) = LOWER(@email)";
 
         await ExecuteNonQueryAsync(insertUserSql, new
         {
@@ -217,7 +244,7 @@ public class UserRepository : BaseRepository, IUserRepository
             Salt = salt,
             UpdatedAt = DateTime.UtcNow
         });
-        return hashedPassword;
+        return newPassword;
     }
 
     public async Task<UserDto?> Login(string username, string password)

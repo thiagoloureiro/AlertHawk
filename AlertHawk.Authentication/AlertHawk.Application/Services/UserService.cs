@@ -43,7 +43,7 @@ public class UserService : IUserService
 
     public async Task ResetPassword(string email)
     {
-        var user = await GetByUsername(email);
+        var user = await GetByEmail(email);
         if (user != null)
         {
             var password = await _userRepository.ResetPassword(email);
@@ -85,5 +85,21 @@ public class UserService : IUserService
     public async Task UpdateUserToken(string token, string username)
     {
         await _userRepository.UpdateUserToken(token, username);
+    }
+
+    public async Task UpdatePassword(string email, string password)
+    {
+        await _userRepository.UpdatePassword(email, password);
+    }
+
+    public async Task<bool> LoginWithEmail(string email, string userPasswordCurrentPassword)
+    {
+        var user = await GetByEmail(email);
+        if (user != null)
+        {
+            return await _userRepository.LoginWithEmail(email, userPasswordCurrentPassword);
+        }
+
+        return false;
     }
 }
