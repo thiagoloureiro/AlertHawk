@@ -21,4 +21,6 @@ public interface IUserRepository
     Task Delete(Guid id);
     Task<UserDto?> GetUserByToken(string? jwtToken);
     Task UpdateUserToken(string token, string username);
+    Task UpdatePassword(string email, string password);
+    Task<bool> LoginWithEmail(string email, string userPasswordCurrentPassword);
 }

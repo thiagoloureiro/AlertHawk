@@ -170,7 +170,7 @@ public class UserServiceTests
         var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("testuser@example.com");
         var newPassword = "newPassword123";
 
-        _mockUserRepository.Setup(repo => repo.GetByUsername(username)).ReturnsAsync(user);
+        _mockUserRepository.Setup(repo => repo.GetByEmail(username)).ReturnsAsync(user);
         _mockUserRepository.Setup(repo => repo.ResetPassword(username)).ReturnsAsync(newPassword);
 
         // Act
@@ -178,7 +178,7 @@ public class UserServiceTests
 
         // Assert
 
-        _mockUserRepository.Verify(repo => repo.GetByUsername(username), Times.Once);
+        _mockUserRepository.Verify(repo => repo.GetByEmail(username), Times.Once);
         _mockUserRepository.Verify(repo => repo.ResetPassword(username), Times.Once);
     }
 
@@ -188,13 +188,13 @@ public class UserServiceTests
         // Arrange
         var username = "nonexistentuser";
 
-        _mockUserRepository.Setup(repo => repo.GetByUsername(username)).ReturnsAsync(It.IsAny<UserDto>());
+        _mockUserRepository.Setup(repo => repo.GetByEmail(username)).ReturnsAsync(It.IsAny<UserDto>());
 
         // Act
         await _userService.ResetPassword(username);
 
         // Assert
-        _mockUserRepository.Verify(repo => repo.GetByUsername(username), Times.Once);
+        _mockUserRepository.Verify(repo => repo.GetByEmail(username), Times.Once);
         _mockUserRepository.Verify(repo => repo.ResetPassword(It.IsAny<string>()), Times.Never);
     }
 
@@ -241,5 +241,35 @@ public class UserServiceTests
 
         // Assert
         _mockUserRepository.Verify(r => r.UpdateUserToken(token, username), Times.Once);
+    }
+
+    [Fact]
+    public async Task LoginWithEmail_CallsRepositoryLoginWithEmail_ReturnsTrue()
+    {
+        // Arrange
+        var email = "test@example.com";
+        var password = "password";
+        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
+        _mockUserRepository.Setup(r => r.GetByEmail(email)).ReturnsAsync(user);
+        
+        // Act
+        await _userService.LoginWithEmail(email, password);
+        
+        // Assert
+        _mockUserRepository.Verify(r => r.LoginWithEmail(email, password), Times.Once);
+    }
+    
+    [Fact]
+    public async Task LoginWithEmail_CallsRepositoryLoginWithEmail_ReturnsFalse()
+    {
+        // Arrange
+        var email = "test@example.com";
+        _mockUserRepository.Setup(r => r.GetByEmail(email)).ReturnsAsync(It.IsAny<UserDto>());
+        
+        // Act
+        var result = await _userService.LoginWithEmail(email, "wrongPassword");
+        
+        // Assert
+        Assert.False(result);
     }
 }

@@ -86,4 +86,20 @@ public class UserService : IUserService
     {
         await _userRepository.UpdateUserToken(token, username);
     }
+
+    public async Task UpdatePassword(string email, string password)
+    {
+        await _userRepository.UpdatePassword(email, password);
+    }
+
+    public async Task<bool> LoginWithEmail(string email, string userPasswordCurrentPassword)
+    {
+        var user = await GetByEmail(email);
+        if (user != null)
+        {
+            return await _userRepository.LoginWithEmail(email, userPasswordCurrentPassword);
+        }
+
+        return false;
+    }
 }

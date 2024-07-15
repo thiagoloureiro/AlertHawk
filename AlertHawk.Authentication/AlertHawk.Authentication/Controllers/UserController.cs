@@ -119,6 +119,28 @@ public class UserController : Controller
         await _userService.ResetPassword(email);
         return Ok();
     }
+    
+    [HttpPost("updatePassword/{email}")]
+    [SwaggerOperation(Summary = "Reset Password")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdatePassword([FromBody] UserPassword userPassword)
+    {
+        var user = await _userService.GetByEmail(userPassword.Email);
+        var validUser = await _userService.LoginWithEmail(userPassword.Email, userPassword.CurrentPassword);
+        
+        if(!validUser)
+        {
+            return BadRequest("Invalid password");
+        }
+        
+        if(user == null)
+        {
+            return BadRequest("User not found");
+        }
+        
+        await _userService.UpdatePassword(userPassword.Email, userPassword.NewPassword);
+        return Ok();
+    }
 
     [HttpGet("GetAll")]
     [SwaggerOperation(Summary = "Get All Users")]

@@ -76,6 +76,27 @@ public class UserRepository : BaseRepository, IUserRepository
         await ExecuteNonQueryAsync(sql, new { token, username });
     }
 
+    public async Task UpdatePassword(string email, string password)
+    {
+        const string sql = "UPDATE Users SET Password = @password WHERE LOWER(email) = @email";
+        await ExecuteNonQueryAsync(sql, new { email, password });
+    }
+
+    public async Task<bool> LoginWithEmail(string email, string password)
+    {
+        const string sql =
+            "SELECT Id, Email, Username, IsAdmin, Password, Salt, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE LOWER(email) = LOWER(@email)";
+        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql,
+            new { email = email.ToLower(CultureInfo.InvariantCulture) });
+
+        if (user is null || !PasswordHasher.VerifyPassword(password, user.Password, user.Salt))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     public async Task Create(UserCreation userCreation)
     {
         string checkExistingUserSql = "SELECT Id FROM Users WHERE LOWER(Email) = @Email";
