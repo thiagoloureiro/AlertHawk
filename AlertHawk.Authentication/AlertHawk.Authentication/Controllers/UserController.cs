@@ -120,7 +120,7 @@ public class UserController : Controller
         return Ok();
     }
     
-    [HttpPost("updatePassword/{email}")]
+    [HttpPost("updatePassword")]
     [SwaggerOperation(Summary = "Reset Password")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdatePassword([FromBody] UserPassword userPassword)
