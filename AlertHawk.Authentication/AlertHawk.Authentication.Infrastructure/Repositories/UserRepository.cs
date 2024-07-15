@@ -208,7 +208,7 @@ public class UserRepository : BaseRepository, IUserRepository
         var hashedPassword = PasswordHasher.HashPassword(newPassword, salt);
 
         const string insertUserSql =
-            @"UPDATE User SET Password = @Password, Salt = @Salt, UpdatedAt = @UpdatedAt WHERE LOWER(email) = LOWER(@email)";
+            @"UPDATE [Users] SET Password = @Password, Salt = @Salt, UpdatedAt = @UpdatedAt WHERE LOWER(email) = LOWER(@email)";
 
         await ExecuteNonQueryAsync(insertUserSql, new
         {
