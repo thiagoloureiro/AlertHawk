@@ -16,7 +16,8 @@ public class UserRepository : BaseRepository, IUserRepository
     private readonly IMapper _mapper;
     private readonly IUsersMonitorGroupRepository _usersMonitorGroupRepository;
 
-    public UserRepository(IConfiguration configuration, IMapper mapper, IUsersMonitorGroupRepository usersMonitorGroupRepository) : base(configuration)
+    public UserRepository(IConfiguration configuration, IMapper mapper,
+        IUsersMonitorGroupRepository usersMonitorGroupRepository) : base(configuration)
     {
         _mapper = mapper;
         _usersMonitorGroupRepository = usersMonitorGroupRepository;
@@ -58,7 +59,7 @@ public class UserRepository : BaseRepository, IUserRepository
     public async Task Delete(Guid id)
     {
         await _usersMonitorGroupRepository.DeleteAllByUserIdAsync(id);
-        
+
         const string sql = "DELETE FROM Users WHERE Id = @Id";
         await ExecuteNonQueryAsync(sql, new { Id = id });
     }
@@ -66,7 +67,7 @@ public class UserRepository : BaseRepository, IUserRepository
     public async Task<UserDto?> GetUserByToken(string? jwtToken)
     {
         const string sql = "SELECT Username, Email, IsAdmin FROM Users WHERE Token = @jwtToken";
-        var user =  await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { jwtToken });
+        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { jwtToken });
         return _mapper.Map<UserDto>(user);
     }
 
@@ -78,8 +79,13 @@ public class UserRepository : BaseRepository, IUserRepository
 
     public async Task UpdatePassword(string email, string password)
     {
-        const string sql = "UPDATE Users SET Password = @password WHERE LOWER(email) = @email";
-        await ExecuteNonQueryAsync(sql, new { email, password });
+        var salt = PasswordHasher.GenerateSalt();
+        var hashedPassword = PasswordHasher.HashPassword(password, salt);
+
+        const string sql = "UPDATE Users SET Password = @password, Salt = @salt WHERE LOWER(email) = @email";
+
+
+        await ExecuteNonQueryAsync(sql, new { email, hashedPassword, salt });
     }
 
     public async Task<bool> LoginWithEmail(string email, string password)
