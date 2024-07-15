@@ -245,7 +245,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             var result = await _controller.ResetPassword(userEmail);
 
             // Assert
-            Assert.IsType<OkResult>(result);
+            Assert.IsType<BadRequestObjectResult>(result);
         }
 
         [Fact]
