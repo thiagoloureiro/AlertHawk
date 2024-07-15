@@ -110,6 +110,7 @@ if (string.Equals(sentryEnabled, "true", StringComparison.InvariantCultureIgnore
                             StringComparison.Ordinal) == true
                         && sentryEvent.Message?.Message?.Contains("IDX10223", StringComparison.Ordinal) == true
                         || sentryEvent.Message?.Message?.Contains("IDX10205", StringComparison.Ordinal) == true
+                        || sentryEvent.Message?.Message?.Contains("IDX10503", StringComparison.Ordinal) == true
                     )
                     {
                         // Do not log 'IDX10223: Lifetime validation failed. The token is expired.'
