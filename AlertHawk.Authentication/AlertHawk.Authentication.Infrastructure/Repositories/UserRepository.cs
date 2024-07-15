@@ -238,7 +238,7 @@ public class UserRepository : BaseRepository, IUserRepository
             Salt = salt,
             UpdatedAt = DateTime.UtcNow
         });
-        return hashedPassword;
+        return newPassword;
     }
 
     public async Task<UserDto?> Login(string username, string password)
