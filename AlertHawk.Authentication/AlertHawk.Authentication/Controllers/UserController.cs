@@ -104,6 +104,7 @@ public class UserController : Controller
         }
     }
 
+    [AllowAnonymous]
     [HttpPost("resetPassword/{email}")]
     [SwaggerOperation(Summary = "Reset Password")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
