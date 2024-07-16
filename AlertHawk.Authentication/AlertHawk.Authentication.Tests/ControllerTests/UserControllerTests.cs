@@ -244,12 +244,13 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             _mockUserService.Setup(s => s.GetByEmail(userEmail)).ReturnsAsync(user);
             _mockUserService.Setup(s => s.LoginWithEmail(userEmail, password)).ReturnsAsync(true);
             _mockUserService.Setup(s => s.UpdatePassword(userEmail, password)).Returns(Task.CompletedTask);
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
             
             // Act
             var result = await _controller.UpdatePassword(new UserPassword
             {
                 CurrentPassword = password,
-                Email = userEmail,
                 NewPassword = password
             });
 
@@ -267,12 +268,13 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             _mockUserService.Setup(s => s.GetByEmail(userEmail)).ReturnsAsync(user);
             _mockUserService.Setup(s => s.LoginWithEmail(userEmail, password)).ReturnsAsync(false);
             _mockUserService.Setup(s => s.UpdatePassword(userEmail, password)).Returns(Task.CompletedTask);
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
             
             // Act
             var result = await _controller.UpdatePassword(new UserPassword
             {
                 CurrentPassword = password,
-                Email = userEmail,
                 NewPassword = password
             });
 
@@ -286,23 +288,22 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Arrange
             var userEmail = "user@example.com";
             var password = "password";
-            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(userEmail);
             _mockUserService.Setup(s => s.GetByEmail(userEmail)).ReturnsAsync(It.IsAny<UserDto>());
             _mockUserService.Setup(s => s.LoginWithEmail(userEmail, password)).ReturnsAsync(true);
             _mockUserService.Setup(s => s.UpdatePassword(userEmail, password)).Returns(Task.CompletedTask);
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(It.IsAny<UserDto>());
             
             // Act
             var result = await _controller.UpdatePassword(new UserPassword
             {
                 CurrentPassword = password,
-                Email = userEmail,
                 NewPassword = password
             });
 
             // Assert
-            Assert.IsType<BadRequestObjectResult>(result);
+            Assert.IsType<BadRequestResult>(result);
         }
-
 
         [Fact]
         public async Task GetAll_ValidRequest_ReturnsOkWithUsers()
