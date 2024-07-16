@@ -134,7 +134,7 @@ public class UserController : Controller
         
         var validUser = await _userService.LoginWithEmail(user.Email, userPassword.CurrentPassword);
         
-        if(!validUser)
+        if(validUser == null)
         {
             return BadRequest("Invalid password");
         }

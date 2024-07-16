@@ -88,7 +88,7 @@ public class UserRepository : BaseRepository, IUserRepository
         await ExecuteNonQueryAsync(sql, new { email, hashedPassword, salt });
     }
 
-    public async Task<bool> LoginWithEmail(string email, string password)
+    public async Task<UserDto?> LoginWithEmail(string email, string password)
     {
         const string sql =
             "SELECT Id, Email, Username, IsAdmin, Password, Salt, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE LOWER(email) = LOWER(@email)";
@@ -97,10 +97,10 @@ public class UserRepository : BaseRepository, IUserRepository
 
         if (user is null || !PasswordHasher.VerifyPassword(password, user.Password, user.Salt))
         {
-            return false;
+            return null;
         }
 
-        return true;
+        return _mapper.Map<UserDto>(user);
     }
 
     public async Task Create(UserCreation userCreation)
