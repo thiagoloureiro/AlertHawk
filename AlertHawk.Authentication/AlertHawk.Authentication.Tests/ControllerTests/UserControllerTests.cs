@@ -242,7 +242,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             var password = "password";
             var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(userEmail);
             _mockUserService.Setup(s => s.GetByEmail(userEmail)).ReturnsAsync(user);
-            _mockUserService.Setup(s => s.LoginWithEmail(userEmail, password)).ReturnsAsync(true);
+            _mockUserService.Setup(s => s.LoginWithEmail(userEmail, password)).ReturnsAsync(user);
             _mockUserService.Setup(s => s.UpdatePassword(userEmail, password)).Returns(Task.CompletedTask);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
@@ -266,7 +266,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             var password = "password";
             var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(userEmail);
             _mockUserService.Setup(s => s.GetByEmail(userEmail)).ReturnsAsync(user);
-            _mockUserService.Setup(s => s.LoginWithEmail(userEmail, password)).ReturnsAsync(false);
+            _mockUserService.Setup(s => s.LoginWithEmail(userEmail, password)).ReturnsAsync(It.IsAny<UserDto>());
             _mockUserService.Setup(s => s.UpdatePassword(userEmail, password)).Returns(Task.CompletedTask);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
@@ -289,7 +289,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             var userEmail = "user@example.com";
             var password = "password";
             _mockUserService.Setup(s => s.GetByEmail(userEmail)).ReturnsAsync(It.IsAny<UserDto>());
-            _mockUserService.Setup(s => s.LoginWithEmail(userEmail, password)).ReturnsAsync(true);
+            _mockUserService.Setup(s => s.LoginWithEmail(userEmail, password)).ReturnsAsync(It.IsAny<UserDto>());
             _mockUserService.Setup(s => s.UpdatePassword(userEmail, password)).Returns(Task.CompletedTask);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(It.IsAny<UserDto>());

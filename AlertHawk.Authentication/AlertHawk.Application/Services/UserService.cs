@@ -57,7 +57,14 @@ public class UserService : IUserService
 
     public async Task<UserDto?> Login(string username, string password)
     {
-        return await _userRepository.Login(username, password);
+        var user = await _userRepository.Login(username, password);
+
+        if (user == null)
+        {
+            return await _userRepository.LoginWithEmail(username, password);
+        }
+
+        return user;
     }
 
     public async Task<UserDto?> Get(Guid id)
@@ -95,7 +102,7 @@ public class UserService : IUserService
         await _userRepository.UpdatePassword(email, password);
     }
 
-    public async Task<bool> LoginWithEmail(string email, string userPasswordCurrentPassword)
+    public async Task<UserDto?> LoginWithEmail(string email, string userPasswordCurrentPassword)
     {
         var user = await GetByEmail(email);
         if (user != null)
@@ -103,6 +110,6 @@ public class UserService : IUserService
             return await _userRepository.LoginWithEmail(email, userPasswordCurrentPassword);
         }
 
-        return false;
+        return null;
     }
 }

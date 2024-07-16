@@ -270,7 +270,7 @@ public class UserServiceTests
         var result = await _userService.LoginWithEmail(email, "wrongPassword");
         
         // Assert
-        Assert.False(result);
+        Assert.Null(result);
     }
     
     [Fact]
