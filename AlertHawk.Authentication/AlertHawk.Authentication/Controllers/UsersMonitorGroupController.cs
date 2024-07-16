@@ -13,12 +13,12 @@ namespace AlertHawk.Authentication.Controllers
     [ApiController]
     public class UsersMonitorGroupController : Controller
     {
-        private readonly IGetOrCreateUserService _getOrCreateUserServicer;
+        private readonly IGetOrCreateUserService _getOrCreateUserService;
         private readonly IUsersMonitorGroupService _usersMonitorGroupService;
 
-        public UsersMonitorGroupController(IUsersMonitorGroupService usersMonitorGroupService, IGetOrCreateUserService getOrCreateUserServicer)
+        public UsersMonitorGroupController(IUsersMonitorGroupService usersMonitorGroupService, IGetOrCreateUserService getOrCreateUserService)
         {
-            _getOrCreateUserServicer = getOrCreateUserServicer;
+            _getOrCreateUserService = getOrCreateUserService;
             _usersMonitorGroupService = usersMonitorGroupService;
         }
         
@@ -146,7 +146,7 @@ namespace AlertHawk.Authentication.Controllers
         }
         private async Task<ObjectResult?> IsUserAdmin()
         {
-            var usr = await _getOrCreateUserServicer.GetUserOrCreateUser(User);
+            var usr = await _getOrCreateUserService.GetUserOrCreateUser(User);
             if (usr != null && !usr.IsAdmin)
             {
                 return StatusCode(StatusCodes.Status403Forbidden,
@@ -157,8 +157,7 @@ namespace AlertHawk.Authentication.Controllers
         }
         private async Task<UserDto?> GetUserByToken()
         {
-            return await _getOrCreateUserServicer.GetUserOrCreateUser(User);
+            return await _getOrCreateUserService.GetUserOrCreateUser(User);
         }
-
     }
 }
