@@ -98,47 +98,6 @@ public class MonitorService : IMonitorService
             var lst3Months = monitorHistories.Where(x => x.TimeStamp > DateTime.UtcNow.AddDays(-90)).ToList();
             var lst6Months = monitorHistories.Where(x => x.TimeStamp > DateTime.UtcNow.AddDays(-180)).ToList();
 
-            // Check if last 24 hours data is present
-            /*  bool containsLast24HoursData = false;
-              if (lst24Hrs.Any())
-              {
-                  containsLast24HoursData =
-                      lst24Hrs.Min(x => x.TimeStamp) <= DateTime.UtcNow.AddDays(-1).AddSeconds(120);
-              }
-             */
-
-            // Check if last 7 days data is present
-            bool containsLast7DaysData = false;
-            if (lst7Days.Any())
-            {
-                containsLast7DaysData =
-                    lst7Days.Min(x => x.TimeStamp) <= DateTime.UtcNow.AddDays(-7).AddSeconds(120);
-            }
-
-            // Check if last 30 days data is present
-            bool containsLast30DaysData = false;
-            if (lst30Days.Any())
-            {
-                containsLast30DaysData =
-                    lst30Days.Min(x => x.TimeStamp) <= DateTime.UtcNow.AddDays(-30).AddSeconds(120);
-            }
-
-            // Check if last 3 months data is present
-            bool containsLast3MonthsData = false;
-            if (lst3Months.Any())
-            {
-                containsLast3MonthsData =
-                    lst3Months.Min(x => x.TimeStamp) <= DateTime.UtcNow.AddDays(-90).AddSeconds(120);
-            }
-
-            // Check if last 6 months data is present
-            bool containsLast6MonthsData = false;
-            if (lst6Months.Any())
-            {
-                containsLast6MonthsData =
-                    lst6Months.Min(x => x.TimeStamp) <= DateTime.UtcNow.AddDays(-180).AddSeconds(120);
-            }
-
             double uptime1Hr = -1;
             if (lst1Hr.Count > 0)
             {
@@ -152,25 +111,25 @@ public class MonitorService : IMonitorService
             }
 
             double upTime7Days = -1;
-            if (lst7Days.Count > 0 && containsLast7DaysData)
+            if (lst7Days.Count > 0)
             {
                 upTime7Days = (double)lst7Days.Count(item => item.Status) / lst7Days.Count * 100;
             }
 
             double uptime30Days = -1;
-            if (lst30Days.Count > 0 && containsLast30DaysData)
+            if (lst30Days.Count > 0)
             {
                 uptime30Days = (double)lst30Days.Count(item => item.Status) / lst30Days.Count * 100;
             }
 
             double uptime3Months = -1;
-            if (lst3Months.Count > 0 && containsLast3MonthsData)
+            if (lst3Months.Count > 0)
             {
                 uptime3Months = (double)lst3Months.Count(item => item.Status) / lst3Months.Count * 100;
             }
 
             double uptime6Months = -1;
-            if (lst6Months.Count > 0 && containsLast6MonthsData)
+            if (lst6Months.Count > 0)
             {
                 uptime6Months = (double)lst6Months.Count(item => item.Status) / lst6Months.Count * 100;
             }
