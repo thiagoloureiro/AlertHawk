@@ -406,4 +406,94 @@ public class MonitorGroupServiceTests
         // Assert
         _cachingMock.Verify(caching => caching.Invalidate(It.IsAny<string>()), Times.Once);
     }
+    
+    [Fact]
+    public async Task GetMonitorDashboardGroupListByUser_ShouldReturnFilteredMonitorGroups()
+    {
+        // Arrange
+        var monitorGroups = new List<MonitorGroup>
+        {
+            new MonitorGroup
+            {
+                Id = 1, Name = "Group1", Monitors = new List<Monitor>
+                {
+                    new Monitor() { Id = 1, Name = "Name", HeartBeatInterval = 0, Retries = 0 }
+                }
+            },
+            new MonitorGroup
+            {
+                Id = 2, Name = "Group2", Monitors = new List<Monitor>
+                {
+                    new Monitor() { Id = 2, Name = "Name", HeartBeatInterval = 0, Retries = 0 }
+                }
+            }
+        };
+
+        _monitorGroupRepositoryMock.Setup(repo => repo.GetMonitorGroupListByEnvironment(It.IsAny<MonitorEnvironment>()))
+            .ReturnsAsync(monitorGroups);
+
+        _monitorGroupRepositoryMock.Setup(repo => repo.GetMonitorGroupList())
+            .ReturnsAsync(monitorGroups);
+
+        _cachingMock.Setup(caching => caching.GetValueFromCacheAsync<List<MonitorDashboard?>>(
+                It.IsAny<string>()))
+            .ReturnsAsync(new List<MonitorDashboard?>());
+        _httpMessageHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(JsonConvert.SerializeObject(new List<UsersMonitorGroup>
+                {
+                    new UsersMonitorGroup { GroupMonitorId = 1 }
+                }), Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var result =
+            await _monitorGroupService.GetMonitorDashboardGroupListByUser("jwtToken");
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("Group1", result.First().Name);
+    }
+
+    [Fact]
+    public async Task GetMonitorDashboardGroupListByUser_ShouldReturnDefaultMonitorGroups()
+    {
+        // Arrange
+        var monitorGroups = new List<MonitorGroup> { new MonitorGroup { Id = 0, Name = "No Groups Found" } };
+        _monitorGroupRepositoryMock.Setup(repo => repo.GetMonitorGroupListByEnvironment(It.IsAny<MonitorEnvironment>()))
+            .ReturnsAsync(monitorGroups);
+
+        _monitorGroupRepositoryMock.Setup(repo => repo.GetMonitorGroupList())
+            .ReturnsAsync(monitorGroups);
+        
+        _cachingMock.Setup(caching => caching.GetValueFromCacheAsync<List<MonitorDashboard?>>(
+                It.IsAny<string>()))
+            .ReturnsAsync(new List<MonitorDashboard?>());
+        _httpMessageHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(JsonConvert.SerializeObject(new List<UsersMonitorGroup>
+                {
+                }), Encoding.UTF8, "application/json")
+            });
+        
+        // Act
+        var result = await _monitorGroupService.GetMonitorDashboardGroupListByUser("jwtToken");
+        
+        // Assert
+        Assert.Single(result);
+    }
 }

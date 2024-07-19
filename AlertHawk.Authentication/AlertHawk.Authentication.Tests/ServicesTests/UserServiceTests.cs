@@ -98,6 +98,23 @@ public class UserServiceTests
         Assert.Equal(user, result);
         _mockUserRepository.Verify(r => r.Login(username, password), Times.Once);
     }
+    
+    [Fact]
+    public async Task LoginWithEmail_CallsRepositoryLogin()
+    {
+        // Arrange
+        var username = "testuser";
+        var password = "testpassword";
+        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
+        _mockUserRepository.Setup(r => r.Login(username, password)).ReturnsAsync(It.IsAny<UserDto>());
+        _mockUserRepository.Setup(r => r.LoginWithEmail(username, password)).ReturnsAsync(user);
+        // Act
+        var result = await _userService.Login(username, password);
+
+        // Assert
+        Assert.Equal(user, result);
+        _mockUserRepository.Verify(r => r.LoginWithEmail(username, password), Times.Once);
+    }
 
     [Fact]
     public async Task Get_CallsRepositoryGet()
