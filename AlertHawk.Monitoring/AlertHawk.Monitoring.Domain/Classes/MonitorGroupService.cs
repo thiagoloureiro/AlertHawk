@@ -291,7 +291,7 @@ public class MonitorGroupService : IMonitorGroupService
 
     public async Task<List<int>?> GetUserGroupMonitorListIds(string token)
     {
-        var client = CreteHttpClient(token);
+        var client = CreateHttpClient(token);
         var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
                       "https://api.monitoring.electrificationtools.abb.com/auth/";
         var content = await client.GetAsync($"{authApi}api/UsersMonitorGroup/GetAll");
@@ -310,7 +310,7 @@ public class MonitorGroupService : IMonitorGroupService
 
     public async Task AddUserToGroup(string token, int groupId)
     {
-        var client = CreteHttpClient(token);
+        var client = CreateHttpClient(token);
 
         var payload = new UsersMonitorGroup { GroupMonitorId = groupId };
 
@@ -323,14 +323,14 @@ public class MonitorGroupService : IMonitorGroupService
 
     public async Task DeleteUserGroupMonitorListIds(string token, int userGroupMonitorId)
     {
-        var client = CreteHttpClient(token);
+        var client = CreateHttpClient(token);
 
         var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
                       "https://api.monitoring.electrificationtools.abb.com/auth/";
         await client.DeleteAsync($"{authApi}api/UsersMonitorGroup/{userGroupMonitorId}");
     }
 
-    private HttpClient CreteHttpClient(string token)
+    private HttpClient CreateHttpClient(string token)
     {
         var client = _httpClientFactory.CreateClient();
         client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
