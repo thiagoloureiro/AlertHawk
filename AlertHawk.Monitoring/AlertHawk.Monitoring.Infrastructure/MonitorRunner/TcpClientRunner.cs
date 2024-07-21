@@ -58,12 +58,10 @@ public class TcpClientRunner : ITcpClientRunner
                     continue;
                 }
             }
-            catch (Exception err)
+            catch (Exception)
             {
                 retries++;
                 // Wait for the specified interval before retrying
-                Console.WriteLine(err.Message);
-                Console.WriteLine($"Retrying in {retryIntervalMilliseconds} milliseconds...");
                 Thread.Sleep(retryIntervalMilliseconds);
             }
         }
