@@ -9,11 +9,12 @@ public class HttpClientScreenshot : IHttpClientScreenshot
 {
     public async Task<string?> TakeScreenshotAsync(string url, int monitorId, string monitorName)
     {
+        Console.WriteLine("Starting screenshot");
         var screenshotEnabled = VariableUtils.GetBoolEnvVariable("enable_screenshot");
         string? screenshotUrl = string.Empty;
         if (screenshotEnabled)
         {
-            var screenshotPath =  Environment.GetEnvironmentVariable("screenshot_folder") ?? "/screenshots/";
+            var screenshotPath = Environment.GetEnvironmentVariable("screenshot_folder") ?? "/screenshots/";
             // Set the path to the directory where you want to save the screenshot
             string screenshotDirectory = $@"{screenshotPath}{monitorId}_{monitorName}";
             // Ensure the directory exists, create it if necessary
@@ -22,7 +23,6 @@ public class HttpClientScreenshot : IHttpClientScreenshot
             // Set Chrome options
             ChromeOptions options = new ChromeOptions();
             options.AddArguments("--no-sandbox");
-            //options.AddArguments("--disable-dev-shm-usage");
             options.AddArgument("--headless");
             options.AddArgument("--window-size=1280,780");
 
@@ -34,22 +34,14 @@ public class HttpClientScreenshot : IHttpClientScreenshot
                 int retryCount = 0;
                 while (!navigationSuccessful && retryCount < 3) // Retry up to 3 times
                 {
-                    try
-                    {
-                        driver.Navigate().GoToUrl(url);
-                        navigationSuccessful = true;
-                    }
-                    catch (WebDriverException)
-                    {
-                        retryCount++;
-                        // You may want to add some delay between retries
-                        await Task.Delay(1000); // 1 second delay between retries
-                    }
+                    await driver.Navigate().GoToUrlAsync(url);
+                    navigationSuccessful = true;
                 }
 
                 // Wait for the page to load (adjust the wait time as needed)
                 await Task.Delay(VariableUtils.GetIntEnvVariable("screenshot_wait_time_ms") ?? 3000);
 
+                Console.WriteLine("Taking screenshot");
                 // Take screenshot
                 Screenshot screenshot = ((ITakesScreenshot)driver).GetScreenshot();
 
@@ -68,12 +60,12 @@ public class HttpClientScreenshot : IHttpClientScreenshot
                 }
 
                 Console.WriteLine($"Screenshot saved: {filePath}");
-
-
+                
                 return screenshotUrl;
             }
             catch (Exception e)
             {
+                Console.WriteLine("Error taking screenshot");
                 SentrySdk.CaptureException(e);
                 driver.Quit();
                 return null;
