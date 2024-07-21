@@ -49,8 +49,9 @@ public class HttpClientScreenshot : IHttpClientScreenshot
 
                 if (VariableUtils.GetBoolEnvVariable("enable_screenshot_storage_account"))
                 {
+                    Console.WriteLine($"Uploading screenshot to Azure Blob Storage: {fileName}");
                     screenshotUrl =
-                        await BlobUtils.UploadByteArrayToBlob($"{monitorId}-{monitorName}.jpg", screenshotAsByteArray);
+                        await BlobUtils.UploadByteArrayToBlob($"{fileName}.jpg", screenshotAsByteArray);
                 }
 
                 Console.WriteLine($"Screenshot saved: {filePath}");
