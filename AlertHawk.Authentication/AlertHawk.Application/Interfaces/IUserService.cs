@@ -24,5 +24,5 @@ public interface IUserService
     Task<UserDto?> GetUserByToken(string? jwtToken);
     Task UpdateUserToken(string token, string username);
     Task UpdatePassword(string email, string password);
-    Task<UserDto?> LoginWithEmail(string userPasswordEmail, string userPasswordCurrentPassword);
+    Task<UserDto?> LoginWithEmail(string email, string userPasswordCurrentPassword);
 }
