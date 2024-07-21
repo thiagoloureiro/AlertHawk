@@ -116,6 +116,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
 
     public async Task SaveMonitorAlert(MonitorHistory monitorHistory, MonitorEnvironment environment)
     {
+        Console.WriteLine($"Saving Monitor Alert for MonitorId: {monitorHistory.MonitorId}, environment: {environment}, Status: {monitorHistory.Status}, Screenshot Url: {monitorHistory.ScreenShotUrl}, StatusCode: {monitorHistory.StatusCode}");
         await using var db = new SqlConnection(_connstring);
         string sql =
             @"INSERT INTO [MonitorAlert] (MonitorId, TimeStamp, Status, Message, ScreenShotUrl, Environment) VALUES (@MonitorId, @TimeStamp, @Status, @Message, @ScreenShotUrl, @Environment)";
