@@ -9,6 +9,7 @@ public class HttpClientScreenshot : IHttpClientScreenshot
 {
     public async Task<string?> TakeScreenshotAsync(string url, int monitorId, string monitorName)
     {
+        Console.WriteLine("Starting screenshot");
         var screenshotEnabled = VariableUtils.GetBoolEnvVariable("enable_screenshot");
         string? screenshotUrl = string.Empty;
         if (screenshotEnabled)
@@ -40,6 +41,7 @@ public class HttpClientScreenshot : IHttpClientScreenshot
                 // Wait for the page to load (adjust the wait time as needed)
                 await Task.Delay(VariableUtils.GetIntEnvVariable("screenshot_wait_time_ms") ?? 3000);
 
+                Console.WriteLine("Taking screenshot");
                 // Take screenshot
                 Screenshot screenshot = ((ITakesScreenshot)driver).GetScreenshot();
 
