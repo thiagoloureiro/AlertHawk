@@ -18,7 +18,8 @@ public class HttpClientRunner : IHttpClientRunner
     public int _retryIntervalMilliseconds = 6000;
 
     public HttpClientRunner(IMonitorRepository monitorRepository, IHttpClientScreenshot httpClientScreenshot,
-        INotificationProducer notificationProducer, IMonitorAlertRepository monitorAlertRepository, IMonitorHistoryRepository monitorHistoryRepository)
+        INotificationProducer notificationProducer, IMonitorAlertRepository monitorAlertRepository,
+        IMonitorHistoryRepository monitorHistoryRepository)
     {
         _monitorRepository = monitorRepository;
         _httpClientScreenshot = httpClientScreenshot;
@@ -82,7 +83,7 @@ public class HttpClientRunner : IHttpClientRunner
                 {
                     // Setting Response time to zero when the call fails.
                     monitorHttp.ResponseTime = 0;
-                    
+
                     monitorHistory.ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}";
                     retryCount++;
                     Thread.Sleep(_retryIntervalMilliseconds);
@@ -96,14 +97,14 @@ public class HttpClientRunner : IHttpClientRunner
                         // only send notification when goes from online into offline to avoid flood
                         if (monitorHttp.LastStatus)
                         {
-                            await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
                             await _notificationProducer.HandleFailedNotifications(monitorHttp,
                                 response.ReasonPhrase);
                             var screenshotUrl = await _httpClientScreenshot.TakeScreenshotAsync(
                                 monitorHttp.UrlToCheck,
                                 monitorHttp.MonitorId, monitorHttp.Name);
                             monitorHistory.ScreenShotUrl = screenshotUrl;
-                            
+                            await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
+
                             break;
                         }
                     }
@@ -133,10 +134,12 @@ public class HttpClientRunner : IHttpClientRunner
                     if (monitorHttp
                         .LastStatus) // only send notification when goes from online into offline to avoid flood
                     {
-                        await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
                         await _notificationProducer.HandleFailedNotifications(monitorHttp, err.Message);
-                        await _httpClientScreenshot.TakeScreenshotAsync(monitorHttp.UrlToCheck,
+                        var screenshotUrl = await _httpClientScreenshot.TakeScreenshotAsync(
+                            monitorHttp.UrlToCheck,
                             monitorHttp.MonitorId, monitorHttp.Name);
+                        monitorHistory.ScreenShotUrl = screenshotUrl;
+                        await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
                     }
 
                     break;
@@ -159,8 +162,8 @@ public class HttpClientRunner : IHttpClientRunner
                 return true;
             };
         }
-        
-        if(monitorHttp.IgnoreTlsSsl)
+
+        if (monitorHttp.IgnoreTlsSsl)
         {
             handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
         }
