@@ -17,41 +17,34 @@ public static class IPAddressUtils
         var apiUrl = $"https://api.ipgeolocation.io/ipgeo?apiKey={apikey}&ip={ipAddress}";
 
         using var client = new HttpClient();
-        try
-        {
-            MonitorRegion region = MonitorRegion.Europe;
-            var json = await client.GetStringAsync(apiUrl);
-            dynamic data = JObject.Parse(json);
 
-            switch (data.continent_name.ToString())
-            {
-                case "Europe":
-                    region = MonitorRegion.Europe;
-                    break;
-                case "Asia":
-                    region = MonitorRegion.Asia;
-                    break;
-                case "North America":
-                    region = MonitorRegion.NorthAmerica;
-                    break;
-                case "South America":
-                    region = MonitorRegion.SouthAmerica;
-                    break;
-                case "Oceania":
-                    region = MonitorRegion.Oceania;
-                    break;
-                case "Africa":
-                    region = MonitorRegion.Africa;
-                    break;
-            }
+        MonitorRegion region = MonitorRegion.Europe;
+        var json = await client.GetStringAsync(apiUrl);
+        dynamic data = JObject.Parse(json);
 
-            return region;
-        }
-        catch (WebException ex)
+        switch (data.continent_name.ToString())
         {
-            Console.WriteLine($"Error: {ex.Message}");
-            throw;
+            case "Europe":
+                region = MonitorRegion.Europe;
+                break;
+            case "Asia":
+                region = MonitorRegion.Asia;
+                break;
+            case "North America":
+                region = MonitorRegion.NorthAmerica;
+                break;
+            case "South America":
+                region = MonitorRegion.SouthAmerica;
+                break;
+            case "Oceania":
+                region = MonitorRegion.Oceania;
+                break;
+            case "Africa":
+                region = MonitorRegion.Africa;
+                break;
         }
+
+        return region;
     }
 
     private static async Task<string> GetIPAddress()
