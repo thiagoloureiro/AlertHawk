@@ -215,8 +215,9 @@ public class MonitorService : IMonitorService
                     lstMonitorDashboard.AddRange(results);
                 }
 
+                Console.WriteLine("Writing Cache to Redis");
                 await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20, CacheTimeInterval.Minutes);
-                Console.WriteLine("Finished Caching Monitor Dashboard Data List");
+                Console.WriteLine("Finished writing Cache to Redis and ended Caching activity");
             }
         }
         catch (Exception e)
