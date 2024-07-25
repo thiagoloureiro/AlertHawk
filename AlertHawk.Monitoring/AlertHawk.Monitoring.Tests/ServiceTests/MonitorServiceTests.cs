@@ -76,7 +76,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                 .ReturnsAsync(monitor);
 
             // Act
-            var result = await _monitorService.GetMonitorDashboardData(monitorId);
+            var result = await _monitorService.GetMonitorDashboardData(monitorId, monitor);
 
             // Assert
             Assert.NotNull(result);
@@ -94,7 +94,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                 .ReturnsAsync(monitorHistory);
 
             // Act
-            var result = await _monitorService.GetMonitorDashboardData(monitorId);
+            var result = await _monitorService.GetMonitorDashboardData(monitorId, It.IsAny<Monitor>());
 
             // Assert
             Assert.NotNull(result);
@@ -638,7 +638,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                 .ReturnsAsync(monitor);
           
             // Act
-            var result = await _monitorService.GetMonitorDashboardData(monitorId);
+            var result = await _monitorService.GetMonitorDashboardData(monitorId,monitor);
 
             // Assert
             Assert.NotNull(result);

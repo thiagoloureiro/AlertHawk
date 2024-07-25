@@ -7,7 +7,7 @@ public interface IMonitorService
 {
     Task<IEnumerable<Monitor?>> GetMonitorList();
     Task PauseMonitor(int id, bool paused);
-    Task<MonitorDashboard?> GetMonitorDashboardData(int id);
+    Task<MonitorDashboard?> GetMonitorDashboardData(int id, Monitor monitor);
     Task<IEnumerable<MonitorDashboard>> GetMonitorDashboardDataList(List<int> ids);
     Task SetMonitorDashboardDataCacheList();
     Task<MonitorStatusDashboard?> GetMonitorStatusDashboard(string jwtToken, MonitorEnvironment environment);
