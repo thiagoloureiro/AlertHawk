@@ -193,14 +193,17 @@ public class MonitorService : IMonitorService
                 var lstMonitorDashboard = new List<MonitorDashboard?>();
                 var lstMonitor = await GetMonitorList();
 
-                foreach (var monitor in lstMonitor)
-                {
-                    if (monitor != null)
+                var tasks = lstMonitor
+                    .Where(monitor => monitor != null)
+                    .Select(async monitor =>
                     {
                         var monitorData = await GetMonitorDashboardData(monitor.Id);
-                        lstMonitorDashboard.Add(monitorData);
-                    }
-                }
+                        return monitorData;
+                    }).ToArray();
+
+                var results = await Task.WhenAll(tasks);
+
+                lstMonitorDashboard.AddRange(results);
 
                 await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20, CacheTimeInterval.Minutes);
                 Console.WriteLine("Finished Caching Monitor Dashboard Data List");
