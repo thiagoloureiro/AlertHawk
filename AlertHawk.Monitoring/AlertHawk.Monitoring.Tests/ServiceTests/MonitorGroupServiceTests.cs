@@ -214,6 +214,9 @@ public class MonitorGroupServiceTests
     public async Task DeleteMonitorGroup_ShouldInvalidateCache()
     {
         // Arrange
+        var authApi = "https://fakeUrl/auth/";
+        Environment.SetEnvironmentVariable("AUTH_API_URL", authApi);
+        
         _monitorGroupRepositoryMock.Setup(repo => repo.DeleteMonitorGroup(It.IsAny<int>()))
             .Returns(Task.CompletedTask);
         _httpMessageHandlerMock
@@ -256,7 +259,8 @@ public class MonitorGroupServiceTests
         // Arrange
         var token = "fake-token";
         var groupId = 123;
-        var authApi = "https://api.monitoring.electrificationtools.abb.com/auth/";
+        var authApi = "https://fakeUrl/auth/";
+        Environment.SetEnvironmentVariable("AUTH_API_URL", authApi);
 
         var expectedUri = new Uri($"{authApi}api/UsersMonitorGroup/AssignUserToGroup");
         var payload = new UsersMonitorGroup { GroupMonitorId = groupId };
@@ -410,6 +414,9 @@ public class MonitorGroupServiceTests
     [Fact]
     public async Task GetMonitorDashboardGroupListByUser_ShouldReturnFilteredMonitorGroups()
     {
+        var authApi = "https://fakeUrl/auth/";
+        Environment.SetEnvironmentVariable("AUTH_API_URL", authApi);
+        
         // Arrange
         var monitorGroups = new List<MonitorGroup>
         {
@@ -466,6 +473,8 @@ public class MonitorGroupServiceTests
     public async Task GetMonitorDashboardGroupListByUser_ShouldReturnDefaultMonitorGroups()
     {
         // Arrange
+        var authApi = "https://fakeUrl/auth/";
+        Environment.SetEnvironmentVariable("AUTH_API_URL", authApi);
         var monitorGroups = new List<MonitorGroup> { new MonitorGroup { Id = 0, Name = "No Groups Found" } };
         _monitorGroupRepositoryMock.Setup(repo => repo.GetMonitorGroupListByEnvironment(It.IsAny<MonitorEnvironment>()))
             .ReturnsAsync(monitorGroups);

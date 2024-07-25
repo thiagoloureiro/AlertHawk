@@ -292,8 +292,7 @@ public class MonitorGroupService : IMonitorGroupService
     public async Task<List<int>?> GetUserGroupMonitorListIds(string token)
     {
         var client = CreateHttpClient(token);
-        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
-                      "https://api.monitoring.electrificationtools.abb.com/auth/";
+        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL");
         var content = await client.GetAsync($"{authApi}api/UsersMonitorGroup/GetAll");
         var result = await content.Content.ReadAsStringAsync();
 
@@ -316,8 +315,7 @@ public class MonitorGroupService : IMonitorGroupService
 
         var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
 
-        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
-                      "https://api.monitoring.electrificationtools.abb.com/auth/";
+        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL");
         await client.PostAsync($"{authApi}api/UsersMonitorGroup/AssignUserToGroup", content);
     }
 
@@ -325,8 +323,7 @@ public class MonitorGroupService : IMonitorGroupService
     {
         var client = CreateHttpClient(token);
 
-        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
-                      "https://api.monitoring.electrificationtools.abb.com/auth/";
+        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL");
         await client.DeleteAsync($"{authApi}api/UsersMonitorGroup/{userGroupMonitorId}");
     }
 

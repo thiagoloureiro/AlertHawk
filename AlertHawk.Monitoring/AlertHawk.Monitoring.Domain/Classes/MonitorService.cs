@@ -35,14 +35,12 @@ public class MonitorService : IMonitorService
         _httpClientRunner = httpClientRunner;
         _monitorHistoryRepository = monitorHistoryRepository;
     }
-
-
+    
     public async Task<IEnumerable<Monitor?>> GetMonitorList()
     {
         return await _monitorRepository.GetMonitorList();
     }
-
-
+    
     public async Task PauseMonitor(int id, bool paused)
     {
         await _monitorRepository.PauseMonitor(id, paused);
@@ -225,7 +223,6 @@ public class MonitorService : IMonitorService
             SentrySdk.CaptureException(e);
             throw;
         }
-
     }
 
     public async Task<MonitorStatusDashboard?> GetMonitorStatusDashboard(string jwtToken, MonitorEnvironment environment)
@@ -526,8 +523,7 @@ public class MonitorService : IMonitorService
             using var content = new StringContent(JsonConvert.SerializeObject(action), System.Text.Encoding.UTF8,
                 "application/json");
 
-            var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
-                          "https://api.monitoring.electrificationtools.abb.com/auth/";
+            var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL");
             var response = await client.PostAsync($"{authApi}api/UserAction/create", content);
             response.EnsureSuccessStatusCode();
         }
