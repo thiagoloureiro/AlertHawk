@@ -3,6 +3,7 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ControllerTests;
 
@@ -56,7 +57,7 @@ public class MonitorHistoryControllerTests
     {
         // Arrange
         var monitorDashboard = new MonitorDashboard();
-        _mockMonitorService.Setup(service => service.GetMonitorDashboardData(It.IsAny<int>()))
+        _mockMonitorService.Setup(service => service.GetMonitorDashboardData(It.IsAny<int>(), It.IsAny<Monitor>()))
             .ReturnsAsync(monitorDashboard);
 
         // Act

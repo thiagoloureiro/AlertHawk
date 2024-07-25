@@ -47,7 +47,7 @@ public class MonitorService : IMonitorService
         _caching.Invalidate($"Monitor_{id}");
     }
 
-    public async Task<MonitorDashboard?> GetMonitorDashboardData(int id)
+    public async Task<MonitorDashboard?> GetMonitorDashboardData(int id, Monitor monitor)
     {
         try
         {
@@ -68,10 +68,10 @@ public class MonitorService : IMonitorService
                     Uptime7Days = 0
                 };
             }
-
-            var monitor =
-                await _caching.GetOrSetObjectFromCacheAsync($"Monitor_{id}", 5,
-                    () => _monitorRepository.GetMonitorById(id));
+            
+            //var monitor =
+              //  await _caching.GetOrSetObjectFromCacheAsync($"Monitor_{id}", 5,
+                //    () => _monitorRepository.GetMonitorById(id));
 
             if (monitor == null)
             {
@@ -201,7 +201,7 @@ public class MonitorService : IMonitorService
                             await semaphore.WaitAsync();
                             try
                             {
-                                return await GetMonitorDashboardData(monitor.Id);
+                                return await GetMonitorDashboardData(monitor.Id, monitor);
                             }
                             finally
                             {

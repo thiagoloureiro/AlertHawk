@@ -44,7 +44,8 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpGet("MonitorDashboardData/{id}")]
         public async Task<IActionResult> GetMonitorDashboardData(int id)
         {
-            var result = await _monitorService.GetMonitorDashboardData(id);
+            var monitor = _monitorService.GetMonitorList().Result.FirstOrDefault(x => x.Id == id);
+            var result = await _monitorService.GetMonitorDashboardData(id, monitor);
             return Ok(result);
         }
 
