@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
-using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Controllers
 {
@@ -145,6 +144,7 @@ namespace AlertHawk.Monitoring.Controllers
         public async Task<IActionResult> DeleteMonitor(int id)
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            
             await _monitorService.DeleteMonitor(id, jwtToken);
             return Ok();
         }
