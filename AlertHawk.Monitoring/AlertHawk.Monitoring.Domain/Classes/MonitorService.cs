@@ -192,18 +192,28 @@ public class MonitorService : IMonitorService
                 Console.WriteLine("Started Caching Monitor Dashboard Data List");
                 var lstMonitorDashboard = new List<MonitorDashboard?>();
                 var lstMonitor = await GetMonitorList();
+                int maxDegreeOfParallelism = 10; // Adjust this value based on your environment
 
-                var tasks = lstMonitor
-                    .Where(monitor => monitor != null)
-                    .Select(async monitor =>
-                    {
-                        var monitorData = await GetMonitorDashboardData(monitor.Id);
-                        return monitorData;
-                    }).ToArray();
+                using (var semaphore = new SemaphoreSlim(maxDegreeOfParallelism))
+                {
+                    var tasks = lstMonitor
+                        .Where(monitor => monitor != null)
+                        .Select(async monitor =>
+                        {
+                            await semaphore.WaitAsync();
+                            try
+                            {
+                                return await GetMonitorDashboardData(monitor.Id);
+                            }
+                            finally
+                            {
+                                semaphore.Release();
+                            }
+                        });
 
-                var results = await Task.WhenAll(tasks);
-
-                lstMonitorDashboard.AddRange(results);
+                    var results = await Task.WhenAll(tasks);
+                    lstMonitorDashboard.AddRange(results);
+                }
 
                 await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20, CacheTimeInterval.Minutes);
                 Console.WriteLine("Finished Caching Monitor Dashboard Data List");
@@ -214,6 +224,7 @@ public class MonitorService : IMonitorService
             SentrySdk.CaptureException(e);
             throw;
         }
+
     }
 
     public async Task<MonitorStatusDashboard?> GetMonitorStatusDashboard(string jwtToken, MonitorEnvironment environment)
