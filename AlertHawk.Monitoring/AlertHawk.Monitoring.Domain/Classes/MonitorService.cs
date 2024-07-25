@@ -192,7 +192,7 @@ public class MonitorService : IMonitorService
                 Console.WriteLine("Started Caching Monitor Dashboard Data List");
                 var lstMonitorDashboard = new List<MonitorDashboard?>();
                 var lstMonitor = await GetMonitorList();
-                int maxDegreeOfParallelism = 10; // Adjust this value based on your environment
+                int maxDegreeOfParallelism = Convert.ToInt32(Environment.GetEnvironmentVariable("CACHE_PARALLEL_TASKS") ?? "10"); // Adjust this value based on your environment
 
                 using (var semaphore = new SemaphoreSlim(maxDegreeOfParallelism))
                 {
