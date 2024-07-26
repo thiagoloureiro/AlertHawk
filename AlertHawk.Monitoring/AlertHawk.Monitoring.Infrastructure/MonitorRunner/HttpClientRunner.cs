@@ -113,7 +113,7 @@ public class HttpClientRunner : IHttpClientRunner
             catch (Exception err)
             {
                 retryCount++;
-                Thread.Sleep(_retryIntervalMilliseconds);
+
                 // If max retries reached, update status and save history
                 if (retryCount == maxRetries)
                 {
@@ -144,6 +144,8 @@ public class HttpClientRunner : IHttpClientRunner
 
                     break;
                 }
+
+                Thread.Sleep(_retryIntervalMilliseconds);
             }
         }
     }

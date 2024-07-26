@@ -30,6 +30,7 @@ public class MonitorHistoryService : IMonitorHistoryService
     public async Task DeleteMonitorHistory(int days)
     {
         await _monitorHistoryRepository.DeleteMonitorHistory(days);
+        await _caching.InvalidateAllAsync();
     }
 
     public async Task<long> GetMonitorHistoryCount()
