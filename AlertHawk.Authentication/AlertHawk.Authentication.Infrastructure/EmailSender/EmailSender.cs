@@ -8,7 +8,7 @@ public static class EmailSender
 {
     public static void SendEmail(string to, string subject, string body)
     {
-        if (!int.TryParse(Environment.GetEnvironmentVariable("SmtpPort"), out int port))
+        if (!int.TryParse(Environment.GetEnvironmentVariable("smtpPort"), out int port))
         {
             port = 587;
         }
@@ -20,8 +20,8 @@ public static class EmailSender
 
         // Initialize your static fields here if needed
         var smtpServer = Environment.GetEnvironmentVariable("smtpHost") ?? "smtp.office365.com";
-        var username = Environment.GetEnvironmentVariable("username") ?? string.Empty;
-        var password = Environment.GetEnvironmentVariable("password") ?? string.Empty;
+        var username = Environment.GetEnvironmentVariable("smtpUsername") ?? string.Empty;
+        var password = Environment.GetEnvironmentVariable("smtpPassword") ?? string.Empty;
         
         try
         {
