@@ -23,7 +23,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             _mockGetOrCreateUserService = new Mock<IGetOrCreateUserService>();
 
             _controller = new UsersMonitorGroupController(_mockUsersMonitorGroupService.Object,
-                _mockGetOrCreateUserService.Object, null)
+                _mockGetOrCreateUserService.Object)
             {
                 ControllerContext = new ControllerContext()
                 {
