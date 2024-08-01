@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using AlertHawk.Authentication.Domain.Entities;
@@ -42,13 +43,15 @@ public class MonitorGroupService : IMonitorGroupService
     public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupListByEnvironment(string jwtToken,
         MonitorEnvironment environment)
     {
-        Console.WriteLine("START Fetching UserGroupIds from Auth API");
+        var sw1 = new Stopwatch();
+        sw1.Start();
         var ids = await GetUserGroupMonitorListIds(jwtToken);
-        Console.WriteLine("END Fetching UserGroupIds from Auth API");
+        Console.WriteLine($"END Fetching UserGroupIds from Auth API {sw1.Elapsed}");
         
-        Console.WriteLine("START GetMonitorGroupListByEnvironment");
+        var sw2 = new Stopwatch();
+        sw2.Start();
         var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupListByEnvironment(environment);
-        Console.WriteLine("END Fetching UserGroupIds from Auth API");
+        Console.WriteLine($"END Fetching UserGroupIds from Auth API {sw2.Elapsed}");
         
         if (ids == null)
         {
@@ -64,8 +67,9 @@ public class MonitorGroupService : IMonitorGroupService
             .SelectMany(group => group.Monitors?.Select(m => m.Id) ?? Enumerable.Empty<int>()).ToList();
         var allDashboardData = await GetMonitorDashboardDataList(allMonitorIds);
         var monitorDashboards = allDashboardData.ToList();
-
-        Console.WriteLine("START GetHistory Parallel Task");
+        
+        var sw3 = new Stopwatch();
+        sw3.Start();
         var tasks = new List<Task>();
         var semaphore = new SemaphoreSlim(20); // Limit to 20 concurrent tasks
 
@@ -111,7 +115,7 @@ public class MonitorGroupService : IMonitorGroupService
 
         // Wait for all tasks to complete
         await Task.WhenAll(tasks);
-        Console.WriteLine("END GetHistory Parallel Task");
+        Console.WriteLine($"END GetHistory Parallel Task {sw3.Elapsed}");
 
         // Now process the results
         foreach (var monitorGroup in monitorGroups)
