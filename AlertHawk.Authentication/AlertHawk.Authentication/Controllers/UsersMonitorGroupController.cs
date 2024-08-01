@@ -100,7 +100,8 @@ namespace AlertHawk.Authentication.Controllers
             var userDetails = await GetUserByToken();
             if (userDetails != null)
             {
-                return Ok(await _usersMonitorGroupService.GetAsync(userDetails.Id));
+                var userGroups = await _usersMonitorGroupService.GetAsync(userDetails.Id);
+                return Ok(userGroups);
             }
 
             return Ok();
