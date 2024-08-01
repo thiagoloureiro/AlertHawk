@@ -2,6 +2,7 @@
 using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
+using EasyMemoryCache;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -15,13 +16,17 @@ namespace AlertHawk.Authentication.Controllers
     {
         private readonly IGetOrCreateUserService _getOrCreateUserService;
         private readonly IUsersMonitorGroupService _usersMonitorGroupService;
+        private readonly ICaching _caching;
+        private readonly string _UserGroupListCacheKey = "UserGroupList";
 
-        public UsersMonitorGroupController(IUsersMonitorGroupService usersMonitorGroupService, IGetOrCreateUserService getOrCreateUserService)
+        public UsersMonitorGroupController(IUsersMonitorGroupService usersMonitorGroupService,
+            IGetOrCreateUserService getOrCreateUserService, ICaching caching)
         {
             _getOrCreateUserService = getOrCreateUserService;
+            _caching = caching;
             _usersMonitorGroupService = usersMonitorGroupService;
         }
-        
+
         [HttpPost("AssignUserToGroup")]
         [SwaggerOperation(Summary = "AssignUserToGroup after group Creation")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -39,6 +44,7 @@ namespace AlertHawk.Authentication.Controllers
             try
             {
                 await _usersMonitorGroupService.AssignUserToGroup(usersMonitorGroup);
+                await _caching.InvalidateAllAsync();
                 return Ok();
             }
             catch (InvalidOperationException ex)
@@ -75,6 +81,7 @@ namespace AlertHawk.Authentication.Controllers
             try
             {
                 await _usersMonitorGroupService.CreateOrUpdateAsync(usersMonitorGroup);
+                await _caching.InvalidateAllAsync();
                 return Ok();
             }
             catch (InvalidOperationException ex)
@@ -100,7 +107,9 @@ namespace AlertHawk.Authentication.Controllers
             var userDetails = await GetUserByToken();
             if (userDetails != null)
             {
-                return Ok(await _usersMonitorGroupService.GetAsync(userDetails.Id));
+                var userGroups = await _caching.GetOrSetObjectFromCacheAsync(_UserGroupListCacheKey + userDetails.Id,
+                    20, () => _usersMonitorGroupService.GetAsync(userDetails.Id));
+                return Ok(userGroups);
             }
 
             return Ok();
@@ -121,7 +130,9 @@ namespace AlertHawk.Authentication.Controllers
                     new Message("This user is not authorized to do this operation"));
             }
 
-            return Ok(await _usersMonitorGroupService.GetAsync(userId));
+            var userGroups = await _caching.GetOrSetObjectFromCacheAsync(_UserGroupListCacheKey + userId,
+                20, () => _usersMonitorGroupService.GetAsync(userId));
+            return Ok(userGroups);
         }
 
         [HttpDelete("{groupMonitorId}")]
@@ -136,14 +147,15 @@ namespace AlertHawk.Authentication.Controllers
             if (usrAdmin == null)
             {
                 await _usersMonitorGroupService.DeleteAllByGroupMonitorIdAsync(groupMonitorId);
+                await _caching.InvalidateAllAsync();
                 return Ok();
             }
             else
             {
                 return usrAdmin;
             }
-
         }
+
         private async Task<ObjectResult?> IsUserAdmin()
         {
             var usr = await _getOrCreateUserService.GetUserOrCreateUser(User);
@@ -155,6 +167,7 @@ namespace AlertHawk.Authentication.Controllers
 
             return null; // or return a default value if needed
         }
+
         private async Task<UserDto?> GetUserByToken()
         {
             return await _getOrCreateUserService.GetUserOrCreateUser(User);
