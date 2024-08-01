@@ -42,9 +42,14 @@ public class MonitorGroupService : IMonitorGroupService
     public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupListByEnvironment(string jwtToken,
         MonitorEnvironment environment)
     {
+        Console.WriteLine("START Fetching UserGroupIds from Auth API");
         var ids = await GetUserGroupMonitorListIds(jwtToken);
+        Console.WriteLine("END Fetching UserGroupIds from Auth API");
+        
+        Console.WriteLine("START GetMonitorGroupListByEnvironment");
         var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupListByEnvironment(environment);
-
+        Console.WriteLine("END Fetching UserGroupIds from Auth API");
+        
         if (ids == null)
         {
             return new List<MonitorGroup> { new MonitorGroup { Id = 0, Name = "No Groups Found" } };
@@ -60,6 +65,7 @@ public class MonitorGroupService : IMonitorGroupService
         var allDashboardData = await GetMonitorDashboardDataList(allMonitorIds);
         var monitorDashboards = allDashboardData.ToList();
 
+        Console.WriteLine("START GetHistory Parallel Task");
         var tasks = new List<Task>();
         var semaphore = new SemaphoreSlim(20); // Limit to 20 concurrent tasks
 
@@ -105,7 +111,7 @@ public class MonitorGroupService : IMonitorGroupService
 
         // Wait for all tasks to complete
         await Task.WhenAll(tasks);
-
+        Console.WriteLine("END GetHistory Parallel Task");
 
         // Now process the results
         foreach (var monitorGroup in monitorGroups)
@@ -176,8 +182,7 @@ public class MonitorGroupService : IMonitorGroupService
                 () => _monitorHistoryRepository.GetMonitorHistoryByIdAndHours(monitor.Id, 1));
             if (monitor.MonitorStatusDashboard != null) monitor.MonitorStatusDashboard.HistoryData = data;
         }
-
-
+        
         return monitorGroups;
     }
 
