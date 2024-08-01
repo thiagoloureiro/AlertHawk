@@ -51,7 +51,7 @@ public class MonitorGroupService : IMonitorGroupService
         var sw2 = new Stopwatch();
         sw2.Start();
         var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupListByEnvironment(environment);
-        Console.WriteLine($"END Fetching UserGroupIds from Auth API {sw2.Elapsed}");
+        Console.WriteLine($"END Fetching GetMonitorGroupListByEnvironment {sw2.Elapsed}");
         
         if (ids == null)
         {
