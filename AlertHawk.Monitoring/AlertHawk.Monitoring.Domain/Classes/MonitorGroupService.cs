@@ -61,6 +61,7 @@ public class MonitorGroupService : IMonitorGroupService
         var monitorDashboards = allDashboardData.ToList();
 
         var tasks = new List<Task>();
+        var semaphore = new SemaphoreSlim(20); // Limit to 20 concurrent tasks
 
         foreach (var monitorGroup in monitorGroups)
         {
@@ -85,13 +86,26 @@ public class MonitorGroupService : IMonitorGroupService
                     };
 
                     // Create tasks to fetch data asynchronously
-                    tasks.Add(FetchMonitorHistoryAsync(monitor));
+                    var task = Task.Run(async () =>
+                    {
+                        await semaphore.WaitAsync(); // Acquire the semaphore
+                        try
+                        {
+                            await FetchMonitorHistoryAsync(monitor);
+                        }
+                        finally
+                        {
+                            semaphore.Release(); // Release the semaphore
+                        }
+                    });
+                    tasks.Add(task);
                 }
             }
         }
 
         // Wait for all tasks to complete
         await Task.WhenAll(tasks);
+
 
         // Now process the results
         foreach (var monitorGroup in monitorGroups)
