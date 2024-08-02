@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
@@ -206,6 +207,14 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpGet("GetMonitorJsonBackup")]
         public async Task<IActionResult> GetMonitorBackupJson()
         {
+            var isAdmin = await IsUserAdmin();
+
+            if (!isAdmin)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
+            }
+            
             var json = await _monitorService.GetMonitorBackupJson();
             var byteArray = Encoding.UTF8.GetBytes(json);
 
@@ -217,6 +226,14 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("UploadMonitorJsonBackup")]
         public async Task<IActionResult> UploadMonitorJsonBackup(IFormFile? file)
         {
+            var isAdmin = await IsUserAdmin();
+
+            if (!isAdmin)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
+            }
+            
             if (file == null || file.Length == 0)
                 return BadRequest("Upload a valid JSON file.");
 
@@ -236,6 +253,27 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorService.UploadMonitorJsonBackup(data);
 
             return Ok();
+        }
+        
+        private async Task<bool> IsUserAdmin()
+        {
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (string.IsNullOrEmpty(jwtToken))
+            {
+                return false;
+            }
+            
+            Console.WriteLine(jwtToken);
+
+            var user = await _monitorService.GetUserDetailsByToken(jwtToken);
+
+
+            if (user == null)
+            {
+                return false;
+            }
+
+            return user.IsAdmin;
         }
     }
 }

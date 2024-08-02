@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
@@ -35,12 +36,12 @@ public class MonitorService : IMonitorService
         _httpClientRunner = httpClientRunner;
         _monitorHistoryRepository = monitorHistoryRepository;
     }
-    
+
     public async Task<IEnumerable<Monitor?>> GetMonitorList()
     {
         return await _monitorRepository.GetMonitorList();
     }
-    
+
     public async Task PauseMonitor(int id, bool paused)
     {
         await _monitorRepository.PauseMonitor(id, paused);
@@ -68,10 +69,10 @@ public class MonitorService : IMonitorService
                     Uptime7Days = 0
                 };
             }
-            
+
             //var monitor =
-              //  await _caching.GetOrSetObjectFromCacheAsync($"Monitor_{id}", 5,
-                //    () => _monitorRepository.GetMonitorById(id));
+            //  await _caching.GetOrSetObjectFromCacheAsync($"Monitor_{id}", 5,
+            //    () => _monitorRepository.GetMonitorById(id));
 
             if (monitor == null)
             {
@@ -190,7 +191,9 @@ public class MonitorService : IMonitorService
                 Console.WriteLine("Started Caching Monitor Dashboard Data List");
                 var lstMonitorDashboard = new List<MonitorDashboard?>();
                 var lstMonitor = await GetMonitorList();
-                int maxDegreeOfParallelism = Convert.ToInt32(Environment.GetEnvironmentVariable("CACHE_PARALLEL_TASKS") ?? "10"); // Adjust this value based on your environment
+                int maxDegreeOfParallelism =
+                    Convert.ToInt32(Environment.GetEnvironmentVariable("CACHE_PARALLEL_TASKS") ??
+                                    "10"); // Adjust this value based on your environment
 
                 using (var semaphore = new SemaphoreSlim(maxDegreeOfParallelism))
                 {
@@ -214,7 +217,8 @@ public class MonitorService : IMonitorService
                 }
 
                 Console.WriteLine("Writing Cache to Redis");
-                await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20, CacheTimeInterval.Minutes);
+                await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20,
+                    CacheTimeInterval.Minutes);
                 Console.WriteLine("Finished writing Cache to Redis and ended Caching activity");
             }
         }
@@ -225,7 +229,8 @@ public class MonitorService : IMonitorService
         }
     }
 
-    public async Task<MonitorStatusDashboard?> GetMonitorStatusDashboard(string jwtToken, MonitorEnvironment environment)
+    public async Task<MonitorStatusDashboard?> GetMonitorStatusDashboard(string jwtToken,
+        MonitorEnvironment environment)
     {
         var monitorList = await GetMonitorListByMonitorGroupIds(jwtToken, environment);
 
@@ -513,13 +518,7 @@ public class MonitorService : IMonitorService
     {
         try
         {
-            var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
-            client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
-            client.DefaultRequestHeaders.Add("Connection", "keep-alive");
-            client.DefaultRequestHeaders.Add("Accept", "*/*");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
+            var client = CreateHttpClient(token);
             using var content = new StringContent(JsonConvert.SerializeObject(action), System.Text.Encoding.UTF8,
                 "application/json");
 
@@ -531,5 +530,35 @@ public class MonitorService : IMonitorService
         {
             SentrySdk.CaptureException(e);
         }
+    }
+
+    public async Task<UserDto?> GetUserDetailsByToken(string token)
+    {
+        try
+        {
+            var client = CreateHttpClient(token);
+
+            var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL");
+            var content = await client.GetAsync($"{authApi}api/User/GetUserDetailsByToken");
+
+            var result = await content.Content.ReadAsStringAsync();
+            var user = JsonConvert.DeserializeObject<UserDto>(result);
+            return user;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    private HttpClient CreateHttpClient(string token)
+    {
+        var client = _httpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
+        client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
+        client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+        client.DefaultRequestHeaders.Add("Accept", "*/*");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return client;
     }
 }

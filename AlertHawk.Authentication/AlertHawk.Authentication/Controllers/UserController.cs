@@ -80,7 +80,12 @@ public class UserController : Controller
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> PutUserUpdate([FromBody] UserDto userUpdate)
     {
-        await IsUserAdmin();
+        var usrAdmin = await IsUserAdmin();
+        if (!usrAdmin)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new Message("This user is not authorized to do this operation"));
+        }
 
         if (!ModelState.IsValid)
         {
@@ -152,19 +157,29 @@ public class UserController : Controller
     public async Task<IActionResult> GetAll()
     {
         var usrAdmin = await IsUserAdmin();
-        return usrAdmin ?? Ok(await _userService.GetAll());
-    }
-
-    private async Task<ObjectResult?> IsUserAdmin()
-    {
-        var usr = await _getOrCreateUserService.GetUserOrCreateUser(User);
-        if (usr != null && !usr.IsAdmin)
+        if (!usrAdmin)
         {
             return StatusCode(StatusCodes.Status403Forbidden,
                 new Message("This user is not authorized to do this operation"));
         }
+        
+        return Ok(await _userService.GetAll());
+    }
 
-        return null; // or return a default value if needed
+    private async Task<bool> IsUserAdmin()
+    {
+        var usr = await _getOrCreateUserService.GetUserOrCreateUser(User);
+        if (usr == null)
+        {
+            return false;
+        }
+            
+        if (!usr.IsAdmin)
+        {
+            return false;
+        }
+
+        return usr.IsAdmin;
     }
 
     [HttpGet("GetById/{userId}")]
@@ -221,5 +236,18 @@ public class UserController : Controller
     {
        var users = await _userService.GetAll();
        return Ok(users?.Count());
+    }
+    
+    [HttpGet("GetUserDetailsByToken")]
+    [SwaggerOperation(Summary = "GetUserDetailsByToken")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUserDetailsByToken()
+    {
+        return Ok(await GetUserByToken());
+    }
+    
+    private async Task<UserDto?> GetUserByToken()
+    {
+        return await _getOrCreateUserService.GetUserOrCreateUser(User);
     }
 }

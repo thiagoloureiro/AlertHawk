@@ -21,6 +21,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             _mockUserService = new Mock<IUserService>();
             _mockGetOrCreateUserService = new Mock<IGetOrCreateUserService>();
+            
 
             _controller = new UserController(_mockUserService.Object, _mockGetOrCreateUserService.Object)
             {
@@ -157,10 +158,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
 
             // Assert
             var objectResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(StatusCodes.Status500InternalServerError, objectResult.StatusCode);
-
-            var message = Assert.IsType<Message>(objectResult.Value);
-            Assert.Equal("Something went wrong.", message.Content);
+            Assert.Equal(StatusCodes.Status403Forbidden, objectResult.StatusCode);
         }
 
         [Fact]
