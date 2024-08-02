@@ -80,7 +80,12 @@ public class UserController : Controller
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> PutUserUpdate([FromBody] UserDto userUpdate)
     {
-        await IsUserAdmin();
+        var usrAdmin = await IsUserAdmin();
+        if (!usrAdmin)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new Message("This user is not authorized to do this operation"));
+        }
 
         if (!ModelState.IsValid)
         {
@@ -152,25 +157,29 @@ public class UserController : Controller
     public async Task<IActionResult> GetAll()
     {
         var usrAdmin = await IsUserAdmin();
-        return usrAdmin ?? Ok(await _userService.GetAll());
+        if (!usrAdmin)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new Message("This user is not authorized to do this operation"));
+        }
+        
+        return Ok(await _userService.GetAll());
     }
 
-    private async Task<ObjectResult?> IsUserAdmin()
+    private async Task<bool> IsUserAdmin()
     {
         var usr = await _getOrCreateUserService.GetUserOrCreateUser(User);
         if (usr == null)
         {
-            return StatusCode(StatusCodes.Status403Forbidden,
-                new Message("This user is not authorized to do this operation"));
+            return false;
         }
             
         if (!usr.IsAdmin)
         {
-            return StatusCode(StatusCodes.Status403Forbidden,
-                new Message("This user is not authorized to do this operation"));
+            return false;
         }
 
-        return null; // or return a default value if needed
+        return usr.IsAdmin;
     }
 
     [HttpGet("GetById/{userId}")]

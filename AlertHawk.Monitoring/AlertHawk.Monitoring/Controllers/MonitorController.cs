@@ -207,7 +207,14 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpGet("GetMonitorJsonBackup")]
         public async Task<IActionResult> GetMonitorBackupJson()
         {
-            await IsUserAdmin();
+            var isAdmin = await IsUserAdmin();
+
+            if (!isAdmin)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
+            }
+            
             var json = await _monitorService.GetMonitorBackupJson();
             var byteArray = Encoding.UTF8.GetBytes(json);
 
@@ -219,7 +226,14 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("UploadMonitorJsonBackup")]
         public async Task<IActionResult> UploadMonitorJsonBackup(IFormFile? file)
         {
-            await IsUserAdmin();
+            var isAdmin = await IsUserAdmin();
+
+            if (!isAdmin)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
+            }
+            
             if (file == null || file.Length == 0)
                 return BadRequest("Upload a valid JSON file.");
 
@@ -241,35 +255,25 @@ namespace AlertHawk.Monitoring.Controllers
             return Ok();
         }
         
-        private async Task<ObjectResult?> IsUserAdmin()
+        private async Task<bool> IsUserAdmin()
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
             if (string.IsNullOrEmpty(jwtToken))
             {
-                return BadRequest("Invalid Token");
+                return false;
             }
             
             Console.WriteLine(jwtToken);
 
             var user = await _monitorService.GetUserDetailsByToken(jwtToken);
-            
-            Console.WriteLine(user?.IsAdmin);
-            Console.WriteLine(user?.Username);
+
 
             if (user == null)
             {
-                return StatusCode(StatusCodes.Status403Forbidden,
-                    new Message("This user is not authorized to do this operation"));
-            }
-            
-            if (!user.IsAdmin)
-            {
-                Console.WriteLine("returning 403 on non-admin");
-                return StatusCode(StatusCodes.Status403Forbidden,
-                    new Message("This user is not authorized to do this operation"));
+                return false;
             }
 
-            return null; // or return a default value if needed
+            return user.IsAdmin;
         }
     }
 }
