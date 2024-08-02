@@ -248,8 +248,13 @@ namespace AlertHawk.Monitoring.Controllers
             {
                 return BadRequest("Invalid Token");
             }
+            
+            Console.WriteLine(jwtToken);
 
             var user = await _monitorService.GetUserDetailsByToken(jwtToken);
+            
+            Console.WriteLine(user?.IsAdmin);
+            Console.WriteLine(user?.Username);
 
             if (user == null)
             {
@@ -259,6 +264,7 @@ namespace AlertHawk.Monitoring.Controllers
             
             if (!user.IsAdmin)
             {
+                Console.WriteLine("returning 403 on non-admin");
                 return StatusCode(StatusCodes.Status403Forbidden,
                     new Message("This user is not authorized to do this operation"));
             }
