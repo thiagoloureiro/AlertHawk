@@ -250,8 +250,14 @@ namespace AlertHawk.Monitoring.Controllers
             }
 
             var user = await _monitorService.GetUserDetailsByToken(jwtToken);
+
+            if (user == null)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
+            }
             
-            if (user != null && !user.IsAdmin)
+            if (!user.IsAdmin)
             {
                 return StatusCode(StatusCodes.Status403Forbidden,
                     new Message("This user is not authorized to do this operation"));

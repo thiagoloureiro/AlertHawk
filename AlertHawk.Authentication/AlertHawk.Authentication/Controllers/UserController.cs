@@ -158,7 +158,13 @@ public class UserController : Controller
     private async Task<ObjectResult?> IsUserAdmin()
     {
         var usr = await _getOrCreateUserService.GetUserOrCreateUser(User);
-        if (usr != null && !usr.IsAdmin)
+        if (usr == null)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new Message("This user is not authorized to do this operation"));
+        }
+            
+        if (!usr.IsAdmin)
         {
             return StatusCode(StatusCodes.Status403Forbidden,
                 new Message("This user is not authorized to do this operation"));
@@ -221,5 +227,18 @@ public class UserController : Controller
     {
        var users = await _userService.GetAll();
        return Ok(users?.Count());
+    }
+    
+    [HttpGet("GetUserCount")]
+    [SwaggerOperation(Summary = "GetUserDetailsByToken")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUserDetailsByToken()
+    {
+        return Ok(await GetUserByToken());
+    }
+    
+    private async Task<UserDto?> GetUserByToken()
+    {
+        return await _getOrCreateUserService.GetUserOrCreateUser(User);
     }
 }

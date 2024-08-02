@@ -533,7 +533,7 @@ public class MonitorService : IMonitorService
         var client = CreateHttpClient(token);
 
         var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL");
-        var content = await client.GetAsync($"{authApi}api/GetUserDetailsByToken");
+        var content = await client.GetAsync($"{authApi}api/User/GetUserDetailsByToken");
         
         var result = await content.Content.ReadAsStringAsync();
         var user = JsonConvert.DeserializeObject<UserDto>(result);
