@@ -1,3 +1,4 @@
+using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Monitoring.Controllers;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
@@ -524,14 +525,26 @@ public class MonitorControllerTests
     public async Task GetMonitorBackupJson_Returns_OkResult_With_Expected_Result()
     {
         // Arrange
-        var monitorServiceMock = Substitute.For<IMonitorService>();
+        var monitorServiceMock = new Mock<IMonitorService>();
         var expectedJson = "json";
-        monitorServiceMock.GetMonitorBackupJson().Returns(expectedJson);
+        var token = "Bearer valid.token.here";
+        var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: true);
+        
+        monitorServiceMock.Setup(x => x.GetUserDetailsByToken(It.IsAny<string>())).ReturnsAsync(user);
 
-        var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        monitorServiceMock.Setup(x => x.GetMonitorBackupJson()).ReturnsAsync(expectedJson);
+        
+        var monitorAgentServiceMock = new Mock<IMonitorAgentService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
-
+        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+        controller.Request.Headers["Authorization"] = token;
+        
         // Act
         var result = await controller.GetMonitorBackupJson();
 
@@ -545,11 +558,22 @@ public class MonitorControllerTests
     public async Task UploadMonitorJsonBackup_Returns_BadRequestResult()
     {
         // Arrange
-        var monitorServiceMock = Substitute.For<IMonitorService>();
-        var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        var monitorServiceMock = new Mock<IMonitorService>();
+        var monitorAgentServiceMock = new Mock<IMonitorAgentService>();
         var mockFile = new Mock<IFormFile>();
-
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var token = "Bearer valid.token.here";
+        var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: true);
+        
+        monitorServiceMock.Setup(x => x.GetUserDetailsByToken(It.IsAny<string>())).ReturnsAsync(user);
+        
+        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+        controller.Request.Headers["Authorization"] = token;
 
         // Act
         var result = await controller.UploadMonitorJsonBackup(mockFile.Object);
@@ -562,18 +586,29 @@ public class MonitorControllerTests
     public async Task UploadMonitorJsonBackup_Returns_OkObjectResult()
     {
         // Arrange
-        var monitorServiceMock = Substitute.For<IMonitorService>();
-        var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        var monitorServiceMock = new Mock<IMonitorService>();
+        var monitorAgentServiceMock = new Mock<IMonitorAgentService>();
         var monitorBackup = new MonitorBackup
         {
             MonitorGroupList = new List<MonitorGroup>()
         };
+        var token = "Bearer valid.token.here";
+        var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: true);
 
         var contentJson = JsonConvert.SerializeObject(monitorBackup);
         
         IFormFile mockFile = CreateMockIFormFile("test.txt", contentJson);
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        monitorServiceMock.Setup(x => x.GetUserDetailsByToken(It.IsAny<string>())).ReturnsAsync(user);
+        
+        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+        controller.Request.Headers["Authorization"] = token;
 
         // Act
         var result = await controller.UploadMonitorJsonBackup(mockFile);
