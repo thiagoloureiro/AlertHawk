@@ -229,7 +229,7 @@ public class UserController : Controller
        return Ok(users?.Count());
     }
     
-    [HttpGet("GetUserCount")]
+    [HttpGet("GetUserDetailsByToken")]
     [SwaggerOperation(Summary = "GetUserDetailsByToken")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUserDetailsByToken()
