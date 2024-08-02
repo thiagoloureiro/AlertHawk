@@ -52,6 +52,14 @@ namespace AlertHawk.Authentication.Controllers
             var userActions = await _userActionService.GetAsync();
             return Ok(userActions);
         }
+        
+        [HttpGet]
+        [SwaggerOperation(Summary = "GetUserDetailsByToken")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetUserDetailsByToken()
+        {
+            return Ok(await GetUserByToken());
+        }
 
         private async Task<UserDto?> GetUserByToken()
         {

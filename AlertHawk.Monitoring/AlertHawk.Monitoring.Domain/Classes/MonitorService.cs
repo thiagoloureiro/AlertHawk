@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
@@ -513,13 +514,7 @@ public class MonitorService : IMonitorService
     {
         try
         {
-            var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
-            client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
-            client.DefaultRequestHeaders.Add("Connection", "keep-alive");
-            client.DefaultRequestHeaders.Add("Accept", "*/*");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
+            var client = CreateHttpClient(token);
             using var content = new StringContent(JsonConvert.SerializeObject(action), System.Text.Encoding.UTF8,
                 "application/json");
 
@@ -531,5 +526,28 @@ public class MonitorService : IMonitorService
         {
             SentrySdk.CaptureException(e);
         }
+    }
+    
+    public async Task<UserDto?> GetUserDetailsByToken(string token)
+    {
+        var client = CreateHttpClient(token);
+
+        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL");
+        var content = await client.GetAsync($"{authApi}api/GetUserDetailsByToken");
+        
+        var result = await content.Content.ReadAsStringAsync();
+        var user = JsonConvert.DeserializeObject<UserDto>(result);
+        return user;
+    }
+    
+    private HttpClient CreateHttpClient(string token)
+    {
+        var client = _httpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
+        client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
+        client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+        client.DefaultRequestHeaders.Add("Accept", "*/*");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return client;
     }
 }

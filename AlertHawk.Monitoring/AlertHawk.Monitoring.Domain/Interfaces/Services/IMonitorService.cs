@@ -1,3 +1,4 @@
+using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Monitoring.Domain.Entities;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
@@ -21,9 +22,9 @@ public interface IMonitorService
     Task<MonitorHttp> GetHttpMonitorByMonitorId(int id);
     Task<MonitorTcp> GetTcpMonitorByMonitorId(int id);
     Task PauseMonitorByGroupId(int groupId, bool paused);
-
     Task<IEnumerable<Monitor?>> GetMonitorListByTag(string tag);
     Task<IEnumerable<string?>> GetMonitorTagList();
     Task<string> GetMonitorBackupJson();
     Task UploadMonitorJsonBackup(MonitorBackup monitorBackups);
+    Task<UserDto?> GetUserDetailsByToken(string token);
 }

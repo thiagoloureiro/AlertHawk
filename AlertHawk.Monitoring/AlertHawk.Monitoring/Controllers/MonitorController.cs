@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
@@ -206,6 +207,7 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpGet("GetMonitorJsonBackup")]
         public async Task<IActionResult> GetMonitorBackupJson()
         {
+            await IsUserAdmin();
             var json = await _monitorService.GetMonitorBackupJson();
             var byteArray = Encoding.UTF8.GetBytes(json);
 
@@ -217,6 +219,7 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("UploadMonitorJsonBackup")]
         public async Task<IActionResult> UploadMonitorJsonBackup(IFormFile? file)
         {
+            await IsUserAdmin();
             if (file == null || file.Length == 0)
                 return BadRequest("Upload a valid JSON file.");
 
@@ -236,6 +239,25 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorService.UploadMonitorJsonBackup(data);
 
             return Ok();
+        }
+        
+        private async Task<ObjectResult?> IsUserAdmin()
+        {
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (string.IsNullOrEmpty(jwtToken))
+            {
+                return BadRequest("Invalid Token");
+            }
+
+            var user = await _monitorService.GetUserDetailsByToken(jwtToken);
+            
+            if (user != null && !user.IsAdmin)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
+            }
+
+            return null; // or return a default value if needed
         }
     }
 }

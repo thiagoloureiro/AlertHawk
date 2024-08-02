@@ -1,3 +1,4 @@
+using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Entities;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
