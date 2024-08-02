@@ -262,11 +262,8 @@ namespace AlertHawk.Monitoring.Controllers
             {
                 return false;
             }
-            
-            Console.WriteLine(jwtToken);
 
             var user = await _monitorService.GetUserDetailsByToken(jwtToken);
-
 
             if (user == null)
             {
