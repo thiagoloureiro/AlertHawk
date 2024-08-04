@@ -21,7 +21,6 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             _mockUserService = new Mock<IUserService>();
             _mockGetOrCreateUserService = new Mock<IGetOrCreateUserService>();
-            
 
             _controller = new UserController(_mockUserService.Object, _mockGetOrCreateUserService.Object)
             {
@@ -112,8 +111,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
                 Password = "password",
                 RepeatPassword = "password",
                 Username = "userName",
-                UserEmail = "email@email.com",
-                IsAdmin = false
+                UserEmail = "email@email.com"
             };
             var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "", IsAdmin: true);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
@@ -231,7 +229,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             Assert.IsType<OkResult>(result);
         }
-        
+
         [Fact]
         public async Task ResetPassword_InvalidUsername_ReturnsOk()
         {
@@ -259,7 +257,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             _mockUserService.Setup(s => s.UpdatePassword(userEmail, password)).Returns(Task.CompletedTask);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
-            
+
             // Act
             var result = await _controller.UpdatePassword(new UserPassword
             {
@@ -270,7 +268,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             Assert.IsType<OkResult>(result);
         }
-        
+
         [Fact]
         public async Task UpdatePassword_UpdateUserPassword_InvalidPasswordReturnsBadRequest()
         {
@@ -283,7 +281,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             _mockUserService.Setup(s => s.UpdatePassword(userEmail, password)).Returns(Task.CompletedTask);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
-            
+
             // Act
             var result = await _controller.UpdatePassword(new UserPassword
             {
@@ -294,7 +292,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             Assert.IsType<BadRequestObjectResult>(result);
         }
-        
+
         [Fact]
         public async Task UpdatePassword_UpdateUserPassword_InvalidUserReturnsBadRequest()
         {
@@ -306,7 +304,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             _mockUserService.Setup(s => s.UpdatePassword(userEmail, password)).Returns(Task.CompletedTask);
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(It.IsAny<UserDto>());
-            
+
             // Act
             var result = await _controller.UpdatePassword(new UserPassword
             {
@@ -468,7 +466,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             var returnedUsers = Assert.IsType<int>(okResult.Value);
             Assert.Equal(0, returnedUsers);
         }
-        
+
         [Fact]
         public async Task DeleteUser_ValidUserId_ReturnsOk()
         {
@@ -484,7 +482,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             Assert.IsType<OkResult>(result);
         }
-        
+
         [Fact]
         public async Task DeleteUser_InvalidUserId_ReturnsBadRequest()
         {
@@ -500,4 +498,3 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         }
     }
 }
-
