@@ -45,7 +45,7 @@ public class NotifierTests : IClassFixture<NotificationController>
         // Assert
         Assert.NotNull(result);
     }
-    
+
     [Fact]
     public async Task Should_Send_Success_Telegram_Notification()
     {
@@ -158,7 +158,7 @@ public class NotifierTests : IClassFixture<NotificationController>
         // Assert
         Assert.True(true);
     }
-    
+
     [Fact]
     public async Task Should_Send_Success_Slack_Notification()
     {
@@ -205,7 +205,7 @@ public class NotifierTests : IClassFixture<NotificationController>
         // Assert
         Assert.True(true);
     }
-    
+
     [Fact]
     public async Task Should_Send_Success_Teams_Notification()
     {
@@ -238,7 +238,7 @@ public class NotifierTests : IClassFixture<NotificationController>
 
         var body = $"{{\"channel\": \"{channel}\", \"text\": \"{message}\"}}";
         var headers = "{\"User-Agent\": \"Mozilla/5.0\"}";
-     
+
         var notificationSend = new NotificationSend
         {
             Message = "Message",

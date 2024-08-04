@@ -68,7 +68,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
             {
                 if (notificationItem.NotificationEmail != null) notificationItem.NotificationEmail.ToCCEmail = null;
             }
-        
+
             if (string.IsNullOrEmpty(notificationItem.NotificationEmail?.ToBCCEmail))
             {
                 if (notificationItem.NotificationEmail != null) notificationItem.NotificationEmail.ToBCCEmail = null;
@@ -166,7 +166,6 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     public async Task InsertNotificationItemWebHook(NotificationItem? notificationItem)
     {
-
         await using var db = new SqlConnection(_connstring);
         string sqlDetails =
             @"INSERT INTO [NotificationWebHook] (NotificationId, Message, WebHookUrl, Body, HeadersJson) VALUES (@notificationId, @Message, @WebHookUrl, @Body, @HeadersJson)";
@@ -305,7 +304,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         string sql = "INSERT INTO [NotificationLog] (TimeStamp, NotificationTypeId, Message) VALUES (@TimeStamp, @NotificationTypeId, @Message)";
         await db.ExecuteAsync(sql, new { notificationLog.TimeStamp, notificationLog.NotificationTypeId, notificationLog.Message }, commandType: CommandType.Text);
     }
-    
+
     public async Task<long> GetNotificationLogCount()
     {
         await using var db = new SqlConnection(_connstring);

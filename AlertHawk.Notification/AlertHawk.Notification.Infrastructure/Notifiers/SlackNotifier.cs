@@ -1,5 +1,5 @@
-﻿using System.Text;
-using AlertHawk.Notification.Domain.Interfaces.Notifiers;
+﻿using AlertHawk.Notification.Domain.Interfaces.Notifiers;
+using System.Text;
 
 namespace AlertHawk.Notification.Infrastructure.Notifiers
 {

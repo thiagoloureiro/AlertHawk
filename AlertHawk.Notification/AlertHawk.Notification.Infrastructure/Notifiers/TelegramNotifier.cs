@@ -9,7 +9,7 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
         public async Task<Message> SendNotification(long chatId, string message, string telegramBotToken)
         {
             var botClient = new TelegramBotClient(telegramBotToken);
-            
+
             message = message.Contains("Success") ? "\u2705 " + message : "\u274c " + message;
 
             var result = await botClient.SendTextMessageAsync(chatId, message);

@@ -3,7 +3,7 @@
     public class NotificationEmail
     {
         public int NotificationId { get; set; }
-        public required string FromEmail { get; set; }
+        public string FromEmail { get; set; }
         public string? ToEmail { get; set; }
         public string? Hostname { get; set; }
         public int Port { get; set; }
