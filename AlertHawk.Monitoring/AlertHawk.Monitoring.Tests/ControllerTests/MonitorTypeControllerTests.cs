@@ -18,12 +18,12 @@ public class MonitorTypeControllerTests
         _monitorTypeServiceMock = new Mock<IMonitorTypeService>();
         _cachingMock = new Mock<ICaching>();
     }
-    
+
     [Fact]
     public async Task Should_Return_Data_From_Health_Check()
     {
         // Arrange
-        var controller = new MonitorTypeController(_monitorTypeServiceMock.Object,_cachingMock.Object);
+        var controller = new MonitorTypeController(_monitorTypeServiceMock.Object, _cachingMock.Object);
 
         // Act
         var result = await controller.GetMonitorType();
@@ -31,6 +31,7 @@ public class MonitorTypeControllerTests
         // Assert
         Assert.NotNull(result);
     }
+
     [Fact]
     public async Task Should_Return_Data_From_Health_Check_From_Service()
     {
@@ -43,12 +44,11 @@ public class MonitorTypeControllerTests
             .ReturnsAsync(monitorTypes);
 
         // Act
-        var controller = new MonitorTypeController(_monitorTypeServiceMock.Object,_cachingMock.Object);
+        var controller = new MonitorTypeController(_monitorTypeServiceMock.Object, _cachingMock.Object);
 
         var result = await controller.GetMonitorType();
 
         // Assert
-         Assert.IsType<OkObjectResult>(result);
-        
+        Assert.IsType<OkObjectResult>(result);
     }
 }

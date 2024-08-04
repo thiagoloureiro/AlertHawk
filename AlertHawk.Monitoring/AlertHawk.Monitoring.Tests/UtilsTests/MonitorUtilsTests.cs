@@ -24,7 +24,7 @@ public class MonitorUtilsTests
 
         // Assert
         Assert.True(monitorRegion == monitorRegionVariable);
-        
+
         Environment.SetEnvironmentVariable("monitor_region", null);
     }
 

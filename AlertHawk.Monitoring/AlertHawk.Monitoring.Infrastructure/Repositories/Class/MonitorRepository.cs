@@ -1,10 +1,10 @@
-using System.Data;
-using System.Data.SqlClient;
-using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
 using Microsoft.Extensions.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
@@ -34,7 +34,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             @"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment FROM [Monitor] WHERE Paused = 0";
         return await db.QueryAsync<Monitor>(sql, commandType: CommandType.Text);
     }
-    
+
     public async Task<IEnumerable<Monitor?>> GetFullMonitorList()
     {
         await using var db = new SqlConnection(_connstring);
@@ -42,7 +42,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             @"SELECT M.Id, M.Name, HTTP.UrlToCheck, CAST(IP AS VARCHAR(255)) + ':' + CAST(Port AS VARCHAR(10)) AS MonitorTcp, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag, HTTP.CheckCertExpiry FROM [Monitor] M
                 LEFT JOIN MonitorHttp HTTP on HTTP.MonitorId = M.Id
                 LEFT JOIN MonitorTcp TCP ON TCP.MonitorId = M.Id";
-        return await db.QueryAsync<Monitor>(sql, new {  }, commandType: CommandType.Text);
+        return await db.QueryAsync<Monitor>(sql, new { }, commandType: CommandType.Text);
     }
 
     public async Task<IEnumerable<MonitorHttp>> GetMonitorHttpList()
@@ -51,7 +51,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string sql = "SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp]";
         return await db.QueryAsync<MonitorHttp>(sql, commandType: CommandType.Text);
     }
-    
+
     public async Task<IEnumerable<MonitorTcp>> GetMonitorTcpList()
     {
         await using var db = new SqlConnection(_connstring);
@@ -63,7 +63,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sqlMonitor =
-            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag) 
+            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag)
             VALUES (@Name, @MonitorTypeId, @HeartBeatInterval, @Retries, @Status, @DaysToExpireCert, @Paused, @MonitorRegion, @MonitorEnvironment, @Tag); SELECT CAST(SCOPE_IDENTITY() as int)";
         var id = await db.ExecuteScalarAsync<int>(sqlMonitor,
             new
@@ -115,7 +115,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 WHERE MonitorEnvironment = @environment";
         return await db.QueryAsync<Monitor>(sql, new { environment }, commandType: CommandType.Text);
     }
-    
+
     public async Task<IEnumerable<Monitor>?> GetMonitorListByMonitorGroupIds(List<int> groupMonitorIds,
         MonitorEnvironment environment)
     {
@@ -155,8 +155,8 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             }, commandType: CommandType.Text);
 
         string sqlMonitorHttp =
-            @"UPDATE [MonitorHttp] SET CheckCertExpiry = @CheckCertExpiry, IgnoreTlsSsl = @IgnoreTlsSsl, 
-            MaxRedirects = @MaxRedirects, UrlToCheck = @UrlToCheck, Timeout = @Timeout, MonitorHttpMethod = @MonitorHttpMethod, 
+            @"UPDATE [MonitorHttp] SET CheckCertExpiry = @CheckCertExpiry, IgnoreTlsSsl = @IgnoreTlsSsl,
+            MaxRedirects = @MaxRedirects, UrlToCheck = @UrlToCheck, Timeout = @Timeout, MonitorHttpMethod = @MonitorHttpMethod,
             Body = @Body, HeadersJson = @HeadersJson WHERE MonitorId = @monitorId";
 
         await db.ExecuteAsync(sqlMonitorHttp,
@@ -191,10 +191,10 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
 
         string sqlTcp = @"DELETE FROM [MonitorTcp] WHERE MonitorId=@id";
         await db.ExecuteAsync(sqlTcp, new { id }, commandType: CommandType.Text);
-        
+
         string sqlNotification = @"DELETE FROM [MonitorNotification] WHERE MonitorId=@id";
         await db.ExecuteAsync(sqlNotification, new { id }, commandType: CommandType.Text);
-        
+
         string sqlMonitorGroupItems = @"DELETE FROM [MonitorGroupItems] WHERE MonitorId=@id";
         await db.ExecuteAsync(sqlMonitorGroupItems, new { id }, commandType: CommandType.Text);
 
@@ -206,7 +206,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sqlMonitor =
-            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag) 
+            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag)
             VALUES (@Name, @MonitorTypeId, @HeartBeatInterval, @Retries, @Status, @DaysToExpireCert, @Paused, @MonitorRegion, @MonitorEnvironment, @Tag); SELECT CAST(SCOPE_IDENTITY() as int)";
         var id = await db.ExecuteScalarAsync<int>(sqlMonitor,
             new
@@ -281,7 +281,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     public async Task<IEnumerable<MonitorTcp>> GetTcpMonitorByIds(List<int> ids)
     {
         await using var db = new SqlConnection(_connstring);
-        
+
         string sql =
             $@"SELECT MonitorId, Port, IP, Timeout, LastStatus  FROM [MonitorTcp] WHERE MonitorId IN @ids";
 
@@ -312,7 +312,6 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return await db.QueryAsync<string>(sql, commandType: CommandType.Text);
     }
 
-
     public async Task<Monitor> GetMonitorById(int id)
     {
         await using var db = new SqlConnection(_connstring);
@@ -327,8 +326,8 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
 
         string sql =
-            $@"SELECT a.Id, a.Name, a.MonitorTypeId, a.HeartBeatInterval, a.Retries, a.Status, a.DaysToExpireCert, a.Paused, a.MonitorRegion, a.MonitorEnvironment, a.Tag, 
-               b.MonitorId, b.CheckCertExpiry, b.IgnoreTlsSsl, b.MaxRedirects, b.UrlToCheck, b.Timeout, b.MonitorHttpMethod, b.Body, b.HeadersJson  
+            $@"SELECT a.Id, a.Name, a.MonitorTypeId, a.HeartBeatInterval, a.Retries, a.Status, a.DaysToExpireCert, a.Paused, a.MonitorRegion, a.MonitorEnvironment, a.Tag,
+               b.MonitorId, b.CheckCertExpiry, b.IgnoreTlsSsl, b.MaxRedirects, b.UrlToCheck, b.Timeout, b.MonitorHttpMethod, b.Body, b.HeadersJson
                 FROM [Monitor] a inner join
                 [MonitorHttp] b on a.Id = b.MonitorId
              WHERE MonitorId = @monitorId";
@@ -340,14 +339,14 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
 
         string sql =
-            $@"SELECT a.Id, a.Name, a.MonitorTypeId, a.HeartBeatInterval, a.Retries, a.Status, a.DaysToExpireCert, a.Paused, a.MonitorRegion, a.MonitorEnvironment, a.Tag, 
-               b.MonitorId, b.Port, b.IP, b.Timeout, b.LastStatus                  
+            $@"SELECT a.Id, a.Name, a.MonitorTypeId, a.HeartBeatInterval, a.Retries, a.Status, a.DaysToExpireCert, a.Paused, a.MonitorRegion, a.MonitorEnvironment, a.Tag,
+               b.MonitorId, b.Port, b.IP, b.Timeout, b.LastStatus
                 FROM [Monitor] a inner join
                 [MonitorTcp] b on a.Id = b.MonitorId
             WHERE MonitorId = @monitorId";
         return await db.QueryFirstOrDefaultAsync<MonitorTcp>(sql, new { monitorId }, commandType: CommandType.Text);
     }
-    
+
     public async Task UpdateMonitorStatus(int id, bool status, int daysToExpireCert)
     {
         await using var db = new SqlConnection(_connstring);
@@ -388,7 +387,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             }, commandType: CommandType.Text);
 
         string sqlMonitorHttp =
-            @"INSERT INTO [MonitorHttp] (MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson) 
+            @"INSERT INTO [MonitorHttp] (MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson)
         VALUES (@MonitorId, @CheckCertExpiry, @IgnoreTlsSsl, @MaxRedirects, @UrlToCheck, @Timeout, @MonitorHttpMethod, @Body, @HeadersJson)";
         await db.ExecuteAsync(sqlMonitorHttp,
             new
@@ -406,8 +405,6 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return id;
     }
 
-   
-
     public async Task<IEnumerable<MonitorHttp>> GetHttpMonitorByIds(List<int> ids)
     {
         await using var db = new SqlConnection(_connstring);
@@ -417,7 +414,6 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
 
         return await db.QueryAsync<MonitorHttp>(sql, new { ids }, commandType: CommandType.Text);
     }
-
 
     public async Task<IEnumerable<MonitorFailureCount>> GetMonitorFailureCount(int days)
     {

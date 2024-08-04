@@ -14,7 +14,7 @@ public static class VariableUtils
         // Default value if environment variable is not set or not a valid boolean
         return false;
     }
-    
+
     public static int? GetIntEnvVariable(string variable)
     {
         string enableScreenshot = Environment.GetEnvironmentVariable(variable);

@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring.Domain.Entities;
+
 [ExcludeFromCodeCoverage]
 public class MonitorNotification
 {

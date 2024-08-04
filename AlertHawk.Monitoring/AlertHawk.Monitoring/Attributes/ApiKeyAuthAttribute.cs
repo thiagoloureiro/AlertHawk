@@ -1,6 +1,6 @@
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring.Attributes;
 

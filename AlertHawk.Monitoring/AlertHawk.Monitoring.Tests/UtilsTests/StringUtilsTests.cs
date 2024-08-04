@@ -9,10 +9,10 @@ public class StringUtilsTests
     {
         // Arrange
         var randomString = StringUtils.RandomStringGenerator();
-        
+
         // Act
         var result = randomString.Length;
-        
+
         // Assert
         Assert.Equal(10, result);
     }

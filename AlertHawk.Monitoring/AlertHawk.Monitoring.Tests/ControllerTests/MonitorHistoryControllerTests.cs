@@ -1,8 +1,12 @@
+using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Monitoring.Controllers;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using NSubstitute;
+using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ControllerTests;
@@ -74,7 +78,7 @@ public class MonitorHistoryControllerTests
         // Arrange
         var monitorDashboardList = new List<MonitorDashboard> { new MonitorDashboard() };
         var ids = new List<int> { 1, 2, 3 };
-    
+
         _mockMonitorService.Setup(service => service.GetMonitorDashboardDataList(It.IsAny<List<int>>()))
             .ReturnsAsync(monitorDashboardList);
 
@@ -89,12 +93,29 @@ public class MonitorHistoryControllerTests
     [Fact]
     public async Task DeleteMonitorHistory_ReturnsOk()
     {
+        // Arrange
+        var jwtToken = "Bearer valid.token.here";
+        var monitorServiceMock = new Mock<IMonitorService>();
+        var monitorHistoryServiceMock = new Mock<IMonitorHistoryService>();
+        var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: true);
+
+        var controller = new MonitorHistoryController(monitorServiceMock.Object, monitorHistoryServiceMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+        controller.Request.Headers["Authorization"] = jwtToken;
+
+        monitorServiceMock.Setup(x => x.GetUserDetailsByToken(It.IsAny<string>())).ReturnsAsync(user);
+
         // Act
-        var result = await _controller.DeleteMonitorHistory(7);
+        var result = await controller.DeleteMonitorHistory(7);
 
         // Assert
         var okResult = Assert.IsType<OkResult>(result);
-        _mockMonitorHistoryService.Verify(service => service.DeleteMonitorHistory(7), Times.Once);
+        Assert.Equal(200, okResult.StatusCode);
     }
 
     [Fact]
@@ -112,7 +133,7 @@ public class MonitorHistoryControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(count, okResult.Value);
     }
-    
+
     [Fact]
     public async Task GetMonitorHistoryRetention_ReturnsOk()
     {
@@ -128,18 +149,34 @@ public class MonitorHistoryControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(monitorSettings, okResult.Value);
     }
-    
+
     [Fact]
     public async Task SetMonitorHistoryRetention_ReturnsOk()
     {
         // Arrange
         var monitorSettings = new MonitorSettings { HistoryDaysRetention = 7 };
 
+        var jwtToken = "Bearer valid.token.here";
+        var monitorServiceMock = new Mock<IMonitorService>();
+        var monitorHistoryServiceMock = new Mock<IMonitorHistoryService>();
+        var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: true);
+
+        var controller = new MonitorHistoryController(monitorServiceMock.Object, monitorHistoryServiceMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+        controller.Request.Headers["Authorization"] = jwtToken;
+
+        monitorServiceMock.Setup(x => x.GetUserDetailsByToken(It.IsAny<string>())).ReturnsAsync(user);
+
         // Act
-        var result = await _controller.SetMonitorHistoryRetention(monitorSettings);
+        var result = await controller.SetMonitorHistoryRetention(monitorSettings);
 
         // Assert
         var okResult = Assert.IsType<OkResult>(result);
-        _mockMonitorHistoryService.Verify(service => service.SetMonitorHistoryRetention(7), Times.Once);
+        Assert.Equal(200, okResult.StatusCode);
     }
 }

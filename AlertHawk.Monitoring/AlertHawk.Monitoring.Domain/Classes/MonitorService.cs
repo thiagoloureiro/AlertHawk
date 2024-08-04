@@ -1,4 +1,3 @@
-using System.Net.Http.Headers;
 using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Entities;
@@ -9,6 +8,7 @@ using AlertHawk.Monitoring.Domain.Utils;
 using EasyMemoryCache;
 using EasyMemoryCache.Configuration;
 using Newtonsoft.Json;
+using System.Net.Http.Headers;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
@@ -344,11 +344,6 @@ public class MonitorService : IMonitorService
     {
         var monitor = await _monitorRepository.GetMonitorById(id);
 
-        if (monitor == null)
-        {
-            return;
-        }
-
         var action = new UserAction
         {
             Action = $"Delete Monitor {monitor.Name}",
@@ -549,6 +544,11 @@ public class MonitorService : IMonitorService
         {
             return null;
         }
+    }
+
+    public async Task<Monitor> GetMonitorById(int id)
+    {
+        return await _monitorRepository.GetMonitorById(id);
     }
 
     private HttpClient CreateHttpClient(string token)

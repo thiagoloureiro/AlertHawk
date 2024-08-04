@@ -7,7 +7,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NSubstitute;
+using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ControllerTests;
@@ -31,7 +33,9 @@ public class MonitorControllerTests
         monitorServiceMock.GetMonitorStatusDashboard(jwtToken, MonitorEnvironment.Production)
             .Returns(Task.FromResult(expectedDashboardData));
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock)
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock)
         {
             ControllerContext = new ControllerContext
             {
@@ -58,8 +62,9 @@ public class MonitorControllerTests
 
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
 
         controller.ControllerContext = new ControllerContext
         {
@@ -88,8 +93,9 @@ public class MonitorControllerTests
 
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
 
         // Act
         var result = controller.GetMonitorAgentStatus();
@@ -113,8 +119,9 @@ public class MonitorControllerTests
 
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
 
         // Act
         var result = await controller.GetMonitorList();
@@ -135,8 +142,9 @@ public class MonitorControllerTests
 
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
 
         // Act
         var result = await controller.GetMonitorListByTag("tag");
@@ -157,8 +165,9 @@ public class MonitorControllerTests
 
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
 
         // Act
         var result = await controller.GetMonitorTagList();
@@ -179,8 +188,9 @@ public class MonitorControllerTests
 
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
 
         // Act
         var result = await controller.GetAllMonitorAgents();
@@ -203,7 +213,9 @@ public class MonitorControllerTests
         monitorServiceMock.GetMonitorListByMonitorGroupIds(jwtToken, MonitorEnvironment.Production)
             .Returns(expectedList);
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
 
         controller.ControllerContext = new ControllerContext
         {
@@ -239,7 +251,9 @@ public class MonitorControllerTests
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
         monitorServiceMock.CreateMonitorHttp(monitorHttp).Returns(Task.FromResult(1));
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
 
         // Act
         var result = await controller.CreateMonitorHttp(monitorHttp);
@@ -260,12 +274,46 @@ public class MonitorControllerTests
             UrlToCheck = "http://urltocheck.com",
             Timeout = 0,
             HeartBeatInterval = 0,
-            Retries = 0
+            Retries = 0,
+            Id = 1
         };
+        var token = "Bearer valid.token.here";
+        var monitorGroups = new List<MonitorGroup>
+        {
+            new MonitorGroup
+            {
+                Id = 1,
+                Name = "Name",
+                Monitors   = new List<Monitor>
+                {
+                    new Monitor
+                    {
+                        Id = 1,
+                        Name = "Name",
+                        HeartBeatInterval = 0,
+                        Retries = 0
+                    }
+                }
+            }
+        };
+
+        var monitorId = 1;
+
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        controller.Request.Headers["Authorization"] = token;
+
+        monitorGroupServiceMock.GetMonitorGroupList("valid.token.here").Returns(monitorGroups);
+        monitorGroupServiceMock.GetMonitorGroupIdByMonitorId(monitorId).Returns(monitorId);
 
         // Act
         var result = await controller.UpdateMonitorHttp(monitorHttp);
@@ -286,13 +334,47 @@ public class MonitorControllerTests
             IP = "1.1.1.1",
             Timeout = 0,
             HeartBeatInterval = 0,
-            Retries = 0
+            Retries = 0,
+            Id = 1
         };
+
+        var token = "Bearer valid.token.here";
+        var monitorGroups = new List<MonitorGroup>
+        {
+            new MonitorGroup
+            {
+                Id = 1,
+                Name = "Name",
+                Monitors   = new List<Monitor>
+                {
+                    new Monitor
+                    {
+                        Id = 1,
+                        Name = "Name",
+                        HeartBeatInterval = 0,
+                        Retries = 0
+                    }
+                }
+            }
+        };
+
+        var monitorId = 1;
+
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
         monitorServiceMock.CreateMonitorTcp(monitorTcp).Returns(Task.FromResult(1));
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        controller.Request.Headers["Authorization"] = token;
+
+        monitorGroupServiceMock.GetMonitorGroupList("valid.token.here").Returns(monitorGroups);
+        monitorGroupServiceMock.GetMonitorGroupIdByMonitorId(monitorId).Returns(monitorId);
 
         // Act
         var result = await controller.CreateMonitorTcp(monitorTcp);
@@ -313,12 +395,45 @@ public class MonitorControllerTests
             IP = "1.1.1.1",
             Timeout = 0,
             HeartBeatInterval = 0,
-            Retries = 0
+            Retries = 0,
+            Id = 1
         };
+
+        var jwtToken = "Bearer valid.token.here";
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var monitorGroups = new List<MonitorGroup>
+        {
+            new MonitorGroup
+            {
+                Id = 1,
+                Name = "Name",
+                Monitors   = new List<Monitor>
+                {
+                    new Monitor
+                    {
+                        Id = 1,
+                        Name = "Name",
+                        HeartBeatInterval = 0,
+                        Retries = 0
+                    }
+                }
+            }
+        };
+
+        var monitorId = 1;
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        controller.Request.Headers["Authorization"] = jwtToken;
+        monitorGroupServiceMock.GetMonitorGroupList("valid.token.here").Returns(monitorGroups);
+        monitorGroupServiceMock.GetMonitorGroupIdByMonitorId(monitorId).Returns(monitorId);
 
         // Act
         var result = await controller.UpdateMonitorTcp(monitorTcp);
@@ -332,51 +447,138 @@ public class MonitorControllerTests
     public async Task DeleteMonitor_ReturnsOkResult()
     {
         // Arrange
-        var jwtToken = "validJwtToken";
+        var jwtToken = "Bearer valid.token.here";
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
-        controller.ControllerContext = new ControllerContext
+        var monitorGroups = new List<MonitorGroup>
         {
-            HttpContext = new DefaultHttpContext
+            new MonitorGroup
             {
-                Request = { Headers = { ["Authorization"] = "Bearer " + jwtToken } }
+                Id = 1,
+                Name = "Name",
+                Monitors   = new List<Monitor>
+                {
+                    new Monitor
+                    {
+                        Id = 1,
+                        Name = "Name",
+                        HeartBeatInterval = 0,
+                        Retries = 0
+                    }
+                }
             }
         };
+
+        var monitorId = 1;
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        controller.Request.Headers["Authorization"] = jwtToken;
+        monitorGroupServiceMock.GetMonitorGroupList("valid.token.here").Returns(monitorGroups);
+        monitorGroupServiceMock.GetMonitorGroupIdByMonitorId(monitorId).Returns(monitorId);
 
         // Act
         var result = await controller.DeleteMonitor(1);
 
         // Assert
         var okResult = Assert.IsType<OkResult>(result);
-        await monitorServiceMock.Received(1).DeleteMonitor(1, jwtToken);
+        await monitorServiceMock.Received(1).DeleteMonitor(1, "valid.token.here");
     }
 
     [Fact]
     public async Task PauseMonitor_ReturnsOkResult()
     {
         // Arrange
+        var token = "Bearer valid.token.here";
+        var monitorGroups = new List<MonitorGroup>
+        {
+            new MonitorGroup
+            {
+                Id = 1,
+                Name = "Name",
+                Monitors   = new List<Monitor>
+                {
+                    new Monitor
+                    {
+                        Id = 1,
+                        Name = "Name",
+                        HeartBeatInterval = 0,
+                        Retries = 0
+                    }
+                }
+            }
+        };
+
+        var monitorId = 1;
+
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        controller.Request.Headers["Authorization"] = token;
+
+        monitorGroupServiceMock.GetMonitorGroupList("valid.token.here").Returns(monitorGroups);
+        monitorGroupServiceMock.GetMonitorGroupIdByMonitorId(monitorId).Returns(monitorId);
 
         // Act
-        var result = await controller.PauseMonitor(1, true);
+        var result = await controller.PauseMonitor(monitorId, true);
 
         // Assert
-        await monitorServiceMock.Received(1).PauseMonitor(1, true);
+        await monitorServiceMock.Received(1).PauseMonitor(monitorId, true);
     }
 
     [Fact]
     public async Task PauseMonitorByGroupId_ReturnsOkResult()
     {
         // Arrange
+        var jwtToken = "Bearer valid.token.here";
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var monitorGroups = new List<MonitorGroup>
+        {
+            new MonitorGroup
+            {
+                Id = 1,
+                Name = "Name",
+                Monitors   = new List<Monitor>
+                {
+                    new Monitor
+                    {
+                        Id = 1,
+                        Name = "Name",
+                        HeartBeatInterval = 0,
+                        Retries = 0
+                    }
+                }
+            }
+        };
+
+        var monitorId = 1;
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        controller.Request.Headers["Authorization"] = jwtToken;
+        monitorGroupServiceMock.GetMonitorGroupList("valid.token.here").Returns(monitorGroups);
+        monitorGroupServiceMock.GetMonitorGroupIdByMonitorId(monitorId).Returns(monitorId);
 
         // Act
         var result = await controller.PauseMonitorByGroupId(1, true);
@@ -396,7 +598,9 @@ public class MonitorControllerTests
 
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
 
         // Act
         var result = await controller.GetMonitorFailureCount(7);
@@ -423,7 +627,9 @@ public class MonitorControllerTests
 
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
 
         // Act
         var result = await controller.GetMonitorHttpByMonitorId(1);
@@ -452,7 +658,9 @@ public class MonitorControllerTests
 
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
 
         // Act
         var result = await controller.GetMonitorTcpByMonitorId(1);
@@ -487,7 +695,9 @@ public class MonitorControllerTests
 
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
 
         // Act
         var result = await controller.GetMonitorCount();
@@ -506,7 +716,9 @@ public class MonitorControllerTests
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
         var monitorServiceMock = Substitute.For<IMonitorService>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock);
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext()
@@ -529,14 +741,15 @@ public class MonitorControllerTests
         var expectedJson = "json";
         var token = "Bearer valid.token.here";
         var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: true);
-        
+
         monitorServiceMock.Setup(x => x.GetUserDetailsByToken(It.IsAny<string>())).ReturnsAsync(user);
 
         monitorServiceMock.Setup(x => x.GetMonitorBackupJson()).ReturnsAsync(expectedJson);
-        
-        var monitorAgentServiceMock = new Mock<IMonitorAgentService>();
 
-        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object)
+        var monitorAgentServiceMock = new Mock<IMonitorAgentService>();
+        var monitorGroupServiceMock = new Mock<IMonitorGroupService>();
+
+        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object, monitorGroupServiceMock.Object)
         {
             ControllerContext = new ControllerContext
             {
@@ -544,7 +757,7 @@ public class MonitorControllerTests
             }
         };
         controller.Request.Headers["Authorization"] = token;
-        
+
         // Act
         var result = await controller.GetMonitorBackupJson();
 
@@ -560,13 +773,14 @@ public class MonitorControllerTests
         // Arrange
         var monitorServiceMock = new Mock<IMonitorService>();
         var monitorAgentServiceMock = new Mock<IMonitorAgentService>();
+        var monitorGroupServiceMock = new Mock<IMonitorGroupService>();
         var mockFile = new Mock<IFormFile>();
         var token = "Bearer valid.token.here";
         var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: true);
-        
+
         monitorServiceMock.Setup(x => x.GetUserDetailsByToken(It.IsAny<string>())).ReturnsAsync(user);
-        
-        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object)
+
+        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object, monitorGroupServiceMock.Object)
         {
             ControllerContext = new ControllerContext
             {
@@ -581,13 +795,14 @@ public class MonitorControllerTests
         // Assert
         Assert.IsType<BadRequestObjectResult>(result);
     }
-    
+
     [Fact]
     public async Task UploadMonitorJsonBackup_Returns_OkObjectResult()
     {
         // Arrange
         var monitorServiceMock = new Mock<IMonitorService>();
         var monitorAgentServiceMock = new Mock<IMonitorAgentService>();
+        var monitorGroupServiceMock = new Mock<IMonitorGroupService>();
         var monitorBackup = new MonitorBackup
         {
             MonitorGroupList = new List<MonitorGroup>()
@@ -596,12 +811,12 @@ public class MonitorControllerTests
         var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: true);
 
         var contentJson = JsonConvert.SerializeObject(monitorBackup);
-        
+
         IFormFile mockFile = CreateMockIFormFile("test.txt", contentJson);
 
         monitorServiceMock.Setup(x => x.GetUserDetailsByToken(It.IsAny<string>())).ReturnsAsync(user);
-        
-        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object)
+
+        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object, monitorGroupServiceMock.Object)
         {
             ControllerContext = new ControllerContext
             {

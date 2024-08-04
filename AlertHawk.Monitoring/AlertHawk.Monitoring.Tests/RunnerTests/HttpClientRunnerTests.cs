@@ -132,7 +132,7 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
             await _notificationProducer.Received(1).HandleSuccessNotifications(monitorHttp, "OK");
             await _monitorAlertRepository.Received(1).SaveMonitorAlert(Arg.Any<MonitorHistory>(), Arg.Any<MonitorEnvironment>());
         }
-        
+
         [Fact]
         public async Task CheckUrlsAsync_Should_Update_Monitor_Status_On_Failure()
         {
@@ -171,7 +171,7 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
             // Assert
             await _monitorRepository.Received(1).UpdateMonitorStatus(1, false, Arg.Any<int>());
         }
-        
+
         [Fact]
         public async Task Should_Make_HttpClient_Call_Timeout()
         {

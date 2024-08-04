@@ -24,7 +24,7 @@ public class MonitorReportService : IMonitorReportService
                 (report.TotalOnlineMinutes + report.TotalOfflineMinutes) * 100;
             report.UptimePercentage = uptimePercentage;
         }
-        
+
         if (!string.IsNullOrWhiteSpace(filter))
         {
             monitorReportUptimes = monitorReportUptimes.Where(x => x.MonitorName != null && x.MonitorName.Contains(filter, StringComparison.CurrentCultureIgnoreCase)).ToList();
@@ -40,8 +40,8 @@ public class MonitorReportService : IMonitorReportService
 
     public async Task<IEnumerable<MonitorReponseTime>> GetMonitorResponseTime(int groupId, int hours, string? filter)
     {
-        var result =  await _monitorReportRepository.GetMonitorResponseTime(groupId, hours);
-        
+        var result = await _monitorReportRepository.GetMonitorResponseTime(groupId, hours);
+
         if (!string.IsNullOrWhiteSpace(filter))
         {
             result = result.Where(x => x.MonitorName != null && x.MonitorName.Contains(filter, StringComparison.CurrentCultureIgnoreCase)).ToList();
@@ -62,7 +62,7 @@ public class MonitorReportService : IMonitorReportService
                 (report.TotalOnlineMinutes + report.TotalOfflineMinutes) * 100;
             report.UptimePercentage = uptimePercentage;
         }
-        
+
         return monitorReportUptimes;
     }
 }
