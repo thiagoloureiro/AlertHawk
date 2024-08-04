@@ -1,11 +1,10 @@
 using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Controllers;
-using AlertHawk.Authentication.Domain.Dto;
-using Microsoft.AspNetCore.Mvc;
 using AlertHawk.Authentication.Domain.Custom;
-using AlertHawk.Authentication.Domain.Entities;
+using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Tests.Builders;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Moq;
 
 namespace AlertHawk.Authentication.Tests.ControllerTests;
@@ -84,7 +83,7 @@ public class AuthControllerTests
         Assert.Equal(500, internalServerErrorResult.StatusCode);
         Assert.Equal("Something went wrong.", message.Content);
     }
-    
+
     [Fact]
     public async Task RefreshUserToken_ValidToken_ReturnsOk()
     {
@@ -103,7 +102,7 @@ public class AuthControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(StatusCodes.Status200OK, okResult.StatusCode);
     }
-    
+
     [Fact]
     public async Task RefreshUserToken_InvalidToken_ReturnsBadRequest()
     {
@@ -121,8 +120,7 @@ public class AuthControllerTests
         var response = Assert.IsType<Message>(badRequestResult.Value);
         Assert.Equal("Invalid token.", response.Content);
     }
-    
-    
+
     [Fact]
     public async Task RefreshUserToken_ExceptionThrown_ReturnsInternalServerError()
     {

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Controllers;
 using AlertHawk.Authentication.Domain.Custom;
@@ -8,6 +7,7 @@ using AlertHawk.Authentication.Tests.Builders;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using System.Security.Claims;
 
 namespace AlertHawk.Authentication.Tests.ControllerTests
 {
@@ -77,7 +77,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Act
             var result = await _controller.AssignUserToGroup(usersMonitorGroup);
 
-            // Assert   
+            // Assert
             Assert.IsType<BadRequestObjectResult>(result);
         }
 
@@ -247,7 +247,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             Assert.IsType<OkResult>(result);
         }
-        
+
         [Fact]
         public async Task AssignUserToGroup_BadRequest_ReturnsBadRequest()
         {
@@ -261,7 +261,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             Assert.IsType<BadRequestObjectResult>(result);
         }
-        
+
         [Fact]
         public async Task AssignUserToGroup_ThrowsException_ReturnsInternalServerError()
         {
@@ -282,7 +282,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             var message = Assert.IsType<Message>(objectResult.Value);
             Assert.Equal("Something went wrong.", message.Content);
         }
-        
+
         [Fact]
         public async Task AssignUserToGroup_ThrowsInvalidOperationException_ReturnsBadRequest()
         {

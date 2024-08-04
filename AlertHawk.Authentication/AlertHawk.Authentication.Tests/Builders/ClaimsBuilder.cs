@@ -15,6 +15,7 @@ public class ClaimsBuilder
         }));
         return _claimsPrincipal;
     }
+
     public ClaimsPrincipal EmailTypeClaimsPrincipal(string email)
     {
         _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
@@ -23,6 +24,7 @@ public class ClaimsBuilder
         }));
         return _claimsPrincipal;
     }
+
     public ClaimsPrincipal PreferredUsernameClaimsPrincipal(string email)
     {
         _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
@@ -31,6 +33,7 @@ public class ClaimsBuilder
         }));
         return _claimsPrincipal;
     }
+
     public ClaimsPrincipal NameTypeClaimsPrincipal(string email)
     {
         _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
@@ -39,6 +42,7 @@ public class ClaimsBuilder
         }));
         return _claimsPrincipal;
     }
+
     public ClaimsPrincipal DefaulClaimsPrincipalWithgivenName(string email)
     {
         _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
@@ -49,6 +53,7 @@ public class ClaimsBuilder
         }));
         return _claimsPrincipal;
     }
+
     public ClaimsPrincipal DefaulClaimsPrincipalWithsurName(string email)
     {
         _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
@@ -59,6 +64,7 @@ public class ClaimsBuilder
         }));
         return _claimsPrincipal;
     }
+
     public ClaimsPrincipal DefaulClaimsPrincipalWithsurNameAndGivenName(string email)
     {
         _claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
@@ -70,6 +76,7 @@ public class ClaimsBuilder
         }));
         return _claimsPrincipal;
     }
+
     public ClaimsPrincipal EmptyClaimsPrincipal()
     {
         _claimsPrincipal = new ClaimsPrincipal();

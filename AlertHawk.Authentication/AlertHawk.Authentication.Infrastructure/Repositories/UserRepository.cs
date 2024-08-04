@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Authentication.Infrastructure.Helpers;
@@ -7,6 +5,8 @@ using AlertHawk.Authentication.Infrastructure.Interfaces;
 using AutoMapper;
 using Dapper;
 using Microsoft.Extensions.Configuration;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 
 namespace AlertHawk.Authentication.Infrastructure.Repositories;
 

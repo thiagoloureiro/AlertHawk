@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Mail;
 
 namespace AlertHawk.Authentication.Infrastructure.EmailSender;
+
 [ExcludeFromCodeCoverage]
 public static class EmailSender
 {
@@ -22,7 +23,7 @@ public static class EmailSender
         var smtpServer = Environment.GetEnvironmentVariable("smtpHost") ?? "smtp.office365.com";
         var username = Environment.GetEnvironmentVariable("smtpUsername") ?? string.Empty;
         var password = Environment.GetEnvironmentVariable("smtpPassword") ?? string.Empty;
-        
+
         try
         {
             using (MailMessage mail = new MailMessage())

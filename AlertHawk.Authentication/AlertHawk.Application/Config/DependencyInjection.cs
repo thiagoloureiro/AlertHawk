@@ -1,7 +1,7 @@
-using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Application.Interfaces;
 using AlertHawk.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Application.Config;
 

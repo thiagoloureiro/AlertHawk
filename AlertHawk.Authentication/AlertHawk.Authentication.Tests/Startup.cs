@@ -1,11 +1,11 @@
-
-using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Application.Interfaces;
 using AlertHawk.Application.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Authentication.Tests;
+
 [ExcludeFromCodeCoverage]
 public static class Startup
 {

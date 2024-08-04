@@ -19,7 +19,7 @@ namespace AlertHawk.Authentication.Controllers
             _userService = userService;
             _jwtTokenService = jwtTokenService;
         }
-        
+
         [HttpPost("refreshToken")]
         [SwaggerOperation(Summary = "Refresh User Token")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -30,12 +30,12 @@ namespace AlertHawk.Authentication.Controllers
             {
                 var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
                 var user = await _userService.GetUserByToken(jwtToken);
-                
+
                 if (user is null)
                 {
                     return BadRequest(new Message("Invalid token."));
                 }
-                
+
                 var token = _jwtTokenService.GenerateToken(user);
                 await _userService.UpdateUserToken(token, user.Username.ToLower());
 

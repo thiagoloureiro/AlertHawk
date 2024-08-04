@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Controllers;
 using AlertHawk.Authentication.Domain.Entities;
@@ -6,9 +5,9 @@ using AlertHawk.Authentication.Tests.Builders;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using System.Security.Claims;
 
 namespace AlertHawk.Authentication.Tests.ControllerTests;
-
 
 public class UserActionControllerTests
 {
@@ -49,10 +48,10 @@ public class UserActionControllerTests
         // Arrange
         var userAction = new UserAction { Action = "TestAction" };
         _controller.ControllerContext.HttpContext.User = new ClaimsPrincipal();
-    
+
         // Act
         var result = await _controller.PostUserActionCreation(userAction);
-    
+
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal("User/Token not found", badRequestResult.Value);
@@ -65,7 +64,6 @@ public class UserActionControllerTests
         var userAction = new UserAction { Action = "TestAction" };
         var userDto = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
         _mockGetOrCreateUserHelper.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(userDto);
-
 
         _controller.ControllerContext.HttpContext.User = new ClaimsPrincipal();
 

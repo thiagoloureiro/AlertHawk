@@ -7,7 +7,7 @@ namespace AlertHawk.Authentication.Tests.ServicesTests;
 
 public class UsersMonitorGroupServiceTests
 {
-     private readonly Mock<IUsersMonitorGroupRepository> _mockRepository;
+    private readonly Mock<IUsersMonitorGroupRepository> _mockRepository;
     private readonly UsersMonitorGroupService _service;
 
     public UsersMonitorGroupServiceTests()
@@ -99,6 +99,7 @@ public class UsersMonitorGroupServiceTests
         // Assert
         _mockRepository.Verify(r => r.DeleteAllByGroupMonitorIdAsync(groupId), Times.Once);
     }
+
     [Fact]
     public async Task AssignUserToGroup_CallsRepositoryMethod()
     {

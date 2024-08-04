@@ -20,7 +20,7 @@ namespace AlertHawk.Authentication.Controllers
             _getOrCreateUserHelper = getOrCreateUserHelper;
             _userActionService = userActionService;
         }
-        
+
         [HttpPost("create")]
         [SwaggerOperation(Summary = "Create User Action")]
         [ProducesResponseType(StatusCodes.Status200OK)]

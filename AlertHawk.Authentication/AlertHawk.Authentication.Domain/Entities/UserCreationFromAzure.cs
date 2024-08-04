@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Authentication.Domain.Entities;
+
 [ExcludeFromCodeCoverage]
 public class UserCreationFromAzure(string username, string email)
 {

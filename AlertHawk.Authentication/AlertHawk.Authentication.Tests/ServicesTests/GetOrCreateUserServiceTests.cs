@@ -12,6 +12,7 @@ public class GetOrCreateUserServiceTests
     private readonly Mock<IUserService> _mockUserService;
     private readonly GetOrCreateUserService _getOrCreateUserService;
     private readonly string _email = "test@example.com";
+
     public GetOrCreateUserServiceTests()
     {
         _mockUserService = new Mock<IUserService>();
@@ -33,6 +34,7 @@ public class GetOrCreateUserServiceTests
         Assert.NotNull(result);
         Assert.Equal(existingUser, result);
     }
+
     [Fact]
     public async Task GetUserOrCreateUser_UserExists_FetchDataFromNameLoggedReturnsUser()
     {
@@ -48,7 +50,6 @@ public class GetOrCreateUserServiceTests
         Assert.NotNull(result);
         Assert.Equal(existingUser, result);
     }
-
 
     [Fact]
     public async Task GetUserOrCreateUser_FechEmailFromEmailClaim_UserExists_ReturnsUser()
@@ -106,13 +107,14 @@ public class GetOrCreateUserServiceTests
     {
         // Arrange
         var claims = new ClaimsBuilder().EmptyClaimsPrincipal();
-        
+
         // Act
         var result = await _getOrCreateUserService.GetUserOrCreateUser(claims);
-        
+
         // Assert
         Assert.Null(result);
     }
+
     [Fact]
     public async Task GetUserOrCreateUser_UserDoesNotExist_CreatesOnlyWithGivenNameAndReturnsUser()
     {
@@ -130,6 +132,7 @@ public class GetOrCreateUserServiceTests
         Assert.NotNull(result);
         Assert.Equal(_email, result.Email);
     }
+
     [Fact]
     public async Task GetUserOrCreateUser_UserDoesNotExist_CreatesOnlyWithSurNameAndReturnsUser()
     {
@@ -146,7 +149,9 @@ public class GetOrCreateUserServiceTests
         _mockUserService.Verify(s => s.GetByEmail(_email), Times.Exactly(2));
         Assert.NotNull(result);
         Assert.Equal(_email, result.Email);
-    } [Fact]
+    }
+
+    [Fact]
     public async Task GetUserOrCreateUser_UserDoesNotExist_CreatesOnlyWithGivenNameAndSurNameAndReturnsUser()
     {
         // Arrange

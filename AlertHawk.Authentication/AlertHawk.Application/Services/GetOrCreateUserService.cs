@@ -1,7 +1,7 @@
-﻿using System.Security.Claims;
-using AlertHawk.Application.Interfaces;
+﻿using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
+using System.Security.Claims;
 
 namespace AlertHawk.Application.Services;
 
@@ -26,7 +26,7 @@ public class GetOrCreateUserService(IUserService userService) : IGetOrCreateUser
         {
             userEmail = claims.Claims?.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
         }
-        
+
         if (string.IsNullOrWhiteSpace(userEmail))
         {
             userEmail = claims.Claims?.FirstOrDefault(c => c.Type == "emailaddress")?.Value;
