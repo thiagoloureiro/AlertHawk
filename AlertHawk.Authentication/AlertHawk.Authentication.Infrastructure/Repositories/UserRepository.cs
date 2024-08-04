@@ -84,7 +84,6 @@ public class UserRepository : BaseRepository, IUserRepository
 
         const string sql = "UPDATE Users SET Password = @hashedPassword, Salt = @salt WHERE LOWER(email) = @email";
 
-
         await ExecuteNonQueryAsync(sql, new { email, hashedPassword, salt });
     }
 
@@ -130,7 +129,7 @@ public class UserRepository : BaseRepository, IUserRepository
         var hashedPassword = PasswordHasher.HashPassword(userCreation.Password, salt);
 
         const string insertUserSql = @"
-            INSERT INTO Users (Id, Username, Email, Password, Salt, IsAdmin, CreatedAt) 
+            INSERT INTO Users (Id, Username, Email, Password, Salt, IsAdmin, CreatedAt)
             VALUES (NEWID(), @Username, @Email, @Password, @Salt, @IsAdmin, @CreatedAt)";
 
         await ExecuteNonQueryAsync(insertUserSql, new
@@ -139,7 +138,7 @@ public class UserRepository : BaseRepository, IUserRepository
             Email = userCreation.UserEmail.ToLower(CultureInfo.InvariantCulture),
             Password = hashedPassword,
             Salt = salt,
-            userCreation.IsAdmin,
+            isAdmin = false,
             CreatedAt = DateTime.UtcNow
         });
     }
@@ -147,7 +146,7 @@ public class UserRepository : BaseRepository, IUserRepository
     public async Task CreateFromAzure(UserCreationFromAzure userCreation)
     {
         const string insertUserSql = @"
-            INSERT INTO Users (Id, Username, Email, IsAdmin, CreatedAt) 
+            INSERT INTO Users (Id, Username, Email, IsAdmin, CreatedAt)
             VALUES (NEWID(), @Username, @Email, @IsAdmin, @CreatedAt)";
 
         await ExecuteNonQueryAsync(insertUserSql, new
@@ -179,8 +178,8 @@ public class UserRepository : BaseRepository, IUserRepository
             }
 
             var checkUserSql = $@"
-                SELECT Id 
-                FROM Users 
+                SELECT Id
+                FROM Users
                 WHERE ({string.Join(" OR ", conditions)})
                 AND Id != @Id";
 
@@ -244,7 +243,7 @@ public class UserRepository : BaseRepository, IUserRepository
             Salt = salt,
             UpdatedAt = DateTime.UtcNow
         });
-        
+
         return affectedRows > 0 ? newPassword : null;
     }
 
