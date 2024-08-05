@@ -496,5 +496,21 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             Assert.IsType<BadRequestObjectResult>(result);
         }
+        
+        [Fact]
+        public async Task GetUserDetailsByToken_ValidRequest_ReturnsOkWithUser()
+        {
+            // Arrange
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            // Act
+            var result = await _controller.GetUserDetailsByToken();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedUser = Assert.IsType<UserDto>(okResult.Value);
+            Assert.Equal(user, returnedUser);
+        }
     }
 }
