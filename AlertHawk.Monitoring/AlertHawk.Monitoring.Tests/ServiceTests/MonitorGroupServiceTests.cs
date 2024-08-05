@@ -1,16 +1,14 @@
-using System.Net;
-using System.Text;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using EasyMemoryCache;
 using EasyMemoryCache.Configuration;
-using EasyMemoryCache.Extensions;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
-using NSubstitute;
+using System.Net;
+using System.Text;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ServiceTests;
@@ -216,7 +214,7 @@ public class MonitorGroupServiceTests
         // Arrange
         var authApi = "https://fakeUrl/auth/";
         Environment.SetEnvironmentVariable("AUTH_API_URL", authApi);
-        
+
         _monitorGroupRepositoryMock.Setup(repo => repo.DeleteMonitorGroup(It.IsAny<int>()))
             .Returns(Task.CompletedTask);
         _httpMessageHandlerMock
@@ -282,7 +280,6 @@ public class MonitorGroupServiceTests
                 StatusCode = HttpStatusCode.OK
             })
             .Verifiable();
-
 
         // Act
         await _monitorGroupService.AddUserToGroup(token, groupId);
@@ -410,13 +407,13 @@ public class MonitorGroupServiceTests
         // Assert
         _cachingMock.Verify(caching => caching.Invalidate(It.IsAny<string>()), Times.Once);
     }
-    
+
     [Fact]
     public async Task GetMonitorDashboardGroupListByUser_ShouldReturnFilteredMonitorGroups()
     {
         var authApi = "https://fakeUrl/auth/";
         Environment.SetEnvironmentVariable("AUTH_API_URL", authApi);
-        
+
         // Arrange
         var monitorGroups = new List<MonitorGroup>
         {
@@ -481,7 +478,7 @@ public class MonitorGroupServiceTests
 
         _monitorGroupRepositoryMock.Setup(repo => repo.GetMonitorGroupList())
             .ReturnsAsync(monitorGroups);
-        
+
         _cachingMock.Setup(caching => caching.GetValueFromCacheAsync<List<MonitorDashboard?>>(
                 It.IsAny<string>()))
             .ReturnsAsync(new List<MonitorDashboard?>());
@@ -498,10 +495,10 @@ public class MonitorGroupServiceTests
                 {
                 }), Encoding.UTF8, "application/json")
             });
-        
+
         // Act
         var result = await _monitorGroupService.GetMonitorDashboardGroupListByUser("jwtToken");
-        
+
         // Assert
         Assert.Single(result);
     }

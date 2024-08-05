@@ -1,11 +1,12 @@
 using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring.Domain.Entities;
+
 [ExcludeFromCodeCoverage]
 public class MonitorGroup
 {
     public int Id { get; set; }
-    public required string Name { get; set; }
+    public string Name { get; set; }
     public IEnumerable<Monitor>? Monitors { get; set; }
     public double? AvgUptime1Hr { get; set; }
     public double? AvgUptime24Hrs { get; set; }

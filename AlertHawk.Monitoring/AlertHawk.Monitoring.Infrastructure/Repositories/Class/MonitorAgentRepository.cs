@@ -1,14 +1,13 @@
+using AlertHawk.Monitoring.Domain.Classes;
+using AlertHawk.Monitoring.Domain.Entities;
+using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using AlertHawk.Monitoring.Infrastructure.Utils;
+using Dapper;
+using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using AlertHawk.Monitoring.Domain.Classes;
-using AlertHawk.Monitoring.Domain.Entities;
-using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
-using AlertHawk.Monitoring.Infrastructure.MonitorManager;
-using AlertHawk.Monitoring.Infrastructure.Utils;
-using Dapper;
-using Microsoft.Extensions.Configuration;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 
@@ -94,7 +93,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         var result = await db.QueryAsync<MonitorAgent>(sqlAllMonitors, commandType: CommandType.Text);
         return result.ToList();
     }
-    
+
     public async Task UpsertMonitorAgentTasks(List<MonitorAgentTasks> lstMonitorAgentTasks, int monitorRegion)
     {
         var lstRegion = new List<MonitorRegion> { (MonitorRegion)monitorRegion };
@@ -105,7 +104,6 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
             .SequenceEqual(lstCurrentMonitorAgentTasks.OrderBy(x => x.MonitorId)
                     .ThenBy(x => x.MonitorAgentId),
                 new MonitorAgentTasksEqualityComparer());
-
 
         if (!areEqual)
         {

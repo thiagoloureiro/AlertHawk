@@ -1,11 +1,11 @@
-using System.Data;
-using System.Data.SqlClient;
-using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using OfficeOpenXml;
+using System.Data;
+using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 
@@ -31,8 +31,8 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
             {
                 sql =
                     @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl, MA.Environment
-                    FROM MonitorAlert MA 
-                    INNER JOIN Monitor M on M.Id = MA.MonitorId 
+                    FROM MonitorAlert MA
+                    INNER JOIN Monitor M on M.Id = MA.MonitorId
                     WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0
                     ORDER BY MA.TimeStamp DESC";
             }
@@ -40,12 +40,12 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
             {
                 sql =
                     @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl, MA.Environment
-                    FROM MonitorAlert MA 
-                    INNER JOIN Monitor M on M.Id = MA.MonitorId 
+                    FROM MonitorAlert MA
+                    INNER JOIN Monitor M on M.Id = MA.MonitorId
                     WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0 AND MA.environment = @environment
                     ORDER BY MA.TimeStamp DESC";
             }
-           
+
             return await db.QueryAsync<MonitorAlert>(sql, new { monitorId, days, environment }, commandType: CommandType.Text);
         }
 
@@ -92,7 +92,6 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
             worksheet.Cells[1, col++].Value = "Environment";
             worksheet.Cells[1, col++].Value = "Message";
             worksheet.Cells[1, col].Value = "Screenshot URL";
-
 
             var row = 2;
             foreach (var alert in alerts)

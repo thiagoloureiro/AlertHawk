@@ -19,7 +19,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             _monitorHistoryRepositoryMock = new Mock<IMonitorHistoryRepository>();
             _monitorHistoryService = new MonitorHistoryService(_cachingMock.Object, _monitorHistoryRepositoryMock.Object);
         }
-        
+
         [Fact]
         public async Task GetMonitorHistory_ReturnsHistory()
         {
@@ -62,7 +62,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             _monitorHistoryRepositoryMock.Verify(repo => repo.DeleteMonitorHistory(days), Times.Once);
         }
-      
+
         [Fact]
         public async Task SetMonitorHistoryRetention_SetsRetention()
         {
@@ -75,7 +75,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             _monitorHistoryRepositoryMock.Verify(repo => repo.SetMonitorHistoryRetention(days), Times.Once);
         }
-        
+
         [Fact]
         public async Task GetMonitorHistoryRetention_ReturnsRetention()
         {
@@ -89,7 +89,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             Assert.Equal(retention, result);
         }
-        
+
         [Fact]
         public async Task GetMonitorHistoryCount_ReturnsCount()
         {

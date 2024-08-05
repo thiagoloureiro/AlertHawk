@@ -1,11 +1,9 @@
-using System.Runtime.CompilerServices;
 using AlertHawk.Monitoring.Controllers;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using Xunit;
 
 namespace AlertHawk.Monitoring.Tests.ControllerTests;
 
@@ -131,7 +129,7 @@ public class MonitorAlertControllerTests
         Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileResult.ContentType);
         Assert.Equal($"MonitorAlerts_{DateTime.UtcNow:yyyyMMdd}.xlsx", fileResult.FileDownloadName);
     }
-    
+
     [Fact]
     public async Task GetMonitorAlertsReportByEnvironment_ValidRequest_ReturnsFileResult()
     {
@@ -156,6 +154,7 @@ public class MonitorAlertControllerTests
         // Assert
         Assert.NotNull(result);
     }
+
     [Fact]
     public async Task GetMonitorAlertsByEnvironment_NullToken_ReturnsBadRequest()
     {

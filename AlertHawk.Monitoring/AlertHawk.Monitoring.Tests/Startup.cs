@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
@@ -13,6 +12,7 @@ using Hangfire;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring.Tests;
 
@@ -36,7 +36,7 @@ public class Startup
         services.AddTransient<IMonitorAgentService, MonitorAgentService>();
         services.AddTransient<IMonitorNotificationService, MonitorNotificationService>();
         services.AddTransient<IMonitorHistoryService, MonitorHistoryService>();
-        
+
         services.AddTransient<IMonitorTypeRepository, MonitorTypeRepository>();
         services.AddTransient<IMonitorRepository, MonitorRepository>();
         services.AddTransient<IMonitorHistoryRepository, MonitorHistoryRepository>();
@@ -49,7 +49,7 @@ public class Startup
         services.AddTransient<IHttpClientRunner, HttpClientRunner>();
         services.AddTransient<ITcpClientRunner, TcpClientRunner>();
         services.AddTransient<IHttpClientScreenshot, HttpClientScreenshot>();
-        
+
         services.AddTransient<INotificationProducer, NotificationProducer>();
         var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
         var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");

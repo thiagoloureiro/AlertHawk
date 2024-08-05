@@ -1,9 +1,9 @@
-using System.Diagnostics;
-using System.Net;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using System.Diagnostics;
+using System.Net;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 

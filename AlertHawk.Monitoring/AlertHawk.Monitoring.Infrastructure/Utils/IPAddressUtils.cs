@@ -1,7 +1,6 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Net;
 using AlertHawk.Monitoring.Domain.Entities;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring.Infrastructure.Utils;
 
@@ -27,18 +26,23 @@ public static class IPAddressUtils
             case "Europe":
                 region = MonitorRegion.Europe;
                 break;
+
             case "Asia":
                 region = MonitorRegion.Asia;
                 break;
+
             case "North America":
                 region = MonitorRegion.NorthAmerica;
                 break;
+
             case "South America":
                 region = MonitorRegion.SouthAmerica;
                 break;
+
             case "Oceania":
                 region = MonitorRegion.Oceania;
                 break;
+
             case "Africa":
                 region = MonitorRegion.Africa;
                 break;

@@ -1,9 +1,9 @@
-using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using AlertHawk.Monitoring.Infrastructure.Repositories.Class;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring
 {

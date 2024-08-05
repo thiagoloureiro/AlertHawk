@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
@@ -8,6 +7,7 @@ using AlertHawk.Monitoring.Infrastructure.Utils;
 using EasyMemoryCache;
 using Hangfire;
 using Hangfire.Storage;
+using System.Diagnostics.CodeAnalysis;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorManager;

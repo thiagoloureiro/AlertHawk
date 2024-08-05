@@ -1,5 +1,4 @@
-﻿using System.Text;
-using AlertHawk.Authentication.Domain.Custom;
+﻿using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
@@ -7,7 +6,9 @@ using AlertHawk.Monitoring.Infrastructure.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Text;
 
 namespace AlertHawk.Monitoring.Controllers
 {
@@ -18,11 +19,13 @@ namespace AlertHawk.Monitoring.Controllers
     {
         private readonly IMonitorService _monitorService;
         private readonly IMonitorAgentService _monitorAgentService;
+        private readonly IMonitorGroupService _monitorGroupService;
 
-        public MonitorController(IMonitorService monitorService, IMonitorAgentService monitorAgentService)
+        public MonitorController(IMonitorService monitorService, IMonitorAgentService monitorAgentService, IMonitorGroupService monitorGroupService)
         {
             _monitorService = monitorService;
             _monitorAgentService = monitorAgentService;
+            _monitorGroupService = monitorGroupService;
         }
 
         [SwaggerOperation(Summary = "Retrieves detailed status for the current monitor Agent")]
@@ -68,7 +71,6 @@ namespace AlertHawk.Monitoring.Controllers
             return Ok(result);
         }
 
-
         [SwaggerOperation(Summary = "Retrieves a List (string) of monitor Tags")]
         [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
         [HttpGet("monitorTagList")]
@@ -77,7 +79,6 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorService.GetMonitorTagList();
             return Ok(result);
         }
-
 
         [SwaggerOperation(Summary =
             "Retrieves a List of items to be Monitored by Monitor Group Ids (JWT Token required)")]
@@ -118,6 +119,12 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("updateMonitorHttp")]
         public async Task<IActionResult> UpdateMonitorHttp([FromBody] MonitorHttp monitorHttp)
         {
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (!await VerifyUserGroupPermissions(monitorHttp.Id, jwtToken))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new Message("This user is not authorized to do this operation"));
+            }
+
             await _monitorService.UpdateMonitorHttp(monitorHttp);
             return Ok();
         }
@@ -135,6 +142,12 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("updateMonitorTcp")]
         public async Task<IActionResult> UpdateMonitorTcp([FromBody] MonitorTcp monitorTcp)
         {
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (!await VerifyUserGroupPermissions(monitorTcp.Id, jwtToken))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new Message("This user is not authorized to do this operation"));
+            }
+
             await _monitorService.UpdateMonitorTcp(monitorTcp);
             return Ok();
         }
@@ -145,15 +158,39 @@ namespace AlertHawk.Monitoring.Controllers
         public async Task<IActionResult> DeleteMonitor(int id)
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
-            
+
+            if (!await VerifyUserGroupPermissions(id, jwtToken))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new Message("This user is not authorized to do this operation"));
+            }
+
             await _monitorService.DeleteMonitor(id, jwtToken);
             return Ok();
+        }
+
+        private async Task<bool> VerifyUserGroupPermissions(int id, string? jwtToken)
+        {
+            var userGroups = await _monitorGroupService.GetMonitorGroupList(jwtToken);
+            var monitorGroupId = await _monitorGroupService.GetMonitorGroupIdByMonitorId(id);
+            if (userGroups == null || userGroups.All(x => x.Id != monitorGroupId))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         [SwaggerOperation(Summary = "Pause or resume the monitoring for the specified monitorId")]
         [HttpPut("pauseMonitor/{id}/{paused}")]
         public async Task<IActionResult> PauseMonitor(int id, bool paused)
         {
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+
+            if (!await VerifyUserGroupPermissions(id, jwtToken))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new Message("This user is not authorized to do this operation"));
+            }
+
             await _monitorService.PauseMonitor(id, paused);
             return Ok();
         }
@@ -162,6 +199,15 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPut("pauseMonitorByGroupId/{groupId}/{paused}")]
         public async Task<IActionResult> PauseMonitorByGroupId(int groupId, bool paused)
         {
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+
+            var userGroups = await _monitorGroupService.GetMonitorGroupList(jwtToken);
+
+            if (userGroups == null || userGroups.All(x => x.Id != groupId))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new Message("This user is not authorized to do this operation"));
+            }
+
             await _monitorService.PauseMonitorByGroupId(groupId, paused);
             return Ok();
         }
@@ -214,7 +260,7 @@ namespace AlertHawk.Monitoring.Controllers
                 return StatusCode(StatusCodes.Status403Forbidden,
                     new Message("This user is not authorized to do this operation"));
             }
-            
+
             var json = await _monitorService.GetMonitorBackupJson();
             var byteArray = Encoding.UTF8.GetBytes(json);
 
@@ -233,7 +279,7 @@ namespace AlertHawk.Monitoring.Controllers
                 return StatusCode(StatusCodes.Status403Forbidden,
                     new Message("This user is not authorized to do this operation"));
             }
-            
+
             if (file == null || file.Length == 0)
                 return BadRequest("Upload a valid JSON file.");
 
@@ -254,7 +300,7 @@ namespace AlertHawk.Monitoring.Controllers
 
             return Ok();
         }
-        
+
         private async Task<bool> IsUserAdmin()
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());

@@ -1,14 +1,14 @@
-using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using MassTransit;
 using SharedModels;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring.Infrastructure.Producers;
 
 [ExcludeFromCodeCoverage]
-public class NotificationProducer: INotificationProducer
+public class NotificationProducer : INotificationProducer
 {
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IMonitorNotificationRepository _monitorNotificationRepository;
@@ -18,7 +18,7 @@ public class NotificationProducer: INotificationProducer
         _publishEndpoint = publishEndpoint;
         _monitorNotificationRepository = monitorNotificationRepository;
     }
-    
+
     public async Task HandleFailedNotifications(MonitorHttp monitorHttp, string? reasonPhrase)
     {
         var notificationIdList = await _monitorNotificationRepository.GetMonitorNotifications(monitorHttp.MonitorId);
@@ -60,7 +60,7 @@ public class NotificationProducer: INotificationProducer
             });
         }
     }
-    
+
     public async Task HandleSuccessTcpNotifications(MonitorTcp monitorTcp)
     {
         var notificationIdList = await _monitorNotificationRepository.GetMonitorNotifications(monitorTcp.MonitorId);
@@ -98,5 +98,4 @@ public class NotificationProducer: INotificationProducer
             });
         }
     }
-
 }

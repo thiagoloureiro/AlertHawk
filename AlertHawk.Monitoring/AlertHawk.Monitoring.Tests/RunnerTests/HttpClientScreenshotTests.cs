@@ -1,9 +1,5 @@
-using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
-using AlertHawk.Monitoring.Infrastructure.Utils;
-using Moq;
-using OpenQA.Selenium;
 
 namespace AlertHawk.Monitoring.Tests.RunnerTests;
 
