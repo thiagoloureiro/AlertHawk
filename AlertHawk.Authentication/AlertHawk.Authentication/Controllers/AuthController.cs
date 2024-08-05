@@ -56,6 +56,12 @@ namespace AlertHawk.Authentication.Controllers
         {
             try
             {
+                var enabledLoginAuth = Environment.GetEnvironmentVariable("ENABLED_LOGIN_AUTH")?.ToLower() ?? "true";
+                if(enabledLoginAuth == "false")
+                {
+                    return BadRequest(new Message("Login is disabled."));
+                }
+                
                 var user = await _userService.Login(userAuth.Username, userAuth.Password);
 
                 if (user is null)

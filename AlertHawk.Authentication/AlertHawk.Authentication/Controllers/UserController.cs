@@ -29,6 +29,12 @@ public class UserController : Controller
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> PostUserCreation([FromBody] UserCreation userCreation)
     {
+        var enabledLoginAuth = Environment.GetEnvironmentVariable("ENABLED_LOGIN_AUTH")?.ToLower() ?? "true";
+        if(enabledLoginAuth == "false")
+        {
+            return BadRequest(new Message("Login is disabled."));
+        }
+        
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
@@ -115,6 +121,12 @@ public class UserController : Controller
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     public async Task<IActionResult> ResetPassword(string email)
     {
+        var enabledLoginAuth = Environment.GetEnvironmentVariable("ENABLED_LOGIN_AUTH")?.ToLower() ?? "true";
+        if(enabledLoginAuth == "false")
+        {
+            return BadRequest(new Message("Login is disabled."));
+        }
+        
         var user = await _userService.GetByEmail(email);
 
         if (user == null)
@@ -131,6 +143,12 @@ public class UserController : Controller
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdatePassword([FromBody] UserPassword userPassword)
     {
+        var enabledLoginAuth = Environment.GetEnvironmentVariable("ENABLED_LOGIN_AUTH")?.ToLower() ?? "true";
+        if(enabledLoginAuth == "false")
+        {
+            return BadRequest(new Message("Login is disabled."));
+        }
+        
         var user = await _getOrCreateUserService.GetUserOrCreateUser(User);
         if (user == null)
         {
