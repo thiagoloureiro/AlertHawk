@@ -1,12 +1,11 @@
-﻿using System.Net.Http.Headers;
-using AlertHawk.Authentication.Domain.Entities;
+﻿using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Domain.Interfaces.Repositories;
 using AlertHawk.Notification.Domain.Interfaces.Services;
 using AlertHawk.Notification.Domain.Utils;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Net.Http.Headers;
 
 namespace AlertHawk.Notification.Domain.Classes
 {
@@ -108,7 +107,7 @@ namespace AlertHawk.Notification.Domain.Classes
             {
                 notificationItem.Name = notificationItem.Name?.TrimStart();
                 notificationItem.Name = notificationItem.Name?.TrimEnd();
-                
+
                 if (notificationItem.Id == 0)
                 {
                     notificationItem.Id = await _notificationRepository.InsertNotificationItem(notificationItem);

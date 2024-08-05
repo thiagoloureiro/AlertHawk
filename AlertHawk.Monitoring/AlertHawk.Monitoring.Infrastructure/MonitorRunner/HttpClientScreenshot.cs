@@ -33,7 +33,7 @@ public class HttpClientScreenshot : IHttpClientScreenshot
 
                 // Wait for the page to load (adjust the wait time as needed)
                 await Task.Delay(VariableUtils.GetIntEnvVariable("screenshot_wait_time_ms") ?? 3000);
-                
+
                 // Take screenshot
                 Screenshot screenshot = ((ITakesScreenshot)driver).GetScreenshot();
 

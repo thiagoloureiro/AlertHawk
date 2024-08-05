@@ -1,12 +1,13 @@
-using System.Data;
-using System.Data.SqlClient;
-using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
 using Microsoft.Extensions.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
+
 [ExcludeFromCodeCoverage]
 public class HealthCheckRepository : RepositoryBase, IHealthCheckRepository
 {
@@ -24,7 +25,7 @@ public class HealthCheckRepository : RepositoryBase, IHealthCheckRepository
             await using var db = new SqlConnection(_connstring);
             string sqlAllMonitors = @"SELECT TOP 1 Id FROM [MonitorAgent]";
             var result = await db.QueryFirstOrDefaultAsync<MonitorAgent>(sqlAllMonitors, commandType: CommandType.Text);
-           
+
             return result != null;
         }
         catch (Exception e)

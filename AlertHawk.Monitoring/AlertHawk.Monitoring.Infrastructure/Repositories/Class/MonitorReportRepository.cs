@@ -1,12 +1,13 @@
-using System.Data;
-using System.Data.SqlClient;
-using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Entities.Report;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
 using Microsoft.Extensions.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
+
 [ExcludeFromCodeCoverage]
 public class MonitorReportRepository : RepositoryBase, IMonitorReportRepository
 {
@@ -137,7 +138,7 @@ public class MonitorReportRepository : RepositoryBase, IMonitorReportRepository
                                 Monitor m ON d.MonitorId = m.id
                             GROUP BY
                                 d.MonitorId, m.name";
-        
+
         return await db.QueryAsync<MonitorReportUptime>(sqlAllMonitors, new { groupId, startDate, endDate },
             commandType: CommandType.Text);
     }

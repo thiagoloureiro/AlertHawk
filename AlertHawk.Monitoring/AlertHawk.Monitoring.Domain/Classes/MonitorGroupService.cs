@@ -1,13 +1,12 @@
-using System.Diagnostics;
-using System.Net.Http.Headers;
-using System.Text;
-using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using EasyMemoryCache;
 using Newtonsoft.Json;
+using System.Diagnostics;
+using System.Net.Http.Headers;
+using System.Text;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
@@ -48,12 +47,12 @@ public class MonitorGroupService : IMonitorGroupService
         sw1.Start();
         var ids = await GetUserGroupMonitorListIds(jwtToken);
         Console.WriteLine($"END Fetching UserGroupIds from Auth API {sw1.Elapsed}");
-        
+
         var sw2 = new Stopwatch();
         sw2.Start();
         var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupListByEnvironment(environment);
         Console.WriteLine($"END Fetching GetMonitorGroupListByEnvironment {sw2.Elapsed}");
-        
+
         if (ids == null)
         {
             return new List<MonitorGroup> { new MonitorGroup { Id = 0, Name = "No Groups Found" } };
@@ -68,7 +67,7 @@ public class MonitorGroupService : IMonitorGroupService
             .SelectMany(group => group.Monitors?.Select(m => m.Id) ?? Enumerable.Empty<int>()).ToList();
         var allDashboardData = await GetMonitorDashboardDataList(allMonitorIds);
         var monitorDashboards = allDashboardData.ToList();
-        
+
         var sw3 = new Stopwatch();
         sw3.Start();
         var tasks = new List<Task>();
@@ -187,7 +186,7 @@ public class MonitorGroupService : IMonitorGroupService
                 () => _monitorHistoryRepository.GetMonitorHistoryByIdAndHours(monitor.Id, 1));
             if (monitor.MonitorStatusDashboard != null) monitor.MonitorStatusDashboard.HistoryData = data;
         }
-        
+
         return monitorGroups;
     }
 
@@ -262,6 +261,11 @@ public class MonitorGroupService : IMonitorGroupService
     public async Task<IEnumerable<Monitor>?> GetMonitorListByGroupId(int monitorGroupId)
     {
         return await _monitorGroupRepository.GetMonitorListByGroupId(monitorGroupId);
+    }
+
+    public async Task<int> GetMonitorGroupIdByMonitorId(int id)
+    {
+        return await _monitorGroupRepository.GetMonitorGroupIdByMonitorId(id);
     }
 
     public async Task<MonitorGroup> GetMonitorGroupById(int id)

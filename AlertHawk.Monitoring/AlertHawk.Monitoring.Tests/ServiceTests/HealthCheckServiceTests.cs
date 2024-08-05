@@ -1,10 +1,9 @@
-
+using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
-using AlertHawk.Monitoring.Domain.Classes;
-using Moq;
 using EasyMemoryCache;
 using EasyMemoryCache.Configuration;
+using Moq;
 
 namespace AlertHawk.Monitoring.Tests.ServiceTests;
 
@@ -33,6 +32,7 @@ public class HealthCheckServiceTests
         // Assert
         Assert.False(result);
     }
+
     [Fact]
     public async Task CheckHealthAsync_ShouldReturnTrue_WehnHealthCheckAndCacheOpeationsSucced()
     {
@@ -47,7 +47,7 @@ public class HealthCheckServiceTests
         // Assert
         Assert.True(result);
     }
-    
+
     [Fact]
     public async Task CheckHealthAsync_ShouldCaptureExceptionAndReturnFalse_WhenHealthCheckRepositoryThrowsException()
     {
@@ -62,5 +62,4 @@ public class HealthCheckServiceTests
         // Assert
         Assert.False(result);
     }
-    
 }

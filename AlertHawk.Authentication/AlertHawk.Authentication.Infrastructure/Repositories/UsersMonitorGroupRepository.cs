@@ -1,7 +1,7 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using AlertHawk.Authentication.Domain.Entities;
+﻿using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Authentication.Infrastructure.Interfaces;
 using Microsoft.Extensions.Configuration;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Authentication.Infrastructure.Repositories;
 
@@ -11,6 +11,7 @@ public class UsersMonitorGroupRepository : BaseRepository, IUsersMonitorGroupRep
     public UsersMonitorGroupRepository(IConfiguration configuration) : base(configuration)
     {
     }
+
     public async Task CreateAsync(UsersMonitorGroup usersMonitorGroup)
     {
         const string sql = "INSERT INTO [dbo].[UsersMonitorGroup] ([Id], [UserId], [GroupMonitorId]) VALUES (@Id, @UserId, @GroupMonitorId)";

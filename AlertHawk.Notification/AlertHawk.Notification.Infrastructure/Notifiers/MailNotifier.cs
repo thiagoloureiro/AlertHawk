@@ -1,8 +1,7 @@
-﻿using System.Net;
-using System.Net.Mail;
-using AlertHawk.Notification.Domain.Entities;
+﻿using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
-using AlertHawk.Notification.Infrastructure.Utils;
+using System.Net;
+using System.Net.Mail;
 
 namespace AlertHawk.Notification.Infrastructure.Notifiers
 {
@@ -78,7 +77,7 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
 
                 retryCount++;
             }
-            
+
             return false;
         }
     }

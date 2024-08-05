@@ -3,13 +3,13 @@ using AlertHawk.Authentication.Helpers;
 using AlertHawk.Authentication.Infrastructure.Config;
 using AutoMapper.EquivalencyExpression;
 using EasyMemoryCache.Configuration;
-using Microsoft.OpenApi.Models;
-using System.Reflection;
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,7 +39,6 @@ var audiences = configuration["Jwt:Audiences"] ??
 
 var key = configuration["Jwt:Key"] ?? "fakeKey";
 var sentryEnabled = configuration.GetValue<string>("Sentry:Enabled") ?? "false";
-
 
 // Add services to the container
 builder.Services.AddAuthentication(options =>
@@ -80,7 +79,8 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1",
         new OpenApiInfo
         {
-            Title = "AlertHawk Authentication API", Version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
+            Title = "AlertHawk Authentication API",
+            Version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
         });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {

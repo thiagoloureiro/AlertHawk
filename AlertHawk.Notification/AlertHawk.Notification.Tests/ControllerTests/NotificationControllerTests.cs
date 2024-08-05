@@ -71,7 +71,6 @@ namespace AlertHawk.Notification.Tests.ControllerTests
             Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
             Assert.Equal("Notification Deleted Successfully", result.Value);
         }
-        
 
         [Fact]
         public async Task SelectNotificationItemById_ShouldReturnOk_WithNotificationItem()
@@ -152,7 +151,7 @@ namespace AlertHawk.Notification.Tests.ControllerTests
             Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
             Assert.Equal(count, Convert.ToInt32(result.Value));
         }
-        
+
         [Fact]
         public async Task GetNotificationCount_ShouldReturnOk_WithZeroNotificationCount()
         {
@@ -167,7 +166,7 @@ namespace AlertHawk.Notification.Tests.ControllerTests
             Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
             Assert.Equal(0, Convert.ToInt32(result.Value));
         }
-        
+
         [Fact]
         public async Task SelectNotificationItemByMonitorGroupId_ShouldReturnOk_WithEmptyNotificationItems()
         {
@@ -185,7 +184,7 @@ namespace AlertHawk.Notification.Tests.ControllerTests
             var items = Assert.IsType<List<NotificationItem>>(result.Value);
             Assert.Empty(items);
         }
-        
+
         [Fact]
         public async Task SendNotification_ShouldReturnOk_WhenNotificationIsSent()
         {
@@ -193,7 +192,7 @@ namespace AlertHawk.Notification.Tests.ControllerTests
             var keys = Utils.GenerateAesKeyAndIv();
             Environment.SetEnvironmentVariable("AesKey", keys.Item1);
             Environment.SetEnvironmentVariable("AesIV", keys.Item2);
-            
+
             var notificationItem = new NotificationSend
             {
                 Message = "Message",
@@ -212,7 +211,7 @@ namespace AlertHawk.Notification.Tests.ControllerTests
             Assert.NotNull(result);
             Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
         }
-        
+
         [Fact]
         public async Task SelectNotificationItemList_ShouldReturnOk_WithEmptyNotificationItems()
         {
@@ -230,7 +229,7 @@ namespace AlertHawk.Notification.Tests.ControllerTests
             var items = Assert.IsType<List<NotificationItem>>(result.Value);
             Assert.Empty(items);
         }
-        
+
         [Fact]
         public async Task SelectNotificationItemList_ShouldReturnOk()
         {

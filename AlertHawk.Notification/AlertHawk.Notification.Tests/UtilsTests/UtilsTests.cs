@@ -23,7 +23,7 @@ namespace AlertHawk.Notification.Tests.UtilsTests
             // Assert
             Assert.Equal(originalString, decryptedString);
         }
-        
+
         [Fact]
         public void EncryptAndDecrypt_ReturnsArgumentNullException()
         {
@@ -37,7 +37,7 @@ namespace AlertHawk.Notification.Tests.UtilsTests
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() => AesEncryption.EncryptString(originalString));
         }
-        
+
         [Fact]
         public void EncryptAndDecrypt_ReturnsArgumentNullExceptionOnDecrypt()
         {
@@ -48,9 +48,9 @@ namespace AlertHawk.Notification.Tests.UtilsTests
             Environment.SetEnvironmentVariable("AesKey", keys.Item1);
             Environment.SetEnvironmentVariable("AesIV", keys.Item2);
 
-            // Act 
+            // Act
             string? encrypted = AesEncryption.EncryptString(originalString);
-            
+
             // Assert
             Assert.Throws<ArgumentNullException>(() => AesEncryption.DecryptString(null));
         }
@@ -124,7 +124,7 @@ namespace AlertHawk.Notification.Tests.UtilsTests
             // Assert
             Assert.Null(result);
         }
-        
+
         [Fact]
         public void ConvertJsonToTuple_ShouldHandleNullHeadersJson()
         {

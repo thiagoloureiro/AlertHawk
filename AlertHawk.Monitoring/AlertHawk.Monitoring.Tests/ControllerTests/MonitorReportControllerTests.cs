@@ -3,12 +3,14 @@ using AlertHawk.Monitoring.Domain.Entities.Report;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+
 namespace AlertHawk.Monitoring.Tests.ControllerTests;
 
 public class MonitorReportControllerTests
 {
     private readonly Mock<IMonitorReportService> _mockMonitorReportService;
     private readonly MonitorReportController _controller;
+
     public MonitorReportControllerTests()
     {
         _mockMonitorReportService = new Mock<IMonitorReportService>();
@@ -30,6 +32,7 @@ public class MonitorReportControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(uptimeReports, okResult.Value);
     }
+
     [Fact]
     public async Task GetMonitorReportUptimeByDate_ReturnsOk()
     {
@@ -44,6 +47,7 @@ public class MonitorReportControllerTests
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
     }
+
     [Fact]
     public async Task GetMonitorAlerts_ReturnsOk()
     {
@@ -75,7 +79,8 @@ public class MonitorReportControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(responseTimeReports, okResult.Value);
     }
-     [Fact]
+
+    [Fact]
     public async Task GetMonitorReportUptimeWithDate_ReturnsOk()
     {
         // Arrange
@@ -106,6 +111,7 @@ public class MonitorReportControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(uptimeReports, okResult.Value);
     }
+
     [Fact]
     public async Task GetMonitorResponseTimeWithFilter_ReturnsOk()
     {

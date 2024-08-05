@@ -1,9 +1,7 @@
-using System.Net;
 using AlertHawk.Notification.Domain.Classes;
 using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Domain.Interfaces.Repositories;
-using AlertHawk.Notification.Domain.Interfaces.Services;
 using NSubstitute;
 
 namespace AlertHawk.Notification.Tests.ServiceTests;
@@ -29,7 +27,7 @@ public class NotificationServiceTests
         _notificationService = new NotificationService(
             _mailNotifier, _slackNotifier, _teamsNotifier, _telegramNotifier, _notificationRepository, _webHookNotifier);
     }
-    
+
     [Fact]
     public async Task InsertNotificationItemSmtp_Calls_Correct_Method()
     {
@@ -81,7 +79,7 @@ public class NotificationServiceTests
         // Assert
         await notificationRepository.Received(1).InsertNotificationItemMsTeams(Arg.Is(notificationItem));
     }
-    
+
     [Fact]
     public async Task InsertNotificationLog_Calls_Correct_Method()
     {
@@ -94,13 +92,13 @@ public class NotificationServiceTests
         // Assert
         await notificationRepository.Received(1).InsertNotificationLog(Arg.Is(notificationLog));
     }
-    
+
     [Fact]
     public async Task GetNotificationLogCount_ShouldReturnCorrectCount()
     {
         // Arrange
         var notificationLog = CreateMockNotificationLog(out var notificationRepository, out var notificationService, 2);
-        
+
         var expectedCount = 10L;
         notificationRepository.GetNotificationLogCount().Returns(Task.FromResult(expectedCount));
 
@@ -130,7 +128,9 @@ public class NotificationServiceTests
         var notificationItem = new NotificationItem
         {
             MonitorGroupId = 1,
-            NotificationTypeId = typeId, Description = "Description", Name = "Notification Name",
+            NotificationTypeId = typeId,
+            Description = "Description",
+            Name = "Notification Name",
             NotificationEmail = new NotificationEmail
             {
                 FromEmail = "user@email.com",
@@ -192,33 +192,35 @@ public class NotificationServiceTests
         );
         return notificationItem;
     }
-    
-     private static NotificationLog CreateMockNotificationLog(out INotificationRepository notificationRepository,
-        out NotificationService notificationService, int typeId = 1)
-     {
-         var notificationLog = new NotificationLog
-         {
-             NotificationTypeId = typeId, TimeStamp = DateTime.Now, Message = "Notification Name",
-         };
-         
-         var mailNotifier = Substitute.For<IMailNotifier>();
-         var slackNotifier = Substitute.For<ISlackNotifier>();
-         var teamsNotifier = Substitute.For<ITeamsNotifier>();
-         var telegramNotifier = Substitute.For<ITelegramNotifier>();
-         notificationRepository = Substitute.For<INotificationRepository>();
-         var webHookNotifier = Substitute.For<IWebHookNotifier>();
 
-         notificationService = new NotificationService(
-             mailNotifier,
-             slackNotifier,
-             teamsNotifier,
-             telegramNotifier,
-             notificationRepository,
-             webHookNotifier
-         );
-         
-         return notificationLog;
-     }
+    private static NotificationLog CreateMockNotificationLog(out INotificationRepository notificationRepository,
+       out NotificationService notificationService, int typeId = 1)
+    {
+        var notificationLog = new NotificationLog
+        {
+            NotificationTypeId = typeId,
+            TimeStamp = DateTime.Now,
+            Message = "Notification Name",
+        };
+
+        var mailNotifier = Substitute.For<IMailNotifier>();
+        var slackNotifier = Substitute.For<ISlackNotifier>();
+        var teamsNotifier = Substitute.For<ITeamsNotifier>();
+        var telegramNotifier = Substitute.For<ITelegramNotifier>();
+        notificationRepository = Substitute.For<INotificationRepository>();
+        var webHookNotifier = Substitute.For<IWebHookNotifier>();
+
+        notificationService = new NotificationService(
+            mailNotifier,
+            slackNotifier,
+            teamsNotifier,
+            telegramNotifier,
+            notificationRepository,
+            webHookNotifier
+        );
+
+        return notificationLog;
+    }
 
     [Fact]
     public async Task UpdateNotificationItem_Calls_Correct_Method()
@@ -279,7 +281,7 @@ public class NotificationServiceTests
         await notificationRepository.Received(1).SelectNotificationItemById(id);
         Assert.Same(notificationItem, result);
     }
-    
+
     [Fact]
     public async Task SelectNotificationItemByMonitorGroupId_Calls_Repository_Method()
     {
@@ -362,7 +364,7 @@ public class NotificationServiceTests
                 Headers = new List<Tuple<string, string>>()
             }
         };
-        
+
         var headers = new List<Tuple<string, string>>();
 
         _webHookNotifier.SendNotification(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), headers).Returns(Task.CompletedTask);

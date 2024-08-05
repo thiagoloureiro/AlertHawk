@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Controllers;
 using AlertHawk.Authentication.Domain.Custom;
@@ -8,6 +7,7 @@ using AlertHawk.Authentication.Tests.Builders;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using System.Security.Claims;
 
 namespace AlertHawk.Authentication.Tests.ControllerTests
 {

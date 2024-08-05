@@ -1,15 +1,11 @@
 using AlertHawk.Notification.Domain.Classes;
+using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Domain.Interfaces.Repositories;
 using AlertHawk.Notification.Domain.Interfaces.Services;
-using AlertHawk.Notification.Infrastructure.Repositories.Class;
-using EasyMemoryCache.Configuration;
-using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
-using System.Text;
-using AlertHawk.Notification;
-using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Helpers;
 using AlertHawk.Notification.Infrastructure.Notifiers;
+using AlertHawk.Notification.Infrastructure.Repositories.Class;
+using EasyMemoryCache.Configuration;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +13,8 @@ using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SharedModels;
+using System.Reflection;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,7 +38,8 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1",
         new OpenApiInfo
         {
-            Title = "AlertHawk Notification API", Version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
+            Title = "AlertHawk Notification API",
+            Version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
         });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {

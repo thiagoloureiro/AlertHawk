@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Reflection;
-using Microsoft.AspNetCore.Authorization;
 
 namespace AlertHawk.Notification.Controllers
 {

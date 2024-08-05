@@ -1,7 +1,7 @@
-using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Services;
 using MassTransit;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SharedModels;
 
@@ -71,7 +71,7 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
             };
             await _notificationService.Send(notificationSend);
         }
-        
+
         if (notificationItem?.NotificationWebHook != null)
         {
             Console.WriteLine("Sending WebHook notification");

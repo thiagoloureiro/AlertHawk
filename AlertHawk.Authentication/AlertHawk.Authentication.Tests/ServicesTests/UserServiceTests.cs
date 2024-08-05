@@ -2,7 +2,6 @@ using AlertHawk.Application.Services;
 using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Authentication.Infrastructure.Interfaces;
-using AlertHawk.Authentication.Infrastructure.EmailSender;
 using AlertHawk.Authentication.Tests.Builders;
 using Moq;
 
@@ -98,7 +97,7 @@ public class UserServiceTests
         Assert.Equal(user, result);
         _mockUserRepository.Verify(r => r.Login(username, password), Times.Once);
     }
-    
+
     [Fact]
     public async Task LoginWithEmail_CallsRepositoryLogin()
     {
@@ -268,28 +267,28 @@ public class UserServiceTests
         var password = "password";
         var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
         _mockUserRepository.Setup(r => r.GetByEmail(email)).ReturnsAsync(user);
-        
+
         // Act
         await _userService.LoginWithEmail(email, password);
-        
+
         // Assert
         _mockUserRepository.Verify(r => r.LoginWithEmail(email, password), Times.Once);
     }
-    
+
     [Fact]
     public async Task LoginWithEmail_CallsRepositoryLoginWithEmail_ReturnsFalse()
     {
         // Arrange
         var email = "test@example.com";
         _mockUserRepository.Setup(r => r.GetByEmail(email)).ReturnsAsync(It.IsAny<UserDto>());
-        
+
         // Act
         var result = await _userService.LoginWithEmail(email, "wrongPassword");
-        
+
         // Assert
         Assert.Null(result);
     }
-    
+
     [Fact]
     public async Task UpdatePassword_CallsRepositoryUpdatePassword()
     {

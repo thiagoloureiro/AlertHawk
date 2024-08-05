@@ -122,7 +122,7 @@ namespace AlertHawk.Notification.Controllers
 
             return Ok(result);
         }
-        
+
         [HttpGet("GetNotificationCount")]
         [SwaggerOperation(Summary = "Get Notification Count")]
         [ProducesResponseType(typeof(NotificationItem), StatusCodes.Status200OK)]

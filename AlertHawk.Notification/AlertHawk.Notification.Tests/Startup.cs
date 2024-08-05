@@ -23,7 +23,7 @@ public class Startup
 
         services.AddTransient<INotificationTypeService, NotificationTypeService>();
         services.AddTransient<INotificationTypeRepository, NotificationTypeRepository>();
-        
+
         services.AddTransient<INotificationService, NotificationService>();
         services.AddTransient<INotificationRepository, NotificationRepository>();
         services.AddTransient<IMailNotifier, MailNotifier>();

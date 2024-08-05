@@ -1,8 +1,8 @@
-using System.Net.Sockets;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using System.Net.Sockets;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
@@ -97,9 +97,9 @@ public class TcpClientRunner : ITcpClientRunner
         using var tcpClient = new TcpClient();
         using var cancellationTokenSource = new CancellationTokenSource();
         var timeoutMilliseconds = monitorTcp.Timeout * 1000;
-            
+
         cancellationTokenSource.CancelAfter(timeoutMilliseconds * 1000);
-        
+
         try
         {
             var connectTask = tcpClient.ConnectAsync(monitorTcp.IP, monitorTcp.Port);

@@ -21,7 +21,7 @@ namespace AlertHawk.Authentication.Controllers
             _getOrCreateUserService = getOrCreateUserService;
             _usersMonitorGroupService = usersMonitorGroupService;
         }
-        
+
         [HttpPost("AssignUserToGroup")]
         [SwaggerOperation(Summary = "AssignUserToGroup after group Creation")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -143,8 +143,8 @@ namespace AlertHawk.Authentication.Controllers
             {
                 return usrAdmin;
             }
-
         }
+
         private async Task<ObjectResult?> IsUserAdmin()
         {
             var usr = await _getOrCreateUserService.GetUserOrCreateUser(User);
@@ -156,6 +156,7 @@ namespace AlertHawk.Authentication.Controllers
 
             return null; // or return a default value if needed
         }
+
         private async Task<UserDto?> GetUserByToken()
         {
             return await _getOrCreateUserService.GetUserOrCreateUser(User);

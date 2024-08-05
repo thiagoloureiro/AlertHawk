@@ -3,7 +3,7 @@
     public class NotificationSend
     {
         public int NotificationTypeId { get; set; }
-        public required string Message { get; set; }
+        public string Message { get; set; }
         public NotificationEmail NotificationEmail { get; set; } = null!;
         public NotificationSlack NotificationSlack { get; set; } = null!;
         public NotificationTeams NotificationTeams { get; set; } = null!;

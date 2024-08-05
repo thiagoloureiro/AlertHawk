@@ -1,7 +1,7 @@
-﻿using System.Reflection;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Reflection;
 
 namespace AlertHawk.Monitoring.Controllers
 {

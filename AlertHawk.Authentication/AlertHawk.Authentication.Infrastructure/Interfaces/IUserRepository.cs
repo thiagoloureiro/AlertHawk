@@ -6,9 +6,11 @@ namespace AlertHawk.Authentication.Infrastructure.Interfaces;
 public interface IUserRepository
 {
     Task Create(UserCreation userCreation);
+
     Task CreateFromAzure(UserCreationFromAzure userCreation);
+
     Task Update(UserDto userUpdate);
-    
+
     Task<string?> ResetPassword(string email);
 
     Task<UserDto?> Login(string username, string password);
@@ -16,11 +18,18 @@ public interface IUserRepository
     Task<UserDto?> Get(Guid id);
 
     Task<UserDto?> GetByEmail(string email);
+
     Task<UserDto?> GetByUsername(string username);
+
     Task<IEnumerable<UserDto>?> GetAll();
+
     Task Delete(Guid id);
+
     Task<UserDto?> GetUserByToken(string? jwtToken);
+
     Task UpdateUserToken(string token, string username);
+
     Task UpdatePassword(string email, string password);
+
     Task<UserDto?> LoginWithEmail(string email, string userPasswordCurrentPassword);
 }

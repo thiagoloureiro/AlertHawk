@@ -75,7 +75,7 @@ public class MonitorReportServiceTests
         Assert.Equal(2, result.Count());
         Assert.Equal(monitorResponseTimes, result);
     }
-    
+
     [Fact]
     public async Task GetMonitorReportUptime_ShouldReturnMonitorReportUptimeWithFilter()
     {
@@ -95,7 +95,7 @@ public class MonitorReportServiceTests
         Assert.Single(result);
         Assert.Equal("Monitor1", result.First().MonitorName);
     }
-    
+
     [Fact]
     public async Task GetMonitorReportUptimeStartEndDate_ShouldReturnMonitorReportUptime()
     {

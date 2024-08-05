@@ -6,8 +6,6 @@ using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using EasyMemoryCache;
 using EasyMemoryCache.Configuration;
 using Moq;
-using Newtonsoft.Json;
-using NSubstitute;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ServiceTests
@@ -62,7 +60,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                 new MonitorHistory { TimeStamp = DateTime.UtcNow.AddDays(-2), Status = false, ResponseTime = 200 },
             };
             var monitor = new Monitor()
-                { Id = monitorId, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
+            { Id = monitorId, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
 
             _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(monitorId, 90))
                 .ReturnsAsync(monitorHistory);
@@ -124,15 +122,20 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             Assert.Equal(monitorList, result);
         }
 
-
         [Fact]
         public async Task CreateMonitorHttp_SetsHeadersJsonAndCallsRunner()
         {
             // Arrange
             var monitor = new MonitorHttp()
             {
-                Id = 1, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0, MaxRedirects = 1,
-                UrlToCheck = "https://www.abb.com/", Timeout = 0,
+                Id = 1,
+                DaysToExpireCert = 30,
+                Name = "Name",
+                HeartBeatInterval = 1,
+                Retries = 0,
+                MaxRedirects = 1,
+                UrlToCheck = "https://www.abb.com/",
+                Timeout = 0,
                 Headers = new List<Tuple<string, string>>()
                 {
                     new Tuple<string, string>("key", "value")
@@ -156,8 +159,14 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Arrange
             var monitor = new MonitorHttp()
             {
-                Id = 1, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0, MaxRedirects = 1,
-                UrlToCheck = "https://www.abb.com/", Timeout = 0,
+                Id = 1,
+                DaysToExpireCert = 30,
+                Name = "Name",
+                HeartBeatInterval = 1,
+                Retries = 0,
+                MaxRedirects = 1,
+                UrlToCheck = "https://www.abb.com/",
+                Timeout = 0,
                 Headers = new List<Tuple<string, string>>()
                 {
                     new Tuple<string, string>("key", "value")
@@ -194,7 +203,6 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             _monitorRepositoryMock.Verify(repo => repo.DeleteMonitor(monitorId), Times.Once);
         }
-
 
         [Fact]
         public async Task CreateMonitor_SetsHeadersJsonAndCallsRepository()
@@ -409,7 +417,6 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             Assert.NotNull(result);
         }
 
-
         [Fact]
         public void GetMonitorDashboardDataList_ReturnsMonitorDashboardDataList()
         {
@@ -422,7 +429,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                 new MonitorHistory { TimeStamp = DateTime.UtcNow.AddDays(-2), Status = false, ResponseTime = 200 },
             };
             var monitor = new Monitor()
-                { Id = monitorId, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
+            { Id = monitorId, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
 
             _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(monitorId, 90))
                 .ReturnsAsync(monitorHistory);
@@ -441,7 +448,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             Assert.NotNull(result);
         }
-        
+
         [Fact]
         public async Task PauseMonitorByGroupId_UpdatesRepositoryAndInvalidatesCache()
         {
@@ -464,7 +471,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                     }
                 }
             };
-                
+
             _monitorGroupServiceMock.Setup(x => x.GetMonitorGroupById(groupId)).ReturnsAsync(monitorGroup);
 
             // Act
@@ -473,7 +480,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             _monitorRepositoryMock.Verify(repo => repo.PauseMonitor(groupId, paused), Times.Once);
         }
-        
+
         [Fact]
         public async Task GetMonitorListByMonitorGroupIds_ReturnsMonitorList()
         {
@@ -511,8 +518,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                     }
                 }
             };
-            
-            
+
             var monitorList = new List<Monitor>
             {
                 new Monitor
@@ -524,35 +530,34 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                     Id = 1
                 }
             };
-            
+
             _monitorGroupServiceMock.Setup(x => x.GetUserGroupMonitorListIds(token)).ReturnsAsync(monitorGroupIds);
             _monitorRepositoryMock.Setup(x => x.GetMonitorListByMonitorGroupIds(monitorGroupIds, MonitorEnvironment.All)).ReturnsAsync(monitorList);
             _cachingMock.Setup(caching => caching.GetValueFromCacheAsync<List<MonitorDashboard?>>(
                     _cacheKeyDashboardList))
                 .ReturnsAsync(lstDashboardData);
-            
-            
+
             // Act
             var result = await _monitorService.GetMonitorListByMonitorGroupIds(token, MonitorEnvironment.All);
 
             // Assert
             Assert.Equal(monitorList, result);
         }
-        
+
         [Fact]
         public async Task SetMonitorDashboardDataCacheList()
         {
             // Arrange
             string _cacheKeyDashboardList = "MonitorDashboardList";
             GlobalVariables.MasterNode = true;
-            
+
             var monitorId = 1;
             var monitorHistory = new List<MonitorHistory>
             {
                 new MonitorHistory { TimeStamp = new DateTime(), Status = true, ResponseTime = 100 },
                 new MonitorHistory { TimeStamp =new DateTime(), Status = false, ResponseTime = 200 },
             };
-            
+
             var monitorList = new List<Monitor>
             {
                 new Monitor
@@ -563,7 +568,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                     Id = 1
                 }
             };
-            
+
             var lstDashboardData = new List<MonitorDashboard?>
             {
                 new MonitorDashboard
@@ -594,18 +599,18 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                     }
                 }
             };
-            
+
             _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(monitorId, 90))
                 .ReturnsAsync(monitorHistory);
             _monitorRepositoryMock.Setup(repo => repo.GetMonitorList()).ReturnsAsync(monitorList);
 
             _cachingMock.Setup(x => x.SetValueToCacheAsync(_cacheKeyDashboardList, lstDashboardData, It.IsAny<int>(),
                 It.IsAny<CacheTimeInterval>()));
-            
+
             // Act
             await _monitorService.SetMonitorDashboardDataCacheList();
         }
-        
+
         [Fact]
         public async Task GetMonitorStatusDashboardData_ReturnsMonitorStatusDashboardData()
         {
@@ -615,8 +620,8 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             string token = "token";
             var monitorGroupIds = new List<int> { 1 };
             var monitor = new Monitor()
-                { Id = 1, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
-            
+            { Id = 1, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
+
             var monitorHistory = new List<MonitorHistory>
             {
                 new MonitorHistory { TimeStamp = DateTime.UtcNow.AddDays(-1), Status = true, ResponseTime = 100 },
@@ -626,9 +631,9 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             _monitorGroupServiceMock.Setup(x => x.GetUserGroupMonitorListIds(token)).ReturnsAsync(monitorGroupIds);
             _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(monitorId, 90))
                 .ReturnsAsync(monitorHistory);
-            
+
             _monitorRepositoryMock.Setup(repo => repo.GetMonitorById(monitorId)).ReturnsAsync(monitor);
-            
+
             _cachingMock.Setup(caching => caching.GetOrSetObjectFromCacheAsync(
                     $"Monitor_{monitorId}",
                     It.IsAny<int>(),
@@ -636,9 +641,9 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                     It.IsAny<bool>(),
                     It.IsAny<CacheTimeInterval>()))
                 .ReturnsAsync(monitor);
-          
+
             // Act
-            var result = await _monitorService.GetMonitorDashboardData(monitorId,monitor);
+            var result = await _monitorService.GetMonitorDashboardData(monitorId, monitor);
 
             // Assert
             Assert.NotNull(result);

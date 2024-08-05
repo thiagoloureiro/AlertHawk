@@ -1,13 +1,14 @@
-using System.Diagnostics.CodeAnalysis;
-using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Application.Interfaces;
+using AlertHawk.Authentication.Domain.Dto;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using System.Diagnostics.CodeAnalysis;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
 namespace AlertHawk.Application.Services;
+
 [ExcludeFromCodeCoverage]
 public class JwtTokenService : IJwtTokenService
 {
@@ -35,7 +36,7 @@ public class JwtTokenService : IJwtTokenService
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret ?? throw new InvalidOperationException("Secret key is undefined.")));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        
+
         var token = new JwtSecurityToken(
             _issuers?.Split(",")[0],
             _audiences?.Split(",")[0],

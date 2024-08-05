@@ -1,6 +1,6 @@
-﻿using System.Text;
-using AlertHawk.Notification.Domain.Interfaces.Notifiers;
+﻿using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using Polly;
+using System.Text;
 using StringContent = System.Net.Http.StringContent;
 
 namespace AlertHawk.Notification.Infrastructure.Notifiers
@@ -18,7 +18,7 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
             {
                 content = new StringContent(body, Encoding.UTF8, "application/json");
             }
-            
+
             if (headers != null)
             {
                 var newHeaders = headers;

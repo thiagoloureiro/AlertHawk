@@ -1,3 +1,4 @@
+using AlertHawk.Monitoring;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
@@ -6,22 +7,21 @@ using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Helpers;
 using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 using AlertHawk.Monitoring.Infrastructure.Producers;
+using AlertHawk.Monitoring.Infrastructure.Utils;
 using EasyMemoryCache.Configuration;
 using Hangfire;
+using Hangfire.InMemory;
 using MassTransit;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Identity.Web;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AlertHawk.Monitoring;
-using AlertHawk.Monitoring.Infrastructure.Utils;
-using Hangfire.InMemory;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,7 +30,6 @@ var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", true, false)
     .AddEnvironmentVariables()
     .Build();
-
 
 var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
 var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
@@ -116,7 +115,6 @@ builder.Services.AddAuthorization(options =>
     defaultAuthorizationPolicyBuilder = defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
     options.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
 });
-
 
 builder.Services.AddHangfire(config => config.UseInMemoryStorage(new InMemoryStorageOptions
 {

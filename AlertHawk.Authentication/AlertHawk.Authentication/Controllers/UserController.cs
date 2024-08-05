@@ -1,10 +1,10 @@
 using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Domain.Custom;
-using AlertHawk.Authentication.Domain.Entities;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Swashbuckle.AspNetCore.Annotations;
 using AlertHawk.Authentication.Domain.Dto;
+using AlertHawk.Authentication.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace AlertHawk.Authentication.Controllers;
 
@@ -21,7 +21,7 @@ public class UserController : Controller
         _userService = userService;
         _getOrCreateUserService = getOrCreateUserService;
     }
-    
+
     [AllowAnonymous]
     [HttpPost("create")]
     [SwaggerOperation(Summary = "Create User")]
@@ -68,11 +68,11 @@ public class UserController : Controller
         {
             return BadRequest("User not found");
         }
-        
+
         await _userService.Delete(userId);
         return Ok();
     }
-    
+
     [HttpPut("update")]
     [SwaggerOperation(Summary = "Update User")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -116,16 +116,16 @@ public class UserController : Controller
     public async Task<IActionResult> ResetPassword(string email)
     {
         var user = await _userService.GetByEmail(email);
-        
-        if(user == null)
+
+        if (user == null)
         {
             return Ok();
         }
-        
+
         await _userService.ResetPassword(email);
         return Ok();
     }
-    
+
     [HttpPost("updatePassword")]
     [SwaggerOperation(Summary = "Update Password")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
@@ -136,14 +136,14 @@ public class UserController : Controller
         {
             return BadRequest();
         }
-        
+
         var validUser = await _userService.LoginWithEmail(user.Email, userPassword.CurrentPassword);
-        
-        if(validUser == null)
+
+        if (validUser == null)
         {
             return BadRequest("Invalid password");
         }
-        
+
         await _userService.UpdatePassword(user.Email, userPassword.NewPassword);
         return Ok();
     }
@@ -162,7 +162,7 @@ public class UserController : Controller
             return StatusCode(StatusCodes.Status403Forbidden,
                 new Message("This user is not authorized to do this operation"));
         }
-        
+
         return Ok(await _userService.GetAll());
     }
 
@@ -173,7 +173,7 @@ public class UserController : Controller
         {
             return false;
         }
-            
+
         if (!usr.IsAdmin)
         {
             return false;
@@ -226,7 +226,7 @@ public class UserController : Controller
 
         return Ok(result);
     }
-    
+
     [HttpGet("GetUserCount")]
     [SwaggerOperation(Summary = "Get Count")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -234,10 +234,10 @@ public class UserController : Controller
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetUserCount()
     {
-       var users = await _userService.GetAll();
-       return Ok(users?.Count());
+        var users = await _userService.GetAll();
+        return Ok(users?.Count());
     }
-    
+
     [HttpGet("GetUserDetailsByToken")]
     [SwaggerOperation(Summary = "GetUserDetailsByToken")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -245,7 +245,7 @@ public class UserController : Controller
     {
         return Ok(await GetUserByToken());
     }
-    
+
     private async Task<UserDto?> GetUserByToken()
     {
         return await _getOrCreateUserService.GetUserOrCreateUser(User);

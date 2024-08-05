@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 
 namespace AlertHawk.Authentication.Infrastructure.Helpers;
+
 [ExcludeFromCodeCoverage]
 public static class PasswordHasher
 {

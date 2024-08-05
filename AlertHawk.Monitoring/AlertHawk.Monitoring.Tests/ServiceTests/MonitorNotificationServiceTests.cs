@@ -67,7 +67,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             _monitorNotificationRepositoryMock.Verify(repo => repo.RemoveMonitorNotification(notification), Times.Once);
         }
-        
+
         [Fact]
         public async Task AddMonitorGroupNotification_AddsGroupNotification()
         {

@@ -1,7 +1,7 @@
-using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Authentication.Infrastructure.Interfaces;
 using AlertHawk.Authentication.Infrastructure.Repositories;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Authentication.Infrastructure.Config;
 

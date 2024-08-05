@@ -1,7 +1,6 @@
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using EasyMemoryCache;
-using EasyMemoryCache.Memorycache;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
 

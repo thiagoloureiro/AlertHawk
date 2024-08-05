@@ -9,5 +9,5 @@ namespace SharedModels
         public string Message { get; set; }
         public string ReasonPhrase { get; set; }
         public int StatusCode { get; set; }
-    }   
+    }
 }

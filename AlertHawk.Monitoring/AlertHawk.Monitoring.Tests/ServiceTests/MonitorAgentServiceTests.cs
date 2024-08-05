@@ -1,7 +1,7 @@
+using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
-using AlertHawk.Monitoring.Domain.Classes;
 using Moq;
 
 namespace AlertHawk.Monitoring.Tests.ServiceTests;
@@ -38,7 +38,6 @@ public class MonitorAgentServiceTests
                 TimeStamp = default
             }
         };
-
 
         var agentTasks = new List<MonitorAgentTasks>
         {
