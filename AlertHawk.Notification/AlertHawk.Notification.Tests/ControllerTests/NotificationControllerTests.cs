@@ -246,5 +246,19 @@ namespace AlertHawk.Notification.Tests.ControllerTests
             Assert.NotNull(result);
             Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
         }
+        
+        [Fact]
+        public async Task ClearNotificationStatistics_ShouldReturnOk()
+        {
+            // Arrange
+            _notificationService.ClearNotificationStatistics().Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _controller.ClearNotificationStatistics() as OkObjectResult;
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+        }
     }
 }

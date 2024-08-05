@@ -313,6 +313,13 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         return result;
     }
 
+    public async Task ClearNotificationStatistics()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = "DELETE FROM [NotificationLog] WHERE 1=1";
+        await db.ExecuteAsync(sql, commandType: CommandType.Text);
+    }
+
     public async Task<int> InsertNotificationItem(NotificationItem? notificationItem)
     {
         await using var db = new SqlConnection(_connstring);
