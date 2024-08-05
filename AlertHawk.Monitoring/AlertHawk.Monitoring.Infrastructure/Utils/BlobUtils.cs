@@ -1,5 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
 using Azure.Storage.Blobs;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring.Infrastructure.Utils;
 

@@ -1,5 +1,4 @@
-﻿using System.Text;
-using AlertHawk.Monitoring.Domain.Entities;
+﻿using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using Microsoft.AspNetCore.Authorization;
@@ -110,7 +109,7 @@ namespace AlertHawk.Monitoring.Controllers
             {
                 return BadRequest("Invalid Token");
             }
-            
+
             await _monitorGroupService.AddMonitorGroup(monitorGroup, jwtToken);
             return Ok();
         }

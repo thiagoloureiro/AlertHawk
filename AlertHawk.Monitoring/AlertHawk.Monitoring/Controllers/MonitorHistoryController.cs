@@ -1,5 +1,7 @@
-﻿using AlertHawk.Monitoring.Domain.Entities;
+﻿using AlertHawk.Authentication.Domain.Custom;
+using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
+using AlertHawk.Monitoring.Infrastructure.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -13,7 +15,6 @@ namespace AlertHawk.Monitoring.Controllers
     {
         private readonly IMonitorService _monitorService;
         private readonly IMonitorHistoryService _monitorHistoryService;
-
 
         public MonitorHistoryController(IMonitorService monitorService, IMonitorHistoryService monitorHistoryService)
         {
@@ -63,6 +64,14 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteMonitorHistory(int days)
         {
+            var isAdmin = await IsUserAdmin();
+
+            if (!isAdmin)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
+            }
+
             await _monitorHistoryService.DeleteMonitorHistory(days);
             return Ok();
         }
@@ -75,7 +84,7 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorHistoryService.GetMonitorHistoryCount();
             return Ok(result);
         }
-        
+
         [SwaggerOperation(Summary = "Get Monitor History Retention")]
         [ProducesResponseType(typeof(MonitorSettings), StatusCodes.Status200OK)]
         [HttpGet("GetMonitorHistoryRetention")]
@@ -90,8 +99,34 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("SetMonitorHistoryRetention")]
         public async Task<IActionResult> SetMonitorHistoryRetention([FromBody] MonitorSettings settings)
         {
+            var isAdmin = await IsUserAdmin();
+
+            if (!isAdmin)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
+            }
+
             await _monitorHistoryService.SetMonitorHistoryRetention(settings.HistoryDaysRetention);
             return Ok();
+        }
+
+        private async Task<bool> IsUserAdmin()
+        {
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (string.IsNullOrEmpty(jwtToken))
+            {
+                return false;
+            }
+
+            var user = await _monitorService.GetUserDetailsByToken(jwtToken);
+
+            if (user == null)
+            {
+                return false;
+            }
+
+            return user.IsAdmin;
         }
     }
 }

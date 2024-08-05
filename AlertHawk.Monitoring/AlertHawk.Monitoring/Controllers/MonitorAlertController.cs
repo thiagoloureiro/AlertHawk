@@ -18,8 +18,7 @@ namespace AlertHawk.Monitoring.Controllers
         {
             _monitorAlertService = monitorAlertService;
         }
-        
-        
+
         [SwaggerOperation(Summary = "Retrieves a list of Monitor Alerts")]
         [ProducesResponseType(typeof(List<MonitorAlert>), StatusCodes.Status200OK)]
         [HttpGet("monitorAlerts/{monitorId}/{days}")]

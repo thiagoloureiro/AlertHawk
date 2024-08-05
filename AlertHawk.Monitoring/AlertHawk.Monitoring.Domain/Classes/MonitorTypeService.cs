@@ -3,10 +3,10 @@ using AlertHawk.Monitoring.Domain.Interfaces.Services;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
 
-public class MonitorTypeService:IMonitorTypeService
+public class MonitorTypeService : IMonitorTypeService
 {
     private readonly IMonitorTypeRepository _monitorTypeRepository;
-    
+
     public MonitorTypeService(IMonitorTypeRepository monitorTypeRepository)
     {
         _monitorTypeRepository = monitorTypeRepository;
@@ -14,6 +14,6 @@ public class MonitorTypeService:IMonitorTypeService
 
     public async Task<IEnumerable<Entities.MonitorType>> GetMonitorType()
     {
-        return await  _monitorTypeRepository.GetMonitorType();
+        return await _monitorTypeRepository.GetMonitorType();
     }
 }

@@ -4,7 +4,6 @@ using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using Monitor = System.Threading.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ControllerTests;
 
@@ -236,8 +235,8 @@ public class MonitorGroupControllerTests
 
         // Assert
         Assert.IsType<OkResult>(result);
-        
     }
+
     [Fact]
     public async Task AddMonitorGroup_WithoutToken_Returns_BadRequestObjectResult()
     {
@@ -250,14 +249,12 @@ public class MonitorGroupControllerTests
         {
             HttpContext = new DefaultHttpContext()
         };
-      
 
         // Act
         var result = await _controller.AddMonitorGroup(monitorGroup);
 
         // Assert
         Assert.IsType<BadRequestObjectResult>(result);
-        
     }
 
     [Fact]

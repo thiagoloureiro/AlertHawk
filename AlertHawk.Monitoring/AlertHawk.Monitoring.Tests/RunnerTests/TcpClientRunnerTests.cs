@@ -1,4 +1,3 @@
-using System.Net.Sockets;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
@@ -16,7 +15,7 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
     private readonly Mock<IMonitorRepository> _mockMonitorRepository;
     private readonly Mock<INotificationProducer> _mockNotificationProducer;
     private readonly Mock<IMonitorHistoryRepository> _mockMonitorHistoryRepository;
-    
+
     public TcpClientRunnerTests(ITcpClientRunner tcpClientRunner)
     {
         _tcpClientRunner = tcpClientRunner;
@@ -26,7 +25,6 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
         _tcpClientRunnerMock = new Mock<ITcpClientRunner>();
         _tcpClientRunner2 = new TcpClientRunner(_mockMonitorRepository.Object, _mockNotificationProducer.Object, _mockMonitorHistoryRepository.Object);
     }
-
 
     [Theory]
     [InlineData("8.8.8.8", 443)]
@@ -75,7 +73,7 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
         // Assert
         Assert.False(result);
     }
-    
+
     [Theory]
     [InlineData("127.0.0.1", 4434131)]
     public async Task Should_Make_Tcp_Call_InvalidPort_Failed_Result(string ip, int port)
@@ -98,7 +96,7 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
         // Assert
         Assert.False(result);
     }
-    
+
     [Fact]
     public async Task CheckTcpAsync_ShouldReturnTrue_WhenConnectionIsSuccessful()
     {
@@ -127,7 +125,7 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
         _mockMonitorRepository.Verify(m => m.UpdateMonitorStatus(monitorTcp.MonitorId, true, 0), Times.Once);
         _mockNotificationProducer.Verify(n => n.HandleSuccessTcpNotifications(monitorTcp), Times.Once);
     }
-    
+
     [Fact]
     public async Task CheckTcpAsync_ShouldReturnTrue_WhenConnectionFails()
     {

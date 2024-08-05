@@ -1,10 +1,10 @@
-using System.Data;
-using System.Data.SqlClient;
-using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
 using Microsoft.Extensions.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+using System.Diagnostics.CodeAnalysis;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
@@ -27,6 +27,7 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
         await using var db = new SqlConnection(_connstring);
         string sql = @"SELECT Id, Name FROM [MonitorGroup]";
         var monitorGroupList = await db.QueryAsync<MonitorGroup>(sql, commandType: CommandType.Text);
+
         return monitorGroupList;
     }
 
@@ -76,10 +77,10 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
     public async Task AddMonitorToGroup(MonitorGroupItems monitorGroupItems)
     {
         await using var db = new SqlConnection(_connstring);
-        
+
         string sqlRemove = @"DELETE FROM [MonitorGroupItems] WHERE MonitorId = @MonitorId";
         await db.QueryAsync(sqlRemove, new { monitorGroupItems.MonitorId }, commandType: CommandType.Text);
-        
+
         string sqlInsert =
             @"INSERT INTO [monitorGroupItems] (MonitorId, MonitorGroupId) VALUES (@MonitorId, @MonitorGroupId)";
         await db.QueryAsync<MonitorGroup>(sqlInsert,
@@ -116,7 +117,7 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
     public async Task DeleteMonitorGroup(int id)
     {
         await using var db = new SqlConnection(_connstring);
-        
+
         string sqlDeleteGroup = @"DELETE FROM [MonitorGroup] WHERE id = @id";
         await db.QueryAsync<MonitorGroup>(sqlDeleteGroup, new { id }, commandType: CommandType.Text);
     }
@@ -136,5 +137,12 @@ public class MonitorGroupRepository : RepositoryBase, IMonitorGroupRepository
             inner join MonitorGroupItems MGI on MGI.MonitorId = M.ID
             where MGI.MonitorGroupId = @monitorGroupId";
         return await db.QueryAsync<Monitor>(sql, new { monitorGroupId }, commandType: CommandType.Text);
+    }
+
+    public async Task<int> GetMonitorGroupIdByMonitorId(int id)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = @"SELECT MonitorGroupId FROM [MonitorGroupItems] WHERE MonitorId=@id";
+        return await db.ExecuteScalarAsync<int>(sql, new { id }, commandType: CommandType.Text);
     }
 }
