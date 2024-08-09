@@ -311,12 +311,7 @@ namespace AlertHawk.Monitoring.Controllers
 
             var user = await _monitorService.GetUserDetailsByToken(jwtToken);
 
-            if (user == null)
-            {
-                return false;
-            }
-
-            return user.IsAdmin;
+            return user != null && user.IsAdmin;
         }
     }
 }

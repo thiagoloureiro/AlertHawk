@@ -69,6 +69,13 @@ public class UserController : Controller
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteUser(Guid userId)
     {
+        var usrAdmin = await IsUserAdmin();
+        if (!usrAdmin)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new Message("This user is not authorized to do this operation"));
+        }
+        
         var user = await _userService.Get(userId);
         if (user == null)
         {
