@@ -471,8 +471,12 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         public async Task DeleteUser_ValidUserId_ReturnsOk()
         {
             // Arrange
+            var users = new List<UserDto> { new UsersBuilder().WithUserEmailAndAdminIsFalse("") };
+            _mockUserService.Setup(s => s.GetAll()).ReturnsAsync(users);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
             var userId = Guid.NewGuid();
-            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
             _mockUserService.Setup(s => s.Get(userId)).ReturnsAsync(user);
             _mockUserService.Setup(s => s.Delete(userId));
 
@@ -487,6 +491,12 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         public async Task DeleteUser_InvalidUserId_ReturnsBadRequest()
         {
             // Arrange
+            var users = new List<UserDto> { new UsersBuilder().WithUserEmailAndAdminIsFalse("") };
+            _mockUserService.Setup(s => s.GetAll()).ReturnsAsync(users);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            
             var userId = Guid.NewGuid();
             _mockUserService.Setup(s => s.Get(userId)).ReturnsAsync(It.IsAny<UserDto>());
 
