@@ -31,4 +31,5 @@ public interface INotificationRepository
     Task InsertNotificationLog(NotificationLog notificationLog);
 
     Task<long> GetNotificationLogCount();
+    Task ClearNotificationStatistics();
 }

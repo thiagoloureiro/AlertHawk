@@ -25,5 +25,6 @@ namespace AlertHawk.Notification.Domain.Interfaces.Services
         Task InsertNotificationLog(NotificationLog notificationLog);
 
         Task<long> GetNotificationLogCount();
+        Task ClearNotificationStatistics();
     }
 }

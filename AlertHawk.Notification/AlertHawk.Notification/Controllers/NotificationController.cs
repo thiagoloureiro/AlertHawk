@@ -25,7 +25,8 @@ namespace AlertHawk.Notification.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         public async Task<IActionResult> SendNotification(NotificationSend notification)
         {
-            notification.NotificationEmail.Password = AesEncryption.EncryptString(notification.NotificationEmail.Password);
+            notification.NotificationEmail.Password =
+                AesEncryption.EncryptString(notification.NotificationEmail.Password);
             var result = await _notificationService.Send(notification);
             return Ok(result);
         }
@@ -130,6 +131,15 @@ namespace AlertHawk.Notification.Controllers
         {
             var result = await _notificationService.GetNotificationLogCount();
             return Ok(result);
+        }
+
+        [HttpGet("ClearNotificationStatistics")]
+        [SwaggerOperation(Summary = "Clear Notification Statistics")]
+        [ProducesResponseType(typeof(NotificationItem), StatusCodes.Status200OK)]
+        public async Task<IActionResult> ClearNotificationStatistics()
+        {
+            await _notificationService.ClearNotificationStatistics();
+            return Ok("Notifications Cleared Successfully");
         }
     }
 }

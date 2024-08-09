@@ -200,5 +200,10 @@ namespace AlertHawk.Notification.Domain.Classes
         {
             return await _notificationRepository.GetNotificationLogCount();
         }
+
+        public async Task ClearNotificationStatistics()
+        {
+            await _notificationRepository.ClearNotificationStatistics();
+        }
     }
 }
