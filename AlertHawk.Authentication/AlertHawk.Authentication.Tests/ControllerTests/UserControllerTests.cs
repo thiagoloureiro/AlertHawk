@@ -146,7 +146,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         public async Task PutUserUpdate_ThrowsException_ReturnsInternalServerError()
         {
             // Arrange
-            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "", IsAdmin: false);
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "", IsAdmin: true);
             _mockUserService.Setup(s => s.Update(user)).ThrowsAsync(new Exception("Unexpected error"));
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
@@ -156,7 +156,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
 
             // Assert
             var objectResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(StatusCodes.Status403Forbidden, objectResult.StatusCode);
+            Assert.Equal(StatusCodes.Status500InternalServerError, objectResult.StatusCode);
         }
 
         [Fact]
@@ -180,7 +180,8 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         public async Task PutUserUpdate_UserNotFound_ReturnsBadRequest()
         {
             // Arrange
-            var userUpdate = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: false);
+            var userUpdate = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com",
+                IsAdmin: false);
             _mockUserService.Setup(s => s.Update(userUpdate))
                 .ThrowsAsync(new InvalidOperationException("User not found"));
             var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: true);
@@ -193,6 +194,25 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
             var message = Assert.IsType<Message>(badRequestResult.Value);
             Assert.Equal("User not found", message.Content);
+        }
+
+        [Fact]
+        public async Task PutUserUpdate_NotAdmin_ReturnsBadRequest()
+        {
+            // Arrange
+            var userUpdate = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com",
+                IsAdmin: false);
+            _mockUserService.Setup(s => s.Update(userUpdate))
+                .ThrowsAsync(new InvalidOperationException("This user is not authorized to do this operation"));
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: false);
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            // Act
+            var result = await _controller.PutUserUpdate(userUpdate);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            var message = Assert.IsType<Message>(badRequestResult.Value);
         }
 
         [Fact]
@@ -332,6 +352,23 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             var okResult = Assert.IsType<OkObjectResult>(result);
             var returnedUsers = Assert.IsType<List<UserDto>>(okResult.Value);
             Assert.Equal(users, returnedUsers);
+        }
+
+        [Fact]
+        public async Task GetAll_NotAdminUser_ReturnBadRequest()
+        {
+            // Arrange
+            var users = new List<UserDto> { new UsersBuilder().WithUserEmailAndAdminIsFalse("") };
+            _mockUserService.Setup(s => s.GetAll()).ReturnsAsync(users);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+
+            // Act
+            var result = await _controller.GetAll();
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
         }
 
         [Fact]
@@ -496,7 +533,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             var user = new UsersBuilder().WithUserEmailAndAdminIsTrue("");
             _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
                 .ReturnsAsync(user);
-            
+
             var userId = Guid.NewGuid();
             _mockUserService.Setup(s => s.Get(userId)).ReturnsAsync(It.IsAny<UserDto>());
 
@@ -506,7 +543,41 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             Assert.IsType<BadRequestObjectResult>(result);
         }
-        
+
+        [Fact]
+        public async Task DeleteUser_NotAdmin_ReturnsBadRequest()
+        {
+            // Arrange
+            var users = new List<UserDto> { new UsersBuilder().WithUserEmailAndAdminIsFalse("") };
+            _mockUserService.Setup(s => s.GetAll()).ReturnsAsync(users);
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+
+            var userId = Guid.NewGuid();
+            _mockUserService.Setup(s => s.Get(userId)).ReturnsAsync(It.IsAny<UserDto>());
+
+            // Act
+            var result = await _controller.DeleteUser(userId);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task DeleteUser_NotAdminNullUser_ReturnsBadRequest()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            _mockUserService.Setup(s => s.Get(userId)).ReturnsAsync(It.IsAny<UserDto>());
+
+            // Act
+            var result = await _controller.DeleteUser(userId);
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
         [Fact]
         public async Task GetUserDetailsByToken_ValidRequest_ReturnsOkWithUser()
         {
@@ -521,6 +592,52 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             var okResult = Assert.IsType<OkObjectResult>(result);
             var returnedUser = Assert.IsType<UserDto>(okResult.Value);
             Assert.Equal(user, returnedUser);
+        }
+
+        [Fact]
+        public async Task UpdatePassword_DisabledAuth_ReturnsBadRequest()
+        {
+            // Arrange
+            Environment.SetEnvironmentVariable("ENABLED_LOGIN_AUTH", "false");
+
+            // Act
+            var response = await _controller.UpdatePassword(new UserPassword
+            {
+                CurrentPassword = "password",
+                NewPassword = "password"
+            });
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(response);
+            Environment.SetEnvironmentVariable("ENABLED_LOGIN_AUTH", "true");
+        }
+        
+        [Fact]
+        public async Task ResetPassword_DisabledAuth_ReturnsBadRequest()
+        {
+            // Arrange
+            Environment.SetEnvironmentVariable("ENABLED_LOGIN_AUTH", "false");
+
+            // Act
+            var response = await _controller.ResetPassword("user");
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(response);
+            Environment.SetEnvironmentVariable("ENABLED_LOGIN_AUTH", "true");
+        }
+        
+        [Fact]
+        public async Task PostUserCreation_DisabledAuth_ReturnsBadRequest()
+        {
+            // Arrange
+            Environment.SetEnvironmentVariable("ENABLED_LOGIN_AUTH", "false");
+
+            // Act
+            var response = await _controller.PostUserCreation(new UserCreation());
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(response);
+            Environment.SetEnvironmentVariable("ENABLED_LOGIN_AUTH", "true");
         }
     }
 }
