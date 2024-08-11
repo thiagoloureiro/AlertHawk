@@ -212,7 +212,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
 
             // Assert
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            var message = Assert.IsType<Message>(badRequestResult.Value);
+            Assert.IsType<Message>(badRequestResult.Value);
         }
 
         [Fact]
@@ -255,7 +255,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
         {
             // Arrange
             var userEmail = "user@example.com";
-            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse(userEmail);
+            new UsersBuilder().WithUserEmailAndAdminIsFalse(userEmail);
             _mockUserService.Setup(s => s.GetByEmail(userEmail)).ReturnsAsync(It.IsAny<UserDto>());
 
             // Act
@@ -611,7 +611,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             Assert.IsType<BadRequestObjectResult>(response);
             Environment.SetEnvironmentVariable("ENABLED_LOGIN_AUTH", "true");
         }
-        
+
         [Fact]
         public async Task ResetPassword_DisabledAuth_ReturnsBadRequest()
         {
@@ -625,7 +625,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             Assert.IsType<BadRequestObjectResult>(response);
             Environment.SetEnvironmentVariable("ENABLED_LOGIN_AUTH", "true");
         }
-        
+
         [Fact]
         public async Task PostUserCreation_DisabledAuth_ReturnsBadRequest()
         {
