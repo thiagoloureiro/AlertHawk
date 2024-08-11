@@ -2,6 +2,7 @@ using AlertHawk.Application.Interfaces;
 using AlertHawk.Authentication.Controllers;
 using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Authentication.Domain.Dto;
+using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Authentication.Tests.Builders;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -137,5 +138,19 @@ public class AuthControllerTests
         Assert.Equal(StatusCodes.Status500InternalServerError, internalServerErrorResult.StatusCode);
         var response = Assert.IsType<Message>(internalServerErrorResult.Value);
         Assert.Equal("Something went wrong.", response.Content);
+    }
+    
+    [Fact]
+    public async Task PostUserAuth_DisabledAuth_ReturnsBadRequest()
+    {
+        // Arrange
+        Environment.SetEnvironmentVariable("ENABLED_LOGIN_AUTH", "false");
+
+        // Act
+        var response = await _controller.PostUserAuth(new UserAuth());
+
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(response);
+        Environment.SetEnvironmentVariable("ENABLED_LOGIN_AUTH", "true");
     }
 }

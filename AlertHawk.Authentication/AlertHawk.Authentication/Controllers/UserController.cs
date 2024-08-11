@@ -30,11 +30,11 @@ public class UserController : Controller
     public async Task<IActionResult> PostUserCreation([FromBody] UserCreation userCreation)
     {
         var enabledLoginAuth = Environment.GetEnvironmentVariable("ENABLED_LOGIN_AUTH")?.ToLower() ?? "true";
-        if(enabledLoginAuth == "false")
+        if (enabledLoginAuth == "false")
         {
             return BadRequest(new Message("Login is disabled."));
         }
-        
+
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
@@ -72,10 +72,10 @@ public class UserController : Controller
         var usrAdmin = await IsUserAdmin();
         if (!usrAdmin)
         {
-            return StatusCode(StatusCodes.Status403Forbidden,
+            return BadRequest(
                 new Message("This user is not authorized to do this operation"));
         }
-        
+
         var user = await _userService.Get(userId);
         if (user == null)
         {
@@ -96,7 +96,7 @@ public class UserController : Controller
         var usrAdmin = await IsUserAdmin();
         if (!usrAdmin)
         {
-            return StatusCode(StatusCodes.Status403Forbidden,
+            return BadRequest(
                 new Message("This user is not authorized to do this operation"));
         }
 
@@ -129,11 +129,11 @@ public class UserController : Controller
     public async Task<IActionResult> ResetPassword(string email)
     {
         var enabledLoginAuth = Environment.GetEnvironmentVariable("ENABLED_LOGIN_AUTH")?.ToLower() ?? "true";
-        if(enabledLoginAuth == "false")
+        if (enabledLoginAuth == "false")
         {
             return BadRequest(new Message("Login is disabled."));
         }
-        
+
         var user = await _userService.GetByEmail(email);
 
         if (user == null)
@@ -151,11 +151,11 @@ public class UserController : Controller
     public async Task<IActionResult> UpdatePassword([FromBody] UserPassword userPassword)
     {
         var enabledLoginAuth = Environment.GetEnvironmentVariable("ENABLED_LOGIN_AUTH")?.ToLower() ?? "true";
-        if(enabledLoginAuth == "false")
+        if (enabledLoginAuth == "false")
         {
             return BadRequest(new Message("Login is disabled."));
         }
-        
+
         var user = await _getOrCreateUserService.GetUserOrCreateUser(User);
         if (user == null)
         {
@@ -184,8 +184,7 @@ public class UserController : Controller
         var usrAdmin = await IsUserAdmin();
         if (!usrAdmin)
         {
-            return StatusCode(StatusCodes.Status403Forbidden,
-                new Message("This user is not authorized to do this operation"));
+            return BadRequest(new Message("This user is not authorized to do this operation"));
         }
 
         return Ok(await _userService.GetAll());
@@ -238,7 +237,8 @@ public class UserController : Controller
     }
 
     [HttpGet("{email}")]
-    [SwaggerOperation(Summary = "Returns user by email. If user does not exist, it will create a new user. (Azure AD Login) - JWT Token required")]
+    [SwaggerOperation(Summary =
+        "Returns user by email. If user does not exist, it will create a new user. (Azure AD Login) - JWT Token required")]
     [Authorize]
     [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
     public async Task<ActionResult> Get(string email)

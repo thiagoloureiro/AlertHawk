@@ -11,13 +11,13 @@ public class UsersBuilder
 
     public UserDto WithUserEmailAndAdminIsFalse(string email)
     {
-        _userDto = new UserDto(Guid.NewGuid(), "testuser", email, false);
+        _userDto = new UserDto(Guid.NewGuid(), "testNotAdminuser", email, false);
         return _userDto;
     }
 
     public UserDto WithUserEmailAndAdminIsTrue(string email)
     {
-        _userDto = new UserDto(Guid.NewGuid(), "testuser", email, true);
+        _userDto = new UserDto(Guid.NewGuid(), "testAdminuser", email, true);
         return _userDto;
     }
 
