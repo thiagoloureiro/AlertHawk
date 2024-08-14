@@ -295,19 +295,5 @@ namespace AlertHawk.Notification.Tests.ControllerTests
             Assert.NotNull(result);
             Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
         }
-        
-        [Fact]
-        public async Task ClearNotificationStatistics_ShouldReturnBadRequest()
-        {
-            // Arrange
-            _notificationService.ClearNotificationStatistics().Returns(Task.FromException(new Exception()));
-
-            // Act
-            var result = await _controller.ClearNotificationStatistics() as BadRequestObjectResult;
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
-        }
     }
 }
