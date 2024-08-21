@@ -9,8 +9,7 @@ public class MonitorAlert
     public int MonitorId { get; set; }
     public DateTime TimeStamp { get; set; }
     public bool Status { get; set; }
-    public string? Message { get; set; }
-    public string? ScreenShotUrl { get; set; }
+    public string? Message { get; set; } 
     public string? MonitorName { get; set; }
     public MonitorEnvironment Environment { get; set; }
 }

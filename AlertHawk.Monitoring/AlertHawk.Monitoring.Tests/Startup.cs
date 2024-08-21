@@ -48,7 +48,6 @@ public class Startup
 
         services.AddTransient<IHttpClientRunner, HttpClientRunner>();
         services.AddTransient<ITcpClientRunner, TcpClientRunner>();
-        services.AddTransient<IHttpClientScreenshot, HttpClientScreenshot>();
 
         services.AddTransient<INotificationProducer, NotificationProducer>();
         var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
