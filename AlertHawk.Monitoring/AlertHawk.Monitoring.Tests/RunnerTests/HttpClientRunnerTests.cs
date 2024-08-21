@@ -13,7 +13,6 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
     {
         private readonly IHttpClientRunner _httpClientRunner;
         private readonly IMonitorRepository _monitorRepository;
-        private readonly IHttpClientScreenshot _httpClientScreenshot;
         private readonly INotificationProducer _notificationProducer;
         private readonly IMonitorAlertRepository _monitorAlertRepository;
         private readonly IMonitorHistoryRepository _monitorHistoryRepository;
@@ -21,12 +20,11 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
         public HttpClientRunnerTests()
         {
             _monitorRepository = Substitute.For<IMonitorRepository>();
-            _httpClientScreenshot = Substitute.For<IHttpClientScreenshot>();
             _notificationProducer = Substitute.For<INotificationProducer>();
             _monitorAlertRepository = Substitute.For<IMonitorAlertRepository>();
             _monitorHistoryRepository = Substitute.For<IMonitorHistoryRepository>();
 
-            _httpClientRunner = new HttpClientRunner(_monitorRepository, _httpClientScreenshot, _notificationProducer, _monitorAlertRepository, _monitorHistoryRepository);
+            _httpClientRunner = new HttpClientRunner(_monitorRepository, _notificationProducer, _monitorAlertRepository, _monitorHistoryRepository);
         }
 
         [Theory]

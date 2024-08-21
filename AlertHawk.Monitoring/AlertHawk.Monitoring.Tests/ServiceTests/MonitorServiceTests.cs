@@ -522,8 +522,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                             TimeStamp = DateTime.UtcNow,
                             Id = 1,
                             ResponseMessage = "Response",
-                            StatusCode = 200,
-                            ScreenShotUrl = "https://www.google.com"
+                            StatusCode = 200
                         }
                     }
                 }
@@ -605,7 +604,6 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                             Id = 1,
                             ResponseMessage = "Response",
                             StatusCode = 200,
-                            ScreenShotUrl = "https://www.google.com",
                             TimeStamp = new DateTime()
                         }
                     }

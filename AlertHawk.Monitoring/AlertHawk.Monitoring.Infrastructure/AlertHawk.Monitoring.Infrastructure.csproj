@@ -24,5 +24,8 @@
     <ItemGroup>
       <ProjectReference Include="..\AlertHawk.Monitoring.Domain\AlertHawk.Monitoring.Domain.csproj" />
     </ItemGroup>
+    <ItemGroup>
+      <Compile Remove="MonitorRunner\HttpClientScreenshot.cs" />
+    </ItemGroup>
 
 </Project>

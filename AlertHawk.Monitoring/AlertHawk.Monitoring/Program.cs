@@ -129,7 +129,6 @@ builder.Services.AddCustomRepositories();
 
 builder.Services.AddTransient<IHttpClientRunner, HttpClientRunner>();
 builder.Services.AddTransient<ITcpClientRunner, TcpClientRunner>();
-builder.Services.AddScoped<IHttpClientScreenshot, HttpClientScreenshot>();
 
 builder.Services.AddTransient<INotificationProducer, NotificationProducer>();
 
