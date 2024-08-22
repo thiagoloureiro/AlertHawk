@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
+using Microsoft.Extensions.Logging;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
 
@@ -21,16 +22,18 @@ public class MonitorGroupService : IMonitorGroupService
     private readonly IMonitorRepository _monitorRepository;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IMonitorHistoryRepository _monitorHistoryRepository;
+    private readonly ILogger<MonitorGroupService> _logger;
 
     public MonitorGroupService(IMonitorGroupRepository monitorGroupRepository, ICaching caching,
         IMonitorRepository monitorRepository, IHttpClientFactory httpClientFactory,
-        IMonitorHistoryRepository monitorHistoryRepository)
+        IMonitorHistoryRepository monitorHistoryRepository, ILogger<MonitorGroupService> logger)
     {
         _monitorGroupRepository = monitorGroupRepository;
         _caching = caching;
         _monitorRepository = monitorRepository;
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _monitorHistoryRepository = monitorHistoryRepository;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<MonitorGroup>?> GetMonitorGroupList()
@@ -326,6 +329,7 @@ public class MonitorGroupService : IMonitorGroupService
 
         if (!content.IsSuccessStatusCode)
         {
+            _logger.LogError($"Error fetching UserGroupMonitorListIds, StatusCode: {content.StatusCode}");
             SentrySdk.CaptureMessage($"Error fetching UserGroupMonitorListIds, StatusCode: {content.StatusCode}");
         }
 
