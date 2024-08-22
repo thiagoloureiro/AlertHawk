@@ -9,12 +9,12 @@
     <PackageProjectUrl>https://github.com/thiagoloureiro/alerthawk</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/thiagoloureiro/AlertHawk/blob/main/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/thiagoloureiro/alerthawk</RepositoryUrl>
-    <Version>1.0.5</Version>
+    <Version>1.0.6</Version>
     <PackageIcon>notification.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AlertHawk.Authentication.Domain" Version="1.0.3" />
+    <PackageReference Include="AlertHawk.Authentication.Domain" Version="1.0.4" />
     <PackageReference Include="Sentry" Version="4.10.2" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0" />
   </ItemGroup>
