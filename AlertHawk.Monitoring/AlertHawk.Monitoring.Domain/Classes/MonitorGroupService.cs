@@ -324,6 +324,11 @@ public class MonitorGroupService : IMonitorGroupService
         var content = await client.GetAsync($"{authApi}api/UsersMonitorGroup/GetAll");
         var result = await content.Content.ReadAsStringAsync();
 
+        if (!content.IsSuccessStatusCode)
+        {
+            SentrySdk.CaptureMessage($"Error fetching UserGroupMonitorListIds, StatusCode: {content.StatusCode}");
+        }
+
         // Check if the response is empty
         if (string.IsNullOrEmpty(result))
         {
