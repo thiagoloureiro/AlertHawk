@@ -9,6 +9,7 @@ using Moq.Protected;
 using Newtonsoft.Json;
 using System.Net;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ServiceTests;
@@ -22,7 +23,7 @@ public class MonitorGroupServiceTests
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
     private readonly Mock<IMonitorHistoryRepository> _monitorHistoryRepositoryMock;
     private readonly MonitorGroupService _monitorGroupService;
-
+    private readonly Mock<ILogger<MonitorGroupService>> _logger;
     public MonitorGroupServiceTests()
     {
         _monitorGroupRepositoryMock = new Mock<IMonitorGroupRepository>();
@@ -31,6 +32,7 @@ public class MonitorGroupServiceTests
         _httpClientFactoryMock = new Mock<IHttpClientFactory>();
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
         _monitorHistoryRepositoryMock = new Mock<IMonitorHistoryRepository>();
+        _logger = new Mock<ILogger<MonitorGroupService>>();
         var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
 
         _httpClientFactoryMock.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(httpClient);
@@ -40,7 +42,8 @@ public class MonitorGroupServiceTests
             _cachingMock.Object,
             _monitorRepositoryMock.Object,
             _httpClientFactoryMock.Object,
-            _monitorHistoryRepositoryMock.Object
+            _monitorHistoryRepositoryMock.Object,
+            _logger.Object
         );
     }
 
@@ -95,7 +98,8 @@ public class MonitorGroupServiceTests
             _cachingMock.Object,
             _monitorRepositoryMock.Object,
             _httpClientFactoryMock.Object,
-            _monitorHistoryRepositoryMock.Object
+            _monitorHistoryRepositoryMock.Object,
+            _logger.Object
         );
 
         // Act

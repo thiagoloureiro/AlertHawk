@@ -30,7 +30,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
             if (environment == MonitorEnvironment.All)
             {
                 sql =
-                    @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl, MA.Environment
+                    @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment
                     FROM MonitorAlert MA
                     INNER JOIN Monitor M on M.Id = MA.MonitorId
                     WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0
@@ -39,7 +39,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
             else
             {
                 sql =
-                    @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl, MA.Environment
+                    @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment
                     FROM MonitorAlert MA
                     INNER JOIN Monitor M on M.Id = MA.MonitorId
                     WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0 AND MA.environment = @environment
@@ -52,7 +52,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
         if (environment == MonitorEnvironment.All)
         {
             sql =
-                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl, MA.Environment
+                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment
                 FROM MonitorAlert MA
                 INNER JOIN Monitor M on M.Id = MA.MonitorId
                 INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id
@@ -63,7 +63,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
         else
         {
             sql =
-                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.ScreenShotUrl, MA.Environment
+                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment
                 FROM MonitorAlert MA
                 INNER JOIN Monitor M on M.Id = MA.MonitorId
                 INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id
@@ -91,7 +91,6 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
             worksheet.Cells[1, col++].Value = "Monitor Name";
             worksheet.Cells[1, col++].Value = "Environment";
             worksheet.Cells[1, col++].Value = "Message";
-            worksheet.Cells[1, col].Value = "Screenshot URL";
 
             var row = 2;
             foreach (var alert in alerts)
@@ -101,7 +100,6 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 worksheet.Cells[row, col++].Value = alert.MonitorName;
                 worksheet.Cells[row, col++].Value = alert.Environment.ToString();
                 worksheet.Cells[row, col++].Value = alert.Message;
-                worksheet.Cells[row, col].Value = alert.ScreenShotUrl;
 
                 row++;
             }
@@ -117,7 +115,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @"INSERT INTO [MonitorAlert] (MonitorId, TimeStamp, Status, Message, ScreenShotUrl, Environment) VALUES (@MonitorId, @TimeStamp, @Status, @Message, @ScreenShotUrl, @Environment)";
+            @"INSERT INTO [MonitorAlert] (MonitorId, TimeStamp, Status, Message, Environment) VALUES (@MonitorId, @TimeStamp, @Status, @Message, @Environment)";
         await db.ExecuteAsync(sql,
             new
             {
@@ -125,7 +123,6 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 monitorHistory.TimeStamp,
                 monitorHistory.Status,
                 Message = monitorHistory.ResponseMessage,
-                monitorHistory.ScreenShotUrl,
                 Environment = environment
             }, commandType: CommandType.Text);
     }

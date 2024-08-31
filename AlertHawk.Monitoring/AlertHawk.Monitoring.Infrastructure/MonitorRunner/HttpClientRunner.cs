@@ -10,19 +10,17 @@ namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 public class HttpClientRunner : IHttpClientRunner
 {
     private readonly IMonitorRepository _monitorRepository;
-    private readonly IHttpClientScreenshot _httpClientScreenshot;
     private readonly INotificationProducer _notificationProducer;
     private readonly IMonitorAlertRepository _monitorAlertRepository;
     private readonly IMonitorHistoryRepository _monitorHistoryRepository;
     private int _daysToExpireCert;
     public int _retryIntervalMilliseconds = 6000;
 
-    public HttpClientRunner(IMonitorRepository monitorRepository, IHttpClientScreenshot httpClientScreenshot,
+    public HttpClientRunner(IMonitorRepository monitorRepository,
         INotificationProducer notificationProducer, IMonitorAlertRepository monitorAlertRepository,
         IMonitorHistoryRepository monitorHistoryRepository)
     {
         _monitorRepository = monitorRepository;
-        _httpClientScreenshot = httpClientScreenshot;
         _notificationProducer = notificationProducer;
         _monitorAlertRepository = monitorAlertRepository;
         _monitorHistoryRepository = monitorHistoryRepository;
@@ -99,10 +97,7 @@ public class HttpClientRunner : IHttpClientRunner
                         {
                             await _notificationProducer.HandleFailedNotifications(monitorHttp,
                                 response.ReasonPhrase);
-                            var screenshotUrl = await _httpClientScreenshot.TakeScreenshotAsync(
-                                monitorHttp.UrlToCheck,
-                                monitorHttp.MonitorId, monitorHttp.Name);
-                            monitorHistory.ScreenShotUrl = screenshotUrl;
+
                             await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
 
                             break;
@@ -135,10 +130,6 @@ public class HttpClientRunner : IHttpClientRunner
                         .LastStatus) // only send notification when goes from online into offline to avoid flood
                     {
                         await _notificationProducer.HandleFailedNotifications(monitorHttp, err.Message);
-                        var screenshotUrl = await _httpClientScreenshot.TakeScreenshotAsync(
-                            monitorHttp.UrlToCheck,
-                            monitorHttp.MonitorId, monitorHttp.Name);
-                        monitorHistory.ScreenShotUrl = screenshotUrl;
                         await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
                     }
 

@@ -1,3 +1,7 @@
+using System.Net;
+using System.Text;
+using AlertHawk.Authentication.Domain.Dto;
+using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
@@ -6,6 +10,8 @@ using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using EasyMemoryCache;
 using EasyMemoryCache.Configuration;
 using Moq;
+using Moq.Protected;
+using Newtonsoft.Json;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ServiceTests
@@ -20,6 +26,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
         private readonly MonitorService _monitorService;
         private readonly Mock<IMonitorGroupService> _monitorGroupServiceMock;
         private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
+        private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
 
         public MonitorServiceTests()
         {
@@ -32,6 +39,9 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             _monitorService = new MonitorService(_monitorRepositoryMock.Object, _cachingMock.Object,
                 _monitorGroupServiceMock.Object, _httpClientFactoryMock.Object, _httpClientRunnerMock.Object,
                 _monitorHistoryRepositoryMock.Object);
+            _httpMessageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
+            _httpClientFactoryMock.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(httpClient);
         }
 
         [Fact]
@@ -60,7 +70,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                 new MonitorHistory { TimeStamp = DateTime.UtcNow.AddDays(-2), Status = false, ResponseTime = 200 },
             };
             var monitor = new Monitor()
-            { Id = monitorId, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
+                { Id = monitorId, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
 
             _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(monitorId, 90))
                 .ReturnsAsync(monitorHistory);
@@ -429,7 +439,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                 new MonitorHistory { TimeStamp = DateTime.UtcNow.AddDays(-2), Status = false, ResponseTime = 200 },
             };
             var monitor = new Monitor()
-            { Id = monitorId, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
+                { Id = monitorId, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
 
             _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(monitorId, 90))
                 .ReturnsAsync(monitorHistory);
@@ -512,8 +522,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                             TimeStamp = DateTime.UtcNow,
                             Id = 1,
                             ResponseMessage = "Response",
-                            StatusCode = 200,
-                            ScreenShotUrl = "https://www.google.com"
+                            StatusCode = 200
                         }
                     }
                 }
@@ -532,7 +541,9 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             };
 
             _monitorGroupServiceMock.Setup(x => x.GetUserGroupMonitorListIds(token)).ReturnsAsync(monitorGroupIds);
-            _monitorRepositoryMock.Setup(x => x.GetMonitorListByMonitorGroupIds(monitorGroupIds, MonitorEnvironment.All)).ReturnsAsync(monitorList);
+            _monitorRepositoryMock
+                .Setup(x => x.GetMonitorListByMonitorGroupIds(monitorGroupIds, MonitorEnvironment.All))
+                .ReturnsAsync(monitorList);
             _cachingMock.Setup(caching => caching.GetValueFromCacheAsync<List<MonitorDashboard?>>(
                     _cacheKeyDashboardList))
                 .ReturnsAsync(lstDashboardData);
@@ -555,7 +566,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             var monitorHistory = new List<MonitorHistory>
             {
                 new MonitorHistory { TimeStamp = new DateTime(), Status = true, ResponseTime = 100 },
-                new MonitorHistory { TimeStamp =new DateTime(), Status = false, ResponseTime = 200 },
+                new MonitorHistory { TimeStamp = new DateTime(), Status = false, ResponseTime = 200 },
             };
 
             var monitorList = new List<Monitor>
@@ -593,7 +604,6 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                             Id = 1,
                             ResponseMessage = "Response",
                             StatusCode = 200,
-                            ScreenShotUrl = "https://www.google.com",
                             TimeStamp = new DateTime()
                         }
                     }
@@ -620,7 +630,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             string token = "token";
             var monitorGroupIds = new List<int> { 1 };
             var monitor = new Monitor()
-            { Id = 1, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
+                { Id = 1, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
 
             var monitorHistory = new List<MonitorHistory>
             {
@@ -649,6 +659,57 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             Assert.NotNull(result);
             Assert.Equal(monitorId, result.MonitorId);
             Assert.Equal(150, result.ResponseTime); // (100 + 200) / 2
+        }
+
+        [Fact]
+        public async Task GetUserDetailsByToken_ReturnsUserDetails()
+        {
+            // Arrange
+            var authApi = "https://fakeUrl/auth/";
+            Environment.SetEnvironmentVariable("AUTH_API_URL", authApi);
+            var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: true);
+            
+            _cachingMock.Setup(caching => caching.GetValueFromCacheAsync<List<MonitorDashboard?>>(
+                    It.IsAny<string>()))
+                .ReturnsAsync(new List<MonitorDashboard?>());
+            _httpMessageHandlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(JsonConvert.SerializeObject(user), Encoding.UTF8, "application/json")
+                });
+
+            // Act
+            var result = await _monitorService.GetUserDetailsByToken("jwtToken");
+
+            // Assert
+            Assert.NotNull(result);
+        }
+        
+        [Fact]
+        public async Task GetMonitorById_ReturnsMonitor()
+        {
+            // Arrange
+            var monitorId = 1;
+            var monitor = new Monitor
+            {
+                Id = monitorId,
+                Name = "Test Monitor",
+                HeartBeatInterval = 0,
+                Retries = 0
+            };
+            _monitorRepositoryMock.Setup(repo => repo.GetMonitorById(monitorId)).ReturnsAsync(monitor);
+
+            // Act
+            var result = await _monitorService.GetMonitorById(monitorId);
+
+            // Assert
+            Assert.Equal(monitor, result);
         }
     }
 }

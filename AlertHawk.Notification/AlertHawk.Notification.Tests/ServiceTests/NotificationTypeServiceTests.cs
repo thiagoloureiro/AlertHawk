@@ -16,8 +16,8 @@ public class NotificationTypeServiceTests
 
         var expectedNotificationTypes = new List<NotificationType>
         {
-            new() { Id = 1, Name = "Type1", Description = "Item Description1"},
-            new() { Id = 2, Name = "Type2", Description = "Item Description2"}
+            new() { Id = 1, Name = "Type1", Description = "Item Description1" },
+            new() { Id = 2, Name = "Type2", Description = "Item Description2" }
         };
 
         repositorySubstitute.SelectNotificationType().Returns(expectedNotificationTypes);
@@ -37,7 +37,8 @@ public class NotificationTypeServiceTests
         var repositorySubstitute = Substitute.For<INotificationTypeRepository>();
         var service = new NotificationTypeService(repositorySubstitute);
 
-        var expectedNotificationType = new NotificationType { Id = 1, Name = "Type1", Description = "Item Description1" };
+        var expectedNotificationType = new NotificationType
+            { Id = 1, Name = "Type1", Description = "Item Description1" };
 
         repositorySubstitute.SelectNotificationTypeById(Arg.Any<int>()).Returns(expectedNotificationType);
 
@@ -56,7 +57,8 @@ public class NotificationTypeServiceTests
         var repositorySubstitute = Substitute.For<INotificationTypeRepository>();
         var service = new NotificationTypeService(repositorySubstitute);
 
-        var expectedNotificationType = new NotificationType { Id = 1, Name = "Type1", Description = "Item Description1" };
+        var expectedNotificationType = new NotificationType
+            { Id = 1, Name = "Type1", Description = "Item Description1" };
 
         repositorySubstitute.SelectNotificationTypeByName(Arg.Any<string>()).Returns(expectedNotificationType);
 
@@ -66,6 +68,9 @@ public class NotificationTypeServiceTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal(expectedNotificationType, result);
+        Assert.Equal(expectedNotificationType.Description, result.Description);
+        Assert.Equal(expectedNotificationType.Id, result.Id);
+        Assert.Equal(expectedNotificationType.Name, result.Name);
     }
 
     [Fact]

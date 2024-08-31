@@ -31,6 +31,11 @@ var configuration = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
+builder.Logging.ClearProviders(); 
+builder.Logging.AddConsole();     
+builder.Logging.AddDebug();      
+builder.Logging.AddEventSourceLogger();
+
 var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
 var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
 var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
@@ -129,7 +134,6 @@ builder.Services.AddCustomRepositories();
 
 builder.Services.AddTransient<IHttpClientRunner, HttpClientRunner>();
 builder.Services.AddTransient<ITcpClientRunner, TcpClientRunner>();
-builder.Services.AddScoped<IHttpClientScreenshot, HttpClientScreenshot>();
 
 builder.Services.AddTransient<INotificationProducer, NotificationProducer>();
 

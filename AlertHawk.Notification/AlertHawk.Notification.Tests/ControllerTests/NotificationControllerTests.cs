@@ -218,6 +218,7 @@ namespace AlertHawk.Notification.Tests.ControllerTests
             // Arrange
             var ids = new List<int> { 1, 2, 3 };
             var notificationItems = new List<NotificationItem>();
+            
             _notificationService.SelectNotificationItemList(ids).Returns(notificationItems);
 
             // Act
@@ -234,8 +235,25 @@ namespace AlertHawk.Notification.Tests.ControllerTests
         public async Task SelectNotificationItemList_ShouldReturnOk()
         {
             // Arrange
-            var notificationItems = new List<NotificationItem>();
-            var token = "token";
+            var notificationItems = new List<NotificationItem>
+            {
+                new NotificationItem
+                {
+                    Id = 1,
+                    Description = "test",
+                    Name = "Name",
+                    NotificationEmail = new NotificationEmail
+                    {
+                        FromEmail = "user@user.com",
+                        Password = "password",
+                        ToEmail = "user@user.com",
+                        EnableSsl = true,
+
+                    }
+                }
+            };
+            
+            var token = "Bearer validJwtToken";
             _notificationService.SelectNotificationItemList(token).Returns(notificationItems);
             _controller.HttpContext.Request.Headers["Authorization"] = "Bearer validJwtToken";
 
@@ -245,6 +263,23 @@ namespace AlertHawk.Notification.Tests.ControllerTests
             // Assert
             Assert.NotNull(result);
             Assert.Equal(StatusCodes.Status200OK, result.StatusCode);
+        }
+        
+        [Fact]
+        public async Task SelectNotificationItemList_InvalidToken_ShouldReturnBadRequest()
+        {
+            // Arrange
+            var notificationItems = new List<NotificationItem>();
+            var token = "token";
+            _notificationService.SelectNotificationItemList(token).Returns(notificationItems);
+            _controller.HttpContext.Request.Headers["Authorization"] =  "invalidToken";
+
+            // Act
+            var result = await _controller.SelectNotificationItemList() as BadRequestObjectResult;
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(StatusCodes.Status400BadRequest, result?.StatusCode);
         }
         
         [Fact]

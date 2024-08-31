@@ -4,7 +4,6 @@ using System.Text;
 
 namespace AlertHawk.Authentication.Infrastructure.Helpers;
 
-[ExcludeFromCodeCoverage]
 public static class PasswordHasher
 {
     private const int Iterations = 10000;
