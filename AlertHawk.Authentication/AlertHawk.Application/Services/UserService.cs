@@ -18,6 +18,8 @@ public class UserService : IUserService
     public async Task Create(UserCreation userCreation)
     {
         await _userRepository.Create(userCreation);
+        EmailSender.SendEmail(userCreation.UserEmail, "AlertHawk - Account Creation",
+            $"Welcome to AlertHawk, please use your credentials to access the application.");
     }
 
     public async Task CreateFromAzure(UserCreationFromAzure userCreation)
