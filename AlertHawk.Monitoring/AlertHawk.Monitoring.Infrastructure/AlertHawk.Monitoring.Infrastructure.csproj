@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
@@ -10,7 +10,7 @@
         <PackageReference Include="Azure.Storage.Blobs" Version="12.21.2" />
         <PackageReference Include="Dapper" Version="2.1.44" />
         <PackageReference Include="EasyMemoryCache" Version="2.0.7" />
-        <PackageReference Include="EPPlus" Version="7.3.0" />
+        <PackageReference Include="EPPlus" Version="7.3.1" />
         <PackageReference Include="Hangfire.Core" Version="1.8.14" />
         <PackageReference Include="MassTransit.Abstractions" Version="8.2.5" />
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
