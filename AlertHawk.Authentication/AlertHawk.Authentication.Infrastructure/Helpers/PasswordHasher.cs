@@ -6,7 +6,7 @@ namespace AlertHawk.Authentication.Infrastructure.Helpers;
 
 public static class PasswordHasher
 {
-    private const int Iterations = 10000;
+    private const int Iterations = 150000;
     private const int KeySize = 32;
 
     public static string GenerateRandomPassword(int length)
