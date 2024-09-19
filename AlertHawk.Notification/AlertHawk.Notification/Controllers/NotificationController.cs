@@ -25,8 +25,12 @@ namespace AlertHawk.Notification.Controllers
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         public async Task<IActionResult> SendNotification(NotificationSend notification)
         {
-            notification.NotificationEmail.Password =
-                AesEncryption.EncryptString(notification.NotificationEmail.Password);
+            if (notification.NotificationTypeId == 1)
+            {
+                notification.NotificationEmail.Password =
+                    AesEncryption.EncryptString(notification.NotificationEmail.Password);
+            }
+
             var result = await _notificationService.Send(notification);
             return Ok(result);
         }
