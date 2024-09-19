@@ -39,10 +39,10 @@ public class HttpClientRunner : IHttpClientRunner
 
         while (retryCount < maxRetries)
         {
+            var response = await MakeHttpClientCall(monitorHttp);
+
             try
             {
-                var response = await MakeHttpClientCall(monitorHttp);
-
                 var succeeded = ((int)monitorHttp.ResponseStatusCode >= 200) &&
                                 ((int)monitorHttp.ResponseStatusCode <= 299);
 
@@ -118,7 +118,7 @@ public class HttpClientRunner : IHttpClientRunner
                     {
                         MonitorId = monitorHttp.MonitorId,
                         Status = false,
-                        StatusCode = (int)monitorHttp.ResponseStatusCode,
+                        StatusCode = (int)response.StatusCode,
                         TimeStamp = DateTime.UtcNow,
                         ResponseTime = 0,
                         ResponseMessage = err.Message
@@ -129,6 +129,7 @@ public class HttpClientRunner : IHttpClientRunner
                     if (monitorHttp
                         .LastStatus) // only send notification when goes from online into offline to avoid flood
                     {
+                        monitorHttp.ResponseStatusCode = response.StatusCode;
                         await _notificationProducer.HandleFailedNotifications(monitorHttp, err.Message);
                         await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
                     }
