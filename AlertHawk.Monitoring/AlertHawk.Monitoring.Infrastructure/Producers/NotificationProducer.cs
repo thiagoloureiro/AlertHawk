@@ -13,7 +13,8 @@ public class NotificationProducer : INotificationProducer
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IMonitorNotificationRepository _monitorNotificationRepository;
 
-    public NotificationProducer(IPublishEndpoint publishEndpoint, IMonitorNotificationRepository monitorNotificationRepository)
+    public NotificationProducer(IPublishEndpoint publishEndpoint,
+        IMonitorNotificationRepository monitorNotificationRepository)
     {
         _publishEndpoint = publishEndpoint;
         _monitorNotificationRepository = monitorNotificationRepository;
@@ -49,10 +50,13 @@ public class NotificationProducer : INotificationProducer
 
         Console.WriteLine($"monitorId {monitorHttp.MonitorId}");
         Console.WriteLine($"notificationIdList Count {notificationIdList.Count()}");
-        
+
         foreach (var item in notificationIdList)
         {
             Console.WriteLine("Sending notification");
+
+            Console.WriteLine(
+                $"Notification Details: notificationId {item.NotificationId}, monitorId: {item.MonitorId}, ResponseStatusCode: {monitorHttp.ResponseStatusCode}, reasonPhrase {reasonPhrase}, name:  {monitorHttp.Name}");
             await _publishEndpoint.Publish<NotificationAlert>(new
             {
                 NotificationId = item.NotificationId,
