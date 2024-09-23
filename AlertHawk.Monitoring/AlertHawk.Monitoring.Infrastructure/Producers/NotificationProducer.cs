@@ -47,8 +47,12 @@ public class NotificationProducer : INotificationProducer
         Console.WriteLine(
             $"sending success notification calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}");
 
+        Console.WriteLine($"monitorId {monitorHttp.MonitorId}");
+        Console.WriteLine($"notificationIdList Count {notificationIdList.Count()}");
+        
         foreach (var item in notificationIdList)
         {
+            Console.WriteLine("Sending notification");
             await _publishEndpoint.Publish<NotificationAlert>(new
             {
                 NotificationId = item.NotificationId,
