@@ -4,6 +4,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using System.Diagnostics;
 using System.Net;
+using Microsoft.Extensions.Logging;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
@@ -14,7 +15,8 @@ public class HttpClientRunner : IHttpClientRunner
     private readonly IMonitorAlertRepository _monitorAlertRepository;
     private readonly IMonitorHistoryRepository _monitorHistoryRepository;
     private int _daysToExpireCert;
-    public int _retryIntervalMilliseconds = 6000;
+    private readonly int _retryIntervalMilliseconds = 6000;
+    private readonly ILogger<HttpClientRunner> _logger;
 
     public HttpClientRunner(IMonitorRepository monitorRepository,
         INotificationProducer notificationProducer, IMonitorAlertRepository monitorAlertRepository,
@@ -27,12 +29,15 @@ public class HttpClientRunner : IHttpClientRunner
         _retryIntervalMilliseconds = Environment.GetEnvironmentVariable("HTTP_RETRY_INTERVAL_MS") != null
             ? int.Parse(Environment.GetEnvironmentVariable("HTTP_RETRY_INTERVAL_MS"))
             : 6000;
+        _logger = new LoggerFactory().CreateLogger<HttpClientRunner>();
     }
 
     public async Task CheckUrlsAsync(MonitorHttp monitorHttp)
     {
         int maxRetries = monitorHttp.Retries + 1;
         int retryCount = 0;
+        
+        _logger.LogInformation($"Checking {monitorHttp.UrlToCheck}");
 
         var monitor = await _monitorRepository.GetMonitorById(monitorHttp.MonitorId);
         monitorHttp.LastStatus = monitor.Status;
@@ -95,6 +100,7 @@ public class HttpClientRunner : IHttpClientRunner
                         // only send notification when goes from online into offline to avoid flood
                         if (monitorHttp.LastStatus)
                         {
+                            _logger.LogWarning("Error calling {monitorHttp.UrlToCheck}, Response ReasonPhrase: {response.ReasonPhrase}");
                             await _notificationProducer.HandleFailedNotifications(monitorHttp,
                                 response.ReasonPhrase);
 
@@ -112,6 +118,7 @@ public class HttpClientRunner : IHttpClientRunner
                 // If max retries reached, update status and save history
                 if (retryCount == maxRetries)
                 {
+                    _logger.LogWarning("Error calling {monitorHttp.UrlToCheck}, Response ReasonPhrase: {response.ReasonPhrase}");
                     await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, false, 0);
 
                     var monitorHistory = new MonitorHistory

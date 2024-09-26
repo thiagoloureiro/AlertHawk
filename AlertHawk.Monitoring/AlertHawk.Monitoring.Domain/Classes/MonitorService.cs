@@ -9,6 +9,7 @@ using EasyMemoryCache;
 using EasyMemoryCache.Configuration;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
+using Microsoft.Extensions.Logging;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
@@ -22,12 +23,13 @@ public class MonitorService : IMonitorService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IMonitorHistoryRepository _monitorHistoryRepository;
     private readonly string _cacheKeyMonitorGroupList = "MonitorGroupList";
+    private readonly ILogger<MonitorService> _logger;
 
     private readonly IHttpClientRunner _httpClientRunner;
 
     public MonitorService(IMonitorRepository monitorRepository, ICaching caching,
         IMonitorGroupService monitorGroupService, IHttpClientFactory httpClientFactory,
-        IHttpClientRunner httpClientRunner, IMonitorHistoryRepository monitorHistoryRepository)
+        IHttpClientRunner httpClientRunner, IMonitorHistoryRepository monitorHistoryRepository, ILogger<MonitorService> logger)
     {
         _monitorRepository = monitorRepository;
         _caching = caching;
@@ -35,6 +37,7 @@ public class MonitorService : IMonitorService
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _httpClientRunner = httpClientRunner;
         _monitorHistoryRepository = monitorHistoryRepository;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<Monitor?>> GetMonitorList()
@@ -188,7 +191,7 @@ public class MonitorService : IMonitorService
         {
             if (GlobalVariables.MasterNode)
             {
-                Console.WriteLine("Started Caching Monitor Dashboard Data List");
+                _logger.LogInformation("Started Caching Monitor Dashboard Data List");
                 var lstMonitorDashboard = new List<MonitorDashboard?>();
                 var lstMonitor = await GetMonitorList();
                 int maxDegreeOfParallelism =
@@ -216,10 +219,10 @@ public class MonitorService : IMonitorService
                     lstMonitorDashboard.AddRange(results);
                 }
 
-                Console.WriteLine("Writing Cache to Redis");
+                _logger.LogInformation("Writing Cache to Redis");
                 await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20,
                     CacheTimeInterval.Minutes);
-                Console.WriteLine("Finished writing Cache to Redis and ended Caching activity");
+                _logger.LogInformation("Finished writing Cache to Redis and ended Caching activity");
             }
         }
         catch (Exception e)

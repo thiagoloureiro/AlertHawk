@@ -9,6 +9,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using EasyMemoryCache;
 using EasyMemoryCache.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
@@ -27,6 +28,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
         private readonly Mock<IMonitorGroupService> _monitorGroupServiceMock;
         private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
         private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
+        private readonly Mock<ILogger<MonitorService>> _loggerMock;
 
         public MonitorServiceTests()
         {
@@ -36,9 +38,10 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             _monitorGroupServiceMock = new Mock<IMonitorGroupService>();
             _cachingMock = new Mock<ICaching>();
             _httpClientRunnerMock = new Mock<IHttpClientRunner>();
+            _loggerMock = new Mock<ILogger<MonitorService>>();
             _monitorService = new MonitorService(_monitorRepositoryMock.Object, _cachingMock.Object,
                 _monitorGroupServiceMock.Object, _httpClientFactoryMock.Object, _httpClientRunnerMock.Object,
-                _monitorHistoryRepositoryMock.Object);
+                _monitorHistoryRepositoryMock.Object, _loggerMock.Object);
             _httpMessageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
             var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
             _httpClientFactoryMock.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(httpClient);
@@ -668,7 +671,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             var authApi = "https://fakeUrl/auth/";
             Environment.SetEnvironmentVariable("AUTH_API_URL", authApi);
             var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: true);
-            
+
             _cachingMock.Setup(caching => caching.GetValueFromCacheAsync<List<MonitorDashboard?>>(
                     It.IsAny<string>()))
                 .ReturnsAsync(new List<MonitorDashboard?>());
@@ -690,7 +693,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             Assert.NotNull(result);
         }
-        
+
         [Fact]
         public async Task GetMonitorById_ReturnsMonitor()
         {
