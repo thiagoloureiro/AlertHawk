@@ -29,7 +29,8 @@ public class MonitorService : IMonitorService
 
     public MonitorService(IMonitorRepository monitorRepository, ICaching caching,
         IMonitorGroupService monitorGroupService, IHttpClientFactory httpClientFactory,
-        IHttpClientRunner httpClientRunner, IMonitorHistoryRepository monitorHistoryRepository, ILogger<MonitorService> logger)
+        IHttpClientRunner httpClientRunner, IMonitorHistoryRepository monitorHistoryRepository,
+        ILogger<MonitorService> logger)
     {
         _monitorRepository = monitorRepository;
         _caching = caching;
@@ -187,48 +188,40 @@ public class MonitorService : IMonitorService
 
     public async Task SetMonitorDashboardDataCacheList()
     {
-        try
+        if (GlobalVariables.MasterNode)
         {
-            if (GlobalVariables.MasterNode)
+            _logger.LogInformation("Started Caching Monitor Dashboard Data List");
+            var lstMonitorDashboard = new List<MonitorDashboard?>();
+            var lstMonitor = await GetMonitorList();
+            int maxDegreeOfParallelism =
+                Convert.ToInt32(Environment.GetEnvironmentVariable("CACHE_PARALLEL_TASKS") ??
+                                "10"); // Adjust this value based on your environment
+
+            using (var semaphore = new SemaphoreSlim(maxDegreeOfParallelism))
             {
-                _logger.LogInformation("Started Caching Monitor Dashboard Data List");
-                var lstMonitorDashboard = new List<MonitorDashboard?>();
-                var lstMonitor = await GetMonitorList();
-                int maxDegreeOfParallelism =
-                    Convert.ToInt32(Environment.GetEnvironmentVariable("CACHE_PARALLEL_TASKS") ??
-                                    "10"); // Adjust this value based on your environment
-
-                using (var semaphore = new SemaphoreSlim(maxDegreeOfParallelism))
-                {
-                    var tasks = lstMonitor
-                        .Where(monitor => monitor != null)
-                        .Select(async monitor =>
+                var tasks = lstMonitor
+                    .Where(monitor => monitor != null)
+                    .Select(async monitor =>
+                    {
+                        await semaphore.WaitAsync();
+                        try
                         {
-                            await semaphore.WaitAsync();
-                            try
-                            {
-                                return await GetMonitorDashboardData(monitor.Id, monitor);
-                            }
-                            finally
-                            {
-                                semaphore.Release();
-                            }
-                        });
+                            return await GetMonitorDashboardData(monitor.Id, monitor);
+                        }
+                        finally
+                        {
+                            semaphore.Release();
+                        }
+                    });
 
-                    var results = await Task.WhenAll(tasks);
-                    lstMonitorDashboard.AddRange(results);
-                }
-
-                _logger.LogInformation("Writing Cache to Redis");
-                await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20,
-                    CacheTimeInterval.Minutes);
-                _logger.LogInformation("Finished writing Cache to Redis and ended Caching activity");
+                var results = await Task.WhenAll(tasks);
+                lstMonitorDashboard.AddRange(results);
             }
-        }
-        catch (Exception e)
-        {
-            SentrySdk.CaptureException(e);
-            throw;
+
+            _logger.LogInformation("Writing Cache to Redis");
+            await _caching.SetValueToCacheAsync(_cacheKeyDashboardList, lstMonitorDashboard, 20,
+                CacheTimeInterval.Minutes);
+            _logger.LogInformation("Finished writing Cache to Redis and ended Caching activity");
         }
     }
 
@@ -532,21 +525,14 @@ public class MonitorService : IMonitorService
 
     public async Task<UserDto?> GetUserDetailsByToken(string token)
     {
-        try
-        {
-            var client = CreateHttpClient(token);
+        var client = CreateHttpClient(token);
 
-            var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL");
-            var content = await client.GetAsync($"{authApi}api/User/GetUserDetailsByToken");
+        var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL");
+        var content = await client.GetAsync($"{authApi}api/User/GetUserDetailsByToken");
 
-            var result = await content.Content.ReadAsStringAsync();
-            var user = JsonConvert.DeserializeObject<UserDto>(result);
-            return user;
-        }
-        catch (Exception)
-        {
-            return null;
-        }
+        var result = await content.Content.ReadAsStringAsync();
+        var user = JsonConvert.DeserializeObject<UserDto>(result);
+        return user;
     }
 
     public async Task<Monitor> GetMonitorById(int id)

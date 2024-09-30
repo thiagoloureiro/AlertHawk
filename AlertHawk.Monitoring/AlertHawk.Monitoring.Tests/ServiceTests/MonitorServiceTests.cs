@@ -69,7 +69,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             var monitorId = 1;
             var monitorHistory = new List<MonitorHistory>
             {
-                new MonitorHistory { TimeStamp = DateTime.UtcNow.AddDays(-1), Status = true, ResponseTime = 100 },
+                new MonitorHistory { TimeStamp = DateTime.UtcNow.AddMinutes(-10), Status = true, ResponseTime = 100 },
                 new MonitorHistory { TimeStamp = DateTime.UtcNow.AddDays(-2), Status = false, ResponseTime = 200 },
             };
             var monitor = new Monitor()
