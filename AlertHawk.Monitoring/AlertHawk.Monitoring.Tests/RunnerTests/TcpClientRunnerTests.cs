@@ -3,6 +3,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace AlertHawk.Monitoring.Tests.RunnerTests;
@@ -15,6 +16,7 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
     private readonly Mock<IMonitorRepository> _mockMonitorRepository;
     private readonly Mock<INotificationProducer> _mockNotificationProducer;
     private readonly Mock<IMonitorHistoryRepository> _mockMonitorHistoryRepository;
+    private readonly Mock<ILogger<TcpClientRunner>> _logger;
 
     public TcpClientRunnerTests(ITcpClientRunner tcpClientRunner)
     {
@@ -23,7 +25,8 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
         _mockNotificationProducer = new Mock<INotificationProducer>();
         _mockMonitorHistoryRepository = new Mock<IMonitorHistoryRepository>();
         _tcpClientRunnerMock = new Mock<ITcpClientRunner>();
-        _tcpClientRunner2 = new TcpClientRunner(_mockMonitorRepository.Object, _mockNotificationProducer.Object, _mockMonitorHistoryRepository.Object);
+        _logger = new Mock<ILogger<TcpClientRunner>>();
+        _tcpClientRunner2 = new TcpClientRunner(_mockMonitorRepository.Object, _mockNotificationProducer.Object, _mockMonitorHistoryRepository.Object, _logger.Object);
     }
 
     [Theory]

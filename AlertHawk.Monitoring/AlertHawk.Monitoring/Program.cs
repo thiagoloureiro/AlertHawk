@@ -137,6 +137,9 @@ builder.Services.AddTransient<ITcpClientRunner, TcpClientRunner>();
 
 builder.Services.AddTransient<INotificationProducer, NotificationProducer>();
 
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true; // Enable compression for HTTPS connections

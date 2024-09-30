@@ -6,19 +6,17 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Azure.Identity" Version="1.12.0" />
-        <PackageReference Include="Azure.Storage.Blobs" Version="12.22.0" />
+        <PackageReference Include="Azure.Identity" Version="1.12.1" />
+        <PackageReference Include="Azure.Storage.Blobs" Version="12.22.1" />
         <PackageReference Include="Dapper" Version="2.1.44" />
         <PackageReference Include="EasyMemoryCache" Version="2.0.8" />
         <PackageReference Include="EPPlus" Version="7.3.2" />
         <PackageReference Include="Hangfire.Core" Version="1.8.14" />
         <PackageReference Include="MassTransit.Abstractions" Version="8.2.5" />
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
-        <PackageReference Include="Polly" Version="8.4.1" />
+        <PackageReference Include="Polly" Version="8.4.2" />
         <PackageReference Include="Sentry" Version="4.11.0" />
         <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-        <PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
-        <PackageReference Include="System.Text.Json" Version="8.0.4" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AlertHawk.Monitoring.Domain\AlertHawk.Monitoring.Domain.csproj" />

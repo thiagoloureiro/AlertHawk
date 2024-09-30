@@ -59,6 +59,39 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
             Assert.NotNull(result.ReasonPhrase);
             Assert.NotNull(result.Content);
         }
+        
+        [Theory]
+        [InlineData("https://postman-echo.com/get", MonitorHttpMethod.Get)]
+        [InlineData("https://postman-echo.com/post", MonitorHttpMethod.Post)]
+        [InlineData("https://postman-echo.com/put", MonitorHttpMethod.Put)]
+        public async Task Should_Make_HttpClient_Call_IgnoreTlsSsl_OK_Result(string url, MonitorHttpMethod method)
+        {
+            // Arrange
+            var monitorHttp = new MonitorHttp
+            {
+                UrlToCheck = url,
+                MonitorId = 1,
+                Name = "Test",
+                Id = 1,
+                CheckCertExpiry = true,
+                IgnoreTlsSsl = true,
+                Timeout = 10,
+                MonitorHttpMethod = method,
+                MaxRedirects = 5,
+                HeartBeatInterval = 1,
+                Retries = 0,
+                LastStatus = true,
+                ResponseTime = 10
+            };
+
+            // Act
+            var result = await _httpClientRunner.MakeHttpClientCall(monitorHttp);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+            Assert.NotNull(result.ReasonPhrase);
+            Assert.NotNull(result.Content);
+        }
 
         [Theory]
         [InlineData("https://httpbin.org/get1", MonitorHttpMethod.Get)]

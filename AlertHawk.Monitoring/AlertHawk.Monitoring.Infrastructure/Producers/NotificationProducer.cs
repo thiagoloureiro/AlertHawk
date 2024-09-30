@@ -4,6 +4,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using MassTransit;
 using SharedModels;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Logging;
 
 namespace AlertHawk.Monitoring.Infrastructure.Producers;
 
@@ -12,18 +13,21 @@ public class NotificationProducer : INotificationProducer
 {
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IMonitorNotificationRepository _monitorNotificationRepository;
+    private readonly ILogger<NotificationProducer> _notificationLogger;
 
-    public NotificationProducer(IPublishEndpoint publishEndpoint, IMonitorNotificationRepository monitorNotificationRepository)
+    public NotificationProducer(IPublishEndpoint publishEndpoint,
+        IMonitorNotificationRepository monitorNotificationRepository, ILogger<NotificationProducer> notificationLogger)
     {
         _publishEndpoint = publishEndpoint;
         _monitorNotificationRepository = monitorNotificationRepository;
+        _notificationLogger = notificationLogger;
     }
 
     public async Task HandleFailedNotifications(MonitorHttp monitorHttp, string? reasonPhrase)
     {
         var notificationIdList = await _monitorNotificationRepository.GetMonitorNotifications(monitorHttp.MonitorId);
 
-        Console.WriteLine(
+        _notificationLogger.LogInformation(
             $"sending notification Error calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}");
 
         foreach (var item in notificationIdList)
@@ -44,11 +48,13 @@ public class NotificationProducer : INotificationProducer
     {
         var notificationIdList = await _monitorNotificationRepository.GetMonitorNotifications(monitorHttp.MonitorId);
 
-        Console.WriteLine(
+        _notificationLogger.LogInformation(
             $"sending success notification calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}");
 
         foreach (var item in notificationIdList)
         {
+            _notificationLogger.LogInformation(
+                $"Notification Details: notificationId {item.NotificationId}, monitorId: {item.MonitorId}, ResponseStatusCode: {monitorHttp.ResponseStatusCode}, reasonPhrase {reasonPhrase}, name:  {monitorHttp.Name}");
             await _publishEndpoint.Publish<NotificationAlert>(new
             {
                 NotificationId = item.NotificationId,
@@ -65,7 +71,7 @@ public class NotificationProducer : INotificationProducer
     {
         var notificationIdList = await _monitorNotificationRepository.GetMonitorNotifications(monitorTcp.MonitorId);
 
-        Console.WriteLine(
+        _notificationLogger.LogInformation(
             $"sending success notification calling {monitorTcp.IP} Port: {monitorTcp.Port},");
 
         foreach (var item in notificationIdList)
@@ -84,7 +90,7 @@ public class NotificationProducer : INotificationProducer
     {
         var notificationIdList = await _monitorNotificationRepository.GetMonitorNotifications(monitorTcp.MonitorId);
 
-        Console.WriteLine(
+        _notificationLogger.LogInformation(
             $"sending notification Error calling {monitorTcp.IP} Port: {monitorTcp.Port}, Response: {monitorTcp.Response}");
 
         foreach (var item in notificationIdList)

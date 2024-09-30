@@ -766,6 +766,40 @@ public class MonitorControllerTests
 
         Assert.NotNull(fileResult);
     }
+    
+    [Fact]
+    public async Task GetMonitorBackupJson_Returns_Forbidden()
+    {
+        // Arrange
+        var monitorServiceMock = new Mock<IMonitorService>();
+        var expectedJson = "json";
+        var token = "";
+        var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: false);
+
+        monitorServiceMock.Setup(x => x.GetUserDetailsByToken(It.IsAny<string>())).ReturnsAsync(user);
+
+        monitorServiceMock.Setup(x => x.GetMonitorBackupJson()).ReturnsAsync(expectedJson);
+
+        var monitorAgentServiceMock = new Mock<IMonitorAgentService>();
+        var monitorGroupServiceMock = new Mock<IMonitorGroupService>();
+
+        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object, monitorGroupServiceMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            }
+        };
+        controller.Request.Headers["Authorization"] = token;
+
+        // Act
+        var result = await controller.GetMonitorBackupJson();
+
+        // Assert
+        var fileResult = result as FileResult;
+
+        Assert.Null(fileResult);
+    }
 
     [Fact]
     public async Task UploadMonitorJsonBackup_Returns_BadRequestResult()

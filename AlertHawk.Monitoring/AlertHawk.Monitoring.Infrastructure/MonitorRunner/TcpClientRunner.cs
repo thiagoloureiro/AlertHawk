@@ -3,6 +3,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using System.Net.Sockets;
+using Microsoft.Extensions.Logging;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
@@ -11,12 +12,14 @@ public class TcpClientRunner : ITcpClientRunner
     private readonly INotificationProducer _notificationProducer;
     private readonly IMonitorRepository _monitorRepository;
     private readonly IMonitorHistoryRepository _monitorHistoryRepository;
-
-    public TcpClientRunner(IMonitorRepository monitorRepository, INotificationProducer notificationProducer, IMonitorHistoryRepository monitorHistoryRepository)
+    private readonly ILogger<TcpClientRunner> _logger;
+    
+    public TcpClientRunner(IMonitorRepository monitorRepository, INotificationProducer notificationProducer, IMonitorHistoryRepository monitorHistoryRepository, ILogger<TcpClientRunner> logger)
     {
         _monitorRepository = monitorRepository;
         _notificationProducer = notificationProducer;
         _monitorHistoryRepository = monitorHistoryRepository;
+        _logger = logger;
     }
 
     public async Task<bool> CheckTcpAsync(MonitorTcp monitorTcp)
@@ -30,7 +33,7 @@ public class TcpClientRunner : ITcpClientRunner
             try
             {
                 isConnected = await MakeTcpCall(monitorTcp);
-
+                _logger.LogInformation("Checking {monitorTcp.IP}:{monitorTcp.Port}, isConnected: {isConnected}");
                 var monitorHistory = new MonitorHistory
                 {
                     MonitorId = monitorTcp.MonitorId,
@@ -85,6 +88,7 @@ public class TcpClientRunner : ITcpClientRunner
 
             if (monitorTcp.LastStatus)
             {
+                _logger.LogWarning("Failed to establish a connection to {monitorTcp.IP}:{monitorTcp.Port}, Response: {monitorTcp.Response}");
                 await _notificationProducer.HandleFailedTcpNotifications(monitorTcp);
             }
         }
