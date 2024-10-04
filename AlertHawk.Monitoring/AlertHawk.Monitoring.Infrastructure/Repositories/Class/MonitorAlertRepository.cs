@@ -30,23 +30,26 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
             if (environment == MonitorEnvironment.All)
             {
                 sql =
-                    @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment
+                    @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment,  MH.UrlToCheck
                     FROM MonitorAlert MA
                     INNER JOIN Monitor M on M.Id = MA.MonitorId
+                    LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
                     WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0
                     ORDER BY MA.TimeStamp DESC";
             }
             else
             {
                 sql =
-                    @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment
+                    @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment,  MH.UrlToCheck
                     FROM MonitorAlert MA
                     INNER JOIN Monitor M on M.Id = MA.MonitorId
+                    LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
                     WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0 AND MA.environment = @environment
                     ORDER BY MA.TimeStamp DESC";
             }
 
-            return await db.QueryAsync<MonitorAlert>(sql, new { monitorId, days, environment }, commandType: CommandType.Text);
+            return await db.QueryAsync<MonitorAlert>(sql, new { monitorId, days, environment },
+                commandType: CommandType.Text);
         }
 
         if (environment == MonitorEnvironment.All)
@@ -59,6 +62,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 WHERE MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0
                 AND MGI.MonitorGroupId in @groupIds
                 ORDER BY MA.TimeStamp DESC";
+            Console.WriteLine(sql);
         }
         else
         {
@@ -73,7 +77,8 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 ORDER BY MA.TimeStamp DESC";
         }
 
-        return await db.QueryAsync<MonitorAlert>(sql, new { days, groupIds, environment }, commandType: CommandType.Text);
+        return await db.QueryAsync<MonitorAlert>(sql, new { days, groupIds, environment },
+            commandType: CommandType.Text);
     }
 
     public async Task<MemoryStream> CreateExcelFileAsync(IEnumerable<MonitorAlert> alerts)
@@ -93,7 +98,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
             worksheet.Cells[1, col++].Value = "Environment";
             worksheet.Cells[1, col++].Value = "Message";
             worksheet.Cells[1, col++].Value = "URL";
-            
+
             var row = 2;
             foreach (var alert in alerts)
             {
