@@ -52,10 +52,10 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
         if (environment == MonitorEnvironment.All)
         {
             sql =
-                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment
-                FROM MonitorAlert MA
-                INNER JOIN Monitor M on M.Id = MA.MonitorId
-                INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id
+                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment, MH.UrlToCheck
+                    FROM MonitorAlert MA
+                    INNER JOIN Monitor M on M.Id = MA.MonitorId
+                    LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
                 WHERE MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0
                 AND MGI.MonitorGroupId in @groupIds
                 ORDER BY MA.TimeStamp DESC";
@@ -63,10 +63,11 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
         else
         {
             sql =
-                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment
+                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment, MH.UrlToCheck
                 FROM MonitorAlert MA
                 INNER JOIN Monitor M on M.Id = MA.MonitorId
                 INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id
+                LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
                 WHERE MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0 AND MA.environment = @environment
                 AND MGI.MonitorGroupId in @groupIds
                 ORDER BY MA.TimeStamp DESC";
@@ -91,7 +92,8 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
             worksheet.Cells[1, col++].Value = "Monitor Name";
             worksheet.Cells[1, col++].Value = "Environment";
             worksheet.Cells[1, col++].Value = "Message";
-
+            worksheet.Cells[1, col++].Value = "URL";
+            
             var row = 2;
             foreach (var alert in alerts)
             {
@@ -100,7 +102,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 worksheet.Cells[row, col++].Value = alert.MonitorName;
                 worksheet.Cells[row, col++].Value = alert.Environment.ToString();
                 worksheet.Cells[row, col++].Value = alert.Message;
-
+                worksheet.Cells[row, col++].Value = alert.UrlToCheck;
                 row++;
             }
 
