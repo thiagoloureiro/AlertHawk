@@ -32,13 +32,7 @@ public class MonitorAlertService : IMonitorAlertService
         ReportType reportType)
     {
         var monitorAlerts = await GetMonitorAlerts(monitorId, days, environment, jwtToken);
-
-        TimeZoneInfo cetTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central Europe Standard Time");
-        foreach (var alert in monitorAlerts)
-        {
-            alert.TimeStamp = TimeZoneInfo.ConvertTimeFromUtc(alert.TimeStamp, cetTimeZone);
-        }
-
+        
         return reportType switch
         {
             ReportType.Excel => await _monitorAlertRepository.CreateExcelFileAsync(monitorAlerts),
