@@ -95,7 +95,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
             // Add column headers
             var col = 1;
 
-            worksheet.Cells[1, col++].Value = "Timestamp";
+            worksheet.Cells[1, col++].Value = "Timestamp (UTC)";
             worksheet.Cells[1, col++].Value = "Monitor Name";
             worksheet.Cells[1, col++].Value = "Environment";
             worksheet.Cells[1, col++].Value = "Message";
