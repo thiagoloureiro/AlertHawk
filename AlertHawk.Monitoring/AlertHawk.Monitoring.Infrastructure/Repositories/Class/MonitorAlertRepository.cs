@@ -63,7 +63,6 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 WHERE MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0
                 AND MGI.MonitorGroupId in @groupIds
                 ORDER BY MA.TimeStamp DESC";
-            Console.WriteLine(sql);
         }
         else
         {
@@ -76,7 +75,6 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 WHERE MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0 AND MA.environment = @environment
                 AND MGI.MonitorGroupId in @groupIds
                 ORDER BY MA.TimeStamp DESC";
-            Console.WriteLine(sql);
         }
 
         return await db.QueryAsync<MonitorAlert>(sql, new { days, groupIds, environment },
