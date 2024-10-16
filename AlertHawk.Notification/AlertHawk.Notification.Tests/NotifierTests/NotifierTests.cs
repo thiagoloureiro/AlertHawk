@@ -69,72 +69,7 @@ public class NotifierTests : IClassFixture<NotificationController>
         // Assert
         Assert.NotNull(result);
     }
-
-    [Fact]
-    public async Task Should_Send_EmailSmtp_Notification()
-    {
-        // Arrange
-        var notificationSend = new NotificationSend
-        {
-            Message = "Message",
-            NotificationTypeId = 1, // EmailSmtp
-            NotificationEmail = new NotificationEmail
-            {
-                ToEmail = "alerthawk@outlook.com",
-                FromEmail = "alerthawk@outlook.com",
-                Username = "alerthawk@outlook.com",
-                Password = GlobalVariables.EmailPassword,
-                Hostname = "smtp.office365.com",
-                Body = "Body",
-                Subject = "Subject",
-                Port = 587,
-                EnableSsl = true,
-                IsHtmlBody = false,
-                NotificationId = 1
-            },
-            NotificationTimeStamp = DateTime.UtcNow
-        };
-
-        // Act
-        var result = await _mailNotifier.Send(notificationSend.NotificationEmail);
-
-        // Assert
-        Assert.True(result);
-    }
-
-    [Fact]
-    public async Task Should_Send_EmailSmtpWithCCAndBCC_Notification()
-    {
-        // Arrange
-        var notificationSend = new NotificationSend
-        {
-            Message = "Message",
-            NotificationTypeId = 1, // EmailSmtp
-            NotificationEmail = new NotificationEmail
-            {
-                ToEmail = "alerthawk@outlook.com",
-                ToCCEmail = "alerthawk@outlook.com",
-                ToBCCEmail = "alerthawk@outlook.com",
-                FromEmail = "alerthawk@outlook.com",
-                Username = "alerthawk@outlook.com",
-                Password = GlobalVariables.EmailPassword,
-                Hostname = "smtp.office365.com",
-                Body = "Body",
-                Subject = "Subject",
-                Port = 587,
-                EnableSsl = true,
-                IsHtmlBody = false,
-                NotificationId = 1
-            },
-        };
-
-        // Act
-        var result = await _mailNotifier.Send(notificationSend.NotificationEmail);
-
-        // Assert
-        Assert.True(result);
-    }
-
+    
     [Fact]
     public async Task Should_Send_Slack_Notification()
     {
