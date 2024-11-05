@@ -1,4 +1,5 @@
 using AlertHawk.Monitoring;
+using AlertHawk.Monitoring.Domain;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
@@ -40,6 +41,8 @@ var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
 var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
 var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
 var sentryEnabled = configuration.GetValue<string>("Sentry:Enabled") ?? "false";
+
+builder.Services.Configure<DownSamplingSettings>(builder.Configuration.GetSection(DownSamplingSettings.DownSampling));
 
 if (string.Equals(sentryEnabled, "true", StringComparison.InvariantCultureIgnoreCase))
 {
