@@ -1,6 +1,6 @@
 ﻿namespace AlertHawk.Monitoring.Domain.Constants
 {
-    public class MetricsConstants
+    public static class MetricsConstants
     {
         public static readonly string UPTIME1HR = "uptime1Hr";
         public static readonly string UPTIME24HR = "uptime24Hrs";
