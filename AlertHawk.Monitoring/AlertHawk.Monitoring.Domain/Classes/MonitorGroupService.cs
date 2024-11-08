@@ -1,4 +1,5 @@
 using AlertHawk.Authentication.Domain.Entities;
+using AlertHawk.Monitoring.Domain.Constants;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
@@ -47,7 +48,9 @@ public class MonitorGroupService : IMonitorGroupService
         return monitorGroupList;
     }
 
-    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupListByEnvironment(string jwtToken, MonitorEnvironment environment)
+    public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupListByEnvironment(string jwtToken,
+                                                                                  MonitorEnvironment environment,
+                                                                                  string metric)
     {
         var ids = await GetUserGroupMonitorListIds(jwtToken);
 
@@ -55,7 +58,7 @@ public class MonitorGroupService : IMonitorGroupService
 
         if (ids == null)
         {
-            return new List<MonitorGroup> { new MonitorGroup { Id = 0, Name = "No Groups Found" } };
+            return [new() { Id = 0, Name = "No Groups Found" }];
         }
 
         monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id));
@@ -179,14 +182,17 @@ public class MonitorGroupService : IMonitorGroupService
 
         async Task FetchMonitorHistoryAsync(Monitor monitor)
         {
-            var data = await _caching.GetOrSetObjectFromCacheAsync(_cacheKeyMonitorDayHist + monitor.Id, 10, () => _monitorHistoryRepository.GetMonitorHistoryByIdAndHours(monitor.Id, 1));
+            string cacheKey = $"{_cacheKeyMonitorDayHist + monitor.Id}_{metric}";
+            var data = await _caching.GetOrSetObjectFromCacheAsync(cacheKey,
+                                                                   10,
+                                                                   () => _monitorHistoryRepository.GetMonitorHistoryByIdAndMetrics(monitor.Id, metric));
 
             if (monitor.MonitorStatusDashboard is null)
                 return;
 
             monitor.MonitorStatusDashboard.HistoryData = data;
 
-            if (_downSamplingSettings.Active)
+            if (_downSamplingSettings.Active && metric != MetricsConstants.UPTIME1HR)
             {
                 monitor.MonitorStatusDashboard.HistoryData = DownSampleWithStatusCheck(monitor.MonitorStatusDashboard.HistoryData, new TimeSpan(0, 0, _downSamplingSettings.IntervalInSeconds));
             }
@@ -435,6 +441,6 @@ public class MonitorGroupService : IMonitorGroupService
             }
         }
 
-        return [.. result.OrderBy(h => h.TimeStamp)];
+        return [.. result.OrderByDescending(h => h.TimeStamp)];
     }
 }
