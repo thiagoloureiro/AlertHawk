@@ -2,7 +2,7 @@
 {
     public class DownSamplingSettings
     {
-        public const string DownSampling = "Downsampling";
+        public static readonly string DownSampling = "Downsampling";
 
         public bool Active { get; set; }
         public int IntervalInSeconds { get; set; } = 60;

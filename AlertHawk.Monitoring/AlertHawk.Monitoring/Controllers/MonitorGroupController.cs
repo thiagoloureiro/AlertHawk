@@ -67,7 +67,7 @@ namespace AlertHawk.Monitoring.Controllers
         [ProducesResponseType(typeof(IEnumerable<MonitorGroup>), StatusCodes.Status200OK)]
         [HttpGet("monitorDashboardGroupListByUser/{environment}/{metric}")]
         [Authorize]
-        public async Task<IActionResult> GetMonitorDashboardGroupListByUser(MonitorEnvironment environment, string metric = "uptime1Hr")
+        public async Task<IActionResult> GetMonitorDashboardGroupListByUser(MonitorEnvironment environment, string metric)
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
 

@@ -188,7 +188,9 @@ public class MonitorGroupService : IMonitorGroupService
                                                                    () => _monitorHistoryRepository.GetMonitorHistoryByIdAndMetrics(monitor.Id, metric));
 
             if (monitor.MonitorStatusDashboard is null)
+            {
                 return;
+            }
 
             monitor.MonitorStatusDashboard.HistoryData = data;
 
