@@ -26,12 +26,30 @@ public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepositor
         return await db.QueryAsync<MonitorHistory>(sql, new { id, days }, commandType: CommandType.Text);
     }
 
-    public async Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndHours(int id, int hours)
+    public async Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndMetrics(int id, string metric)
     {
+        var metricDic = new Dictionary<string, string>()
+        {
+            {"uptime1Hr",  "DATEADD(HOUR, -1, GETUTCDATE())"},
+            {"uptime24Hrs", "DATEADD(HOUR, -24, GETUTCDATE())" },
+            {"uptime7Days", "DATEADD(DAY, -7, GETUTCDATE())" },
+            {"uptime30Days", "DATEADD(DAY, -30, GETUTCDATE())" },
+            {"uptime3Months", "DATEADD(MONTH, -3, GETUTCDATE())"},
+            {"uptime6Months", "DATEADD(MONTH, -6, GETUTCDATE())" },
+        };
+
         await using var db = new SqlConnection(_connstring);
-        string sql =
-            @$"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion FROM [MonitorHistory] WHERE MonitorId=@id AND TimeStamp >= DATEADD(hour, -@hours, GETUTCDATE())  ORDER BY TimeStamp DESC";
-        return await db.QueryAsync<MonitorHistory>(sql, new { id, hours }, commandType: CommandType.Text);
+        string sql = @$"
+                        SELECT MonitorId
+                             , Status
+                             , TimeStamp
+                             , StatusCode
+                             , ResponseTime
+                             , HttpVersion 
+                        FROM [MonitorHistory] 
+                        WHERE MonitorId = @id AND TimeStamp >= {metricDic.GetValueOrDefault(metric)}  
+                        ORDER BY TimeStamp DESC";
+        return await db.QueryAsync<MonitorHistory>(sql, new { id }, commandType: CommandType.Text);
     }
 
     public async Task<MonitorSettings?> GetMonitorHistoryRetention()
