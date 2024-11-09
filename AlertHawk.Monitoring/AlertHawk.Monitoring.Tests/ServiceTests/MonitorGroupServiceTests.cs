@@ -172,7 +172,7 @@ public class MonitorGroupServiceTests
 
         // Act
         var result =
-            await _monitorGroupService.GetMonitorGroupListByEnvironment("jwtToken", MonitorEnvironment.Production);
+            await _monitorGroupService.GetMonitorGroupListByEnvironment("jwtToken", MonitorEnvironment.Production, "uptime1Hr");
 
         // Assert
         Assert.Single(result);
