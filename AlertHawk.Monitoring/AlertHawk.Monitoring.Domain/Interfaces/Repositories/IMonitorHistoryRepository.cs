@@ -14,7 +14,7 @@ public interface IMonitorHistoryRepository
 
     Task<long> GetMonitorHistoryCount();
 
-    Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndMetrics(int id, string metric);
+    Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndHours(int id, int hours);
 
     Task<MonitorSettings?> GetMonitorHistoryRetention();
 
