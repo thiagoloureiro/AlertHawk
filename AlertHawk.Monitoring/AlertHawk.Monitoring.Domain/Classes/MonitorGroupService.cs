@@ -1,14 +1,15 @@
 using AlertHawk.Authentication.Domain.Entities;
+using AlertHawk.Monitoring.Domain.Constants;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using EasyMemoryCache;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
-using Microsoft.Extensions.Logging;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
 
@@ -19,21 +20,25 @@ public class MonitorGroupService : IMonitorGroupService
     private readonly string _cacheKeyDashboardList = "MonitorDashboardList";
     private readonly string _cacheKeyMonitorGroupList = "MonitorGroupList";
     private readonly string _cacheKeyMonitorDayHist = "CacheKeyMonitorDayHist_";
-    private readonly IMonitorRepository _monitorRepository;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IMonitorHistoryRepository _monitorHistoryRepository;
     private readonly ILogger<MonitorGroupService> _logger;
+    private readonly DownSamplingSettings _downSamplingSettings;
 
-    public MonitorGroupService(IMonitorGroupRepository monitorGroupRepository, ICaching caching,
-        IMonitorRepository monitorRepository, IHttpClientFactory httpClientFactory,
-        IMonitorHistoryRepository monitorHistoryRepository, ILogger<MonitorGroupService> logger)
+    public MonitorGroupService(IMonitorGroupRepository monitorGroupRepository,
+                               ICaching caching,
+                               IMonitorRepository monitorRepository,
+                               IHttpClientFactory httpClientFactory,
+                               IMonitorHistoryRepository monitorHistoryRepository,
+                               ILogger<MonitorGroupService> logger,
+                               IOptions<DownSamplingSettings> options)
     {
         _monitorGroupRepository = monitorGroupRepository;
         _caching = caching;
-        _monitorRepository = monitorRepository;
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _monitorHistoryRepository = monitorHistoryRepository;
         _logger = logger;
+        _downSamplingSettings = options.Value;
     }
 
     public async Task<IEnumerable<MonitorGroup>?> GetMonitorGroupList()
@@ -44,15 +49,16 @@ public class MonitorGroupService : IMonitorGroupService
     }
 
     public async Task<IEnumerable<MonitorGroup>> GetMonitorGroupListByEnvironment(string jwtToken,
-        MonitorEnvironment environment)
+                                                                                  MonitorEnvironment environment,
+                                                                                  string metric)
     {
         var ids = await GetUserGroupMonitorListIds(jwtToken);
 
         var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupListByEnvironment(environment);
-        
+
         if (ids == null)
         {
-            return new List<MonitorGroup> { new MonitorGroup { Id = 0, Name = "No Groups Found" } };
+            return [new() { Id = 0, Name = "No Groups Found" }];
         }
 
         monitorGroupList = monitorGroupList.Where(x => ids.Contains(x.Id));
@@ -64,7 +70,7 @@ public class MonitorGroupService : IMonitorGroupService
             .SelectMany(group => group.Monitors?.Select(m => m.Id) ?? Enumerable.Empty<int>()).ToList();
         var allDashboardData = await GetMonitorDashboardDataList(allMonitorIds);
         var monitorDashboards = allDashboardData.ToList();
-        
+
         var tasks = new List<Task>();
         var semaphore = new SemaphoreSlim(20); // Limit to 20 concurrent tasks
 
@@ -110,7 +116,7 @@ public class MonitorGroupService : IMonitorGroupService
 
         // Wait for all tasks to complete
         await Task.WhenAll(tasks);
-        
+
         // Now process the results
         foreach (var monitorGroup in monitorGroups)
         {
@@ -176,9 +182,22 @@ public class MonitorGroupService : IMonitorGroupService
 
         async Task FetchMonitorHistoryAsync(Monitor monitor)
         {
-            var data = await _caching.GetOrSetObjectFromCacheAsync(_cacheKeyMonitorDayHist + monitor.Id, 10,
-                () => _monitorHistoryRepository.GetMonitorHistoryByIdAndHours(monitor.Id, 1));
-            if (monitor.MonitorStatusDashboard != null) monitor.MonitorStatusDashboard.HistoryData = data;
+            string cacheKey = $"{_cacheKeyMonitorDayHist + monitor.Id}_{metric}";
+            var data = await _caching.GetOrSetObjectFromCacheAsync(cacheKey,
+                                                                   10,
+                                                                   () => _monitorHistoryRepository.GetMonitorHistoryByIdAndMetrics(monitor.Id, metric));
+
+            if (monitor.MonitorStatusDashboard is null)
+            {
+                return;
+            }
+
+            monitor.MonitorStatusDashboard.HistoryData = data;
+
+            if (_downSamplingSettings.Active && metric != MetricsConstants.UPTIME1HR)
+            {
+                monitor.MonitorStatusDashboard.HistoryData = DownSampleWithStatusCheck(monitor.MonitorStatusDashboard.HistoryData, new TimeSpan(0, 0, _downSamplingSettings.IntervalInSeconds));
+            }
         }
 
         return monitorGroups;
@@ -380,5 +399,50 @@ public class MonitorGroupService : IMonitorGroupService
         }
 
         return new List<MonitorDashboard>();
+    }
+
+    private static List<MonitorHistory> DownSampleWithStatusCheck(IEnumerable<MonitorHistory> monitorHistories, TimeSpan interval)
+    {
+        var aggregatedData = new Dictionary<DateTime, List<MonitorHistory>>();
+
+        foreach (var history in monitorHistories)
+        {
+            var key = new DateTime(history.TimeStamp.Year,
+                                   history.TimeStamp.Month,
+                                   history.TimeStamp.Day,
+                                   history.TimeStamp.Hour,
+                                   (int)(history.TimeStamp.Minute / interval.TotalMinutes * (int)interval.TotalMinutes),
+                                   0);
+
+            if (!aggregatedData.ContainsKey(key))
+            {
+                aggregatedData[key] = new List<MonitorHistory>();
+            }
+            aggregatedData[key].Add(history);
+        }
+
+        var result = new List<MonitorHistory>();
+
+        foreach (var group in aggregatedData)
+        {
+            var histories = group.Value;
+
+            if (histories.Any(h => !h.Status))
+            {
+                var falseStatusEntry = histories.First(h => !h.Status);
+                result.Add(falseStatusEntry);
+            }
+            else
+            {
+                result.Add(new MonitorHistory
+                {
+                    TimeStamp = group.Key,
+                    ResponseTime = (int)histories.Average(h => h.ResponseTime),
+                    Status = true
+                });
+            }
+        }
+
+        return [.. result.OrderByDescending(h => h.TimeStamp)];
     }
 }
