@@ -5,6 +5,6 @@
         public static readonly string DownSampling = "Downsampling";
 
         public bool Active { get; set; }
-        public int IntervalInSeconds { get; set; } = 60;
+        public int IntervalInSeconds { get; set; }
     }
 }
