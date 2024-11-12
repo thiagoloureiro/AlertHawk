@@ -63,20 +63,21 @@ namespace AlertHawk.Monitoring.Controllers
             return Ok(result);
         }
 
-        [SwaggerOperation(Summary = "Retrieves a List of all Monitor Groups (including monitor list + dashboard data) By User Token and Environment")]
+        [SwaggerOperation(Summary =
+            "Retrieves a List of all Monitor Groups (including monitor list + dashboard data) By User Token and Environment")]
         [ProducesResponseType(typeof(IEnumerable<MonitorGroup>), StatusCodes.Status200OK)]
-        [HttpGet("monitorDashboardGroupListByUser/{environment}/{metric}")]
+        [HttpGet("monitorDashboardGroupListByUser/{environment}")]
         [Authorize]
-        public async Task<IActionResult> GetMonitorDashboardGroupListByUser(MonitorEnvironment environment, string metric)
+        public async Task<IActionResult> GetMonitorDashboardGroupListByUser(
+            MonitorEnvironment environment = MonitorEnvironment.Production)
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
-
             if (jwtToken == null)
             {
                 return BadRequest("Invalid Token");
             }
 
-            var result = await _monitorGroupService.GetMonitorGroupListByEnvironment(jwtToken, environment, metric);
+            var result = await _monitorGroupService.GetMonitorGroupListByEnvironment(jwtToken, environment);
             return Ok(result);
         }
 

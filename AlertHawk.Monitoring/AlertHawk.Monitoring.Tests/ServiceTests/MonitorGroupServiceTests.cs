@@ -1,17 +1,15 @@
 using AlertHawk.Authentication.Domain.Entities;
-using AlertHawk.Monitoring.Domain;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using EasyMemoryCache;
 using EasyMemoryCache.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
 using System.Net;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ServiceTests;
@@ -26,9 +24,6 @@ public class MonitorGroupServiceTests
     private readonly Mock<IMonitorHistoryRepository> _monitorHistoryRepositoryMock;
     private readonly MonitorGroupService _monitorGroupService;
     private readonly Mock<ILogger<MonitorGroupService>> _logger;
-    
-    private readonly IOptions<DownSamplingSettings> _options = Options.Create(new DownSamplingSettings() { Active = false, IntervalInSeconds = 60 });
-
     public MonitorGroupServiceTests()
     {
         _monitorGroupRepositoryMock = new Mock<IMonitorGroupRepository>();
@@ -38,7 +33,6 @@ public class MonitorGroupServiceTests
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
         _monitorHistoryRepositoryMock = new Mock<IMonitorHistoryRepository>();
         _logger = new Mock<ILogger<MonitorGroupService>>();
-
         var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
 
         _httpClientFactoryMock.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(httpClient);
@@ -49,8 +43,7 @@ public class MonitorGroupServiceTests
             _monitorRepositoryMock.Object,
             _httpClientFactoryMock.Object,
             _monitorHistoryRepositoryMock.Object,
-            _logger.Object,
-            _options
+            _logger.Object
         );
     }
 
@@ -106,8 +99,7 @@ public class MonitorGroupServiceTests
             _monitorRepositoryMock.Object,
             _httpClientFactoryMock.Object,
             _monitorHistoryRepositoryMock.Object,
-            _logger.Object,
-            _options
+            _logger.Object
         );
 
         // Act
@@ -172,7 +164,7 @@ public class MonitorGroupServiceTests
 
         // Act
         var result =
-            await _monitorGroupService.GetMonitorGroupListByEnvironment("jwtToken", MonitorEnvironment.Production, "uptime1Hr");
+            await _monitorGroupService.GetMonitorGroupListByEnvironment("jwtToken", MonitorEnvironment.Production);
 
         // Assert
         Assert.Single(result);

@@ -146,7 +146,7 @@ public class MonitorGroupControllerTests
         _controller.Request.Headers["Authorization"] = invalidToken;
 
         // Act
-        var result = await _controller.GetMonitorDashboardGroupListByUser(MonitorEnvironment.Production, "uptime1Hr");
+        var result = await _controller.GetMonitorDashboardGroupListByUser(MonitorEnvironment.Production);
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
@@ -172,11 +172,11 @@ public class MonitorGroupControllerTests
         _controller.Request.Headers["Authorization"] = validToken;
 
         _mockMonitorGroupService.Setup(service =>
-                service.GetMonitorGroupListByEnvironment(validToken, MonitorEnvironment.Production, "uptime1Hr"))
+                service.GetMonitorGroupListByEnvironment(validToken, MonitorEnvironment.Production))
             .ReturnsAsync(monitorGroups);
 
         // Act
-        var result = await _controller.GetMonitorDashboardGroupListByUser(MonitorEnvironment.Production, "uptime1Hr");
+        var result = await _controller.GetMonitorDashboardGroupListByUser(MonitorEnvironment.Production);
 
         // Assert
         Assert.IsType<OkObjectResult>(result);

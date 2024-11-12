@@ -5,7 +5,7 @@ namespace AlertHawk.Monitoring.Domain.Interfaces.Services;
 
 public interface IMonitorGroupService
 {
-    Task<IEnumerable<MonitorGroup>> GetMonitorGroupListByEnvironment(string jwtToken, MonitorEnvironment environment, string metric);
+    Task<IEnumerable<MonitorGroup>> GetMonitorGroupListByEnvironment(string jwtToken, MonitorEnvironment environment);
 
     Task<IEnumerable<MonitorGroup>?> GetMonitorGroupList(string jwtToken);
 
