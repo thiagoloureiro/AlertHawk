@@ -196,6 +196,7 @@ public class MonitorGroupService : IMonitorGroupService
 
             if (_downSamplingSettings.Active && metric != MetricsConstants.UPTIME1HR)
             {
+                Console.WriteLine("Downsampling data for monitor: " + monitor.Id + " with metric: " + metric);
                 monitor.MonitorStatusDashboard.HistoryData = DownSampleWithStatusCheck(monitor.MonitorStatusDashboard.HistoryData, new TimeSpan(0, 0, _downSamplingSettings.IntervalInSeconds));
             }
         }
