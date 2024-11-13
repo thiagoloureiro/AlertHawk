@@ -4,8 +4,8 @@ using AlertHawk.Notification.Domain.Utils;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using System.Data;
-using System.Data.SqlClient;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Data.SqlClient;
 
 namespace AlertHawk.Notification.Infrastructure.Repositories.Class;
 
