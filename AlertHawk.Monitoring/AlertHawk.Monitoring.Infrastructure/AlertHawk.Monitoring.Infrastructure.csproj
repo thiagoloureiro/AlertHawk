@@ -7,16 +7,16 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Azure.Identity" Version="1.13.1" />
-        <PackageReference Include="Azure.Storage.Blobs" Version="12.22.2" />
+        <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
         <PackageReference Include="Dapper" Version="2.1.44" />
         <PackageReference Include="EasyMemoryCache" Version="2.0.9" />
         <PackageReference Include="EPPlus" Version="7.4.2" />
         <PackageReference Include="Hangfire.Core" Version="1.8.15" />
         <PackageReference Include="MassTransit.Abstractions" Version="8.3.1" />
-        <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
-        <PackageReference Include="Polly" Version="8.4.2" />
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+        <PackageReference Include="Polly" Version="8.5.0" />
         <PackageReference Include="Sentry" Version="4.13.0" />
-        <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AlertHawk.Monitoring.Domain\AlertHawk.Monitoring.Domain.csproj" />

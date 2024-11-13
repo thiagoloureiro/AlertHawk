@@ -5,9 +5,9 @@ using AlertHawk.Monitoring.Infrastructure.Utils;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using System.Data;
-using System.Data.SqlClient;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using Microsoft.Data.SqlClient;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 

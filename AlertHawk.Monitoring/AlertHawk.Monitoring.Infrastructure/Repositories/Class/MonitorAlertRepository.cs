@@ -4,8 +4,8 @@ using Dapper;
 using Microsoft.Extensions.Configuration;
 using OfficeOpenXml;
 using System.Data;
-using System.Data.SqlClient;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Data.SqlClient;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 
