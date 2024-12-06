@@ -11,14 +11,14 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.13.1" />
-    <PackageReference Include="EasyMemoryCache" Version="3.0.0" />
-    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.15" />
+    <PackageReference Include="EasyMemoryCache" Version="3.0.1" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.17" />
     <PackageReference Include="Hangfire.InMemory" Version="1.0.0" />
-    <PackageReference Include="MassTransit" Version="8.3.2" />
+    <PackageReference Include="MassTransit" Version="8.3.3" />
     <PackageReference Include="MassTransit.AspNetCore" Version="7.3.1" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.2" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.3" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Identity.Web" Version="3.4.0" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="3.5.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Sentry" Version="4.13.0" />

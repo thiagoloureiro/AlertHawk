@@ -14,6 +14,9 @@ public class MonitorUtilsTests
     [InlineData(MonitorRegion.Asia, "6")]
     [InlineData(MonitorRegion.Custom, "7")]
     [InlineData(MonitorRegion.Custom2, "8")]
+    [InlineData(MonitorRegion.Custom3, "9")]
+    [InlineData(MonitorRegion.Custom4, "10")]
+    [InlineData(MonitorRegion.Custom5, "11")]
     public void Should_Return_MonitorRegion_Env_Variable(MonitorRegion monitorRegion, string monitorRegionString)
     {
         // Arrange
