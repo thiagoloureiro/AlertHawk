@@ -12,4 +12,5 @@ public enum MonitorRegion
     Custom2 = 8,
     Custom3 = 9,
     Custom4 = 10,
+    Custom5 = 11
 }
