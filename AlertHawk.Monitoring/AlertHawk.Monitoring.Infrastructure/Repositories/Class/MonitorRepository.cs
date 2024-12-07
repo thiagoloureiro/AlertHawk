@@ -4,6 +4,7 @@ using Dapper;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using Hangfire;
 using Microsoft.Data.SqlClient;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
@@ -198,8 +199,16 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string sqlMonitorGroupItems = @"DELETE FROM [MonitorGroupItems] WHERE MonitorId=@id";
         await db.ExecuteAsync(sqlMonitorGroupItems, new { id }, commandType: CommandType.Text);
 
+        // Enqueue the deletion of history as a background job
+        BackgroundJob.Enqueue(() => DeleteMonitorHistory(id));
+    }
+    
+    public void DeleteMonitorHistory(int id)
+    {
+        // This method will be executed in the background
+        using var db = new SqlConnection(_connstring);
         string sqlHistory = @"DELETE FROM [MonitorHistory] WHERE MonitorId=@id";
-        await db.ExecuteAsync(sqlHistory, new { id }, commandType: CommandType.Text, commandTimeout: 1200);
+        db.Execute(sqlHistory, new { id }, commandType: CommandType.Text, commandTimeout: 1200);
     }
 
     public async Task<int> CreateMonitorTcp(MonitorTcp monitorTcp)
