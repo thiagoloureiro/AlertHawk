@@ -208,7 +208,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         // This method will be executed in the background
         using var db = new SqlConnection(_connstring);
         string sqlHistory = @"DELETE FROM [MonitorHistory] WHERE MonitorId=@id";
-        db.Execute(sqlHistory, new { id }, commandType: CommandType.Text, commandTimeout: 1200);
+        db.Execute(sqlHistory, new { id }, commandType: CommandType.Text, commandTimeout: 1800);
     }
 
     public async Task<int> CreateMonitorTcp(MonitorTcp monitorTcp)
