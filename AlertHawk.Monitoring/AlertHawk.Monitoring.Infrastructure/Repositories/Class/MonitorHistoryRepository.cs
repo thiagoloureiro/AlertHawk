@@ -23,7 +23,7 @@ public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepositor
         await using var db = new SqlConnection(_connstring);
         string sql =
             @$"SELECT MonitorId, Status, TimeStamp, ResponseTime FROM [MonitorHistory] WHERE MonitorId=@id AND TimeStamp >= DATEADD(day, -@days, GETUTCDATE())  ORDER BY TimeStamp DESC";
-        return await db.QueryAsync<MonitorHistory>(sql, new { id, days }, commandType: CommandType.Text);
+        return await db.QueryAsync<MonitorHistory>(sql, new { id, days }, commandType: CommandType.Text, commandTimeout: 120);
     }
 
     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndHours(int id, int hours)
