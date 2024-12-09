@@ -4,12 +4,12 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using EasyMemoryCache;
 using EasyMemoryCache.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
 using System.Net;
 using System.Text;
-using Microsoft.Extensions.Logging;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ServiceTests;
@@ -24,6 +24,7 @@ public class MonitorGroupServiceTests
     private readonly Mock<IMonitorHistoryRepository> _monitorHistoryRepositoryMock;
     private readonly MonitorGroupService _monitorGroupService;
     private readonly Mock<ILogger<MonitorGroupService>> _logger;
+
     public MonitorGroupServiceTests()
     {
         _monitorGroupRepositoryMock = new Mock<IMonitorGroupRepository>();

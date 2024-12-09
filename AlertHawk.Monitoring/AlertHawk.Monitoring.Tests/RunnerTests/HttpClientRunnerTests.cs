@@ -59,7 +59,7 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
             Assert.NotNull(result.ReasonPhrase);
             Assert.NotNull(result.Content);
         }
-        
+
         [Theory]
         [InlineData("https://postman-echo.com/get", MonitorHttpMethod.Get)]
         [InlineData("https://postman-echo.com/post", MonitorHttpMethod.Post)]

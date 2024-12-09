@@ -32,7 +32,7 @@ public class MonitorAlertService : IMonitorAlertService
         ReportType reportType)
     {
         var monitorAlerts = await GetMonitorAlerts(monitorId, days, environment, jwtToken);
-        
+
         return reportType switch
         {
             ReportType.Excel => await _monitorAlertRepository.CreateExcelFileAsync(monitorAlerts),

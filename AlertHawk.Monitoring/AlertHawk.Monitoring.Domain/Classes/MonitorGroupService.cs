@@ -3,12 +3,11 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using EasyMemoryCache;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
-using Microsoft.Extensions.Logging;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
 
@@ -49,7 +48,7 @@ public class MonitorGroupService : IMonitorGroupService
         var ids = await GetUserGroupMonitorListIds(jwtToken);
 
         var monitorGroupList = await _monitorGroupRepository.GetMonitorGroupListByEnvironment(environment);
-        
+
         if (ids == null)
         {
             return new List<MonitorGroup> { new MonitorGroup { Id = 0, Name = "No Groups Found" } };
@@ -64,7 +63,7 @@ public class MonitorGroupService : IMonitorGroupService
             .SelectMany(group => group.Monitors?.Select(m => m.Id) ?? Enumerable.Empty<int>()).ToList();
         var allDashboardData = await GetMonitorDashboardDataList(allMonitorIds);
         var monitorDashboards = allDashboardData.ToList();
-        
+
         var tasks = new List<Task>();
         var semaphore = new SemaphoreSlim(20); // Limit to 20 concurrent tasks
 
@@ -110,7 +109,7 @@ public class MonitorGroupService : IMonitorGroupService
 
         // Wait for all tasks to complete
         await Task.WhenAll(tasks);
-        
+
         // Now process the results
         foreach (var monitorGroup in monitorGroups)
         {

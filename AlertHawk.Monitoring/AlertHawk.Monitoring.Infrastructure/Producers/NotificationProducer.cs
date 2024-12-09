@@ -2,9 +2,9 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using MassTransit;
+using Microsoft.Extensions.Logging;
 using SharedModels;
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.Extensions.Logging;
 
 namespace AlertHawk.Monitoring.Infrastructure.Producers;
 
