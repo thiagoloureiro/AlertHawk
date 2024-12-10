@@ -11,9 +11,9 @@ namespace AlertHawk.Monitoring.Infrastructure.Utils
     {
         private static readonly IEnumerable<TimeSpan> RetryTimes =
         [
-            TimeSpan.FromSeconds(1),
-        TimeSpan.FromSeconds(2),
-        TimeSpan.FromSeconds(3)
+            TimeSpan.FromSeconds(3),
+        TimeSpan.FromSeconds(6),
+        TimeSpan.FromSeconds(9)
         ];
 
         private static readonly AsyncRetryPolicy RetryPolicy = Policy
