@@ -90,7 +90,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sqlAllMonitors = @"SELECT Id, Hostname, TimeStamp, IsMaster, MonitorRegion, Version FROM [MonitorAgent]";
-        var result = await db.QueryAsync<MonitorAgent>(sqlAllMonitors, commandType: CommandType.Text, commandTimeout: 120);
+        var result = await db.QueryAsyncWithRetry<MonitorAgent>(sqlAllMonitors, commandType: CommandType.Text, commandTimeout: 120);
         return result.ToList();
     }
 
