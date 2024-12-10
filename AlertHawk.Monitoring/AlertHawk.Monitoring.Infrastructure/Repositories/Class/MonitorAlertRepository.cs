@@ -1,11 +1,11 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using OfficeOpenXml;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.Data.SqlClient;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 

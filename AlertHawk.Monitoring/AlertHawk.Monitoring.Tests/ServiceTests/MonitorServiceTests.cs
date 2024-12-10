@@ -1,7 +1,4 @@
-using System.Net;
-using System.Text;
 using AlertHawk.Authentication.Domain.Dto;
-using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
@@ -13,6 +10,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 using Newtonsoft.Json;
+using System.Net;
+using System.Text;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ServiceTests
@@ -73,7 +72,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                 new MonitorHistory { TimeStamp = DateTime.UtcNow.AddDays(-2), Status = false, ResponseTime = 200 },
             };
             var monitor = new Monitor()
-                { Id = monitorId, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
+            { Id = monitorId, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
 
             _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(monitorId, 90))
                 .ReturnsAsync(monitorHistory);
@@ -442,7 +441,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                 new MonitorHistory { TimeStamp = DateTime.UtcNow.AddDays(-2), Status = false, ResponseTime = 200 },
             };
             var monitor = new Monitor()
-                { Id = monitorId, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
+            { Id = monitorId, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
 
             _monitorHistoryRepositoryMock.Setup(repo => repo.GetMonitorHistoryByIdAndDays(monitorId, 90))
                 .ReturnsAsync(monitorHistory);
@@ -633,7 +632,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             string token = "token";
             var monitorGroupIds = new List<int> { 1 };
             var monitor = new Monitor()
-                { Id = 1, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
+            { Id = 1, DaysToExpireCert = 30, Name = "Name", HeartBeatInterval = 1, Retries = 0 };
 
             var monitorHistory = new List<MonitorHistory>
             {

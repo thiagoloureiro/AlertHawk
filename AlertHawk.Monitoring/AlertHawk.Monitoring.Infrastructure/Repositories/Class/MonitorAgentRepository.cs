@@ -3,11 +3,11 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using Dapper;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using Microsoft.Data.SqlClient;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 
@@ -90,7 +90,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sqlAllMonitors = @"SELECT Id, Hostname, TimeStamp, IsMaster, MonitorRegion, Version FROM [MonitorAgent]";
-        var result = await db.QueryAsync<MonitorAgent>(sqlAllMonitors, commandType: CommandType.Text, commandTimeout: 120);
+        var result = await db.QueryAsyncWithRetry<MonitorAgent>(sqlAllMonitors, commandType: CommandType.Text, commandTimeout: 120);
         return result.ToList();
     }
 

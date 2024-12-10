@@ -31,9 +31,9 @@ var configuration = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
-builder.Logging.ClearProviders(); 
-builder.Logging.AddConsole();     
-builder.Logging.AddDebug();      
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 builder.Logging.AddEventSourceLogger();
 
 var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");

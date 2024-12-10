@@ -7,9 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using NSubstitute;
-using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.ControllerTests;
@@ -766,7 +764,7 @@ public class MonitorControllerTests
 
         Assert.NotNull(fileResult);
     }
-    
+
     [Fact]
     public async Task GetMonitorBackupJson_Returns_Forbidden()
     {

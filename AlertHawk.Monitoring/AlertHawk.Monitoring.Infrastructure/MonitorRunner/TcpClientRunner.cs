@@ -2,8 +2,8 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
-using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
+using System.Net.Sockets;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
@@ -13,7 +13,7 @@ public class TcpClientRunner : ITcpClientRunner
     private readonly IMonitorRepository _monitorRepository;
     private readonly IMonitorHistoryRepository _monitorHistoryRepository;
     private readonly ILogger<TcpClientRunner> _logger;
-    
+
     public TcpClientRunner(IMonitorRepository monitorRepository, INotificationProducer notificationProducer, IMonitorHistoryRepository monitorHistoryRepository, ILogger<TcpClientRunner> logger)
     {
         _monitorRepository = monitorRepository;

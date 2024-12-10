@@ -2,9 +2,9 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Net;
-using Microsoft.Extensions.Logging;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
@@ -36,7 +36,7 @@ public class HttpClientRunner : IHttpClientRunner
     {
         int maxRetries = monitorHttp.Retries + 1;
         int retryCount = 0;
-        
+
         _logger.LogInformation($"Checking {monitorHttp.UrlToCheck}");
 
         var monitor = await _monitorRepository.GetMonitorById(monitorHttp.MonitorId);

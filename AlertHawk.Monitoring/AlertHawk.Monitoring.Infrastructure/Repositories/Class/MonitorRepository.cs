@@ -1,11 +1,11 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
+using Hangfire;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
-using Hangfire;
-using Microsoft.Data.SqlClient;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
@@ -202,7 +202,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         // Enqueue the deletion of history as a background job
         BackgroundJob.Enqueue(() => DeleteMonitorHistory(id));
     }
-    
+
     public void DeleteMonitorHistory(int id)
     {
         // This method will be executed in the background

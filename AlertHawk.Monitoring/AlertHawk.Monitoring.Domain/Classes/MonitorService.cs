@@ -7,9 +7,9 @@ using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Domain.Utils;
 using EasyMemoryCache;
 using EasyMemoryCache.Configuration;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
-using Microsoft.Extensions.Logging;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Domain.Classes;
