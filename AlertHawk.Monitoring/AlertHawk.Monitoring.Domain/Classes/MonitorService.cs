@@ -268,7 +268,14 @@ public class MonitorService : IMonitorService
         monitorHttp.Retries = 1;
         monitorHttp.Timeout = 5000;
         monitorHttp.MaxRedirects = 5;
-        await _httpClientRunner.CheckUrlsAsync(monitorHttp);
+        
+        var checkMonitorAfterCreation = Environment.GetEnvironmentVariable("CHECK_MONITOR_AFTER_CREATION");
+
+        if (checkMonitorAfterCreation?.ToLower() is "true")
+        {
+            await _httpClientRunner.CheckUrlsAsync(monitorHttp);
+        }
+
         return id;
     }
 
