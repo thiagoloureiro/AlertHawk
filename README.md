@@ -59,7 +59,7 @@ Create a new account or login with any personal Microsoft Account and try it!
 Thanks to these wonderful people for their contributions to the project:
 
 | [![BulandaK](https://avatars.githubusercontent.com/BulandaK?s=100)](https://github.com/BulandaK) | [![altughan09](https://avatars.githubusercontent.com/altughan09?s=100)](https://github.com/altughan09) | [![guilhermedclima](https://avatars.githubusercontent.com/guilhermedclima?s=100)](https://github.com/guilhermedclima) |  [![pvinicius](https://avatars.githubusercontent.com/pvinicius?s=100)](https://github.com/pvinicius) |
-|:---:|:---:|:---:|
-| [BulandaK](https://github.com/BulandaK) | [altughan09](https://github.com/altughan09) | [guilhermedclima](https://github.com/guilhermedclima) |
+|:---:|:---:|:---:|:---:|
+| [BulandaK](https://github.com/BulandaK) | [altughan09](https://github.com/altughan09) | [guilhermedclima](https://github.com/guilhermedclima) | [pvinicius](https://github.com/pvinicius) |
 
 You can find the full list of contributors [here](https://github.com/thiagoloureiro/AlertHawk/graphs/contributors).
