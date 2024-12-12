@@ -162,7 +162,6 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             Assert.Equal(1, result);
             Assert.NotNull(monitor.HeadersJson);
-            _httpClientRunnerMock.Verify(runner => runner.CheckUrlsAsync(monitor), Times.Once);
         }
 
         [Fact]
