@@ -10,13 +10,13 @@
         <PackageReference Include="Azure.Storage.Blobs" Version="12.23.0" />
         <PackageReference Include="Dapper" Version="2.1.44" />
         <PackageReference Include="EasyMemoryCache" Version="3.0.1" />
-        <PackageReference Include="EPPlus" Version="7.5.1" />
+        <PackageReference Include="EPPlus" Version="7.5.2" />
         <PackageReference Include="Hangfire.Core" Version="1.8.17" />
-        <PackageReference Include="MassTransit.Abstractions" Version="8.3.3" />
+        <PackageReference Include="MassTransit.Abstractions" Version="8.3.4" />
         <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
         <PackageReference Include="Polly" Version="8.5.0" />
-        <PackageReference Include="Sentry" Version="4.13.0" />
+        <PackageReference Include="Sentry" Version="5.0.0" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AlertHawk.Monitoring.Domain\AlertHawk.Monitoring.Domain.csproj" />
