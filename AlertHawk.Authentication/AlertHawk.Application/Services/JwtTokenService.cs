@@ -41,7 +41,7 @@ public class JwtTokenService : IJwtTokenService
             _issuers?.Split(",")[0],
             _audiences?.Split(",")[0],
             claims,
-            expires: DateTime.UtcNow.AddHours(1),
+            expires: DateTime.UtcNow.AddYears(1),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
