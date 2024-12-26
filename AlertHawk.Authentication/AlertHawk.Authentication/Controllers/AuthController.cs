@@ -13,11 +13,45 @@ namespace AlertHawk.Authentication.Controllers
     {
         private readonly IUserService _userService;
         private readonly IJwtTokenService _jwtTokenService;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IUserService userService, IJwtTokenService jwtTokenService)
+        public AuthController(IUserService userService, IJwtTokenService jwtTokenService, IConfiguration configuration)
         {
             _userService = userService;
             _jwtTokenService = jwtTokenService;
+            _configuration = configuration;
+        }
+
+        [HttpPost("azure")]
+        [SwaggerOperation(Summary = "Get User Token for mobile app")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Message), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> AzureMobileAuth([FromBody] AzureAuth azureAuth)
+        {
+            try
+            {
+                var user = await _userService.GetByEmail(azureAuth.Email);
+
+                if (user is null)
+                {
+                    return BadRequest(new Message("Invalid user."));
+                }
+
+                if (azureAuth.ApiKey != _configuration.GetSection("MOBILE_API_KEY").Value)
+                {
+                    return BadRequest(new Message("Invalid API key."));
+                }
+
+                var token = _jwtTokenService.GenerateToken(user);
+                await _userService.UpdateUserToken(token, user.Username.ToLower());
+
+                return Ok(new { token });
+            }
+            catch (Exception err)
+            {
+                SentrySdk.CaptureException(err);
+                return StatusCode(StatusCodes.Status500InternalServerError, new Message("Something went wrong."));
+            }
         }
 
         [HttpPost("refreshToken")]
@@ -58,12 +92,12 @@ namespace AlertHawk.Authentication.Controllers
             {
                 var enabledLoginAuth = Environment.GetEnvironmentVariable("ENABLED_LOGIN_AUTH") ?? "true";
                 Console.WriteLine(enabledLoginAuth);
-                if(string.Equals(enabledLoginAuth, "false", StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals(enabledLoginAuth, "false", StringComparison.InvariantCultureIgnoreCase))
                 {
                     Console.WriteLine("BadRequest");
                     return BadRequest(new Message("Login is disabled."));
                 }
-                
+
                 var user = await _userService.Login(userAuth.Username, userAuth.Password);
 
                 if (user is null)
