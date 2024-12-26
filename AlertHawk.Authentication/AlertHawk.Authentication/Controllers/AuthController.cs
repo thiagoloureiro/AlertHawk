@@ -13,13 +13,15 @@ namespace AlertHawk.Authentication.Controllers
     {
         private readonly IUserService _userService;
         private readonly IJwtTokenService _jwtTokenService;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IUserService userService, IJwtTokenService jwtTokenService)
+        public AuthController(IUserService userService, IJwtTokenService jwtTokenService, IConfiguration configuration)
         {
             _userService = userService;
             _jwtTokenService = jwtTokenService;
+            _configuration = configuration;
         }
-        
+
         [HttpPost("azure")]
         [SwaggerOperation(Summary = "Get User Token for mobile app")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -34,8 +36,8 @@ namespace AlertHawk.Authentication.Controllers
                 {
                     return BadRequest(new Message("Invalid user."));
                 }
-                
-                if(azureAuth.ApiKey != Environment.GetEnvironmentVariable("MOBILE_API_KEY"))
+
+                if (azureAuth.ApiKey != _configuration.GetSection("MOBILE_API_KEY").Value)
                 {
                     return BadRequest(new Message("Invalid API key."));
                 }
@@ -90,12 +92,12 @@ namespace AlertHawk.Authentication.Controllers
             {
                 var enabledLoginAuth = Environment.GetEnvironmentVariable("ENABLED_LOGIN_AUTH") ?? "true";
                 Console.WriteLine(enabledLoginAuth);
-                if(string.Equals(enabledLoginAuth, "false", StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals(enabledLoginAuth, "false", StringComparison.InvariantCultureIgnoreCase))
                 {
                     Console.WriteLine("BadRequest");
                     return BadRequest(new Message("Login is disabled."));
                 }
-                
+
                 var user = await _userService.Login(userAuth.Username, userAuth.Password);
 
                 if (user is null)

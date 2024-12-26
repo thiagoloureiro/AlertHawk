@@ -6,6 +6,7 @@ using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Authentication.Tests.Builders;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Moq;
 
 namespace AlertHawk.Authentication.Tests.ControllerTests;
@@ -14,13 +15,15 @@ public class AuthControllerTests
 {
     private readonly Mock<IUserService> _mockUserService;
     private readonly Mock<IJwtTokenService> _mockJwtTokenService;
+    private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly AuthController _controller;
 
     public AuthControllerTests()
     {
         _mockUserService = new Mock<IUserService>();
         _mockJwtTokenService = new Mock<IJwtTokenService>();
-        _controller = new AuthController(_mockUserService.Object, _mockJwtTokenService.Object)
+        _mockConfiguration = new Mock<IConfiguration>();
+        _controller = new AuthController(_mockUserService.Object, _mockJwtTokenService.Object, _mockConfiguration.Object)
         {
             ControllerContext = new ControllerContext
             {
