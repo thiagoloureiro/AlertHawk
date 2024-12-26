@@ -19,6 +19,38 @@ namespace AlertHawk.Authentication.Controllers
             _userService = userService;
             _jwtTokenService = jwtTokenService;
         }
+        
+        [HttpPost("azure")]
+        [SwaggerOperation(Summary = "Get User Token for mobile app")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Message), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> AzureMobileAuth([FromBody] AzureAuth azureAuth)
+        {
+            try
+            {
+                var user = await _userService.GetByEmail(azureAuth.Email);
+
+                if (user is null)
+                {
+                    return BadRequest(new Message("Invalid user."));
+                }
+                
+                if(azureAuth.ApiKey != Environment.GetEnvironmentVariable("MOBILE_API_KEY"))
+                {
+                    return BadRequest(new Message("Invalid API key."));
+                }
+
+                var token = _jwtTokenService.GenerateToken(user);
+                await _userService.UpdateUserToken(token, user.Username.ToLower());
+
+                return Ok(new { token });
+            }
+            catch (Exception err)
+            {
+                SentrySdk.CaptureException(err);
+                return StatusCode(StatusCodes.Status500InternalServerError, new Message("Something went wrong."));
+            }
+        }
 
         [HttpPost("refreshToken")]
         [SwaggerOperation(Summary = "Refresh User Token")]
