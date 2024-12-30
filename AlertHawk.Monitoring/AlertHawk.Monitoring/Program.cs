@@ -41,6 +41,8 @@ var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
 var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
 var sentryEnabled = configuration.GetValue<string>("Sentry:Enabled") ?? "false";
 
+var cacheFrequency = configuration.GetValue<string>("DataCacheFrequencyCron") ?? "*/2 * * * *"; 
+
 if (string.Equals(sentryEnabled, "true", StringComparison.InvariantCultureIgnoreCase))
 {
     builder.WebHost.UseSentry(options =>
@@ -196,7 +198,7 @@ recurringJobManager.AddOrUpdate<IMonitorManager>("StartMasterMonitorAgentTaskMan
 recurringJobManager.AddOrUpdate<IMonitorManager>("StartRunnerManager", x => x.StartRunnerManager(), "*/25 * * * * *");
 
 recurringJobManager.AddOrUpdate<IMonitorService>("SetMonitorDashboardDataCacheList",
-    x => x.SetMonitorDashboardDataCacheList(), "*/2 * * * *");
+    x => x.SetMonitorDashboardDataCacheList(), cacheFrequency);
 
 recurringJobManager.AddOrUpdate<IMonitorManager>("CleanMonitorHistoryTask",
     x => x.CleanMonitorHistoryTask(), "0 0 * * *");
