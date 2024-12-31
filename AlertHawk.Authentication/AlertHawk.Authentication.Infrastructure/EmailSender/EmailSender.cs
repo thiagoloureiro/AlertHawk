@@ -46,7 +46,7 @@ public static class EmailSender
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error sending email: {ex.Message}");
+            Console.WriteLine($"Error sending email: {ex.Message}, To: {to} Subject: {subject} Body: {body} smtpServer: {smtpServer} username: {username}, enableSsl: {useSsl}");
         }
     }
 }
