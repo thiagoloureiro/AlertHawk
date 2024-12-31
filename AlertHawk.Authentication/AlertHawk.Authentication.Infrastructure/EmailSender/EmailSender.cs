@@ -20,15 +20,16 @@ public static class EmailSender
         }
 
         // Initialize your static fields here if needed
-        var smtpServer = Environment.GetEnvironmentVariable("smtpHost") ?? "smtp.office365.com";
+        var smtpServer = Environment.GetEnvironmentVariable("smtpHost") ?? string.Empty;
         var username = Environment.GetEnvironmentVariable("smtpUsername") ?? string.Empty;
         var password = Environment.GetEnvironmentVariable("smtpPassword") ?? string.Empty;
-
+        var smtpFrom = Environment.GetEnvironmentVariable("smtpFrom") ?? string.Empty;
+        
         try
         {
             using (MailMessage mail = new MailMessage())
             {
-                mail.From = new MailAddress(username);
+                mail.From = new MailAddress(smtpFrom);
                 mail.To.Add(to);
                 mail.Subject = subject;
                 mail.Body = body;
