@@ -102,6 +102,25 @@ public class UserRepository : BaseRepository, IUserRepository
         return _mapper.Map<UserDto>(user);
     }
 
+    public async Task<IEnumerable<string>?> GetUserDeviceTokenList(Guid userId)
+    {
+        const string sql = "SELECT DeviceToken FROM Users WHERE Id = @userId";
+        var list = await ExecuteQueryAsyncWithParameters<string>(sql, new { userId });
+        return list;
+    }
+
+    public async Task UpdateUserDeviceToken(string deviceToken, Guid userId)
+    {
+        var userTokenList = await GetUserDeviceTokenList(userId);
+        if (userTokenList != null && userTokenList.Contains(deviceToken))
+        {
+            return;
+        }
+        
+        const string sql = "INSERT INTO UserDeviceToken (UserId, DeviceToken) VALUES (UserId, @deviceToken)";
+        await ExecuteNonQueryAsync(sql, new { userId, deviceToken });
+    }
+
     public async Task Create(UserCreation userCreation)
     {
         string checkExistingUserSql = "SELECT Id FROM Users WHERE LOWER(Email) = @Email";

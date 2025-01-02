@@ -32,4 +32,6 @@ public interface IUserRepository
     Task UpdatePassword(string email, string password);
 
     Task<UserDto?> LoginWithEmail(string email, string userPasswordCurrentPassword);
+    Task UpdateUserDeviceToken(string deviceToken, Guid userId);
+    Task<IEnumerable<string>?> GetUserDeviceTokenList(Guid userId);
 }

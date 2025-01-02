@@ -271,6 +271,29 @@ public class UserController : Controller
         return Ok(await GetUserByToken());
     }
 
+    [HttpPost("UpdateUserDeviceToken")]
+    [SwaggerOperation(Summary = "Update user device token")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateUserDeviceToken([FromBody] UserDeviceToken userDeviceToken)
+    {
+        var user = await GetUserByToken();
+        if (user == null)
+        {
+            return BadRequest();
+        }
+
+        await _userService.UpdateUserDeviceToken(userDeviceToken.DeviceToken, user.Id);
+        return Ok();
+    }
+    
+    [HttpGet("GetUserDeviceTokenList")]
+    [SwaggerOperation(Summary = "GetUserDeviceTokenList")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUserDeviceTokenList(Guid userId)
+    {
+        return Ok(await _userService.GetUserDeviceTokenList(userId));
+    }
+
     private async Task<UserDto?> GetUserByToken()
     {
         return await _getOrCreateUserService.GetUserOrCreateUser(User);
