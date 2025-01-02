@@ -104,7 +104,7 @@ public class UserRepository : BaseRepository, IUserRepository
 
     public async Task<IEnumerable<string>?> GetUserDeviceTokenList(Guid userId)
     {
-        const string sql = "SELECT DeviceToken FROM Users WHERE Id = @userId";
+        const string sql = "SELECT DeviceToken FROM UserDeviceToken WHERE Id = @userId";
         var list = await ExecuteQueryAsyncWithParameters<string>(sql, new { userId });
         return list;
     }
