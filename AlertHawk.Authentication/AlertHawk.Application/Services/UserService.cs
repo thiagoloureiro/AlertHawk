@@ -114,4 +114,14 @@ public class UserService : IUserService
 
         return null;
     }
+
+    public async Task UpdateUserDeviceToken(string deviceToken, Guid userId)
+    {
+        await _userRepository.UpdateUserDeviceToken(deviceToken, userId);
+    }
+
+    public async Task<IEnumerable<string>?> GetUserDeviceTokenList(Guid userId)
+    {
+        return await _userRepository.GetUserDeviceTokenList(userId);
+    }
 }
