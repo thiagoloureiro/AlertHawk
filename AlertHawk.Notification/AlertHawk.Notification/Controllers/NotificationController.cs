@@ -44,12 +44,12 @@ namespace AlertHawk.Notification.Controllers
                     {
                         data = new PushNotificationData
                         {
-                            message = "Test Notification"
+                            message = notification.Message
                         },
                         notification = new PushNotificationItem
                         {
                             title = "Test Notification",
-                            body = "Test Notification",
+                            body = notification.Message,
                             badge = 1
                         }
                     }
