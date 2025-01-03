@@ -1,9 +1,11 @@
-﻿using AlertHawk.Notification.Domain.Entities;
+﻿using System.Net.Http.Headers;
+using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Services;
 using AlertHawk.Notification.Domain.Utils;
 using AlertHawk.Notification.Infrastructure.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace AlertHawk.Notification.Controllers
@@ -31,7 +33,33 @@ namespace AlertHawk.Notification.Controllers
                     AesEncryption.EncryptString(notification.NotificationEmail.Password);
             }
 
+            if (notification.NotificationTypeId == 6)
+            {
+                var deviceTokenList =
+                    await _notificationService.GetDeviceTokenList(notification.MonitorGroupId);
+
+                notification.NotificationPush.PushNotificationBody.data = new PushNotificationData
+                {
+                    message = "Test Notification"
+                };
+                notification.NotificationPush.PushNotificationBody.notification = new PushNotificationItem
+                {
+                    title = "Test Notification",
+                    body = "Test Notification",
+                    badge = 1
+                };
+
+                foreach (var deviceToken in deviceTokenList)
+                {
+                    notification.NotificationPush.PushNotificationBody.to = deviceToken;
+                    await _notificationService.Send(notification);
+                }
+
+                return Ok(true);
+            }
+
             var result = await _notificationService.Send(notification);
+
             return Ok(result);
         }
 

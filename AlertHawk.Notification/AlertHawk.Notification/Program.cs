@@ -83,6 +83,7 @@ builder.Services.AddTransient<ISlackNotifier, SlackNotifier>();
 builder.Services.AddTransient<ITeamsNotifier, TeamsNotifier>();
 builder.Services.AddTransient<ITelegramNotifier, TelegramNotifier>();
 builder.Services.AddTransient<IWebHookNotifier, WebHookNotifier>();
+builder.Services.AddTransient<IPushNotifier, PushNotifier>();
 
 if (string.Equals(sentryEnabled, "true", StringComparison.InvariantCultureIgnoreCase))
 {

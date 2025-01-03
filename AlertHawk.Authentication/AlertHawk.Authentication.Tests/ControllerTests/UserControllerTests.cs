@@ -639,5 +639,345 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             Assert.IsType<BadRequestObjectResult>(response);
             Environment.SetEnvironmentVariable("ENABLED_LOGIN_AUTH", "true");
         }
+
+        [Fact]
+        public async Task GetAllByGroupId_ValidGroupId_ReturnsOkWithUsers()
+        {
+            // Arrange
+            int groupId = 1;
+            var users = new List<UserDto> { new UsersBuilder().WithUserEmailAndAdminIsFalse("") };
+            _mockUserService.Setup(s => s.GetAllByGroupId(groupId)).ReturnsAsync(users);
+
+            // Act
+            var result = await _controller.GetAllByGroupId(groupId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedUsers = Assert.IsType<List<UserDto>>(okResult.Value);
+            Assert.Equal(users, returnedUsers);
+        }
+
+        [Fact]
+        public async Task GetAllByGroupId_NoUsersInGroup_ReturnsOkWithEmptyList()
+        {
+            // Arrange
+            int groupId = 1;
+            var emptyList = new List<UserDto>();
+            _mockUserService.Setup(s => s.GetAllByGroupId(groupId)).ReturnsAsync(emptyList);
+
+            // Act
+            var result = await _controller.GetAllByGroupId(groupId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedUsers = Assert.IsType<List<UserDto>>(okResult.Value);
+            Assert.Empty(returnedUsers);
+        }
+
+        [Fact]
+        public async Task GetAllByGroupId_ServiceThrowsException_ReturnsOkWithNull()
+        {
+            // Arrange
+            int groupId = 1;
+            _mockUserService.Setup(s => s.GetAllByGroupId(groupId)).ReturnsAsync((List<UserDto>)null);
+
+            // Act
+            var result = await _controller.GetAllByGroupId(groupId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Null(okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetUserDeviceTokenList_ValidUser_ReturnsOkWithTokenList()
+        {
+            // Arrange
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
+            var deviceTokens = new List<string> { "token1", "token2" };
+
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            _mockUserService.Setup(s => s.GetUserDeviceTokenList(user.Id))
+                .ReturnsAsync(deviceTokens);
+
+            // Act
+            var result = await _controller.GetUserDeviceTokenList();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedTokens = Assert.IsType<List<string>>(okResult.Value);
+            Assert.Equal(deviceTokens, returnedTokens);
+        }
+
+        [Fact]
+        public async Task GetUserDeviceTokenList_NullUser_ReturnsBadRequest()
+        {
+            // Arrange
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync((UserDto)null);
+
+            // Act
+            var result = await _controller.GetUserDeviceTokenList();
+
+            // Assert
+            Assert.IsType<BadRequestResult>(result);
+        }
+
+        [Fact]
+        public async Task GetUserDeviceTokenList_NoTokens_ReturnsOkWithEmptyList()
+        {
+            // Arrange
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
+            var emptyTokenList = new List<string>();
+
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            _mockUserService.Setup(s => s.GetUserDeviceTokenList(user.Id))
+                .ReturnsAsync(emptyTokenList);
+
+            // Act
+            var result = await _controller.GetUserDeviceTokenList();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedTokens = Assert.IsType<List<string>>(okResult.Value);
+            Assert.Empty(returnedTokens);
+        }
+
+        [Fact]
+        public async Task GetUserDeviceTokenList_ServiceReturnsNull_ReturnsOkWithNull()
+        {
+            // Arrange
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
+
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            _mockUserService.Setup(s => s.GetUserDeviceTokenList(user.Id))
+                .ReturnsAsync((List<string>)null);
+
+            // Act
+            var result = await _controller.GetUserDeviceTokenList();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Null(okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetUserDeviceTokenListByUserId_ValidUserId_ReturnsOkWithTokenList()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var deviceTokens = new List<string> { "token1", "token2" };
+
+            _mockUserService.Setup(s => s.GetUserDeviceTokenList(userId))
+                .ReturnsAsync(deviceTokens);
+
+            // Act
+            var result = await _controller.GetUserDeviceTokenListByUserId(userId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedTokens = Assert.IsType<List<string>>(okResult.Value);
+            Assert.Equal(deviceTokens, returnedTokens);
+        }
+
+        [Fact]
+        public async Task GetUserDeviceTokenListByUserId_NoTokens_ReturnsOkWithEmptyList()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var emptyTokenList = new List<string>();
+
+            _mockUserService.Setup(s => s.GetUserDeviceTokenList(userId))
+                .ReturnsAsync(emptyTokenList);
+
+            // Act
+            var result = await _controller.GetUserDeviceTokenListByUserId(userId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedTokens = Assert.IsType<List<string>>(okResult.Value);
+            Assert.Empty(returnedTokens);
+        }
+
+        [Fact]
+        public async Task GetUserDeviceTokenListByUserId_ServiceReturnsNull_ReturnsOkWithNull()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+
+            _mockUserService.Setup(s => s.GetUserDeviceTokenList(userId))
+                .ReturnsAsync((List<string>)null);
+
+            // Act
+            var result = await _controller.GetUserDeviceTokenListByUserId(userId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Null(okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetUserDeviceTokenListByGroupId_ValidGroupId_ReturnsOkWithTokenList()
+        {
+            // Arrange
+            int groupId = 1;
+            var deviceTokens = new List<string> { "token1", "token2" };
+
+            _mockUserService.Setup(s => s.GetUserDeviceTokenListByGroupId(groupId))
+                .ReturnsAsync(deviceTokens);
+
+            // Act
+            var result = await _controller.GetUserDeviceTokenListByGroupId(groupId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedTokens = Assert.IsType<List<string>>(okResult.Value);
+            Assert.Equal(deviceTokens, returnedTokens);
+        }
+
+        [Fact]
+        public async Task GetUserDeviceTokenListByGroupId_NoTokens_ReturnsOkWithEmptyList()
+        {
+            // Arrange
+            int groupId = 1;
+            var emptyTokenList = new List<string>();
+
+            _mockUserService.Setup(s => s.GetUserDeviceTokenListByGroupId(groupId))
+                .ReturnsAsync(emptyTokenList);
+
+            // Act
+            var result = await _controller.GetUserDeviceTokenListByGroupId(groupId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedTokens = Assert.IsType<List<string>>(okResult.Value);
+            Assert.Empty(returnedTokens);
+        }
+
+        [Fact]
+        public async Task GetUserDeviceTokenListByGroupId_ServiceReturnsNull_ReturnsOkWithNull()
+        {
+            // Arrange
+            int groupId = 1;
+
+            _mockUserService.Setup(s => s.GetUserDeviceTokenListByGroupId(groupId))
+                .ReturnsAsync((List<string>)null);
+
+            // Act
+            var result = await _controller.GetUserDeviceTokenListByGroupId(groupId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Null(okResult.Value);
+        }
+
+        [Fact]
+        public async Task Get_ExistingEmail_ReturnsOkWithExistingUser()
+        {
+            // Arrange
+            var email = "test@example.com";
+            var existingUser = new UsersBuilder().WithUserEmailAndAdminIsFalse(email);
+
+            _mockUserService.Setup(s => s.GetByEmail(email))
+                .ReturnsAsync(existingUser);
+
+            // Act
+            var result = await _controller.Get(email);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedUser = Assert.IsType<UserDto>(okResult.Value);
+            Assert.Equal(existingUser, returnedUser);
+
+            // Verify GetUserOrCreateUser was not called since user exists
+            _mockGetOrCreateUserService.Verify(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task Get_NonExistingEmail_CreatesAndReturnsNewUser()
+        {
+            // Arrange
+            var email = "newuser@example.com";
+            var newUser = new UsersBuilder().WithUserEmailAndAdminIsFalse(email);
+
+            _mockUserService.Setup(s => s.GetByEmail(email))
+                .ReturnsAsync((UserDto)null);
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(newUser);
+
+            // Act
+            var result = await _controller.Get(email);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            var returnedUser = Assert.IsType<UserDto>(okResult.Value);
+            Assert.Equal(newUser, returnedUser);
+
+            // Verify GetUserOrCreateUser was called since user didn't exist
+            _mockGetOrCreateUserService.Verify(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task Get_NonExistingEmailAndCreationFails_ReturnsOkWithNull()
+        {
+            // Arrange
+            var email = "newuser@example.com";
+
+            _mockUserService.Setup(s => s.GetByEmail(email))
+                .ReturnsAsync((UserDto)null);
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync((UserDto)null);
+
+            // Act
+            var result = await _controller.Get(email);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Null(okResult.Value);
+
+            // Verify both methods were called
+            _mockUserService.Verify(s => s.GetByEmail(email), Times.Once);
+            _mockGetOrCreateUserService.Verify(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateUserDeviceToken_ValidUser_ReturnsOk()
+        {
+            // Arrange
+            var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
+            var deviceToken = new UserDeviceToken { DeviceToken = "token123", Id = Guid.NewGuid() };
+
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(user);
+            _mockUserService.Setup(s => s.UpdateUserDeviceToken(deviceToken.DeviceToken, user.Id))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _controller.UpdateUserDeviceToken(deviceToken);
+
+            // Assert
+            Assert.IsType<OkResult>(result);
+            _mockUserService.Verify(s => s.UpdateUserDeviceToken(deviceToken.DeviceToken, user.Id), Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateUserDeviceToken_NullUser_ReturnsBadRequest()
+        {
+            // Arrange
+            var deviceToken = new UserDeviceToken { DeviceToken = "token123" };
+
+            _mockGetOrCreateUserService.Setup(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync((UserDto)null);
+
+            // Act
+            var result = await _controller.UpdateUserDeviceToken(deviceToken);
+
+            // Assert
+            Assert.IsType<BadRequestResult>(result);
+            _mockUserService.Verify(s => s.UpdateUserDeviceToken(It.IsAny<string>(), It.IsAny<Guid>()), Times.Never);
+        }
     }
 }

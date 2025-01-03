@@ -189,6 +189,17 @@ public class UserController : Controller
 
         return Ok(await _userService.GetAll());
     }
+    
+    [HttpGet("GetAllByGroupId/{groupId}")]
+    [SwaggerOperation(Summary = "Get All Users by GroupId")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [Authorize()]
+    public async Task<IActionResult> GetAllByGroupId(int groupId)
+    {
+        return Ok(await _userService.GetAllByGroupId(groupId));
+    }
 
     private async Task<bool> IsUserAdmin()
     {
@@ -287,7 +298,7 @@ public class UserController : Controller
     }
     
     [HttpGet("GetUserDeviceTokenList")]
-    [SwaggerOperation(Summary = "GetUserDeviceTokenList")]
+    [SwaggerOperation(Summary = "GetUserDeviceTokenList by Bearer Token")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUserDeviceTokenList()
     {
@@ -298,6 +309,23 @@ public class UserController : Controller
         }
 
         return Ok(await _userService.GetUserDeviceTokenList(user.Id));
+    }
+    
+    [HttpGet("GetUserDeviceTokenListByUserId/{userId}")]
+    [SwaggerOperation(Summary = "GetUserDeviceTokenList by userId")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUserDeviceTokenListByUserId(Guid userId)
+    {
+        return Ok(await _userService.GetUserDeviceTokenList(userId));
+    }
+    
+    [AllowAnonymous]
+    [HttpGet("GetUserDeviceTokenListByGroupId/{groupId}")]
+    [SwaggerOperation(Summary = "GetUserDeviceTokenList by groupId")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUserDeviceTokenListByGroupId(int groupId)
+    {
+        return Ok(await _userService.GetUserDeviceTokenListByGroupId(groupId));
     }
 
     private async Task<UserDto?> GetUserByToken()

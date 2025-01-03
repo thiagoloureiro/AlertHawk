@@ -17,10 +17,11 @@ namespace AlertHawk.Notification.Domain.Classes
         private readonly ITelegramNotifier _telegramNotifier;
         private readonly INotificationRepository _notificationRepository;
         private readonly IWebHookNotifier _webHookNotifier;
+        private readonly IPushNotifier _pushNotifier;
 
         public NotificationService(IMailNotifier mailNotifier, ISlackNotifier slackNotifier,
             ITeamsNotifier teamsNotifier, ITelegramNotifier telegramNotifier,
-            INotificationRepository notificationRepository, IWebHookNotifier webHookNotifier)
+            INotificationRepository notificationRepository, IWebHookNotifier webHookNotifier, IPushNotifier pushNotifier)
         {
             _mailNotifier = mailNotifier;
             _slackNotifier = slackNotifier;
@@ -28,6 +29,7 @@ namespace AlertHawk.Notification.Domain.Classes
             _telegramNotifier = telegramNotifier;
             _notificationRepository = notificationRepository;
             _webHookNotifier = webHookNotifier;
+            _pushNotifier = pushNotifier;
         }
 
         public async Task<bool> Send(NotificationSend notificationSend)
@@ -86,7 +88,13 @@ namespace AlertHawk.Notification.Domain.Classes
                             notificationSend.NotificationWebHook.Body, notificationSend.NotificationWebHook.Headers);
                         await InsertNotificationLog(notificationLog);
                         return true;
-
+                    
+                    case 6: // Push
+                        notificationLog.Message =
+                            $"Push Notification Message:{notificationSend.Message} To Device: {notificationSend.NotificationPush.PushNotificationBody.to}";
+                        await _pushNotifier.SendNotification(notificationSend.Message,
+                            notificationSend.NotificationPush);
+                        return true;
                     default:
                         Console.WriteLine($"Not found NotificationTypeId: {notificationSend.NotificationTypeId}");
                         break;
@@ -204,6 +212,20 @@ namespace AlertHawk.Notification.Domain.Classes
         public async Task ClearNotificationStatistics()
         {
             await _notificationRepository.ClearNotificationStatistics();
+        }
+
+        public async Task<IEnumerable<string>> GetDeviceTokenList(int monitorGroupId)
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
+            client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
+            client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+            client.DefaultRequestHeaders.Add("Accept", "*/*");
+                
+            var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL");
+            var content = await client.GetAsync($"{authApi}api/UserController/GetUserDeviceTokenListByGroupId/{monitorGroupId}");
+            var userTokenStr = await content.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<string>>(userTokenStr);
         }
     }
 }

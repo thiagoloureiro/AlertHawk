@@ -10,5 +10,6 @@
 
         public static string TeamsWebHookUrl { get; set; } = "teamswebhookurl-replace";
         public static string WebHookUrl { get; set; } = "webhookurl-replace";
+        public static string PushyApiKey { get; set; } = "pushyapikey-replace";
     }
 }

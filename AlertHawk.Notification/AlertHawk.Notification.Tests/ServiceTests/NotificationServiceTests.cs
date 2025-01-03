@@ -15,6 +15,7 @@ public class NotificationServiceTests
     private readonly IWebHookNotifier _webHookNotifier;
     private readonly NotificationService _notificationService;
     private readonly INotificationRepository _notificationRepository;
+    private readonly IPushNotifier _pushNotifier;
 
     public NotificationServiceTests()
     {
@@ -24,8 +25,9 @@ public class NotificationServiceTests
         _telegramNotifier = Substitute.For<ITelegramNotifier>();
         _slackNotifier = Substitute.For<ISlackNotifier>();
         _webHookNotifier = Substitute.For<IWebHookNotifier>();
+        _pushNotifier = Substitute.For<IPushNotifier>();
         _notificationService = new NotificationService(
-            _mailNotifier, _slackNotifier, _teamsNotifier, _telegramNotifier, _notificationRepository, _webHookNotifier);
+            _mailNotifier, _slackNotifier, _teamsNotifier, _telegramNotifier, _notificationRepository, _webHookNotifier, _pushNotifier);
     }
 
     [Fact]
@@ -181,14 +183,16 @@ public class NotificationServiceTests
         var telegramNotifier = Substitute.For<ITelegramNotifier>();
         notificationRepository = Substitute.For<INotificationRepository>();
         var webHookNotifier = Substitute.For<IWebHookNotifier>();
-
+        var pushNotifier = Substitute.For<IPushNotifier>();
+        
         notificationService = new NotificationService(
             mailNotifier,
             slackNotifier,
             teamsNotifier,
             telegramNotifier,
             notificationRepository,
-            webHookNotifier
+            webHookNotifier,
+            pushNotifier
         );
         return notificationItem;
     }
@@ -209,14 +213,16 @@ public class NotificationServiceTests
         var telegramNotifier = Substitute.For<ITelegramNotifier>();
         notificationRepository = Substitute.For<INotificationRepository>();
         var webHookNotifier = Substitute.For<IWebHookNotifier>();
-
+        var pushNotifier = Substitute.For<IPushNotifier>();
+        
         notificationService = new NotificationService(
             mailNotifier,
             slackNotifier,
             teamsNotifier,
             telegramNotifier,
             notificationRepository,
-            webHookNotifier
+            webHookNotifier,
+            pushNotifier
         );
 
         return notificationLog;

@@ -83,6 +83,25 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
             };
             await _notificationService.Send(notificationSend);
         }
+        
+        if (notificationItem?.NotificationPush != null)
+        {
+            var deviceTokenList = await _notificationService.GetDeviceTokenList(notificationItem.MonitorGroupId);
+
+            foreach (var token in deviceTokenList)
+            {
+                Console.WriteLine("Sending Push notification to device token: " + token);
+                notificationItem.NotificationPush.PushNotificationBody.to = token;
+                
+                var notificationSend = new NotificationSend
+                {
+                    NotificationPush = notificationItem.NotificationPush,
+                    Message = context.Message.Message,
+                    NotificationTypeId = notificationItem.NotificationTypeId,
+                };
+                await _notificationService.Send(notificationSend);
+            }
+        }
 
         // Handle the received message
         Console.WriteLine(
