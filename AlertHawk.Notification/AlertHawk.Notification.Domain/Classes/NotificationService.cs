@@ -185,8 +185,8 @@ namespace AlertHawk.Notification.Domain.Classes
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL") ??
-                          "https://dev.api.monitoring.electrificationtools.abb.com/auth/";
+            var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL");
+            
             var content = await client.GetAsync($"{authApi}api/UsersMonitorGroup/GetAll");
             var result = await content.Content.ReadAsStringAsync();
             var groupMonitorIds = JsonConvert.DeserializeObject<List<UsersMonitorGroup>>(result);
@@ -220,7 +220,7 @@ namespace AlertHawk.Notification.Domain.Classes
             client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
             client.DefaultRequestHeaders.Add("Connection", "keep-alive");
             client.DefaultRequestHeaders.Add("Accept", "*/*");
-                
+
             var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL");
             var content = await client.GetAsync($"{authApi}api/User/GetUserDeviceTokenListByGroupId/{monitorGroupId}");
             var userTokenStr = await content.Content.ReadAsStringAsync();
