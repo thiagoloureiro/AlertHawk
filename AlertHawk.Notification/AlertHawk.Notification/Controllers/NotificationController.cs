@@ -37,16 +37,21 @@ namespace AlertHawk.Notification.Controllers
             {
                 var deviceTokenList =
                     await _notificationService.GetDeviceTokenList(notification.MonitorGroupId);
-
-                notification.NotificationPush.PushNotificationBody.data = new PushNotificationData
+                notification.NotificationPush = new NotificationPush
                 {
-                    message = "Test Notification"
-                };
-                notification.NotificationPush.PushNotificationBody.notification = new PushNotificationItem
-                {
-                    title = "Test Notification",
-                    body = "Test Notification",
-                    badge = 1
+                    PushNotificationBody =
+                    {
+                        data = new PushNotificationData
+                        {
+                            message = "Test Notification"
+                        },
+                        notification = new PushNotificationItem
+                        {
+                            title = "Test Notification",
+                            body = "Test Notification",
+                            badge = 1
+                        }
+                    }
                 };
 
                 foreach (var deviceToken in deviceTokenList)
