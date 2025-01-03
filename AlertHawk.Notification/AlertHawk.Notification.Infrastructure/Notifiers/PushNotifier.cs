@@ -13,8 +13,8 @@ public class PushNotifier: IPushNotifier
         using var client = new HttpClient();
         client.BaseAddress = new Uri("https://api.pushy.me");
         
-        notificationPush.PushNotificationBody.data.message = notificationPush.PushNotificationBody.data.message.Contains("Success") ? "\u2705 " + message : "\\n\u274c " + message;
-        notificationPush.PushNotificationBody.notification.body = notificationPush.PushNotificationBody.notification.body.Contains("Success") ? "\u2705 " + message : "\\n\u274c " + message;
+        notificationPush.PushNotificationBody.data.message = notificationPush.PushNotificationBody.data.message.Contains("Success") ? "\u2705 " + message : "\u274c " + message;
+        notificationPush.PushNotificationBody.notification.body = notificationPush.PushNotificationBody.notification.body.Contains("Success") ? "\u2705 " + message : "\u274c " + message;
 
         var body = JsonSerializer.Serialize(notificationPush.PushNotificationBody);
         
