@@ -35,4 +35,5 @@ public interface IUserRepository
     Task UpdateUserDeviceToken(string deviceToken, Guid userId);
     Task<IEnumerable<string>?> GetUserDeviceTokenList(Guid userId);
     Task<IEnumerable<UserDto>?> GetAllByGroupId(int groupId);
+    Task<IEnumerable<UserDeviceToken>?> GetUserDeviceTokenList();
 }

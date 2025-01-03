@@ -108,6 +108,13 @@ public class UserRepository : BaseRepository, IUserRepository
         var list = await ExecuteQueryAsyncWithParameters<string>(sql, new { userId });
         return list;
     }
+    
+    public async Task<IEnumerable<UserDeviceToken>?> GetUserDeviceTokenList()
+    {
+        const string sql = "SELECT DeviceToken FROM UserDeviceToken";
+        var list = await ExecuteQueryAsync<UserDeviceToken>(sql);
+        return list;
+    }
 
     public async Task<IEnumerable<UserDto>?> GetAllByGroupId(int groupId)
     {

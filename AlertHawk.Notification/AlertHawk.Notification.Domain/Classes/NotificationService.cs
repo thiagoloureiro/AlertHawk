@@ -18,7 +18,6 @@ namespace AlertHawk.Notification.Domain.Classes
         private readonly INotificationRepository _notificationRepository;
         private readonly IWebHookNotifier _webHookNotifier;
         private readonly IPushNotifier _pushNotifier;
-        private INotificationService _notificationServiceImplementation;
 
         public NotificationService(IMailNotifier mailNotifier, ISlackNotifier slackNotifier,
             ITeamsNotifier teamsNotifier, ITelegramNotifier telegramNotifier,
@@ -215,17 +214,16 @@ namespace AlertHawk.Notification.Domain.Classes
             await _notificationRepository.ClearNotificationStatistics();
         }
 
-        public async Task<IEnumerable<string>> GetDeviceTokenList(int monitorGroupdId, string jwtToken)
+        public async Task<IEnumerable<string>> GetDeviceTokenList(int monitorGroupId)
         {
             using var client = new HttpClient();
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
             client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
             client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
             client.DefaultRequestHeaders.Add("Connection", "keep-alive");
             client.DefaultRequestHeaders.Add("Accept", "*/*");
                 
             var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL");
-            var content = await client.GetAsync($"{authApi}api/UserController/GetUserDeviceTokenListByGroupId/{monitorGroupdId}");
+            var content = await client.GetAsync($"{authApi}api/UserController/GetUserDeviceTokenListByGroupId/{monitorGroupId}");
             var userTokenStr = await content.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<List<string>>(userTokenStr);
         }

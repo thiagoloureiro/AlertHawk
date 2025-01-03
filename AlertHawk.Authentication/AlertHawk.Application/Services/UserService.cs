@@ -134,13 +134,15 @@ public class UserService : IUserService
     {
         var users = await _userRepository.GetAllByGroupId(groupId);
         var lstDeviceTokens = new List<string>();
+        
+        var userDeviceTokenList = await _userRepository.GetUserDeviceTokenList();
 
         if (users != null)
         {
             foreach (var user in users)
             {
-                lstDeviceTokens.AddRange(await _userRepository.GetUserDeviceTokenList(user.Id) ??
-                                         Array.Empty<string>());
+                var tokenList = userDeviceTokenList.Where(x=> x.Id == user.Id).Select(x=> x.DeviceToken);
+                lstDeviceTokens.AddRange(tokenList);
             }
         }
 

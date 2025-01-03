@@ -26,6 +26,6 @@ namespace AlertHawk.Notification.Domain.Interfaces.Services
 
         Task<long> GetNotificationLogCount();
         Task ClearNotificationStatistics();
-        Task<IEnumerable<string>> GetDeviceTokenList(int monitorGroupdId, string jwtToken);
+        Task<IEnumerable<string>> GetDeviceTokenList(int monitorGroupId);
     }
 }

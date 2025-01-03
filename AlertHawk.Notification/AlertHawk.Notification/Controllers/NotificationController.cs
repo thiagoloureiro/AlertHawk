@@ -35,9 +35,8 @@ namespace AlertHawk.Notification.Controllers
 
             if (notification.NotificationTypeId == 6)
             {
-                var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
                 var deviceTokenList =
-                    await _notificationService.GetDeviceTokenList(notification.MonitorGroupId, jwtToken);
+                    await _notificationService.GetDeviceTokenList(notification.MonitorGroupId);
 
                 notification.NotificationPush.PushNotificationBody.data = new PushNotificationData
                 {

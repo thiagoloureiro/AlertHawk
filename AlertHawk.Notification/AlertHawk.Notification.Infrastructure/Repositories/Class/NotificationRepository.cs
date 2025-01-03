@@ -220,6 +220,12 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
                 notificationItem.NotificationWebHook =
                     notificationWebHookList.SingleOrDefault(x => x.NotificationId == notificationItem.Id);
                 break;
+            case 6:
+                notificationItem.NotificationPush = new NotificationPush
+                {
+                    NotificationId = notificationItem.Id
+                };
+                break;
         }
 
         return notificationItem;

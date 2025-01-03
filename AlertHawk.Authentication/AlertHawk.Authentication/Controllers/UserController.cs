@@ -319,6 +319,7 @@ public class UserController : Controller
         return Ok(await _userService.GetUserDeviceTokenList(userId));
     }
     
+    [AllowAnonymous]
     [HttpGet("GetUserDeviceTokenListByGroupId/{groupId}")]
     [SwaggerOperation(Summary = "GetUserDeviceTokenList by groupId")]
     [ProducesResponseType(StatusCodes.Status200OK)]
