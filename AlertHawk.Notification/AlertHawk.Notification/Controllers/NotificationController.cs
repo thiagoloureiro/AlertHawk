@@ -22,6 +22,7 @@ namespace AlertHawk.Notification.Controllers
             _notificationService = notificationService;
         }
 
+        [AllowAnonymous]
         [HttpPost("SendManualNotification")]
         [SwaggerOperation(Summary = "Send Manual notification")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
@@ -37,9 +38,10 @@ namespace AlertHawk.Notification.Controllers
             {
                 var deviceTokenList =
                     await _notificationService.GetDeviceTokenList(notification.MonitorGroupId);
+                
                 notification.NotificationPush = new NotificationPush
                 {
-                    PushNotificationBody =
+                    PushNotificationBody = new()
                     {
                         data = new PushNotificationData
                         {
