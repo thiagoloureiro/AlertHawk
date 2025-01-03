@@ -214,11 +214,10 @@ namespace AlertHawk.Notification.Domain.Classes
             await _notificationRepository.ClearNotificationStatistics();
         }
 
-        public async Task<IEnumerable<string>> GetDeviceTokenList(int monitorGroupId)
+        public async Task<IEnumerable<string>?> GetDeviceTokenList(int monitorGroupId)
         {
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
-            client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
             client.DefaultRequestHeaders.Add("Connection", "keep-alive");
             client.DefaultRequestHeaders.Add("Accept", "*/*");
                 
