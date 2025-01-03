@@ -91,8 +91,12 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
             foreach (var token in deviceTokenList)
             {
                 Console.WriteLine("Sending Push notification to device token: " + token);
-                notificationItem.NotificationPush.PushNotificationBody.to = token;
-                
+
+                notificationItem.NotificationPush.PushNotificationBody = new PushNotificationBody
+                {
+                    to = token
+                };
+
                 var notificationSend = new NotificationSend
                 {
                     NotificationPush = notificationItem.NotificationPush,
