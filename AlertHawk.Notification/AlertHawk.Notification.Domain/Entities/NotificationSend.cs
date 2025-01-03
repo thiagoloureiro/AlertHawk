@@ -10,7 +10,7 @@
         public NotificationTeams NotificationTeams { get; set; } = null!;
         public NotificationTelegram NotificationTelegram { get; set; } = null!;
         public NotificationWebHook NotificationWebHook { get; set; } = null!;
-        public NotificationPush NotificationPush { get; set; } = null;
+        public NotificationPush NotificationPush { get; set; }
         public DateTime NotificationTimeStamp { get; set; }
     }
 }
