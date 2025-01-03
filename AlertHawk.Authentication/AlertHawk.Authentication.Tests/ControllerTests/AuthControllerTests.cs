@@ -220,4 +220,35 @@ public class AuthControllerTests
         var message = Assert.IsType<Message>(badRequestResult.Value);
         Assert.Equal("Invalid API key.", message.Content);
     }
+    
+    [Fact]
+    public async Task PostUserAuth_AzureMobileAuth_ReturnsBadRequestInvalidUser()
+    {
+        // Arrange
+        var apikey = "your_auth_api_key";
+        var invalidKey = "invalidkey";
+       
+        var userAuth = new AzureAuth
+        {
+            Email = "user@user.com",
+            ApiKey = invalidKey
+        };
+
+        var expectedValue = apikey;
+        var mockSection = new Mock<IConfigurationSection>();
+        mockSection.Setup(s => s.Value).Returns(expectedValue);
+        
+        _mockConfiguration.Setup(c => c.GetSection("MOBILE_API_KEY")).Returns(mockSection.Object);
+        
+        var token = "test_token";
+        _mockJwtTokenService.Setup(x => x.GenerateToken(It.IsAny<UserDto>())).Returns(token);
+
+        // Act
+        var result = await _controller.AzureMobileAuth(userAuth);
+
+        // Assert
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        var message = Assert.IsType<Message>(badRequestResult.Value);
+        Assert.Equal("Invalid user.", message.Content);
+    }
 }
