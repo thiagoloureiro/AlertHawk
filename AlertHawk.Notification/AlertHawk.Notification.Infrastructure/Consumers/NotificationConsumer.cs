@@ -83,7 +83,7 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
             };
             await _notificationService.Send(notificationSend);
         }
-        
+
         if (notificationItem?.NotificationPush != null)
         {
             var deviceTokenList = await _notificationService.GetDeviceTokenList(notificationItem.MonitorGroupId);
@@ -94,7 +94,18 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
 
                 notificationItem.NotificationPush.PushNotificationBody = new PushNotificationBody
                 {
-                    to = token
+                    to = token,
+                    data = new PushNotificationData
+                    {
+                        message = context.Message.Message
+                    },
+                    notification = new PushNotificationItem
+                    {
+                        title = "AlertHawk Notification",
+                        body = context.Message.Message,
+                        badge = 1,
+                        sound = "ping.aiff"
+                    }
                 };
 
                 var notificationSend = new NotificationSend
