@@ -156,4 +156,68 @@ public class AuthControllerTests
         Assert.IsType<BadRequestObjectResult>(response);
         Environment.SetEnvironmentVariable("ENABLED_LOGIN_AUTH", "true");
     }
+    
+    [Fact]
+    public async Task PostUserAuth_AzureMobileAuth_ReturnsOkResultWithToken()
+    {
+        // Arrange
+        var apikey = "your_auth_api_key";
+        var userAuth = new AzureAuth
+        {
+            Email = "user@user.com",
+            ApiKey = apikey
+        };
+
+        var expectedValue = apikey;
+        var mockSection = new Mock<IConfigurationSection>();
+        mockSection.Setup(s => s.Value).Returns(expectedValue);
+        _mockConfiguration.Setup(c => c.GetSection("MOBILE_API_KEY")).Returns(mockSection.Object);
+        
+        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
+        var token = "test_token";
+        _mockUserService.Setup(x => x.GetByEmail(It.IsAny<string>())).ReturnsAsync(user);
+        _mockJwtTokenService.Setup(x => x.GenerateToken(It.IsAny<UserDto>())).Returns(token);
+
+        // Act
+        var result = await _controller.AzureMobileAuth(userAuth);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var returnedToken =
+            Assert.IsType<string>(okResult.Value?.GetType().GetProperty("token")?.GetValue(okResult.Value));
+        Assert.Equal(token, returnedToken);
+    }
+    
+    [Fact]
+    public async Task PostUserAuth_AzureMobileAuth_ReturnsBadRequestInvalidApiToken()
+    {
+        // Arrange
+        var apikey = "your_auth_api_key";
+        var invalidKey = "invalidkey";
+       
+        var userAuth = new AzureAuth
+        {
+            Email = "user@user.com",
+            ApiKey = invalidKey
+        };
+
+        var expectedValue = apikey;
+        var mockSection = new Mock<IConfigurationSection>();
+        mockSection.Setup(s => s.Value).Returns(expectedValue);
+        
+        _mockConfiguration.Setup(c => c.GetSection("MOBILE_API_KEY")).Returns(mockSection.Object);
+        
+        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
+        var token = "test_token";
+        _mockUserService.Setup(x => x.GetByEmail(It.IsAny<string>())).ReturnsAsync(user);
+        _mockJwtTokenService.Setup(x => x.GenerateToken(It.IsAny<UserDto>())).Returns(token);
+
+        // Act
+        var result = await _controller.AzureMobileAuth(userAuth);
+
+        // Assert
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        var message = Assert.IsType<Message>(badRequestResult.Value);
+        Assert.Equal("Invalid API key.", message.Content);
+    }
 }

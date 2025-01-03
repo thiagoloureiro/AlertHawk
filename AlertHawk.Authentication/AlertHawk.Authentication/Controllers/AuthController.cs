@@ -28,30 +28,22 @@ namespace AlertHawk.Authentication.Controllers
         [ProducesResponseType(typeof(Message), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> AzureMobileAuth([FromBody] AzureAuth azureAuth)
         {
-            try
+            var user = await _userService.GetByEmail(azureAuth.Email);
+
+            if (user is null)
             {
-                var user = await _userService.GetByEmail(azureAuth.Email);
-
-                if (user is null)
-                {
-                    return BadRequest(new Message("Invalid user."));
-                }
-
-                if (azureAuth.ApiKey != _configuration.GetSection("MOBILE_API_KEY").Value)
-                {
-                    return BadRequest(new Message("Invalid API key."));
-                }
-
-                var token = _jwtTokenService.GenerateToken(user);
-                await _userService.UpdateUserToken(token, user.Username.ToLower());
-
-                return Ok(new { token });
+                return BadRequest(new Message("Invalid user."));
             }
-            catch (Exception err)
+
+            if (azureAuth.ApiKey != _configuration.GetSection("MOBILE_API_KEY").Value)
             {
-                SentrySdk.CaptureException(err);
-                return StatusCode(StatusCodes.Status500InternalServerError, new Message("Something went wrong."));
+                return BadRequest(new Message("Invalid API key."));
             }
+
+            var token = _jwtTokenService.GenerateToken(user);
+            await _userService.UpdateUserToken(token, user.Username.ToLower());
+
+            return Ok(new { token });
         }
 
         [HttpPost("refreshToken")]

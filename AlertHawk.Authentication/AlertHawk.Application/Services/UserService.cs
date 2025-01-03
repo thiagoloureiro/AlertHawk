@@ -124,4 +124,26 @@ public class UserService : IUserService
     {
         return await _userRepository.GetUserDeviceTokenList(userId);
     }
+
+    public async Task<IEnumerable<UserDto>?> GetAllByGroupId(int groupId)
+    {
+        return await _userRepository.GetAllByGroupId(groupId);
+    }
+
+    public async Task<IEnumerable<string>> GetUserDeviceTokenListByGroupId(int groupId)
+    {
+        var users = await _userRepository.GetAllByGroupId(groupId);
+        var lstDeviceTokens = new List<string>();
+
+        if (users != null)
+        {
+            foreach (var user in users)
+            {
+                lstDeviceTokens.AddRange(await _userRepository.GetUserDeviceTokenList(user.Id) ??
+                                         Array.Empty<string>());
+            }
+        }
+
+        return lstDeviceTokens;
+    }
 }

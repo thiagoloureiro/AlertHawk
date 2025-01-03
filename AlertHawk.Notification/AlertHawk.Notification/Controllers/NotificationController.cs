@@ -31,6 +31,11 @@ namespace AlertHawk.Notification.Controllers
                     AesEncryption.EncryptString(notification.NotificationEmail.Password);
             }
 
+            if (notification.NotificationTypeId == 6)
+            {
+                
+            }
+
             var result = await _notificationService.Send(notification);
             return Ok(result);
         }

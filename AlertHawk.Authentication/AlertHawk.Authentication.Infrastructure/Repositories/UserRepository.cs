@@ -109,6 +109,15 @@ public class UserRepository : BaseRepository, IUserRepository
         return list;
     }
 
+    public async Task<IEnumerable<UserDto>?> GetAllByGroupId(int groupId)
+    {
+        const string sql = "SELECT u.Id, u.Email, u.Username, u.IsAdmin, u.CreatedAt, u.UpdatedAt, u.LastLogon FROM Users u " +
+                          "JOIN UsersMonitorGroup umg ON u.Id = umg.UserId " +
+                          "WHERE umg.GroupMonitorId = @groupId";
+        var list = await ExecuteQueryAsyncWithParameters<User>(sql, new { groupId });
+        return _mapper.Map<List<UserDto>?>(list);
+    }
+
     public async Task UpdateUserDeviceToken(string deviceToken, Guid userId)
     {
         var userTokenList = await GetUserDeviceTokenList(userId);
