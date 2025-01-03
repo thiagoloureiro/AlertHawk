@@ -289,9 +289,15 @@ public class UserController : Controller
     [HttpGet("GetUserDeviceTokenList")]
     [SwaggerOperation(Summary = "GetUserDeviceTokenList")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetUserDeviceTokenList(Guid userId)
+    public async Task<IActionResult> GetUserDeviceTokenList()
     {
-        return Ok(await _userService.GetUserDeviceTokenList(userId));
+        var user = await GetUserByToken();
+        if (user == null)
+        {
+            return BadRequest();
+        }
+
+        return Ok(await _userService.GetUserDeviceTokenList(user.Id));
     }
 
     private async Task<UserDto?> GetUserByToken()
