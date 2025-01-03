@@ -117,7 +117,7 @@ public class UserRepository : BaseRepository, IUserRepository
             return;
         }
         
-        const string sql = "INSERT INTO UserDeviceToken (UserId, DeviceToken) VALUES (UserId, @deviceToken)";
+        const string sql = "INSERT INTO UserDeviceToken (Id, DeviceToken) VALUES (UserId, @deviceToken)";
         await ExecuteNonQueryAsync(sql, new { userId, deviceToken });
     }
 
