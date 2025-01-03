@@ -21,8 +21,7 @@ namespace AlertHawk.Notification.Controllers
         {
             _notificationService = notificationService;
         }
-
-        [AllowAnonymous]
+        
         [HttpPost("SendManualNotification")]
         [SwaggerOperation(Summary = "Send Manual notification")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
