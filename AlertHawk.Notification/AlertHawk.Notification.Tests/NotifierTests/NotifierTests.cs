@@ -12,14 +12,17 @@ public class NotifierTests : IClassFixture<NotificationController>
     private readonly ITeamsNotifier _teamsNotifier;
     private readonly ITelegramNotifier _telegramNotifier;
     private readonly IWebHookNotifier _webHookNotifier;
+    private readonly IPushNotifier _pushNotifier;
 
-    public NotifierTests(IMailNotifier mailNotifier, ISlackNotifier slackNotifier, ITeamsNotifier teamsNotifier, ITelegramNotifier telegramNotifier, IWebHookNotifier webHookNotifier)
+    public NotifierTests(IMailNotifier mailNotifier, ISlackNotifier slackNotifier, ITeamsNotifier teamsNotifier,
+        ITelegramNotifier telegramNotifier, IWebHookNotifier webHookNotifier, IPushNotifier pushNotifier)
     {
         _mailNotifier = mailNotifier;
         _slackNotifier = slackNotifier;
         _teamsNotifier = teamsNotifier;
         _telegramNotifier = telegramNotifier;
         _webHookNotifier = webHookNotifier;
+        _pushNotifier = pushNotifier;
     }
 
     [Fact]
@@ -40,7 +43,8 @@ public class NotifierTests : IClassFixture<NotificationController>
         };
 
         // Act
-        var result = await _telegramNotifier.SendNotification(notificationSend.NotificationTelegram.ChatId, notificationSend.Message, notificationSend.NotificationTelegram.TelegramBotToken);
+        var result = await _telegramNotifier.SendNotification(notificationSend.NotificationTelegram.ChatId,
+            notificationSend.Message, notificationSend.NotificationTelegram.TelegramBotToken);
 
         // Assert
         Assert.NotNull(result);
@@ -64,12 +68,13 @@ public class NotifierTests : IClassFixture<NotificationController>
         };
 
         // Act
-        var result = await _telegramNotifier.SendNotification(notificationSend.NotificationTelegram.ChatId, notificationSend.Message, notificationSend.NotificationTelegram.TelegramBotToken);
+        var result = await _telegramNotifier.SendNotification(notificationSend.NotificationTelegram.ChatId,
+            notificationSend.Message, notificationSend.NotificationTelegram.TelegramBotToken);
 
         // Assert
         Assert.NotNull(result);
     }
-    
+
     [Fact]
     public async Task Should_Send_Slack_Notification()
     {
@@ -88,7 +93,8 @@ public class NotifierTests : IClassFixture<NotificationController>
         };
 
         // Act
-        await _slackNotifier.SendNotification(notificationSend.NotificationSlack.Channel, notificationSend.Message, notificationSend.NotificationSlack.WebHookUrl);
+        await _slackNotifier.SendNotification(notificationSend.NotificationSlack.Channel, notificationSend.Message,
+            notificationSend.NotificationSlack.WebHookUrl);
 
         // Assert
         Assert.True(true);
@@ -112,7 +118,8 @@ public class NotifierTests : IClassFixture<NotificationController>
         };
 
         // Act
-        await _slackNotifier.SendNotification(notificationSend.NotificationSlack.Channel, notificationSend.Message, notificationSend.NotificationSlack.WebHookUrl);
+        await _slackNotifier.SendNotification(notificationSend.NotificationSlack.Channel, notificationSend.Message,
+            notificationSend.NotificationSlack.WebHookUrl);
 
         // Assert
         Assert.True(true);
@@ -191,8 +198,49 @@ public class NotifierTests : IClassFixture<NotificationController>
         JsonUtils.ConvertJsonToTuple(notificationSend.NotificationWebHook);
 
         // Act
-        await _webHookNotifier.SendNotification(notificationSend.Message, notificationSend.NotificationWebHook.WebHookUrl, notificationSend.NotificationWebHook.Body, notificationSend.NotificationWebHook.Headers);
+        await _webHookNotifier.SendNotification(notificationSend.Message,
+            notificationSend.NotificationWebHook.WebHookUrl, notificationSend.NotificationWebHook.Body,
+            notificationSend.NotificationWebHook.Headers);
 
+        // Assert
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task Should_Send_Push_Notification()
+    {
+        // Arrange
+        var notificationSend = new NotificationSend
+        {
+            Message = "from backend",
+            NotificationTypeId = 6, // Push
+            NotificationTimeStamp = DateTime.UtcNow,
+            NotificationPush = new NotificationPush()
+            {
+                NotificationId = 1,
+                PushNotificationBody = new PushNotificationBody()
+                {
+                    to = "4c826a0cb5b691e7312bad",
+                    data = new PushNotificationData()
+                    {
+                        message = "message"
+                    },
+                    notification = new PushNotificationItem()
+                    {
+                        title = "title",
+                        body = "body",
+                        badge = 1,
+                        sound = "ping.aiff"
+                    }
+                }
+            }
+        };
+        
+        Environment.SetEnvironmentVariable("PUSHY_API_KEY", GlobalVariables.PushyApiKey);
+        
+        // Act
+        await _pushNotifier.SendNotification(notificationSend.Message, notificationSend.NotificationPush);
+        
         // Assert
         Assert.True(true);
     }

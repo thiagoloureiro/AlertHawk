@@ -17,10 +17,11 @@ namespace AlertHawk.Notification.Domain.Classes
         private readonly ITelegramNotifier _telegramNotifier;
         private readonly INotificationRepository _notificationRepository;
         private readonly IWebHookNotifier _webHookNotifier;
+        private readonly IPushNotifier _pushNotifier;
 
         public NotificationService(IMailNotifier mailNotifier, ISlackNotifier slackNotifier,
             ITeamsNotifier teamsNotifier, ITelegramNotifier telegramNotifier,
-            INotificationRepository notificationRepository, IWebHookNotifier webHookNotifier)
+            INotificationRepository notificationRepository, IWebHookNotifier webHookNotifier, IPushNotifier pushNotifier)
         {
             _mailNotifier = mailNotifier;
             _slackNotifier = slackNotifier;
@@ -28,6 +29,7 @@ namespace AlertHawk.Notification.Domain.Classes
             _telegramNotifier = telegramNotifier;
             _notificationRepository = notificationRepository;
             _webHookNotifier = webHookNotifier;
+            _pushNotifier = pushNotifier;
         }
 
         public async Task<bool> Send(NotificationSend notificationSend)
@@ -86,7 +88,13 @@ namespace AlertHawk.Notification.Domain.Classes
                             notificationSend.NotificationWebHook.Body, notificationSend.NotificationWebHook.Headers);
                         await InsertNotificationLog(notificationLog);
                         return true;
-
+                    
+                    case 6: // Push
+                        notificationLog.Message =
+                            $"Push Notification Message:{notificationSend.Message} To Device: {notificationSend.NotificationPush.PushNotificationBody.to}";
+                        await _pushNotifier.SendNotification(notificationSend.Message,
+                            notificationSend.NotificationPush);
+                        return true;
                     default:
                         Console.WriteLine($"Not found NotificationTypeId: {notificationSend.NotificationTypeId}");
                         break;

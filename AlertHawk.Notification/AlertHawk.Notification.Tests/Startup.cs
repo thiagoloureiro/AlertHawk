@@ -31,5 +31,6 @@ public class Startup
         services.AddTransient<ITeamsNotifier, TeamsNotifier>();
         services.AddTransient<ITelegramNotifier, TelegramNotifier>();
         services.AddTransient<IWebHookNotifier, WebHookNotifier>();
+        services.AddTransient<IPushNotifier, PushNotifier>();
     }
 }

@@ -83,6 +83,18 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
             };
             await _notificationService.Send(notificationSend);
         }
+        
+        if (notificationItem?.NotificationPush != null)
+        {
+            Console.WriteLine("Sending Push notification");
+            var notificationSend = new NotificationSend
+            {
+                NotificationPush = notificationItem.NotificationPush,
+                Message = context.Message.Message,
+                NotificationTypeId = notificationItem.NotificationTypeId
+            };
+            await _notificationService.Send(notificationSend);
+        }
 
         // Handle the received message
         Console.WriteLine(
