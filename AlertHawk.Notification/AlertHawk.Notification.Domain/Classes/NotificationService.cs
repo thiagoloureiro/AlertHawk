@@ -223,7 +223,7 @@ namespace AlertHawk.Notification.Domain.Classes
             client.DefaultRequestHeaders.Add("Accept", "*/*");
                 
             var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL");
-            var content = await client.GetAsync($"{authApi}api/UserController/GetUserDeviceTokenListByGroupId/{monitorGroupId}");
+            var content = await client.GetAsync($"{authApi}api/User/GetUserDeviceTokenListByGroupId/{monitorGroupId}");
             var userTokenStr = await content.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<List<string>>(userTokenStr);
         }
