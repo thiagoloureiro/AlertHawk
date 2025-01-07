@@ -33,10 +33,10 @@ namespace AlertHawk.Monitoring.Controllers
 
         [SwaggerOperation(Summary = "Retrieves the history of the Monitor, by Id and Number of Days")]
         [ProducesResponseType(typeof(IEnumerable<MonitorHistory>), StatusCodes.Status200OK)]
-        [HttpGet("MonitorHistoryByIdDays/{id}/{days}")]
-        public async Task<IActionResult> GetMonitorHistory(int id, int days)
+        [HttpGet("MonitorHistoryByIdDays/{id}/{days}/{downSampling}/{downSamplingFactor}")]
+        public async Task<IActionResult> GetMonitorHistory(int id, int days, bool downSampling = false, int downSamplingFactor = 1)
         {
-            var result = await _monitorHistoryService.GetMonitorHistory(id, days);
+            var result = await _monitorHistoryService.GetMonitorHistory(id, days, downSampling, downSamplingFactor);
             return Ok(result);
         }
 

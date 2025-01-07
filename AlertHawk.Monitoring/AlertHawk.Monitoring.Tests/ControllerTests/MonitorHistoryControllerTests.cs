@@ -43,7 +43,7 @@ public class MonitorHistoryControllerTests
     {
         // Arrange
         var monitorHistory = new List<MonitorHistory> { new MonitorHistory() };
-        _mockMonitorHistoryService.Setup(service => service.GetMonitorHistory(It.IsAny<int>(), It.IsAny<int>()))
+        _mockMonitorHistoryService.Setup(service => service.GetMonitorHistory(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<int>()))
             .ReturnsAsync(monitorHistory);
 
         // Act
