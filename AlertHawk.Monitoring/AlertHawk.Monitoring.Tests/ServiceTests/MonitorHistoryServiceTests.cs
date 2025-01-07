@@ -44,7 +44,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                 .ReturnsAsync(history);
 
             // Act
-            var result = await _monitorHistoryService.GetMonitorHistory(1, 7);
+            var result = await _monitorHistoryService.GetMonitorHistory(1, 7, false, 0);
 
             // Assert
             Assert.Equal(history, result);
