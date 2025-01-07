@@ -85,6 +85,23 @@ public class UserController : Controller
         await _userService.Delete(userId);
         return Ok();
     }
+    
+    [HttpDelete("delete")]
+    [SwaggerOperation(Summary = "Self Delete User by Token")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> DeleteUserByToken()
+    {
+        var user = await GetUserByToken();
+        if (user == null)
+        {
+            return BadRequest();
+        }
+
+        await _userService.Delete(user.Id);
+        return Ok();
+    }
 
     [HttpPut("update")]
     [SwaggerOperation(Summary = "Update User")]
