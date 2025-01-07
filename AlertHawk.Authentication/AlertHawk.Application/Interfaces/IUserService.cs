@@ -15,7 +15,7 @@ public interface IUserService
 
     Task ResetPassword(string email);
 
-    Task<UserDto?> Login(string username, string password);
+    Task<UserDto?> Login(string email, string password);
 
     Task<UserDto?> Get(Guid id);
 

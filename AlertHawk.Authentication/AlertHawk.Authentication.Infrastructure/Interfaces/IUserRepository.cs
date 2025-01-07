@@ -13,8 +13,6 @@ public interface IUserRepository
 
     Task<string?> ResetPassword(string email);
 
-    Task<UserDto?> Login(string username, string password);
-
     Task<UserDto?> Get(Guid id);
 
     Task<UserDto?> GetByEmail(string email);
