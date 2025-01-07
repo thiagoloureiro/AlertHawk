@@ -22,9 +22,35 @@ public class MonitorHistoryService : IMonitorHistoryService
         return await _monitorHistoryRepository.GetMonitorHistory(id);
     }
 
-    public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days)
+    public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days, bool downSampling,
+        int downSamplingFactor)
     {
-        return await _monitorHistoryRepository.GetMonitorHistoryByIdAndDays(id, days);
+        var monitorData = await _monitorHistoryRepository.GetMonitorHistoryByIdAndDays(id, days);
+
+        if (downSampling)
+        {
+            var data = monitorData.ToArray();
+            var downSampledData = new List<MonitorHistory>();
+            
+            // First, add all records where Status is false
+            var failureRecords = data.Where(x => !x.Status).ToList();
+            downSampledData.AddRange(failureRecords);
+
+            // Then perform downsampling only on successful records
+            var successRecords = data.Where(x => x.Status).ToArray();
+            var downSampledDataCount = successRecords.Length / downSamplingFactor;
+
+            for (var i = 0; i < downSampledDataCount; i++)
+            {
+                var downSampledItem = successRecords[i * downSamplingFactor];
+                downSampledData.Add(downSampledItem);
+            }
+
+            // Sort the combined results by timestamp to maintain chronological order
+            monitorData = downSampledData.OrderBy(x => x.TimeStamp);
+        }
+
+        return monitorData;
     }
 
     public async Task DeleteMonitorHistory(int days)
