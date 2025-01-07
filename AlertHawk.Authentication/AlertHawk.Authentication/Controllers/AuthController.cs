@@ -89,7 +89,7 @@ namespace AlertHawk.Authentication.Controllers
                     return BadRequest(new Message("Login is disabled."));
                 }
 
-                var user = await _userService.Login(userAuth.Email, userAuth.Password);
+                var user = await _userService.Login(userAuth.username, userAuth.Password);
 
                 if (user is null)
                 {
