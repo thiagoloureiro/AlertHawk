@@ -35,7 +35,7 @@ public class UsersBuilder
 
     public UserAuth WithUserAuth()
     {
-        _userAuth = new UserAuth { Email = "testuser@user.com", Password = "wrongpassword" };
+        _userAuth = new UserAuth { username = "testuser@user.com", Password = "wrongpassword" };
         return _userAuth;
     }
 }
