@@ -150,16 +150,6 @@ public class UserRepository : BaseRepository, IUserRepository
             throw new InvalidOperationException("The email is already registered, please choose another.");
         }
 
-        checkExistingUserSql = "SELECT Id FROM Users WHERE LOWER(Username) = @Username";
-        existingUser = await ExecuteQueryFirstOrDefaultAsync<Guid?>(checkExistingUserSql, new
-        {
-            Username = userCreation.Username.ToLower(CultureInfo.InvariantCulture)
-        });
-        if (existingUser.HasValue)
-        {
-            throw new InvalidOperationException("The username is already registered, please choose another.");
-        }
-
         var salt = PasswordHasher.GenerateSalt();
         var hashedPassword = PasswordHasher.HashPassword(userCreation.Password, salt);
 
