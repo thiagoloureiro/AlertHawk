@@ -57,14 +57,9 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<UserDto?> Login(string username, string password)
+    public async Task<UserDto?> Login(string email, string password)
     {
-        var user = await _userRepository.Login(username, password);
-
-        if (user == null)
-        {
-            return await _userRepository.LoginWithEmail(username, password);
-        }
+        var user = await _userRepository.LoginWithEmail(email, password);
 
         return user;
     }

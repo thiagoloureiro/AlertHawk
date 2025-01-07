@@ -281,19 +281,4 @@ public class UserRepository : BaseRepository, IUserRepository
 
         return affectedRows > 0 ? newPassword : null;
     }
-
-    public async Task<UserDto?> Login(string username, string password)
-    {
-        const string sql =
-            "SELECT Id, Email, Username, IsAdmin, Password, Salt, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE LOWER(Username) = LOWER(@username)";
-        var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql,
-            new { username = username.ToLower(CultureInfo.InvariantCulture) });
-
-        if (user is null || !PasswordHasher.VerifyPassword(password, user.Password, user.Salt))
-        {
-            return null;
-        }
-
-        return _mapper.Map<UserDto>(user);
-    }
 }
