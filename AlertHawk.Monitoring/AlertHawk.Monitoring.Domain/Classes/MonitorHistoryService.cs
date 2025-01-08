@@ -50,7 +50,16 @@ public class MonitorHistoryService : IMonitorHistoryService
             monitorData = downSampledData.OrderBy(x => x.TimeStamp);
         }
 
-        return monitorData;
+        var monitorHistories = monitorData as MonitorHistory[] ?? monitorData.ToArray();
+        Parallel.ForEach(monitorHistories, item =>
+        {
+            if (item.Status)
+            {
+                item.ResponseTime = 0;
+            }
+        });
+        
+        return monitorHistories;
     }
 
     public async Task DeleteMonitorHistory(int days)
