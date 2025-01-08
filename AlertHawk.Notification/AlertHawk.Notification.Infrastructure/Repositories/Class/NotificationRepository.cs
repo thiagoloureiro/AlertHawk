@@ -30,6 +30,7 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
         var notificationTeamsList = await SelectNotificationTeamsList();
         var notificationSlackList = await SelectNotificationSlackList();
         var notificationTelegramList = await SelectNotificationTelegramList();
+        var notificationWebHookList = await SelectNotificationWebHookList();
 
         var selectNotificationItemList = notificationItemList.ToList();
         foreach (var item in selectNotificationItemList)
@@ -51,6 +52,10 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
                 case 4: // Slack
                     item.NotificationSlack = notificationSlackList.SingleOrDefault(x => x.NotificationId == item.Id);
+                    break;
+                
+                case 5: // WebHook
+                    item.NotificationWebHook = notificationWebHookList.SingleOrDefault(x => x.NotificationId == item.Id);
                     break;
             }
         }
