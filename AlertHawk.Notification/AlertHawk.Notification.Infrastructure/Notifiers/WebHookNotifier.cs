@@ -10,6 +10,9 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
         public async Task SendNotification(string message, string webHookUrl, string? body,
             List<Tuple<string, string>>? headers)
         {
+            var headersString = string.Join(", ", headers.Select(header => $"{header.Item1}: {header.Item2}"));
+            Console.WriteLine($"Sending WebHook notification to {webHookUrl} headers: {headersString} body: {body}, message: {message}");
+
             using HttpClient httpClient = new HttpClient();
 
             StringContent? content = null;
