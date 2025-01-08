@@ -53,7 +53,7 @@ public class MonitorHistoryService : IMonitorHistoryService
         var monitorHistories = monitorData as MonitorHistory[] ?? monitorData.ToArray();
         Parallel.ForEach(monitorHistories, item =>
         {
-            if (item.Status)
+            if (!item.Status)
             {
                 item.ResponseTime = 0;
             }
