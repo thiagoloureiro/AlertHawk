@@ -32,7 +32,9 @@ namespace AlertHawk.Authentication.Controllers
 
             if (user is null)
             {
-                return BadRequest(new Message("Invalid user."));
+                var newUser = new UserCreationFromAzure(azureAuth.Email, azureAuth.Email);
+                await _userService.CreateFromAzure(newUser);
+                user = await _userService.GetByEmail(azureAuth.Email);
             }
 
             if (azureAuth.ApiKey != _configuration.GetSection("MOBILE_API_KEY").Value)
