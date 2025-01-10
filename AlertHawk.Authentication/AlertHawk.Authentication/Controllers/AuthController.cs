@@ -14,12 +14,15 @@ namespace AlertHawk.Authentication.Controllers
         private readonly IUserService _userService;
         private readonly IJwtTokenService _jwtTokenService;
         private readonly IConfiguration _configuration;
+        private readonly IUsersMonitorGroupService _monitorGroupService;
 
-        public AuthController(IUserService userService, IJwtTokenService jwtTokenService, IConfiguration configuration)
+        public AuthController(IUserService userService, IJwtTokenService jwtTokenService, IConfiguration configuration,
+            IUsersMonitorGroupService monitorGroupService)
         {
             _userService = userService;
             _jwtTokenService = jwtTokenService;
             _configuration = configuration;
+            _monitorGroupService = monitorGroupService;
         }
 
         [HttpPost("azure")]
@@ -35,6 +38,19 @@ namespace AlertHawk.Authentication.Controllers
                 var newUser = new UserCreationFromAzure(azureAuth.Email, azureAuth.Email);
                 await _userService.CreateFromAzure(newUser);
                 user = await _userService.GetByEmail(azureAuth.Email);
+                
+                var demoMode = Environment.GetEnvironmentVariable("DEMO_MODE") ?? "false";
+
+                if (string.Equals(demoMode, "true", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    await _monitorGroupService.CreateOrUpdateAsync([
+                        new UsersMonitorGroup
+                        {
+                            UserId = user.Id,
+                            GroupMonitorId = 24
+                        }
+                    ]);
+                }
             }
 
             if (azureAuth.ApiKey != _configuration.GetSection("MOBILE_API_KEY").Value)
