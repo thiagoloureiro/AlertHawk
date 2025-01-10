@@ -17,13 +17,15 @@ public class AuthControllerTests
     private readonly Mock<IJwtTokenService> _mockJwtTokenService;
     private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly AuthController _controller;
+    private readonly Mock<IUsersMonitorGroupService> _mockUsersGroupService;
 
     public AuthControllerTests()
     {
         _mockUserService = new Mock<IUserService>();
         _mockJwtTokenService = new Mock<IJwtTokenService>();
         _mockConfiguration = new Mock<IConfiguration>();
-        _controller = new AuthController(_mockUserService.Object, _mockJwtTokenService.Object, _mockConfiguration.Object)
+        _mockUsersGroupService = new Mock<IUsersMonitorGroupService>();
+        _controller = new AuthController(_mockUserService.Object, _mockJwtTokenService.Object, _mockConfiguration.Object, _mockUsersGroupService.Object)
         {
             ControllerContext = new ControllerContext
             {
