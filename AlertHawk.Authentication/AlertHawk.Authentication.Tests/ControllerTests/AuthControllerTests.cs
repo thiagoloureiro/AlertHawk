@@ -251,6 +251,6 @@ public class AuthControllerTests
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         var message = Assert.IsType<Message>(badRequestResult.Value);
-        Assert.Equal("Invalid user.", message.Content);
+        Assert.Equal("Invalid API key.", message.Content);
     }
 }
