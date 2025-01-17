@@ -220,7 +220,7 @@ public class NotifierTests : IClassFixture<NotificationController>
                 NotificationId = 1,
                 PushNotificationBody = new PushNotificationBody()
                 {
-                    to = "4c826a0cb5b691e7312bad",
+                    to = "dbc452fdb71374b10fb22b",
                     data = new PushNotificationData()
                     {
                         message = "message"
