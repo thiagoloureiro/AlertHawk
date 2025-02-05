@@ -19,9 +19,37 @@ public class MonitorAlertService : IMonitorAlertService
         MonitorEnvironment? environment, string jwtToken)
     {
         var groupIds = await _monitorGroupService.GetUserGroupMonitorListIds(jwtToken);
+
         if (groupIds != null && groupIds.Any())
         {
-            return await _monitorAlertRepository.GetMonitorAlerts(monitorId, days, environment, groupIds);
+            var alerts = await _monitorAlertRepository.GetMonitorAlerts(monitorId, days, environment, groupIds);
+
+            // Group alerts by MonitorId
+            var groupedAlerts = alerts.GroupBy(a => a.MonitorId);
+
+            foreach (var monitorAlerts in groupedAlerts)
+            {
+                // Order alerts chronologically for each monitor
+                var orderedAlerts = monitorAlerts.OrderBy(a => a.TimeStamp).ToList();
+
+                for (int i = 0; i < orderedAlerts.Count; i++)
+                {
+                    if (orderedAlerts[i].Status == false) // Went offline
+                    {
+                        // Find the next occurrence of status 1 (monitor came back online) for the same MonitorId
+                        var nextOnlineAlert = orderedAlerts.Skip(i + 1).FirstOrDefault(a => a.Status);
+
+                        if (nextOnlineAlert != null)
+                        {
+                            // Calculate the offline period in minutes
+                            orderedAlerts[i].PeriodOffline =
+                                (int)(nextOnlineAlert.TimeStamp - orderedAlerts[i].TimeStamp).TotalMinutes;
+                        }
+                    }
+                }
+            }
+
+            return groupedAlerts.SelectMany(g => g).ToList().Where(x => x.Status == false);
         }
 
         return new List<MonitorAlert>();

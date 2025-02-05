@@ -34,7 +34,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                     FROM MonitorAlert MA
                     INNER JOIN Monitor M on M.Id = MA.MonitorId
                     LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
-                    WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0
+                    WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE())
                     ORDER BY MA.TimeStamp DESC";
             }
             else
@@ -44,7 +44,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                     FROM MonitorAlert MA
                     INNER JOIN Monitor M on M.Id = MA.MonitorId
                     LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
-                    WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0 AND MA.environment = @environment
+                    WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.environment = @environment
                     ORDER BY MA.TimeStamp DESC";
             }
 
@@ -60,7 +60,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                     INNER JOIN Monitor M on M.Id = MA.MonitorId
                     INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id
                     LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
-                WHERE MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0
+                WHERE MA.TimeStamp >= DATEADD(day, -@days, GETDATE())
                 AND MGI.MonitorGroupId in @groupIds
                 ORDER BY MA.TimeStamp DESC";
         }
@@ -72,7 +72,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 INNER JOIN Monitor M on M.Id = MA.MonitorId
                 INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id
                 LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
-                WHERE MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.[Status] = 0 AND MA.environment = @environment
+                WHERE MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.environment = @environment
                 AND MGI.MonitorGroupId in @groupIds
                 ORDER BY MA.TimeStamp DESC";
         }
