@@ -13,4 +13,5 @@ public class MonitorAlert
     public string? MonitorName { get; set; }
     public MonitorEnvironment Environment { get; set; }
     public string? UrlToCheck { get; set; }
+    public int PeriodOffline { get; set; }
 }
