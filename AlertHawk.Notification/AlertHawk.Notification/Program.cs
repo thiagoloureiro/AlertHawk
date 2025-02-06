@@ -28,6 +28,9 @@ var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
 var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
 var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
 var sentryEnabled = configuration.GetValue<string>("Sentry:Enabled") ?? "false";
+var queueType = configuration.GetValue<string>("QueueType") ?? "RABBITMQ";
+var serviceBusConnectionString = configuration.GetValue<string>("ServiceBus:ConnectionString");
+var serviceBusQueueName = configuration.GetValue<string>("ServiceBus:QueueName");
 
 builder.Services.AddControllers();
 
@@ -57,17 +60,33 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<NotificationConsumer>();
-
-    x.UsingRabbitMq((context, cfg) =>
+    switch (queueType.ToUpper())
     {
-        cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
-        {
-            h.Username(rabbitMqUser);
-            h.Password(rabbitMqPass);
-        });
+        case "RABBITMQ":
+            x.UsingRabbitMq((context, cfg) =>
+            {
+                cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
+                {
+                    h.Username(rabbitMqUser);
+                    h.Password(rabbitMqPass);
+                });
 
-        cfg.ReceiveEndpoint("notifications", e => { e.ConfigureConsumer<NotificationConsumer>(context); });
-    });
+                cfg.ReceiveEndpoint("notifications", e => { e.ConfigureConsumer<NotificationConsumer>(context); });
+            });
+            break;
+        case "SERVICEBUS":
+            x.UsingAzureServiceBus((context, cfg) =>
+            {
+                cfg.Host(serviceBusConnectionString);
+                cfg.Message<NotificationAlert>(config =>
+                {
+                    config.SetEntityName(serviceBusQueueName);
+                });
+                
+                cfg.ReceiveEndpoint("notifications", e => { e.ConfigureConsumer<NotificationConsumer>(context); });
+            });
+            break;
+    }
 });
 
 // DI
