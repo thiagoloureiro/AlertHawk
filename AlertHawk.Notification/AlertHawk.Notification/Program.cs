@@ -77,14 +77,16 @@ builder.Services.AddMassTransit(x =>
         case "SERVICEBUS":
             x.UsingAzureServiceBus((context, cfg) =>
             {
+                // Set the connection string
                 cfg.Host(serviceBusConnectionString);
-                cfg.Message<NotificationAlert>(config =>
-                {
-                    config.SetEntityName(serviceBusQueueName);
-                });
                 
-                cfg.ReceiveEndpoint("notifications", e => { e.ConfigureConsumer<NotificationConsumer>(context); });
+                // Configure the receive endpoint and the consumer
+                cfg.ReceiveEndpoint(serviceBusQueueName, e =>
+                {
+                    e.ConfigureConsumer<NotificationConsumer>(context);
+                });
             });
+
             break;
     }
 });
