@@ -85,6 +85,7 @@ builder.Services.AddMassTransit(x =>
                 {
                     e.ConfigureConsumer<NotificationConsumer>(context);
                 });
+                cfg.Message<NotificationAlert>(c => c.SetEntityName("notificationsTopic"));
             });
 
             break;

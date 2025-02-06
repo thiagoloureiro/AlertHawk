@@ -96,6 +96,7 @@ builder.Services.AddMassTransit(x =>
                 {
                     config.SetEntityName(serviceBusQueueName);
                 });
+                cfg.Message<NotificationAlert>(c => c.SetEntityName("notificationsTopic"));
             });
             break;
     }
