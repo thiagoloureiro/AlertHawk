@@ -43,7 +43,7 @@ public class MonitorAlertService : IMonitorAlertService
                         {
                             // Calculate the offline period in minutes
                             orderedAlerts[i].PeriodOffline =
-                                (int)(nextOnlineAlert.TimeStamp - orderedAlerts[i].TimeStamp).TotalMinutes;
+                                Math.Max(1, (int)(nextOnlineAlert.TimeStamp - orderedAlerts[i].TimeStamp).TotalMinutes);
                         }
                     }
                 }
