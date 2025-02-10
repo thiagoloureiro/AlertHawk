@@ -98,6 +98,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
             worksheet.Cells[1, col++].Value = "Environment";
             worksheet.Cells[1, col++].Value = "Message";
             worksheet.Cells[1, col++].Value = "URL";
+            worksheet.Cells[1, col++].Value = "Period Offline";
 
             var row = 2;
             foreach (var alert in alerts)
@@ -108,6 +109,7 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 worksheet.Cells[row, col++].Value = alert.Environment.ToString();
                 worksheet.Cells[row, col++].Value = alert.Message;
                 worksheet.Cells[row, col++].Value = alert.UrlToCheck;
+                worksheet.Cells[row, col++].Value = alert.PeriodOffline;
                 row++;
             }
 
