@@ -45,7 +45,7 @@ public class HttpClientRunner : IHttpClientRunner
         while (retryCount < maxRetries)
         {
             var response = await MakeHttpClientCall(monitorHttp);
-
+            monitorHttp.ResponseStatusCode = response.StatusCode;
             try
             {
                 var succeeded = ((int)monitorHttp.ResponseStatusCode >= 200) &&
@@ -70,8 +70,7 @@ public class HttpClientRunner : IHttpClientRunner
 
                 if (succeeded)
                 {
-                    await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded,
-                        _daysToExpireCert);
+                    await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded, _daysToExpireCert);
                     await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
 
                     if (!monitorHttp.LastStatus)

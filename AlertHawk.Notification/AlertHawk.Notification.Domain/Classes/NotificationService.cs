@@ -82,13 +82,14 @@ namespace AlertHawk.Notification.Domain.Classes
                     case 5: // WebHook
                         notificationLog.Message =
                             $"Telegram Message:{notificationSend.Message} WebHookUrl: {notificationSend.NotificationWebHook.WebHookUrl}";
+                        
                         JsonUtils.ConvertJsonToTuple(notificationSend.NotificationWebHook);
-                        await _webHookNotifier.SendNotification(notificationSend.NotificationWebHook.Message,
-                            notificationSend.NotificationWebHook.WebHookUrl,
-                            notificationSend.NotificationWebHook.Body, notificationSend.NotificationWebHook.Headers);
+
+                        await _webHookNotifier.SendNotification(notificationSend, notificationSend.NotificationWebHook);
+
                         await InsertNotificationLog(notificationLog);
                         return true;
-                    
+
                     case 6: // Push
                         notificationLog.Message =
                             $"Push Notification Message:{notificationSend.Message} To Device: {notificationSend.NotificationPush.PushNotificationBody.to}";
@@ -186,7 +187,7 @@ namespace AlertHawk.Notification.Domain.Classes
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             var authApi = Environment.GetEnvironmentVariable("AUTH_API_URL");
-            
+
             var content = await client.GetAsync($"{authApi}api/UsersMonitorGroup/GetAll");
             var result = await content.Content.ReadAsStringAsync();
             var groupMonitorIds = JsonConvert.DeserializeObject<List<UsersMonitorGroup>>(result);
