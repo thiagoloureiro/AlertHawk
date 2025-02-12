@@ -75,12 +75,24 @@ public class NotificationConsumer : IConsumer<NotificationAlert>
         if (notificationItem?.NotificationWebHook != null)
         {
             Console.WriteLine("Sending WebHook notification");
+            var message = context.Message;
+
             var notificationSend = new NotificationSend
             {
                 NotificationWebHook = notificationItem.NotificationWebHook,
                 Message = context.Message.Message,
-                NotificationTypeId = notificationItem.NotificationTypeId
+                NotificationTypeId = notificationItem.NotificationTypeId,
+                MonitorId = message.MonitorId,
+                Service = message.Service,
+                Region = message.Region,
+                Environment = message.Environment,
+                StatusCode = message.StatusCode,
+                ReasonPhrase = message.ReasonPhrase,
+                URL = message.URL,
+                Success = message.Success,
+                NotificationTimeStamp = message.TimeStamp,
             };
+
             await _notificationService.Send(notificationSend);
         }
 
