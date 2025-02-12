@@ -40,6 +40,9 @@ public class HttpClientRunner : IHttpClientRunner
         _logger.LogInformation($"Checking {monitorHttp.UrlToCheck}");
 
         var monitor = await _monitorRepository.GetMonitorById(monitorHttp.MonitorId);
+
+        monitorHttp.MonitorEnvironment = monitor.MonitorEnvironment;
+        monitorHttp.MonitorRegion = monitor.MonitorRegion;
         monitorHttp.LastStatus = monitor.Status;
 
         while (retryCount < maxRetries)
