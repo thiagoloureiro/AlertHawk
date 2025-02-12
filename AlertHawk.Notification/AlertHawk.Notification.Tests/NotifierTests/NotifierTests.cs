@@ -198,9 +198,8 @@ public class NotifierTests : IClassFixture<NotificationController>
         JsonUtils.ConvertJsonToTuple(notificationSend.NotificationWebHook);
 
         // Act
-        await _webHookNotifier.SendNotification(notificationSend.Message,
-            notificationSend.NotificationWebHook.WebHookUrl, notificationSend.NotificationWebHook.Body,
-            notificationSend.NotificationWebHook.Headers);
+        await _webHookNotifier.SendNotification(notificationSend,
+            notificationSend.NotificationWebHook);
 
         // Assert
         Assert.True(true);
@@ -235,12 +234,12 @@ public class NotifierTests : IClassFixture<NotificationController>
                 }
             }
         };
-        
+
         Environment.SetEnvironmentVariable("PUSHY_API_KEY", GlobalVariables.PushyApiKey);
-        
+
         // Act
         await _pushNotifier.SendNotification(notificationSend.Message, notificationSend.NotificationPush);
-        
+
         // Assert
         Assert.True(true);
     }

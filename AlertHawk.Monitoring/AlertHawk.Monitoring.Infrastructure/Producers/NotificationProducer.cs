@@ -35,11 +35,16 @@ public class NotificationProducer : INotificationProducer
             await _publishEndpoint.Publish<NotificationAlert>(new
             {
                 NotificationId = item.NotificationId,
+                MonitorId = item.MonitorId,
+                Service = monitorHttp.Name,
+                Region = (int)monitorHttp?.MonitorRegion,
+                Environment = (int)monitorHttp?.MonitorEnvironment,
+                URL = monitorHttp?.UrlToCheck,
+                Success = false,
                 TimeStamp = DateTime.UtcNow,
-                Message =
-                    $"Error calling {monitorHttp.Name}, Response StatusCode: {monitorHttp.ResponseStatusCode}",
+                Message = $"Error calling {monitorHttp?.Name}, Response StatusCode: {monitorHttp?.ResponseStatusCode}",
+                StatusCode = (int)monitorHttp.ResponseStatusCode,
                 ReasonPhrase = reasonPhrase,
-                StatusCode = (int)monitorHttp.ResponseStatusCode
             });
         }
     }
@@ -58,9 +63,14 @@ public class NotificationProducer : INotificationProducer
             await _publishEndpoint.Publish<NotificationAlert>(new
             {
                 NotificationId = item.NotificationId,
+                MonitorId = item.MonitorId,
+                Service = monitorHttp.Name,
+                Region = (int)monitorHttp?.MonitorRegion,
+                Environment = (int)monitorHttp?.MonitorEnvironment,
+                URL = monitorHttp?.UrlToCheck,
+                Success = true,
                 TimeStamp = DateTime.UtcNow,
-                Message =
-                    $"Success calling {monitorHttp.Name}, Response StatusCode: {monitorHttp.ResponseStatusCode}",
+                Message = $"Success calling {monitorHttp?.Name}, Response StatusCode: {monitorHttp?.ResponseStatusCode}",
                 StatusCode = (int)monitorHttp.ResponseStatusCode,
                 ReasonPhrase = reasonPhrase
             });
@@ -79,9 +89,15 @@ public class NotificationProducer : INotificationProducer
             await _publishEndpoint.Publish<NotificationAlert>(new
             {
                 NotificationId = item.NotificationId,
+                MonitorId = item.MonitorId,
+                Service = monitorTcp.Name,
+                Region = (int)monitorTcp.MonitorRegion,
+                Environment = (int)monitorTcp.MonitorEnvironment,
+                IP = monitorTcp.IP,
+                Port = monitorTcp.Port,
+                Success = true,
                 TimeStamp = DateTime.UtcNow,
-                Message =
-                    $"Success calling {monitorTcp.Name}, Response StatusCode: {monitorTcp.Response}"
+                Message = $"Success calling {monitorTcp.Name}, Response StatusCode: {monitorTcp.Response}"
             });
         }
     }
@@ -98,9 +114,15 @@ public class NotificationProducer : INotificationProducer
             await _publishEndpoint.Publish<NotificationAlert>(new
             {
                 NotificationId = item.NotificationId,
+                MonitorId = item.MonitorId,
+                Service = monitorTcp.Name,
+                Region = (int)monitorTcp?.MonitorRegion,
+                Environment = (int)monitorTcp?.MonitorEnvironment,
+                IP = monitorTcp?.IP,
+                Port = monitorTcp?.Port,
+                Success = false,
                 TimeStamp = DateTime.UtcNow,
-                Message =
-                    $"Error calling {monitorTcp.Name}, Response StatusCode: {monitorTcp.Response}"
+                Message = $"Error calling {monitorTcp?.Name}, Response StatusCode: {monitorTcp?.Response}"
             });
         }
     }

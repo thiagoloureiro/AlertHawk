@@ -371,16 +371,14 @@ public class NotificationServiceTests
             }
         };
 
-        var headers = new List<Tuple<string, string>>();
-
-        _webHookNotifier.SendNotification(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), headers).Returns(Task.CompletedTask);
+        _webHookNotifier.SendNotification(Arg.Any<NotificationSend>(), Arg.Any<NotificationWebHook>()).Returns(Task.CompletedTask);
 
         // Act
         var result = await _notificationService.Send(notificationSend);
 
         // Assert
         Assert.True(result);
-        await _webHookNotifier.Received(1).SendNotification(notificationSend.NotificationWebHook.Message, notificationSend.NotificationWebHook.WebHookUrl, notificationSend.NotificationWebHook.Body, notificationSend.NotificationWebHook.Headers);
+        await _webHookNotifier.Received(1).SendNotification(notificationSend, notificationSend.NotificationWebHook);
     }
 
     [Fact]
