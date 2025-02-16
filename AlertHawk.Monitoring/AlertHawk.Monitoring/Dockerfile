@@ -4,6 +4,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS base
 RUN apk update && apk upgrade
 RUN apk add icu-libs
+RUN apk add ca-certificates
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
