@@ -329,7 +329,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string sql =
             $@"SELECT M.Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag, MGI.MonitorGroupId as MonitorGroup 
                 FROM [Monitor] M
-                INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id WHERE M.Id=@id";
+                LEFT JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id WHERE M.Id=@id";
 
         var monitorHttp = await GetHttpMonitorByMonitorId(id);
         var monitorTcp = await GetTcpMonitorByMonitorId(id);
