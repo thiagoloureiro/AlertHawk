@@ -125,6 +125,7 @@ namespace AlertHawk.Monitoring.Controllers
         public async Task<IActionResult> CloneMonitor(int id)
         {
             var monitor = await _monitorService.GetMonitorById(id);
+            monitor.Name += "-clone";
             if (monitor.MonitorHttpItem != null)
             {
                 var monitorId = await _monitorService.CreateMonitorHttp(monitor.MonitorHttpItem);
