@@ -353,7 +353,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 FROM [Monitor] a inner join
                 [MonitorTcp] b on a.Id = b.MonitorId
                 inner join MonitorGroupItems MGI on MGI.MonitorId = b.MonitorId
-            WHERE MonitorId = @monitorId";
+            WHERE b.MonitorId = @monitorId";
         return await db.QueryFirstOrDefaultAsync<MonitorTcp>(sql, new { monitorId }, commandType: CommandType.Text);
     }
 
