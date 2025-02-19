@@ -49,7 +49,8 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     public async Task<IEnumerable<MonitorHttp>> GetMonitorHttpList()
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = "SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp]";
+        string sql =
+            "SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp]";
         return await db.QueryAsync<MonitorHttp>(sql, commandType: CommandType.Text);
     }
 
@@ -327,7 +328,18 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
 
         string sql =
             $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag FROM [Monitor] WHERE Id=@id";
-        return await db.QueryFirstOrDefaultAsync<Monitor>(sql, new { id }, commandType: CommandType.Text);
+
+        var monitorHttp = await GetHttpMonitorByMonitorId(id);
+        var monitorTcp = await GetTcpMonitorByMonitorId(id);
+
+        var monitor = await db.QueryFirstOrDefaultAsync<Monitor>(sql, new { id }, commandType: CommandType.Text);
+        if (monitor != null)
+        {
+            monitor.MonitorTcpItem = monitorTcp;
+            monitor.MonitorHttpItem = monitorHttp;
+        }
+
+        return monitor;
     }
 
     public async Task<MonitorHttp> GetHttpMonitorByMonitorId(int monitorId)
