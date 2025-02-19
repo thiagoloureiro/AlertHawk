@@ -118,6 +118,38 @@ namespace AlertHawk.Monitoring.Controllers
             });
             return Ok(monitorId);
         }
+        
+        [SwaggerOperation(Summary = "Clone a Monitor")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [HttpPost("clone/{id}")]
+        public async Task<IActionResult> CloneMonitor(int id)
+        {
+            var monitor = await _monitorService.GetMonitorById(id);
+            if (monitor.MonitorHttpItem != null)
+            {
+                var monitorId = await _monitorService.CreateMonitorHttp(monitor.MonitorHttpItem);
+                await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
+                {
+                    MonitorId = monitorId,
+                    MonitorGroupId = monitor.MonitorGroup
+                });
+            }
+            else if (monitor.MonitorTcpItem != null)
+            {
+                var monitorId = await _monitorService.CreateMonitorTcp(monitor.MonitorTcpItem);
+                await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
+                {
+                    MonitorId = monitorId,
+                    MonitorGroupId = monitor.MonitorGroup
+                });
+            }
+            else
+            {
+                return BadRequest();
+            }
+            
+            return Ok();
+        }
 
         [SwaggerOperation(Summary = "Update monitor Http")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
