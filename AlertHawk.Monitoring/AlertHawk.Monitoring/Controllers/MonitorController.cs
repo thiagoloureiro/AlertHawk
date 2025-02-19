@@ -5,7 +5,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
+using Newtonsoft.Json;  
 using Swashbuckle.AspNetCore.Annotations;
 using System.Text;
 
@@ -110,7 +110,13 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("createMonitorHttp")]
         public async Task<IActionResult> CreateMonitorHttp([FromBody] MonitorHttp monitorHttp)
         {
-            return Ok(await _monitorService.CreateMonitorHttp(monitorHttp));
+            var monitorId = await _monitorService.CreateMonitorHttp(monitorHttp);
+            await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
+            {
+                MonitorId = monitorId,
+                MonitorGroupId = monitorHttp.MonitorGroup
+            });
+            return Ok(monitorId);
         }
 
         [SwaggerOperation(Summary = "Update monitor Http")]
@@ -133,7 +139,13 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("createMonitorTcp")]
         public async Task<IActionResult> CreateMonitorTcp([FromBody] MonitorTcp monitorTcp)
         {
-            return Ok(await _monitorService.CreateMonitorTcp(monitorTcp));
+            var monitorId = await _monitorService.CreateMonitorTcp(monitorTcp);
+            await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
+            {
+                MonitorId = monitorId,
+                MonitorGroupId = monitorTcp.MonitorGroup
+            });
+            return Ok(monitorId);
         }
 
         [SwaggerOperation(Summary = "Update monitor TCP")]
