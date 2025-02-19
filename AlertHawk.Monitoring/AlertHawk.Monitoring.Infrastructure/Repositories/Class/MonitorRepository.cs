@@ -349,9 +349,10 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
 
         string sql =
             $@"SELECT a.Id, a.Name, a.MonitorTypeId, a.HeartBeatInterval, a.Retries, a.Status, a.DaysToExpireCert, a.Paused, a.MonitorRegion, a.MonitorEnvironment, a.Tag,
-               b.MonitorId, b.Port, b.IP, b.Timeout, b.LastStatus
+               b.MonitorId, b.Port, b.IP, b.Timeout, b.LastStatus, MGI.MonitorGroupId as MonitorGroup
                 FROM [Monitor] a inner join
                 [MonitorTcp] b on a.Id = b.MonitorId
+                inner join MonitorGroupItems MGI on MGI.MonitorId = b.MonitorId
             WHERE MonitorId = @monitorId";
         return await db.QueryFirstOrDefaultAsync<MonitorTcp>(sql, new { monitorId }, commandType: CommandType.Text);
     }
