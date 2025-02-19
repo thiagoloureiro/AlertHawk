@@ -24,4 +24,5 @@ public class Monitor
 
     public MonitorHttp? MonitorHttpItem { get; set; }
     public MonitorTcp? MonitorTcpItem { get; set; }
+    public int MonitorGroup { get; set; }
 }
