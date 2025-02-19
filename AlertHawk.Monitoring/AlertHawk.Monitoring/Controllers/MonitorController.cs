@@ -126,8 +126,10 @@ namespace AlertHawk.Monitoring.Controllers
         {
             var monitor = await _monitorService.GetMonitorById(id);
             monitor.Name += "-clone";
+            
             if (monitor.MonitorHttpItem != null)
             {
+                monitor.MonitorHttpItem.Name += "-clone";
                 var monitorId = await _monitorService.CreateMonitorHttp(monitor.MonitorHttpItem);
                 await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
                 {
@@ -137,6 +139,7 @@ namespace AlertHawk.Monitoring.Controllers
             }
             else if (monitor.MonitorTcpItem != null)
             {
+                monitor.MonitorTcpItem.Name += "-clone";
                 var monitorId = await _monitorService.CreateMonitorTcp(monitor.MonitorTcpItem);
                 await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
                 {
