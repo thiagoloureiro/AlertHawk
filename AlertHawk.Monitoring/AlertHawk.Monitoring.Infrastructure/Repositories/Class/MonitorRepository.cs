@@ -327,7 +327,9 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
 
         string sql =
-            $@"SELECT Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag FROM [Monitor] WHERE Id=@id";
+            $@"SELECT M.Id, Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag, MGI.MonitorGroupId as MonitorGroup 
+                FROM [Monitor] M
+                INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id WHERE M.Id=@id";
 
         var monitorHttp = await GetHttpMonitorByMonitorId(id);
         var monitorTcp = await GetTcpMonitorByMonitorId(id);
