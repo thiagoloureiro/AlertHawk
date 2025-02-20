@@ -196,7 +196,7 @@ namespace AlertHawk.Monitoring.Controllers
         
         [SwaggerOperation(Summary = "Create a new monitor K8S")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-        [HttpPost("createMonitorTcp")]
+        [HttpPost("createMonitorK8s")]
         public async Task<IActionResult> CreateMonitorK8s([FromBody] MonitorK8s monitorK8s)
         {
             var monitorId = await _monitorService.CreateMonitorK8s(monitorK8s);
