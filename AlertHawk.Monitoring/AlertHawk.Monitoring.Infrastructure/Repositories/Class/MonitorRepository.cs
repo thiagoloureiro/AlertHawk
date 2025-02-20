@@ -60,6 +60,13 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string sql = "SELECT MonitorId, Port, IP, Timeout, LastStatus FROM [MonitorTcp]";
         return await db.QueryAsync<MonitorTcp>(sql, commandType: CommandType.Text);
     }
+    
+    public async Task<IEnumerable<MonitorK8s>> GetMonitorK8sList()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = "SELECT MonitorId, ClusterName, KubeConfig, LastStatus FROM [MonitorK8s]";
+        return await db.QueryAsync<MonitorK8s>(sql, commandType: CommandType.Text);
+    }
 
     public async Task<int> CreateMonitor(Monitor monitor)
     {

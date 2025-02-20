@@ -419,6 +419,7 @@ public class MonitorService : IMonitorService
     {
         var monitorHttpList = await _monitorRepository.GetMonitorHttpList();
         var monitorTcpList = await _monitorRepository.GetMonitorTcpList();
+        var monitorK8sList = await _monitorRepository.GetMonitorK8sList();
         var monitorGroupList = await _monitorGroupService.GetMonitorGroupList();
 
         foreach (var monitorGroup in monitorGroupList)
@@ -435,6 +436,7 @@ public class MonitorService : IMonitorService
         {
             monitor.MonitorHttpItem = monitorHttpList.Where(x => x.MonitorId == monitor.Id).FirstOrDefault();
             monitor.MonitorTcpItem = monitorTcpList.Where(x => x.MonitorId == monitor.Id).FirstOrDefault();
+            monitor.MonitorK8sItem = monitorK8sList.Where(x => x.MonitorId == monitor.Id).FirstOrDefault();
         }
 
         var json = JsonConvert.SerializeObject(monitorBackup, Formatting.Indented);
