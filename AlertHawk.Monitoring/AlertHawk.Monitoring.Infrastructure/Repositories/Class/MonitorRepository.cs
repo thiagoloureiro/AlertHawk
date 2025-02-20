@@ -385,12 +385,14 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
 
         var monitorHttp = await GetHttpMonitorByMonitorId(id);
         var monitorTcp = await GetTcpMonitorByMonitorId(id);
+        var monitorK8s = await GetK8sMonitorByMonitorId(id);
 
         var monitor = await db.QueryFirstOrDefaultAsync<Monitor>(sql, new { id }, commandType: CommandType.Text);
         if (monitor != null)
         {
             monitor.MonitorTcpItem = monitorTcp;
             monitor.MonitorHttpItem = monitorHttp;
+            monitor.MonitorK8sItem = monitorK8s;
         }
 
         return monitor;
@@ -421,6 +423,20 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 inner join MonitorGroupItems MGI on MGI.MonitorId = b.MonitorId
             WHERE b.MonitorId = @monitorId";
         return await db.QueryFirstOrDefaultAsync<MonitorTcp>(sql, new { monitorId }, commandType: CommandType.Text);
+    }
+    
+    public async Task<MonitorK8s> GetK8sMonitorByMonitorId(int monitorId)
+    {
+        await using var db = new SqlConnection(_connstring);
+
+        string sql =
+            $@"SELECT a.Id, a.Name, a.MonitorTypeId, a.HeartBeatInterval, a.Retries, a.Status, a.DaysToExpireCert, a.Paused, a.MonitorRegion, a.MonitorEnvironment, a.Tag,
+               b.MonitorId, b.ClusterName, b.KubeConfig, b.LastStatus, MGI.MonitorGroupId as MonitorGroup
+                FROM [Monitor] a inner join
+                [MonitorK8s] b on a.Id = b.MonitorId
+                inner join MonitorGroupItems MGI on MGI.MonitorId = b.MonitorId
+            WHERE b.MonitorId = @monitorId";
+        return await db.QueryFirstOrDefaultAsync<MonitorK8s>(sql, new { monitorId }, commandType: CommandType.Text);
     }
 
     public async Task UpdateMonitorStatus(int id, bool status, int daysToExpireCert)

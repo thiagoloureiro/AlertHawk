@@ -21,7 +21,6 @@ public class Monitor
     public MonitorDashboard? MonitorStatusDashboard { get; set; }
     public string? Tag { get; set; }
     public bool CheckCertExpiry { get; set; }
-
     public MonitorHttp? MonitorHttpItem { get; set; }
     public MonitorTcp? MonitorTcpItem { get; set; }
     public MonitorK8s? MonitorK8sItem { get; set; }

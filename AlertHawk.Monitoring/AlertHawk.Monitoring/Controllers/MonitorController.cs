@@ -147,6 +147,16 @@ namespace AlertHawk.Monitoring.Controllers
                     MonitorGroupId = monitor.MonitorGroup
                 });
             }
+            else if (monitor.MonitorK8sItem != null)
+            {
+                monitor.MonitorK8sItem.Name += "-clone";
+                var monitorId = await _monitorService.CreateMonitorK8s(monitor.MonitorK8sItem);
+                await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
+                {
+                    MonitorId = monitorId,
+                    MonitorGroupId = monitor.MonitorGroup
+                });
+            }
             else
             {
                 return BadRequest();
