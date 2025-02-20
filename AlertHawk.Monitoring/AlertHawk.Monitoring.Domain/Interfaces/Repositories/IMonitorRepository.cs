@@ -53,4 +53,5 @@ public interface IMonitorRepository
     Task<int> CreateMonitor(Monitor monitor);
 
     Task WipeMonitorData();
+    Task<IEnumerable<MonitorK8s>> GetK8sMonitorByIds(List<int> ids);
 }

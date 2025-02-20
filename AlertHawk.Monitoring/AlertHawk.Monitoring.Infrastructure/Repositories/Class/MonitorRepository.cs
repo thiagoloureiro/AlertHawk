@@ -297,6 +297,16 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
 
         return await db.QueryAsync<MonitorTcp>(sql, new { ids }, commandType: CommandType.Text);
     }
+    
+    public async Task<IEnumerable<MonitorK8s>> GetK8sMonitorByIds(List<int> ids)
+    {
+        await using var db = new SqlConnection(_connstring);
+
+        string sql =
+            $@"SELECT MonitorId, ClusterName, KubeConfig, LastStatus  FROM [MonitorK8s] WHERE MonitorId IN @ids";
+
+        return await db.QueryAsync<MonitorK8s>(sql, new { ids }, commandType: CommandType.Text);
+    }
 
     public async Task<IEnumerable<Monitor>> GetMonitorListByIds(List<int> ids)
     {

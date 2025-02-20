@@ -41,6 +41,7 @@ public class MonitorManager : IMonitorManager
 
                 await StartHttpMonitorJobs(monitorListByIds);
                 await StartTcpMonitorJobs(monitorListByIds);
+                await StartK8sMonitorJobs(monitorListByIds);
             }
         }
         catch (Exception e)
@@ -147,6 +148,54 @@ public class MonitorManager : IMonitorManager
                 Thread.Sleep(50);
                 var monitor = monitorByTcpType.FirstOrDefault(x => x.Id == monitorTcp.MonitorId);
                 RecurringJob.AddOrUpdate<ITcpClientRunner>(jobId, x => x.CheckTcpAsync(monitorTcp),
+                    $"*/{monitor?.HeartBeatInterval} * * * *");
+            }
+        }
+    }
+    
+      private async Task StartK8sMonitorJobs(IEnumerable<Monitor> monitorListByIds)
+    {
+        var lstMonitorByK8sType = monitorListByIds.Where(x => x.MonitorTypeId == 4);
+        var monitorbyK8sType = lstMonitorByK8sType.ToList();
+        if (monitorbyK8sType.Any())
+        {
+            var k8sMonitorIds = monitorbyK8sType.Select(x => x.Id).ToList();
+            var lstMonitors = await _monitorRepository.GetK8sMonitorByIds(k8sMonitorIds);
+
+            GlobalVariables.K8sTaskList = k8sMonitorIds;
+
+            var lstStringsToAdd = new List<string>();
+            var monitorK8sList = lstMonitors.ToList();
+
+            foreach (var monitorK8S in monitorK8sList)
+            {
+                monitorK8S.LastStatus =
+                    monitorbyK8sType.FirstOrDefault(x => x.Id == monitorK8S.MonitorId).Status;
+                monitorK8S.Name = monitorbyK8sType.FirstOrDefault(x => x.Id == monitorK8S.MonitorId).Name;
+                monitorK8S.Retries = monitorbyK8sType.FirstOrDefault(x => x.Id == monitorK8S.MonitorId).Retries;
+
+                string jobId = $"StartRunnerManager_CheckK8sAsync_JobId_{monitorK8S.MonitorId}";
+                lstStringsToAdd.Add(jobId);
+            }
+
+            IEnumerable<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
+            recurringJobs = recurringJobs.Where(x => x.Id.StartsWith("StartRunnerManager_CheckK8sAsync_JobId"))
+                .ToList();
+
+            foreach (var job in recurringJobs)
+            {
+                if (!lstStringsToAdd.Contains(job.Id))
+                {
+                    RecurringJob.RemoveIfExists(job.Id);
+                }
+            }
+
+            foreach (var monitorK8S in monitorK8sList)
+            {
+                string jobId = $"StartRunnerManager_CheckK8sAsync_JobId_{monitorK8S.MonitorId}";
+                Thread.Sleep(50);
+                var monitor = monitorbyK8sType.FirstOrDefault(x => x.Id == monitorK8S.MonitorId);
+                RecurringJob.AddOrUpdate<IK8sClientRunner>(jobId, x => x.CheckK8sAsync(monitorK8S),
                     $"*/{monitor?.HeartBeatInterval} * * * *");
             }
         }
