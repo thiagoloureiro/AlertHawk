@@ -308,6 +308,41 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return await db.QueryAsync<MonitorK8s>(sql, new { ids }, commandType: CommandType.Text);
     }
 
+    public async Task<int> CreateMonitorK8s(MonitorK8s monitorK8S)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlMonitor =
+            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag)
+            VALUES (@Name, @MonitorTypeId, @HeartBeatInterval, @Retries, @Status, @DaysToExpireCert, @Paused, @MonitorRegion, @MonitorEnvironment, @Tag); SELECT CAST(SCOPE_IDENTITY() as int)";
+        
+        var id = await db.ExecuteScalarAsync<int>(sqlMonitor,
+            new
+            {
+                monitorK8S.Name,
+                monitorK8S.MonitorTypeId,
+                monitorK8S.HeartBeatInterval,
+                monitorK8S.Retries,
+                monitorK8S.Status,
+                monitorK8S.DaysToExpireCert,
+                monitorK8S.Paused,
+                monitorK8S.MonitorRegion,
+                monitorK8S.MonitorEnvironment,
+                monitorK8S.Tag
+            }, commandType: CommandType.Text);
+
+        string sqlMonitorK8s =
+            @"INSERT INTO [MonitorK8s] (MonitorId, ClusterName, KubeConfig, LastStatus) VALUES (@MonitorId, @ClusterName, @KubeConfig, @LastStatus)";
+        await db.ExecuteAsync(sqlMonitorK8s,
+            new
+            {
+                MonitorId = id,
+                monitorK8S.ClusterName,
+                monitorK8S.KubeConfig,
+                monitorK8S.LastStatus
+            }, commandType: CommandType.Text);
+        return id;
+    }
+
     public async Task<IEnumerable<Monitor>> GetMonitorListByIds(List<int> ids)
     {
         await using var db = new SqlConnection(_connstring);

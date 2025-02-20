@@ -547,6 +547,14 @@ public class MonitorService : IMonitorService
         return await _monitorRepository.GetMonitorById(id);
     }
 
+    public async Task<int> CreateMonitorK8s(MonitorK8s monitorK8S)
+    {
+        monitorK8S.Name = monitorK8S.Name.TrimStart();
+        monitorK8S.Name = monitorK8S.Name.TrimEnd();
+
+        return await _monitorRepository.CreateMonitorK8s(monitorK8S);
+    }
+
     private HttpClient CreateHttpClient(string token)
     {
         var client = _httpClientFactory.CreateClient();
