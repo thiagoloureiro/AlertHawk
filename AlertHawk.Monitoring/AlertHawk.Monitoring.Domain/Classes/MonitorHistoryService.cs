@@ -28,7 +28,7 @@ public class MonitorHistoryService : IMonitorHistoryService
         IEnumerable<MonitorHistory> monitorData;
         if (days == 0)
         {
-            monitorData = await _monitorHistoryRepository.GetMonitorHistoryByIdAndHours(id, days);
+            monitorData = await _monitorHistoryRepository.GetMonitorHistoryByIdAndHours(id, 24);
         }
         else
         {
