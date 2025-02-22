@@ -25,13 +25,21 @@ public class MonitorHistoryService : IMonitorHistoryService
     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id, int days, bool downSampling,
         int downSamplingFactor)
     {
-        var monitorData = await _monitorHistoryRepository.GetMonitorHistoryByIdAndDays(id, days);
+        IEnumerable<MonitorHistory> monitorData;
+        if (days == 0)
+        {
+            monitorData = await _monitorHistoryRepository.GetMonitorHistoryByIdAndHours(id, days);
+        }
+        else
+        {
+            monitorData = await _monitorHistoryRepository.GetMonitorHistoryByIdAndDays(id, days);
+        }
 
         if (downSampling)
         {
             var data = monitorData.ToArray();
             var downSampledData = new List<MonitorHistory>();
-            
+
             // First, add all records where Status is false
             var failureRecords = data.Where(x => !x.Status).ToList();
             downSampledData.AddRange(failureRecords);
@@ -58,7 +66,7 @@ public class MonitorHistoryService : IMonitorHistoryService
                 item.ResponseTime = 0;
             }
         });
-        
+
         return monitorHistories;
     }
 
