@@ -186,8 +186,6 @@ public class K8sClientRunner : IK8sClientRunner
                         succeeded = false;
                     }
                 }
-                
-                monitorK8s.NodeStatusList = nodeStatuses;
 
                 var monitorHistory = new MonitorHistory
                 {
