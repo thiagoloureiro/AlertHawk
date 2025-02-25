@@ -250,7 +250,6 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             var monitor = new MonitorTcp
             {
                 Name = "Test Monitor",
-                MonitorTcp = "www.google.com",
                 HeartBeatInterval = 0,
                 Retries = 0,
                 IP = "1.1.1.1",
@@ -273,7 +272,6 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             var monitor = new MonitorTcp
             {
                 Name = "Test Monitor",
-                MonitorTcp = "www.google.com",
                 HeartBeatInterval = 0,
                 Retries = 0,
                 IP = "1.1.1.1",
@@ -326,7 +324,6 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             var monitor = new MonitorTcp
             {
                 Name = "Test Monitor",
-                MonitorTcp = "www.google.com",
                 HeartBeatInterval = 0,
                 Retries = 0,
                 IP = "1.1.1.1",
