@@ -27,6 +27,21 @@ namespace AlertHawk.Monitoring.Controllers
             _monitorGroupService = monitorGroupService;
         }
 
+        [SwaggerOperation(Summary = "Get MonitorById")]
+        [ProducesResponseType(typeof(Domain.Entities.Monitor), StatusCodes.Status200OK)]
+        [HttpGet("monitor/{id}")]
+        public async Task<IActionResult> GetMonitorById(int id)
+        {
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (string.IsNullOrEmpty(jwtToken))
+            {
+                return BadRequest("Invalid Token");
+            }
+
+            var result = await _monitorService.GetMonitorById(id);
+            return Ok(result);
+        }
+
         [SwaggerOperation(Summary = "Retrieves detailed status for the current monitor Agent")]
         [ProducesResponseType(typeof(MonitorStatusDashboard), StatusCodes.Status200OK)]
         [HttpGet("monitorStatusDashboard/{environment}")]
