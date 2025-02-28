@@ -67,4 +67,12 @@ public class MonitorAlertService : IMonitorAlertService
             _ => new MemoryStream()
         };
     }
+
+    public async Task<IEnumerable<MonitorAlert>> GetMonitorAlertsByMonitorGroup(int monitorGroupId, int? days, MonitorEnvironment? environment, string jwtToken)
+    {
+        var monitorList = await _monitorGroupService.GetMonitorListByGroupId(monitorGroupId);
+        var listIds = monitorList.Select(x => x.Id).ToList();
+        
+        return await _monitorAlertRepository.GetMonitorAlertsByMonitorGroup(listIds, days, environment);
+    }
 }

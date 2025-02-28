@@ -9,4 +9,6 @@ public interface IMonitorAlertService
 
     Task<MemoryStream> GetMonitorAlertsReport(int? monitorId, int? days, string jwtToken,
         MonitorEnvironment? environment, ReportType reportType);
+
+    Task<IEnumerable<MonitorAlert>> GetMonitorAlertsByMonitorGroup(int monitorGroupId, int? days, MonitorEnvironment? environment, string jwtToken);
 }
