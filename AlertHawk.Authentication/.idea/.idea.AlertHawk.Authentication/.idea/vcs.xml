@@ -2,5 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$/.." vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../AlertHawk.Chart" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../AlertHawk.Mobile" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../AlertHawk.UI" vcs="Git" />
   </component>
 </project>

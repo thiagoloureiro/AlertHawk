@@ -60,6 +60,13 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         string sql = "SELECT MonitorId, Port, IP, Timeout, LastStatus FROM [MonitorTcp]";
         return await db.QueryAsync<MonitorTcp>(sql, commandType: CommandType.Text);
     }
+    
+    public async Task<IEnumerable<MonitorK8s>> GetMonitorK8sList()
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = "SELECT MonitorId, ClusterName, KubeConfig, LastStatus FROM [MonitorK8s]";
+        return await db.QueryAsync<MonitorK8s>(sql, commandType: CommandType.Text);
+    }
 
     public async Task<int> CreateMonitor(Monitor monitor)
     {
@@ -297,6 +304,51 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
 
         return await db.QueryAsync<MonitorTcp>(sql, new { ids }, commandType: CommandType.Text);
     }
+    
+    public async Task<IEnumerable<MonitorK8s>> GetK8sMonitorByIds(List<int> ids)
+    {
+        await using var db = new SqlConnection(_connstring);
+
+        string sql =
+            $@"SELECT MonitorId, ClusterName, KubeConfig, LastStatus  FROM [MonitorK8s] WHERE MonitorId IN @ids";
+
+        return await db.QueryAsync<MonitorK8s>(sql, new { ids }, commandType: CommandType.Text);
+    }
+
+    public async Task<int> CreateMonitorK8s(MonitorK8s monitorK8S)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlMonitor =
+            @"INSERT INTO [Monitor] (Name, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag)
+            VALUES (@Name, @MonitorTypeId, @HeartBeatInterval, @Retries, @Status, @DaysToExpireCert, @Paused, @MonitorRegion, @MonitorEnvironment, @Tag); SELECT CAST(SCOPE_IDENTITY() as int)";
+        
+        var id = await db.ExecuteScalarAsync<int>(sqlMonitor,
+            new
+            {
+                monitorK8S.Name,
+                monitorK8S.MonitorTypeId,
+                monitorK8S.HeartBeatInterval,
+                monitorK8S.Retries,
+                monitorK8S.Status,
+                monitorK8S.DaysToExpireCert,
+                monitorK8S.Paused,
+                monitorK8S.MonitorRegion,
+                monitorK8S.MonitorEnvironment,
+                monitorK8S.Tag
+            }, commandType: CommandType.Text);
+
+        string sqlMonitorK8s =
+            @"INSERT INTO [MonitorK8s] (MonitorId, ClusterName, KubeConfig, LastStatus) VALUES (@MonitorId, @ClusterName, @KubeConfig, @LastStatus)";
+        await db.ExecuteAsync(sqlMonitorK8s,
+            new
+            {
+                MonitorId = id,
+                monitorK8S.ClusterName,
+                monitorK8S.KubeConfig,
+                monitorK8S.LastStatus
+            }, commandType: CommandType.Text);
+        return id;
+    }
 
     public async Task<IEnumerable<Monitor>> GetMonitorListByIds(List<int> ids)
     {
@@ -333,12 +385,14 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
 
         var monitorHttp = await GetHttpMonitorByMonitorId(id);
         var monitorTcp = await GetTcpMonitorByMonitorId(id);
+        var monitorK8s = await GetK8sMonitorByMonitorId(id);
 
         var monitor = await db.QueryFirstOrDefaultAsync<Monitor>(sql, new { id }, commandType: CommandType.Text);
         if (monitor != null)
         {
             monitor.MonitorTcpItem = monitorTcp;
             monitor.MonitorHttpItem = monitorHttp;
+            monitor.MonitorK8sItem = monitorK8s;
         }
 
         return monitor;
@@ -369,6 +423,20 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 inner join MonitorGroupItems MGI on MGI.MonitorId = b.MonitorId
             WHERE b.MonitorId = @monitorId";
         return await db.QueryFirstOrDefaultAsync<MonitorTcp>(sql, new { monitorId }, commandType: CommandType.Text);
+    }
+    
+    public async Task<MonitorK8s> GetK8sMonitorByMonitorId(int monitorId)
+    {
+        await using var db = new SqlConnection(_connstring);
+
+        string sql =
+            $@"SELECT a.Id, a.Name, a.MonitorTypeId, a.HeartBeatInterval, a.Retries, a.Status, a.DaysToExpireCert, a.Paused, a.MonitorRegion, a.MonitorEnvironment, a.Tag,
+               b.MonitorId, b.ClusterName, b.KubeConfig, b.LastStatus, MGI.MonitorGroupId as MonitorGroup
+                FROM [Monitor] a inner join
+                [MonitorK8s] b on a.Id = b.MonitorId
+                inner join MonitorGroupItems MGI on MGI.MonitorId = b.MonitorId
+            WHERE b.MonitorId = @monitorId";
+        return await db.QueryFirstOrDefaultAsync<MonitorK8s>(sql, new { monitorId }, commandType: CommandType.Text);
     }
 
     public async Task UpdateMonitorStatus(int id, bool status, int daysToExpireCert)

@@ -11,4 +11,8 @@ public interface INotificationProducer
     Task HandleSuccessTcpNotifications(MonitorTcp monitorTcp);
 
     Task HandleFailedTcpNotifications(MonitorTcp monitorTcp);
+    
+    Task HandleSuccessK8sNotifications(MonitorK8s monitorK8S, string response);
+
+    Task HandleFailedK8sNotifications(MonitorK8s monitorK8S, string response);
 }

@@ -419,6 +419,7 @@ public class MonitorService : IMonitorService
     {
         var monitorHttpList = await _monitorRepository.GetMonitorHttpList();
         var monitorTcpList = await _monitorRepository.GetMonitorTcpList();
+        var monitorK8sList = await _monitorRepository.GetMonitorK8sList();
         var monitorGroupList = await _monitorGroupService.GetMonitorGroupList();
 
         foreach (var monitorGroup in monitorGroupList)
@@ -435,6 +436,7 @@ public class MonitorService : IMonitorService
         {
             monitor.MonitorHttpItem = monitorHttpList.Where(x => x.MonitorId == monitor.Id).FirstOrDefault();
             monitor.MonitorTcpItem = monitorTcpList.Where(x => x.MonitorId == monitor.Id).FirstOrDefault();
+            monitor.MonitorK8sItem = monitorK8sList.Where(x => x.MonitorId == monitor.Id).FirstOrDefault();
         }
 
         var json = JsonConvert.SerializeObject(monitorBackup, Formatting.Indented);
@@ -483,6 +485,21 @@ public class MonitorService : IMonitorService
                         monitor.MonitorTcpItem.MonitorTypeId = monitor.MonitorTypeId;
 
                         monitorId = await _monitorRepository.CreateMonitorTcp(monitor.MonitorTcpItem);
+                    }
+                    
+                    if (monitor.MonitorK8sItem != null)
+                    {
+                        monitor.MonitorK8sItem.Name = monitor.Name;
+                        monitor.MonitorK8sItem.MonitorEnvironment = monitor.MonitorEnvironment;
+                        monitor.MonitorK8sItem.HeartBeatInterval = monitor.HeartBeatInterval;
+                        monitor.MonitorK8sItem.Retries = monitor.Retries;
+                        monitor.MonitorK8sItem.Status = monitor.Status;
+                        monitor.MonitorK8sItem.DaysToExpireCert = monitor.DaysToExpireCert;
+                        monitor.MonitorK8sItem.Paused = monitor.Paused;
+                        monitor.MonitorK8sItem.MonitorRegion = monitor.MonitorRegion;
+                        monitor.MonitorK8sItem.MonitorTypeId = monitor.MonitorTypeId;
+
+                        monitorId = await _monitorRepository.CreateMonitorK8s(monitor.MonitorK8sItem);
                     }
 
                     await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
@@ -545,6 +562,14 @@ public class MonitorService : IMonitorService
     public async Task<Monitor> GetMonitorById(int id)
     {
         return await _monitorRepository.GetMonitorById(id);
+    }
+
+    public async Task<int> CreateMonitorK8s(MonitorK8s monitorK8S)
+    {
+        monitorK8S.Name = monitorK8S.Name.TrimStart();
+        monitorK8S.Name = monitorK8S.Name.TrimEnd();
+
+        return await _monitorRepository.CreateMonitorK8s(monitorK8S);
     }
 
     private HttpClient CreateHttpClient(string token)
