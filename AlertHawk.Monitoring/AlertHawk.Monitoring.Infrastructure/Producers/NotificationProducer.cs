@@ -126,4 +126,52 @@ public class NotificationProducer : INotificationProducer
             });
         }
     }
+
+    public async Task HandleSuccessK8sNotifications(MonitorK8s monitorK8S, string response)
+    {
+        var notificationIdList = await _monitorNotificationRepository.GetMonitorNotifications(monitorK8S.MonitorId);
+
+        _notificationLogger.LogInformation(
+            $"sending success notification calling {monitorK8S.ClusterName}");
+
+        foreach (var item in notificationIdList)
+        {
+            await _publishEndpoint.Publish<NotificationAlert>(new
+            {
+                NotificationId = item.NotificationId,
+                MonitorId = item.MonitorId,
+                Service = monitorK8S.Name,
+                Region = (int)monitorK8S.MonitorRegion,
+                Environment = (int)monitorK8S.MonitorEnvironment,
+                ClusterName = monitorK8S.ClusterName,
+                Success = true,
+                TimeStamp = DateTime.UtcNow,
+                Message = $"Success calling {monitorK8S.ClusterName}"
+            });
+        }
+    }
+
+    public async Task HandleFailedK8sNotifications(MonitorK8s monitorK8S, string response)
+    {
+        var notificationIdList = await _monitorNotificationRepository.GetMonitorNotifications(monitorK8S.MonitorId);
+
+        _notificationLogger.LogInformation(
+            $"sending notification Error calling {monitorK8S.ClusterName} Error Detail: {response}");
+
+        foreach (var item in notificationIdList)
+        {
+            await _publishEndpoint.Publish<NotificationAlert>(new
+            {
+                NotificationId = item.NotificationId,
+                MonitorId = item.MonitorId,
+                Service = monitorK8S.Name,
+                Region = (int)monitorK8S?.MonitorRegion,
+                Environment = (int)monitorK8S?.MonitorEnvironment,
+                ClusterName = monitorK8S?.ClusterName,
+                Success = false,
+                TimeStamp = DateTime.UtcNow,
+                Message = $"Error calling {monitorK8S?.Name}, Error Detail: {response}"
+            });
+        }
+    }
 }

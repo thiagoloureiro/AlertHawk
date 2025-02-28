@@ -162,6 +162,16 @@ namespace AlertHawk.Monitoring.Controllers
                     MonitorGroupId = monitor.MonitorGroup
                 });
             }
+            else if (monitor.MonitorK8sItem != null)
+            {
+                monitor.MonitorK8sItem.Name += "-clone";
+                var monitorId = await _monitorService.CreateMonitorK8s(monitor.MonitorK8sItem);
+                await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
+                {
+                    MonitorId = monitorId,
+                    MonitorGroupId = monitor.MonitorGroup
+                });
+            }
             else
             {
                 return BadRequest();
@@ -195,6 +205,20 @@ namespace AlertHawk.Monitoring.Controllers
             {
                 MonitorId = monitorId,
                 MonitorGroupId = monitorTcp.MonitorGroup
+            });
+            return Ok(monitorId);
+        }
+        
+        [SwaggerOperation(Summary = "Create a new monitor K8S")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [HttpPost("createMonitorK8s")]
+        public async Task<IActionResult> CreateMonitorK8s([FromBody] MonitorK8s monitorK8s)
+        {
+            var monitorId = await _monitorService.CreateMonitorK8s(monitorK8s);
+            await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
+            {
+                MonitorId = monitorId,
+                MonitorGroupId = monitorK8s.MonitorGroup
             });
             return Ok(monitorId);
         }

@@ -49,4 +49,5 @@ public interface IMonitorService
     Task<UserDto?> GetUserDetailsByToken(string token);
 
     Task<Monitor> GetMonitorById(int id);
+    Task<int> CreateMonitorK8s(MonitorK8s monitorK8S);
 }

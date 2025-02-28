@@ -135,4 +135,36 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
                 Environment = environment
             }, commandType: CommandType.Text);
     }
+
+    public async Task<IEnumerable<MonitorAlert>> GetMonitorAlertsByMonitorGroup(List<int> monitorListIds, int? days,
+        MonitorEnvironment? environment)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql;
+
+
+        if (environment == MonitorEnvironment.All)
+        {
+            sql =
+                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment,  MH.UrlToCheck
+                    FROM MonitorAlert MA
+                    INNER JOIN Monitor M on M.Id = MA.MonitorId
+                    LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
+                    WHERE MA.MonitorId IN @monitorListIds AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE())
+                    ORDER BY MA.TimeStamp DESC";
+        }
+        else
+        {
+            sql =
+                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment,  MH.UrlToCheck
+                    FROM MonitorAlert MA
+                    INNER JOIN Monitor M on M.Id = MA.MonitorId
+                    LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
+                    WHERE MA.MonitorId in @monitorListIds AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.environment = @environment
+                    ORDER BY MA.TimeStamp DESC";
+        }
+
+        return await db.QueryAsync<MonitorAlert>(sql, new { monitorListIds, days, environment },
+            commandType: CommandType.Text);
+    }
 }
