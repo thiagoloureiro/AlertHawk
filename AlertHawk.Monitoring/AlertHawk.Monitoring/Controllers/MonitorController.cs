@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;  
 using Swashbuckle.AspNetCore.Annotations;
 using System.Text;
+using k8s;
 
 namespace AlertHawk.Monitoring.Controllers
 {
@@ -212,8 +213,23 @@ namespace AlertHawk.Monitoring.Controllers
         [SwaggerOperation(Summary = "Create a new monitor K8S")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [HttpPost("createMonitorK8s")]
-        public async Task<IActionResult> CreateMonitorK8s([FromBody] MonitorK8s monitorK8s)
+        public async Task<IActionResult> CreateMonitorK8s([FromBody] MonitorK8s monitorK8s, IFormFile? file)
         {
+            if (file != null)
+            {
+                var filePath = Path.Combine("kubeconfig", file.FileName); // Define a folder to save files
+
+                Directory.CreateDirectory("kubeconfig"); // Ensure directory exists
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+                
+                var config = KubernetesClientConfiguration.BuildConfigFromConfigFile(filePath);
+                monitorK8s.KubeConfig = JsonConvert.SerializeObject(config);
+            }
+            
             var monitorId = await _monitorService.CreateMonitorK8s(monitorK8s);
             await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
             {
