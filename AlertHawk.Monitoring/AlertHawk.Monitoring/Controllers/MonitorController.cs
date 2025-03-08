@@ -213,8 +213,11 @@ namespace AlertHawk.Monitoring.Controllers
         [SwaggerOperation(Summary = "Create a new monitor K8S")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [HttpPost("createMonitorK8s")]
-        public async Task<IActionResult> CreateMonitorK8s([FromBody] MonitorK8s monitorK8s, IFormFile? file)
+        public async Task<IActionResult> CreateMonitorK8s([FromForm] MonitorK8sDto request)
         {
+            var file = request.File;
+            var monitorK8s = JsonConvert.DeserializeObject<MonitorK8s>(request.MonitorK8s);
+            
             if (file != null)
             {
                 var filePath = Path.Combine("kubeconfig", file.FileName); // Define a folder to save files
