@@ -38,10 +38,20 @@ public class K8sClientRunner : IK8sClientRunner
         {
             try
             {
-                string kubeconfigPath = monitorK8s.KubeConfig;
-                var k8sOject = JsonSerializer.Deserialize<K8SConfiguration>(kubeconfigPath);
+                var filePath = "kubeconfig/config.yaml";
+                if (!string.IsNullOrEmpty(monitorK8s.KubeConfig))
+                {
+                    var fileBytes = Convert.FromBase64String(monitorK8s.Base64Content); // Decode base64 string
+                    filePath = Path.Combine("kubeconfig", "config.yaml"); // Define file path
 
-                var config = KubernetesClientConfiguration.BuildConfigFromConfigObject(k8sOject);
+                    Directory.CreateDirectory("kubeconfig"); // Ensure directory exists
+
+                    await System.IO.File.WriteAllBytesAsync(filePath, fileBytes); // Write decoded bytes to file
+
+                    monitorK8s.KubeConfig = monitorK8s.Base64Content;
+                }
+                
+                var config = KubernetesClientConfiguration.BuildConfigFromConfigFile(filePath);
                 var client = new Kubernetes(config);
 
                 // Fetch nodes from Kubernetes

@@ -225,9 +225,8 @@ namespace AlertHawk.Monitoring.Controllers
                 Directory.CreateDirectory("kubeconfig"); // Ensure directory exists
 
                 await System.IO.File.WriteAllBytesAsync(filePath, fileBytes); // Write decoded bytes to file
-
-                var config = KubernetesClientConfiguration.BuildConfigFromConfigFile(filePath);
-                monitorK8s.KubeConfig = JsonConvert.SerializeObject(config);
+                
+                monitorK8s.KubeConfig = monitorK8s.Base64Content;
             }
 
             var monitorId = await _monitorService.CreateMonitorK8s(monitorK8s);
