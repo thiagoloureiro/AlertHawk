@@ -5,7 +5,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;  
+using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Text;
 using k8s;
@@ -21,7 +21,8 @@ namespace AlertHawk.Monitoring.Controllers
         private readonly IMonitorAgentService _monitorAgentService;
         private readonly IMonitorGroupService _monitorGroupService;
 
-        public MonitorController(IMonitorService monitorService, IMonitorAgentService monitorAgentService, IMonitorGroupService monitorGroupService)
+        public MonitorController(IMonitorService monitorService, IMonitorAgentService monitorAgentService,
+            IMonitorGroupService monitorGroupService)
         {
             _monitorService = monitorService;
             _monitorAgentService = monitorAgentService;
@@ -134,7 +135,7 @@ namespace AlertHawk.Monitoring.Controllers
             });
             return Ok(monitorId);
         }
-        
+
         [SwaggerOperation(Summary = "Clone a Monitor")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [HttpPost("clone/{id}")]
@@ -142,7 +143,7 @@ namespace AlertHawk.Monitoring.Controllers
         {
             var monitor = await _monitorService.GetMonitorById(id);
             monitor.Name += "-clone";
-            
+
             if (monitor.MonitorHttpItem != null)
             {
                 monitor.MonitorHttpItem.Name += "-clone";
@@ -177,7 +178,7 @@ namespace AlertHawk.Monitoring.Controllers
             {
                 return BadRequest();
             }
-            
+
             return Ok();
         }
 
@@ -189,7 +190,8 @@ namespace AlertHawk.Monitoring.Controllers
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
             if (!await VerifyUserGroupPermissions(monitorHttp.Id, jwtToken))
             {
-                return StatusCode(StatusCodes.Status403Forbidden, new Message("This user is not authorized to do this operation"));
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
             }
 
             await _monitorService.UpdateMonitorHttp(monitorHttp);
@@ -209,30 +211,25 @@ namespace AlertHawk.Monitoring.Controllers
             });
             return Ok(monitorId);
         }
-        
+
         [SwaggerOperation(Summary = "Create a new monitor K8S")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [HttpPost("createMonitorK8s")]
-        public async Task<IActionResult> CreateMonitorK8s([FromForm] MonitorK8sDto request)
+        public async Task<IActionResult> CreateMonitorK8s([FromBody] MonitorK8s monitorK8s)
         {
-            var file = request.File;
-            var monitorK8s = JsonConvert.DeserializeObject<MonitorK8s>(request.MonitorK8s);
-            
-            if (file != null)
+            if (!string.IsNullOrEmpty(monitorK8s.Base64Content))
             {
-                var filePath = Path.Combine("kubeconfig", file.FileName); // Define a folder to save files
+                var fileBytes = Convert.FromBase64String(monitorK8s.Base64Content); // Decode base64 string
+                var filePath = Path.Combine("kubeconfig", "config.yaml"); // Define file path
 
                 Directory.CreateDirectory("kubeconfig"); // Ensure directory exists
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
-                
+                await System.IO.File.WriteAllBytesAsync(filePath, fileBytes); // Write decoded bytes to file
+
                 var config = KubernetesClientConfiguration.BuildConfigFromConfigFile(filePath);
                 monitorK8s.KubeConfig = JsonConvert.SerializeObject(config);
             }
-            
+
             var monitorId = await _monitorService.CreateMonitorK8s(monitorK8s);
             await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
             {
@@ -250,7 +247,8 @@ namespace AlertHawk.Monitoring.Controllers
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
             if (!await VerifyUserGroupPermissions(monitorTcp.Id, jwtToken))
             {
-                return StatusCode(StatusCodes.Status403Forbidden, new Message("This user is not authorized to do this operation"));
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
             }
 
             await _monitorService.UpdateMonitorTcp(monitorTcp);
@@ -266,7 +264,8 @@ namespace AlertHawk.Monitoring.Controllers
 
             if (!await VerifyUserGroupPermissions(id, jwtToken))
             {
-                return StatusCode(StatusCodes.Status403Forbidden, new Message("This user is not authorized to do this operation"));
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
             }
 
             await _monitorService.DeleteMonitor(id, jwtToken);
@@ -293,7 +292,8 @@ namespace AlertHawk.Monitoring.Controllers
 
             if (!await VerifyUserGroupPermissions(id, jwtToken))
             {
-                return StatusCode(StatusCodes.Status403Forbidden, new Message("This user is not authorized to do this operation"));
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
             }
 
             await _monitorService.PauseMonitor(id, paused);
@@ -310,7 +310,8 @@ namespace AlertHawk.Monitoring.Controllers
 
             if (userGroups == null || userGroups.All(x => x.Id != groupId))
             {
-                return StatusCode(StatusCodes.Status403Forbidden, new Message("This user is not authorized to do this operation"));
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
             }
 
             await _monitorService.PauseMonitorByGroupId(groupId, paused);
