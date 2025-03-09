@@ -32,7 +32,7 @@ public class K8sClientRunner : IK8sClientRunner
 
     public async Task CheckK8sAsync(MonitorK8s monitorK8s)
     {
-        Console.WriteLine("Checking K8s");
+        _logger.LogInformation("Checking K8s");
         int maxRetries = monitorK8s.Retries + 1;
         int retryCount = 0;
 
@@ -40,28 +40,28 @@ public class K8sClientRunner : IK8sClientRunner
         {
             try
             {
-                Console.WriteLine("Loading configuration");
+                _logger.LogInformation("Loading configuration");
                 var filePath = "kubeconfig/config.yaml";
                 if (!string.IsNullOrEmpty(monitorK8s.KubeConfig))
                 {
-                    Console.WriteLine("Using provided kubeconfig");
+                    _logger.LogInformation("Using provided kubeconfig");
                     
                     var fileBytes = Convert.FromBase64String(monitorK8s.KubeConfig); // Decode base64 string
                     filePath = Path.Combine("kubeconfig", "config.yaml"); // Define file path
 
-                    Console.WriteLine("Writing kubeconfig to file");
+                    _logger.LogInformation("Writing kubeconfig to file");
                     
                     Directory.CreateDirectory("kubeconfig"); // Ensure directory exists
 
                     await System.IO.File.WriteAllBytesAsync(filePath, fileBytes); // Write decoded bytes to file
-                    Console.WriteLine("Wrote kubeconfig to file");
+                    _logger.LogInformation("Wrote kubeconfig to file");
                 }
                 
-                Console.WriteLine("Building Kubernetes client");
+                _logger.LogInformation("Building Kubernetes client");
                 var config = KubernetesClientConfiguration.BuildConfigFromConfigFile(filePath);
                 var client = new Kubernetes(config);
                 
-                Console.WriteLine("Fetching nodes from Kubernetes");
+                _logger.LogInformation("Fetching nodes from Kubernetes");
 
                 // Fetch nodes from Kubernetes
                 var nodes = await client.CoreV1.ListNodeAsync();
@@ -70,7 +70,7 @@ public class K8sClientRunner : IK8sClientRunner
 
                 foreach (var node in nodes.Items)
                 {
-                    Console.WriteLine($"Processing node {node.Metadata.Name}");
+                    _logger.LogInformation($"Processing node {node.Metadata.Name}");
                     var nodeStatus = new K8sNodeStatusModel
                     {
                         NodeName = node.Metadata.Name
@@ -100,7 +100,7 @@ public class K8sClientRunner : IK8sClientRunner
                         }
                     }
                     
-                    Console.WriteLine($"Node {nodeStatus.NodeName} status: {JsonSerializer.Serialize(nodeStatus)}");
+                    _logger.LogInformation($"Node {nodeStatus.NodeName} status: {JsonSerializer.Serialize(nodeStatus)}");
 
                     nodeStatuses.Add(nodeStatus);
                 }
@@ -219,6 +219,7 @@ public class K8sClientRunner : IK8sClientRunner
 
                 if (succeeded)
                 {
+                    _logger.LogInformation("K8s check succeeded");
                     await _monitorRepository.UpdateMonitorStatus(monitorK8s.MonitorId, succeeded, 0);
                     await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
 
@@ -232,6 +233,7 @@ public class K8sClientRunner : IK8sClientRunner
                 }
                 else
                 {
+                    _logger.LogInformation($"K8s check failed with message: {responseMessage}");
                     monitorHistory.ResponseMessage = responseMessage;
                     retryCount++;
                     Thread.Sleep(_retryIntervalMilliseconds);
