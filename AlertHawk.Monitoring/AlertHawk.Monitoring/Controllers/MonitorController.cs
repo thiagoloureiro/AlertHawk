@@ -343,6 +343,15 @@ namespace AlertHawk.Monitoring.Controllers
             var result = await _monitorService.GetTcpMonitorByMonitorId(monitorId);
             return Ok(result);
         }
+        
+        [SwaggerOperation(Summary = "Retrieves monitor tcp by monitorId")]
+        [ProducesResponseType(typeof(MonitorTcp), StatusCodes.Status200OK)]
+        [HttpGet("getMonitorK8sByMonitorId/{monitorId}")]
+        public async Task<IActionResult> getMonitorK8sByMonitorId(int monitorId)
+        {
+            var result = await _monitorService.GetK8sMonitorByMonitorId(monitorId);
+            return Ok(result);
+        }
 
         [SwaggerOperation(Summary = "Monitor Count")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]

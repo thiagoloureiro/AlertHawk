@@ -50,4 +50,5 @@ public interface IMonitorService
 
     Task<Monitor> GetMonitorById(int id);
     Task<int> CreateMonitorK8s(MonitorK8s monitorK8S);
+    Task<MonitorK8s?> GetK8sMonitorByMonitorId(int monitorId);
 }
