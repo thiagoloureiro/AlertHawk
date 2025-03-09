@@ -5,6 +5,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using k8s;
 using k8s.KubeConfigModels;
+using k8s.Models;
 using Microsoft.Extensions.Logging;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
@@ -69,6 +70,7 @@ public class K8sClientRunner : IK8sClientRunner
 
                 foreach (var node in nodes.Items)
                 {
+                    Console.WriteLine($"Processing node {node.Metadata.Name}");
                     var nodeStatus = new K8sNodeStatusModel
                     {
                         NodeName = node.Metadata.Name
@@ -97,6 +99,8 @@ public class K8sClientRunner : IK8sClientRunner
                             case "Ready": nodeStatus.Ready = isTrue; break;
                         }
                     }
+                    
+                    Console.WriteLine($"Node {nodeStatus.NodeName} status: {JsonSerializer.Serialize(nodeStatus)}");
 
                     nodeStatuses.Add(nodeStatus);
                 }
