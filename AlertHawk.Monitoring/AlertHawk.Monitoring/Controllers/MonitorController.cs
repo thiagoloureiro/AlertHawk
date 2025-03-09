@@ -197,6 +197,22 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorService.UpdateMonitorHttp(monitorHttp);
             return Ok();
         }
+        
+        [SwaggerOperation(Summary = "Update monitor K8s")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [HttpPost("UpdateMonitorK8s")]
+        public async Task<IActionResult> UpdateMonitorK8s([FromBody] MonitorK8s monitorK8S)
+        {
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (!await VerifyUserGroupPermissions(monitorK8S.Id, jwtToken))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
+            }
+
+            await _monitorService.UpdateMonitorK8s(monitorK8S);
+            return Ok();
+        }
 
         [SwaggerOperation(Summary = "Create a new monitor TCP")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
@@ -217,16 +233,14 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("createMonitorK8s")]
         public async Task<IActionResult> CreateMonitorK8s([FromBody] MonitorK8s monitorK8s)
         {
-            if (!string.IsNullOrEmpty(monitorK8s.Base64Content))
+            if (!string.IsNullOrEmpty(monitorK8s.KubeConfig))
             {
-                var fileBytes = Convert.FromBase64String(monitorK8s.Base64Content); // Decode base64 string
+                var fileBytes = Convert.FromBase64String(monitorK8s.KubeConfig); // Decode base64 string
                 var filePath = Path.Combine("kubeconfig", "config.yaml"); // Define file path
 
                 Directory.CreateDirectory("kubeconfig"); // Ensure directory exists
 
                 await System.IO.File.WriteAllBytesAsync(filePath, fileBytes); // Write decoded bytes to file
-                
-                monitorK8s.KubeConfig = monitorK8s.Base64Content;
             }
 
             var monitorId = await _monitorService.CreateMonitorK8s(monitorK8s);

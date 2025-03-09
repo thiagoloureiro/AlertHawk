@@ -268,7 +268,7 @@ public class MonitorService : IMonitorService
         monitorHttp.Retries = 1;
         monitorHttp.Timeout = 5000;
         monitorHttp.MaxRedirects = 5;
-        
+
         var checkMonitorAfterCreation = Environment.GetEnvironmentVariable("CHECK_MONITOR_AFTER_CREATION");
 
         if (checkMonitorAfterCreation?.ToLower() is "true")
@@ -486,7 +486,7 @@ public class MonitorService : IMonitorService
 
                         monitorId = await _monitorRepository.CreateMonitorTcp(monitor.MonitorTcpItem);
                     }
-                    
+
                     if (monitor.MonitorK8sItem != null)
                     {
                         monitor.MonitorK8sItem.Name = monitor.Name;
@@ -575,6 +575,14 @@ public class MonitorService : IMonitorService
     public async Task<MonitorK8s?> GetK8sMonitorByMonitorId(int monitorId)
     {
         return await _monitorRepository.GetK8sMonitorByMonitorId(monitorId);
+    }
+
+    public async Task UpdateMonitorK8s(MonitorK8s monitorK8S)
+    {
+        monitorK8S.Name = monitorK8S.Name.TrimStart();
+        monitorK8S.Name = monitorK8S.Name.TrimEnd();
+
+        await _monitorRepository.UpdateMonitorK8s(monitorK8S);
     }
 
     private HttpClient CreateHttpClient(string token)
