@@ -572,6 +572,11 @@ public class MonitorService : IMonitorService
         return await _monitorRepository.CreateMonitorK8s(monitorK8S);
     }
 
+    public async Task<MonitorK8s?> GetK8sMonitorByMonitorId(int monitorId)
+    {
+        return await _monitorRepository.GetK8sMonitorByMonitorId(monitorId);
+    }
+
     private HttpClient CreateHttpClient(string token)
     {
         var client = _httpClientFactory.CreateClient();

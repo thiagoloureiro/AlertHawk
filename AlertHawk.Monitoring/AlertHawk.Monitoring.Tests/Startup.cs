@@ -48,7 +48,8 @@ public class Startup
 
         services.AddTransient<IHttpClientRunner, HttpClientRunner>();
         services.AddTransient<ITcpClientRunner, TcpClientRunner>();
-
+        services.AddTransient<IK8sClientRunner, K8sClientRunner>();
+        
         services.AddTransient<INotificationProducer, NotificationProducer>();
         var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
         var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");

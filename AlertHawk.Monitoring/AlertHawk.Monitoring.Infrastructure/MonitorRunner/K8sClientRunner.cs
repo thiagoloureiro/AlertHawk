@@ -5,6 +5,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using k8s;
 using k8s.KubeConfigModels;
+using k8s.Models;
 using Microsoft.Extensions.Logging;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
@@ -31,6 +32,7 @@ public class K8sClientRunner : IK8sClientRunner
 
     public async Task CheckK8sAsync(MonitorK8s monitorK8s)
     {
+        _logger.LogInformation("Checking K8s");
         int maxRetries = monitorK8s.Retries + 1;
         int retryCount = 0;
 
@@ -38,11 +40,28 @@ public class K8sClientRunner : IK8sClientRunner
         {
             try
             {
-                string kubeconfigPath = monitorK8s.KubeConfig;
-                var k8sOject = JsonSerializer.Deserialize<K8SConfiguration>(kubeconfigPath);
+                _logger.LogInformation("Loading configuration");
+                var filePath = "kubeconfig/config.yaml";
+                if (!string.IsNullOrEmpty(monitorK8s.KubeConfig))
+                {
+                    _logger.LogInformation("Using provided kubeconfig");
+                    
+                    var fileBytes = Convert.FromBase64String(monitorK8s.KubeConfig); // Decode base64 string
+                    filePath = Path.Combine("kubeconfig", "config.yaml"); // Define file path
 
-                var config = KubernetesClientConfiguration.BuildConfigFromConfigObject(k8sOject);
+                    _logger.LogInformation("Writing kubeconfig to file");
+                    
+                    Directory.CreateDirectory("kubeconfig"); // Ensure directory exists
+
+                    await System.IO.File.WriteAllBytesAsync(filePath, fileBytes); // Write decoded bytes to file
+                    _logger.LogInformation("Wrote kubeconfig to file");
+                }
+                
+                _logger.LogInformation("Building Kubernetes client");
+                var config = KubernetesClientConfiguration.BuildConfigFromConfigFile(filePath);
                 var client = new Kubernetes(config);
+                
+                _logger.LogInformation("Fetching nodes from Kubernetes");
 
                 // Fetch nodes from Kubernetes
                 var nodes = await client.CoreV1.ListNodeAsync();
@@ -51,6 +70,7 @@ public class K8sClientRunner : IK8sClientRunner
 
                 foreach (var node in nodes.Items)
                 {
+                    _logger.LogInformation($"Processing node {node.Metadata.Name}");
                     var nodeStatus = new K8sNodeStatusModel
                     {
                         NodeName = node.Metadata.Name
@@ -79,6 +99,8 @@ public class K8sClientRunner : IK8sClientRunner
                             case "Ready": nodeStatus.Ready = isTrue; break;
                         }
                     }
+                    
+                    _logger.LogInformation($"Node {nodeStatus.NodeName} status: {JsonSerializer.Serialize(nodeStatus)}");
 
                     nodeStatuses.Add(nodeStatus);
                 }
@@ -197,6 +219,7 @@ public class K8sClientRunner : IK8sClientRunner
 
                 if (succeeded)
                 {
+                    _logger.LogInformation("K8s check succeeded");
                     await _monitorRepository.UpdateMonitorStatus(monitorK8s.MonitorId, succeeded, 0);
                     await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
 
@@ -210,6 +233,7 @@ public class K8sClientRunner : IK8sClientRunner
                 }
                 else
                 {
+                    _logger.LogInformation($"K8s check failed with message: {responseMessage}");
                     monitorHistory.ResponseMessage = responseMessage;
                     retryCount++;
                     Thread.Sleep(_retryIntervalMilliseconds);
@@ -236,6 +260,7 @@ public class K8sClientRunner : IK8sClientRunner
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 SentrySdk.CaptureException(ex);
             }
         }
