@@ -31,6 +31,7 @@ public class K8sClientRunner : IK8sClientRunner
 
     public async Task CheckK8sAsync(MonitorK8s monitorK8s)
     {
+        Console.WriteLine("Checking K8s");
         int maxRetries = monitorK8s.Retries + 1;
         int retryCount = 0;
 
@@ -38,6 +39,7 @@ public class K8sClientRunner : IK8sClientRunner
         {
             try
             {
+                Console.WriteLine("Loading configuration");
                 var filePath = "kubeconfig/config.yaml";
                 if (!string.IsNullOrEmpty(monitorK8s.KubeConfig))
                 {
@@ -53,6 +55,8 @@ public class K8sClientRunner : IK8sClientRunner
                 
                 var config = KubernetesClientConfiguration.BuildConfigFromConfigFile(filePath);
                 var client = new Kubernetes(config);
+                
+                Console.WriteLine("Fetching nodes from Kubernetes");
 
                 // Fetch nodes from Kubernetes
                 var nodes = await client.CoreV1.ListNodeAsync();
@@ -246,6 +250,7 @@ public class K8sClientRunner : IK8sClientRunner
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 SentrySdk.CaptureException(ex);
             }
         }

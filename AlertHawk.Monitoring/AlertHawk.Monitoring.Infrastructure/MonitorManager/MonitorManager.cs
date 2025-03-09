@@ -193,6 +193,7 @@ public class MonitorManager : IMonitorManager
             foreach (var monitorK8S in monitorK8sList)
             {
                 string jobId = $"StartRunnerManager_CheckK8sAsync_JobId_{monitorK8S.MonitorId}";
+                Console.WriteLine(jobId);
                 Thread.Sleep(50);
                 var monitor = monitorbyK8sType.FirstOrDefault(x => x.Id == monitorK8S.MonitorId);
                 RecurringJob.AddOrUpdate<IK8sClientRunner>(jobId, x => x.CheckK8sAsync(monitorK8S),
