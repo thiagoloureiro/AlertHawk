@@ -439,6 +439,26 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         return await db.QueryFirstOrDefaultAsync<MonitorK8s>(sql, new { monitorId }, commandType: CommandType.Text);
     }
 
+    public async Task UpdateMonitorK8s(MonitorK8s monitorK8S)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = "UPDATE [Monitor] SET Name=@Name, HeartBeatInterval=@HeartBeatInterval, Retries=@Retries, Paused=@Paused, MonitorRegion=@MonitorRegion, MonitorEnvironment=@MonitorEnvironment WHERE Id=@MonitorId";
+        string sqlMonitork8s = "UPDATE [MonitorK8s] SET ClusterName=@ClusterName, KubeConfig=@KubeConfig WHERE MonitorId=@MonitorId";
+        
+        await db.ExecuteAsync(sql, new
+        {
+            monitorK8S.Name,
+            monitorK8S.HeartBeatInterval,
+            monitorK8S.Retries,
+            monitorK8S.Status,
+            monitorK8S.MonitorRegion,
+            monitorK8S.MonitorEnvironment,
+            monitorK8S.MonitorId
+        }, commandType: CommandType.Text);
+        
+        await db.ExecuteAsync(sqlMonitork8s, new{ monitorK8S.MonitorId}, commandType: CommandType.Text);
+    }
+
     public async Task UpdateMonitorStatus(int id, bool status, int daysToExpireCert)
     {
         await using var db = new SqlConnection(_connstring);

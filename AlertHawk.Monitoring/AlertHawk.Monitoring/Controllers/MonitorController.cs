@@ -197,6 +197,22 @@ namespace AlertHawk.Monitoring.Controllers
             await _monitorService.UpdateMonitorHttp(monitorHttp);
             return Ok();
         }
+        
+        [SwaggerOperation(Summary = "Update monitor K8s")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [HttpPost("UpdateMonitorK8s")]
+        public async Task<IActionResult> UpdateMonitorK8s([FromBody] MonitorK8s monitorK8S)
+        {
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (!await VerifyUserGroupPermissions(monitorK8S.Id, jwtToken))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation"));
+            }
+
+            await _monitorService.UpdateMonitorK8s(monitorK8S);
+            return Ok();
+        }
 
         [SwaggerOperation(Summary = "Create a new monitor TCP")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
