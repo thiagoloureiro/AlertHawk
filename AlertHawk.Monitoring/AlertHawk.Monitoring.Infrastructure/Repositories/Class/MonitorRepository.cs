@@ -443,7 +443,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            "UPDATE [Monitor] SET Name=@Name, HeartBeatInterval=@HeartBeatInterval, Retries=@Retries, Paused=@Paused, MonitorRegion=@MonitorRegion, MonitorEnvironment=@MonitorEnvironment WHERE Id=@MonitorId";
+            "UPDATE [Monitor] SET Name=@Name, HeartBeatInterval=@HeartBeatInterval, Retries=@Retries, MonitorRegion=@MonitorRegion, MonitorEnvironment=@MonitorEnvironment WHERE Id=@MonitorId";
 
         await db.ExecuteAsync(sql, new
         {
