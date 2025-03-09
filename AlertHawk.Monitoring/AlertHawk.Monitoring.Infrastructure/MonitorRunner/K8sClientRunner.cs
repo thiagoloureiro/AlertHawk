@@ -45,7 +45,7 @@ public class K8sClientRunner : IK8sClientRunner
                 {
                     Console.WriteLine("Using provided kubeconfig");
                     
-                    var fileBytes = Convert.FromBase64String(monitorK8s.Base64Content); // Decode base64 string
+                    var fileBytes = Convert.FromBase64String(monitorK8s.KubeConfig); // Decode base64 string
                     filePath = Path.Combine("kubeconfig", "config.yaml"); // Define file path
 
                     Console.WriteLine("Writing kubeconfig to file");
