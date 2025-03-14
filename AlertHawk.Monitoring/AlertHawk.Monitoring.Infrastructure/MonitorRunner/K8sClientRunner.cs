@@ -45,22 +45,22 @@ public class K8sClientRunner : IK8sClientRunner
                 if (!string.IsNullOrEmpty(monitorK8s.KubeConfig))
                 {
                     _logger.LogInformation("Using provided kubeconfig");
-                    
+
                     var fileBytes = Convert.FromBase64String(monitorK8s.KubeConfig); // Decode base64 string
                     filePath = Path.Combine("kubeconfig", "config.yaml"); // Define file path
 
                     _logger.LogInformation("Writing kubeconfig to file");
-                    
+
                     Directory.CreateDirectory("kubeconfig"); // Ensure directory exists
 
                     await System.IO.File.WriteAllBytesAsync(filePath, fileBytes); // Write decoded bytes to file
                     _logger.LogInformation("Wrote kubeconfig to file");
                 }
-                
+
                 _logger.LogInformation("Building Kubernetes client");
                 var config = KubernetesClientConfiguration.BuildConfigFromConfigFile(filePath);
                 var client = new Kubernetes(config);
-                
+
                 _logger.LogInformation("Fetching nodes from Kubernetes");
 
                 // Fetch nodes from Kubernetes
@@ -99,11 +99,15 @@ public class K8sClientRunner : IK8sClientRunner
                             case "Ready": nodeStatus.Ready = isTrue; break;
                         }
                     }
-                    
-                    _logger.LogInformation($"Node {nodeStatus.NodeName} status: {JsonSerializer.Serialize(nodeStatus)}");
+
+                    _logger.LogInformation(
+                        $"Node {nodeStatus.NodeName} status: {JsonSerializer.Serialize(nodeStatus)}");
 
                     nodeStatuses.Add(nodeStatus);
                 }
+                
+                monitorK8s.MonitorK8sNodes = new List<K8sNodeStatusModel>();
+                monitorK8s.MonitorK8sNodes = nodeStatuses;
 
                 bool succeeded = true;
                 var responseMessage = "";
@@ -223,6 +227,8 @@ public class K8sClientRunner : IK8sClientRunner
                     await _monitorRepository.UpdateMonitorStatus(monitorK8s.MonitorId, succeeded, 0);
                     await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
 
+                    await _monitorRepository.UpdateK8sMonitorNodeStatus(monitorK8s);
+
                     if (!monitorK8s.LastStatus)
                     {
                         await _notificationProducer.HandleSuccessK8sNotifications(monitorK8s, "Cluster is Up");
@@ -243,6 +249,7 @@ public class K8sClientRunner : IK8sClientRunner
                         await _monitorRepository.UpdateMonitorStatus(monitorK8s.MonitorId, succeeded,
                             0);
                         await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
+                        await _monitorRepository.UpdateK8sMonitorNodeStatus(monitorK8s);
 
                         // only send notification when goes from online into offline to avoid flood
                         if (monitorK8s.LastStatus)
