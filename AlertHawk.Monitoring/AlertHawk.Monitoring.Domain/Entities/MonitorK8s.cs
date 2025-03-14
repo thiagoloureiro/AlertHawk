@@ -6,4 +6,5 @@ public class MonitorK8s: Monitor
     public string ClusterName { get; set; }
     public string? KubeConfig { get; set; }
     public bool LastStatus { get; set; }
+    public IEnumerable<K8sNodeStatusModel> MonitorK8sNodes { get; set; }
 }

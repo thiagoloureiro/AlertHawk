@@ -104,6 +104,8 @@ public class K8sClientRunner : IK8sClientRunner
 
                     nodeStatuses.Add(nodeStatus);
                 }
+                
+                monitorK8s.MonitorK8sNodes = nodeStatuses;
 
                 bool succeeded = true;
                 var responseMessage = "";
@@ -223,6 +225,9 @@ public class K8sClientRunner : IK8sClientRunner
                     await _monitorRepository.UpdateMonitorStatus(monitorK8s.MonitorId, succeeded, 0);
                     await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
 
+                    Console.WriteLine($"Updating K8s monitor status");
+                    await _monitorRepository.UpdateK8sMonitorNodeStatus(monitorK8s);
+
                     if (!monitorK8s.LastStatus)
                     {
                         await _notificationProducer.HandleSuccessK8sNotifications(monitorK8s, "Cluster is Up");
@@ -243,6 +248,7 @@ public class K8sClientRunner : IK8sClientRunner
                         await _monitorRepository.UpdateMonitorStatus(monitorK8s.MonitorId, succeeded,
                             0);
                         await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
+                        await _monitorRepository.UpdateK8sMonitorNodeStatus(monitorK8s);
 
                         // only send notification when goes from online into offline to avoid flood
                         if (monitorK8s.LastStatus)

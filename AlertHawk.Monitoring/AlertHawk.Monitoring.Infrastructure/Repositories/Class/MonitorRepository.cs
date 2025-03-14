@@ -471,6 +471,29 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             await db.ExecuteAsync(sqlMonitork8s, new { monitorK8S.MonitorId, monitorK8S.ClusterName }, commandType: CommandType.Text);
         }
     }
+    
+    public async Task UpdateK8sMonitorNodeStatus(MonitorK8s monitorK8S)
+    {
+        await using var db = new SqlConnection(_connstring);
+
+        foreach (var node in monitorK8S.MonitorK8sNodes)
+        {
+            // check if the node already exists on the K8sNodeStatusModel table
+            var sqlCheck = "SELECT COUNT(*) FROM K8sNodeStatusModel WHERE MonitorK8sId = @MonitorK8sId AND NodeName = @NodeName";
+            var count = await db.ExecuteScalarAsync<int>(sqlCheck, new {MonitorK8sId = monitorK8S.Id, node.NodeName}, commandType: CommandType.Text);
+            
+            // if count is greater than 0, update the node status
+            if (count > 0)
+            {
+                var sqlUpdate = "UPDATE K8sNodeStatusModel SET ContainerRuntimeProblem = @ContainerRuntimeProblem, KernelDeadlock = @KernelDeadlock, KubeletProblem = @KubeletProblem, FrequentUnregisterNetDevice = @FrequentUnregisterNetDevice, FilesystemCorruptionProblem = @FilesystemCorruptionProblem, ReadonlyFilesystem = @ReadonlyFilesystem, FrequentKubeletRestart = @FrequentKubeletRestart, VMEventScheduled = @VMEventScheduled, FrequentDockerRestart = @FrequentDockerRestart, FrequentContainerdRestart = @FrequentContainerdRestart, MemoryPressure = @MemoryPressure, DiskPressure = @DiskPressure, PIDPressure = @PIDPressure, Ready = @Ready WHERE MonitorK8sId = @MonitorK8sId AND NodeName = @NodeName";
+                await db.ExecuteAsync(sqlUpdate, new {MonitorK8sId = monitorK8S.Id, node.NodeName, node.ContainerRuntimeProblem, node.KernelDeadlock, node.KubeletProblem, node.FrequentUnregisterNetDevice, node.FilesystemCorruptionProblem, node.ReadonlyFilesystem, node.FrequentKubeletRestart, node.VMEventScheduled, node.FrequentDockerRestart, node.FrequentContainerdRestart, node.MemoryPressure, node.DiskPressure, node.PIDPressure, node.Ready}, commandType: CommandType.Text);
+                continue;
+            }
+            
+            var sql = "INSERT INTO K8sNodeStatusModel (MonitorK8sId, NodeName, ContainerRuntimeProblem, KernelDeadlock, KubeletProblem, FrequentUnregisterNetDevice, FilesystemCorruptionProblem, ReadonlyFilesystem, FrequentKubeletRestart, VMEventScheduled, FrequentDockerRestart, FrequentContainerdRestart, MemoryPressure, DiskPressure, PIDPressure, Ready) VALUES (@MonitorK8sId, @NodeName, @ContainerRuntimeProblem, @KernelDeadlock, @KubeletProblem, @FrequentUnregisterNetDevice, @FilesystemCorruptionProblem, @ReadonlyFilesystem, @FrequentKubeletRestart, @VMEventScheduled, @FrequentDockerRestart, @FrequentContainerdRestart, @MemoryPressure, @DiskPressure, @PIDPressure, @Ready)";
+            await db.ExecuteAsync(sql, new {MonitorK8sId = monitorK8S.Id, node.NodeName, node.ContainerRuntimeProblem, node.KernelDeadlock, node.KubeletProblem, node.FrequentUnregisterNetDevice, node.FilesystemCorruptionProblem, node.ReadonlyFilesystem, node.FrequentKubeletRestart, node.VMEventScheduled, node.FrequentDockerRestart, node.FrequentContainerdRestart, node.MemoryPressure, node.DiskPressure, node.PIDPressure, node.Ready} , commandType: CommandType.Text);
+        }
+    }
 
     public async Task UpdateMonitorStatus(int id, bool status, int daysToExpireCert)
     {
