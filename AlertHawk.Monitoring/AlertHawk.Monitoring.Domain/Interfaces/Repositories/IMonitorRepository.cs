@@ -56,7 +56,7 @@ public interface IMonitorRepository
     Task<IEnumerable<MonitorK8s>> GetK8sMonitorByIds(List<int> ids);
     Task<int> CreateMonitorK8s(MonitorK8s monitorK8S);
     Task<IEnumerable<MonitorK8s>> GetMonitorK8sList();
-    Task<MonitorK8s> GetK8sMonitorByMonitorId(int monitorId);
+    Task<MonitorK8s?> GetK8sMonitorByMonitorId(int monitorId);
     Task UpdateMonitorK8s(MonitorK8s monitorK8S);
     Task UpdateK8sMonitorNodeStatus(MonitorK8s monitorK8S);
 }
