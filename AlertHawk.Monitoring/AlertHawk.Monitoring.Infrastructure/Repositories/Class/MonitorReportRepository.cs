@@ -30,8 +30,8 @@ public class MonitorReportRepository : RepositoryBase, IMonitorReportRepository
                                 FROM
                                     MonitorHistory
                                 WHERE
-                                    MonitorId IN (SELECT monitorid FROM MonitorGroupItems WHERE MonitorGroupId = 1) AND
-                                    TimeStamp >= DATEADD(hour, -24, DATEADD(minute, -1, GETUTCDATE()))
+                                    MonitorId IN (SELECT monitorid FROM MonitorGroupItems WHERE MonitorGroupId = @groupId) AND
+                                    TimeStamp >= DATEADD(hour, -@hours, DATEADD(minute, -1, GETUTCDATE()))
                             ),
                             Durations AS (
                                 SELECT

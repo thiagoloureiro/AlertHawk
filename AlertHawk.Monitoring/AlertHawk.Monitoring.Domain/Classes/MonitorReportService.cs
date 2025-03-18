@@ -6,7 +6,7 @@ namespace AlertHawk.Monitoring.Domain.Classes;
 
 public class MonitorReportService : IMonitorReportService
 {
-    private IMonitorReportRepository _monitorReportRepository;
+    private readonly IMonitorReportRepository _monitorReportRepository;
 
     public MonitorReportService(IMonitorReportRepository monitorReportRepository)
     {
