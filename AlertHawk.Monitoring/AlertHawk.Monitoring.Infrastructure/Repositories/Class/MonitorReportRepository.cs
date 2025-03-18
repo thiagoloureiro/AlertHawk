@@ -30,8 +30,8 @@ public class MonitorReportRepository : RepositoryBase, IMonitorReportRepository
                                 FROM
                                     MonitorHistory
                                 WHERE
-                                    MonitorId IN (select monitorid from MonitorGroupItems where MonitorGroupId = @groupId) AND
-                                    TimeStamp >=DATEADD(hour, -@hours, DATEADD(minute, -1,GETUTCDATE()))
+                                    MonitorId IN (SELECT monitorid FROM MonitorGroupItems WHERE MonitorGroupId = 1) AND
+                                    TimeStamp >= DATEADD(hour, -24, DATEADD(minute, -1, GETUTCDATE()))
                             ),
                             Durations AS (
                                 SELECT
@@ -48,6 +48,7 @@ public class MonitorReportRepository : RepositoryBase, IMonitorReportRepository
                             SELECT
                                 m.name AS MonitorName,
                                 d.MonitorId,
+                                m.Status AS MonitorStatus, -- Include the Status column from the Monitor table
                                 SUM(CASE WHEN d.Status = 'true' THEN d.DurationInMinutes ELSE 0 END) AS TotalOnlineMinutes,
                                 SUM(CASE WHEN d.Status = 'false' THEN d.DurationInMinutes ELSE 0 END) AS TotalOfflineMinutes
                             FROM
@@ -55,7 +56,8 @@ public class MonitorReportRepository : RepositoryBase, IMonitorReportRepository
                             JOIN
                                 Monitor m ON d.MonitorId = m.id
                             GROUP BY
-                                d.MonitorId, m.name";
+                                d.MonitorId, m.name, m.Status; -- Add m.Status to the GROUP BY clause
+                            ";
         return await db.QueryAsync<MonitorReportUptime>(sqlAllMonitors, new { groupId, hours },
             commandType: CommandType.Text);
     }

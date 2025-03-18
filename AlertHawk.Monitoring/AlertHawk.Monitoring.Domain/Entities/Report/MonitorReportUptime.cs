@@ -10,4 +10,5 @@ public class MonitorReportUptime
     public int TotalOnlineMinutes { get; set; }
     public int TotalOfflineMinutes { get; set; }
     public double UptimePercentage { get; set; }
+    public bool MonitorStatus { get; set; }
 }
