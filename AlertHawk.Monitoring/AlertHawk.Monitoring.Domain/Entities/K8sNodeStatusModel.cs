@@ -12,7 +12,6 @@ public class K8sNodeStatusModel
     public bool FilesystemCorruptionProblem { get; set; }
     public bool ReadonlyFilesystem { get; set; }
     public bool FrequentKubeletRestart { get; set; }
-    public bool VMEventScheduled { get; set; }
     public bool FrequentDockerRestart { get; set; }
     public bool FrequentContainerdRestart { get; set; }
     public bool MemoryPressure { get; set; }
