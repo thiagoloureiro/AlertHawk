@@ -90,7 +90,6 @@ public class K8sClientRunner : IK8sClientRunner
                             case "FilesystemCorruptionProblem": nodeStatus.FilesystemCorruptionProblem = isTrue; break;
                             case "ReadonlyFilesystem": nodeStatus.ReadonlyFilesystem = isTrue; break;
                             case "FrequentKubeletRestart": nodeStatus.FrequentKubeletRestart = isTrue; break;
-                            case "VMEventScheduled": nodeStatus.VMEventScheduled = isTrue; break;
                             case "FrequentDockerRestart": nodeStatus.FrequentDockerRestart = isTrue; break;
                             case "FrequentContainerdRestart": nodeStatus.FrequentContainerdRestart = isTrue; break;
                             case "MemoryPressure": nodeStatus.MemoryPressure = isTrue; break;
@@ -183,14 +182,7 @@ public class K8sClientRunner : IK8sClientRunner
                         responseMessage += $"Node {node.NodeName} has frequent kubelet restart\n";
                         succeeded = false;
                     }
-
-                    if (node.VMEventScheduled)
-                    {
-                        _logger.LogInformation($"Node {node.NodeName} has VM event scheduled");
-                        responseMessage += $"Node {node.NodeName} has VM event scheduled\n";
-                        succeeded = false;
-                    }
-
+                    
                     if (node.FrequentDockerRestart)
                     {
                         _logger.LogInformation($"Node {node.NodeName} has frequent docker restart");
