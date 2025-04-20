@@ -12,7 +12,7 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
 
             message = message.Contains("Success") ? "\u2705 " + message : "\u274c " + message;
 
-            var result = await botClient.SendTextMessageAsync(chatId, message);
+            var result = await botClient.SendMessage(chatId, message);
 
             return result;
         }
