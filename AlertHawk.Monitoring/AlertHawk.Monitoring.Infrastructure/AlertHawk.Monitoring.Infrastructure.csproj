@@ -9,15 +9,15 @@
         <PackageReference Include="Azure.Identity" Version="1.13.2" />
         <PackageReference Include="Azure.Storage.Blobs" Version="12.24.0" />
         <PackageReference Include="Dapper" Version="2.1.66" />
-        <PackageReference Include="EasyMemoryCache" Version="3.0.2" />
-        <PackageReference Include="EPPlus" Version="8.0.2" />
+        <PackageReference Include="EasyMemoryCache" Version="3.0.3" />
+        <PackageReference Include="EPPlus" Version="8.0.3" />
         <PackageReference Include="Hangfire.Core" Version="1.8.18" />
-        <PackageReference Include="KubernetesClient" Version="16.0.2" />
+        <PackageReference Include="KubernetesClient" Version="16.0.7" />
         <PackageReference Include="MassTransit.Abstractions" Version="8.4.0" />
-        <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.2" />
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
         <PackageReference Include="Polly" Version="8.5.2" />
-        <PackageReference Include="Sentry" Version="5.5.1" />
+        <PackageReference Include="Sentry" Version="5.6.0" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AlertHawk.Monitoring.Domain\AlertHawk.Monitoring.Domain.csproj" />
