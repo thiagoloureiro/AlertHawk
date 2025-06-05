@@ -33,15 +33,23 @@ builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => 
         resource.AddService(serviceName: "alerthawk.monitoring"))
     .WithTracing(tracing => tracing
-        .AddAspNetCoreInstrumentation()
+        .AddAspNetCoreInstrumentation(options =>
+        {
+            options.Filter = context =>
+            {
+                // Exclude the /api/version endpoint from tracing
+                return !context.Request.Path.StartsWithSegments("/api/version", StringComparison.OrdinalIgnoreCase);
+            };
+        })
         .AddOtlpExporter(otlpOptions =>
         {
-            //SigNoz Cloud Endpoint 
+            // SigNoz Cloud Endpoint
             otlpOptions.Endpoint =
                 new Uri(Environment.GetEnvironmentVariable("SIGNOZ_OTEL_ENDPOINT") ?? "http://localhost:4317");
 
             otlpOptions.Protocol = OtlpExportProtocol.Grpc;
         }));
+
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
