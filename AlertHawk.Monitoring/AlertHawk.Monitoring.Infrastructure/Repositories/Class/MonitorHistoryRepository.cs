@@ -23,7 +23,8 @@ public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepositor
         await using var db = new SqlConnection(_connstring);
         string sql =
             @$"SELECT MonitorId, Status, TimeStamp, ResponseTime FROM [MonitorHistory] WHERE MonitorId = @id AND TimeStamp >= DATEADD(day, -@days, GETUTCDATE()) ORDER BY TimeStamp DESC;";
-        return await db.QueryAsync<MonitorHistory>(sql, new { id, days }, commandType: CommandType.Text, commandTimeout: 120);
+        return await db.QueryAsync<MonitorHistory>(sql, new { id, days }, commandType: CommandType.Text,
+            commandTimeout: 120);
     }
 
     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndHours(int id, int hours)
@@ -76,7 +77,16 @@ public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepositor
 
     public async Task DeleteMonitorHistory(int days)
     {
+        // if days == 0 we truncate
         await using var db = new SqlConnection(_connstring);
+
+        if (days == 0)
+        {
+            string sqlTruncate = "TRUNCATE TABLE [MonitorHistory]";
+            await db.ExecuteAsync(sqlTruncate, commandType: CommandType.Text);
+            return;
+        }
+
         string sql = @"DELETE FROM [MonitorHistory] WHERE TimeStamp < DATEADD(DAY, -@days, GETDATE())";
         await db.QueryAsync<MonitorHistory>(sql, new { days }, commandType: CommandType.Text, commandTimeout: 3600);
     }
