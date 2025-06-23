@@ -260,7 +260,19 @@ public class K8sClientRunner : IK8sClientRunner
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                SentrySdk.CaptureException(ex);
+                var monitorHistory = new MonitorHistory
+                {
+                    MonitorId = monitorK8s.MonitorId,
+                    Status = false,
+                    TimeStamp = DateTime.UtcNow,
+                    ResponseMessage = "Failed to connect to Kubernetes cluster."
+                };
+                
+                await _notificationProducer.HandleFailedK8sNotifications(monitorK8s,
+                    "Failed to connect to Kubernetes cluster.");
+
+                await _monitorAlertRepository.SaveMonitorAlert(monitorHistory,
+                    monitorK8s.MonitorEnvironment);
             }
         }
     }
