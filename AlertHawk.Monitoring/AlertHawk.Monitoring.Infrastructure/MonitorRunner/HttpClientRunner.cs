@@ -176,6 +176,7 @@ public class HttpClientRunner : IHttpClientRunner
 
     public async Task<HttpResponseMessage> MakeHttpClientCall(MonitorHttp monitorHttp)
     {
+        Console.WriteLine($"Making HTTP call to {monitorHttp.UrlToCheck}");
         var notAfter = DateTime.UtcNow;
 
         using HttpClientHandler handler = new HttpClientHandler();
@@ -262,8 +263,9 @@ public class HttpClientRunner : IHttpClientRunner
                 response?.Dispose();
             }
         }
-        catch (Exception)
+        catch (Exception err)
         {
+            Console.WriteLine($"Error making HTTP call: {err.Message}");
             client?.Dispose();
         }
         finally
