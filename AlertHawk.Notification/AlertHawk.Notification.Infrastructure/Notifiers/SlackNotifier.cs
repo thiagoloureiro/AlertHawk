@@ -1,5 +1,6 @@
 ﻿using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using System.Text;
+using System.Text.Json;
 
 namespace AlertHawk.Notification.Infrastructure.Notifiers
 {
@@ -9,11 +10,19 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
         {
             using HttpClient httpClient = new HttpClient();
 
-            message = message.Contains("Success") ? ":white_check_mark: " + message : ":x: " + message;
+            message = message.Contains("Success")
+                ? ":white_check_mark: " + message
+                : ":x: " + message;
 
-            string payload = $"{{\"channel\": \"{channel}\", \"text\": \"{message}\"}}";
+            var payload = new
+            {
+                channel = channel,
+                text = message
+            };
 
-            using StringContent content = new StringContent(payload, Encoding.UTF8, "application/json");
+            string jsonPayload = JsonSerializer.Serialize(payload);
+
+            using StringContent content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
             using HttpResponseMessage response = await httpClient.PostAsync(webHookUrl, content);
 

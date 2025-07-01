@@ -24,30 +24,24 @@ public static class EmailSender
         var username = Environment.GetEnvironmentVariable("smtpUsername") ?? string.Empty;
         var password = Environment.GetEnvironmentVariable("smtpPassword") ?? string.Empty;
         var smtpFrom = Environment.GetEnvironmentVariable("smtpFrom") ?? string.Empty;
-        
+
         try
         {
-            using (MailMessage mail = new MailMessage())
-            {
-                mail.From = new MailAddress(smtpFrom);
-                mail.To.Add(to);
-                mail.Subject = subject;
-                mail.Body = body;
-                mail.IsBodyHtml = true;
+            using MailMessage mail = new MailMessage();
+            mail.From = new MailAddress(smtpFrom);
+            mail.To.Add(to);
+            mail.Subject = subject;
+            mail.Body = body;
+            mail.IsBodyHtml = true;
 
-                using (SmtpClient smtp = new SmtpClient(smtpServer, port))
-                {
-                    smtp.Credentials = new NetworkCredential(username, password);
-                    smtp.EnableSsl = useSsl;
-                    smtp.Send(mail);
-                }
-            }
-
-            Console.WriteLine("Email sent successfully!");
+            using SmtpClient smtp = new SmtpClient(smtpServer, port);
+            smtp.Credentials = new NetworkCredential(username, password);
+            smtp.EnableSsl = useSsl;
+            smtp.Send(mail);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error sending email: {ex.Message}, To: {to} Subject: {subject} Body: {body} smtpServer: {smtpServer} username: {username}, enableSsl: {useSsl}");
+            SentrySdk.CaptureException(ex);
         }
     }
 }

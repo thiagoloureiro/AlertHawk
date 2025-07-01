@@ -11,13 +11,25 @@ public static class PasswordHasher
 
     public static string GenerateRandomPassword(int length)
     {
+        if (length <= 0)
+            throw new ArgumentOutOfRangeException(nameof(length), "Password length must be positive.");
+
         const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+";
+        var password = new StringBuilder();
+        using (var rng = RandomNumberGenerator.Create())
+        {
+            byte[] uintBuffer = new byte[4];
 
-        Random random = new Random();
-        string password = new string(Enumerable.Repeat(chars, length)
-            .Select(s => s[random.Next(s.Length)]).ToArray());
+            while (password.Length < length)
+            {
+                rng.GetBytes(uintBuffer);
+                uint num = BitConverter.ToUInt32(uintBuffer, 0);
+                long index = num % chars.Length;
+                password.Append(chars[(int)index]);
+            }
+        }
 
-        return password;
+        return password.ToString();
     }
 
     public static string GenerateSalt()

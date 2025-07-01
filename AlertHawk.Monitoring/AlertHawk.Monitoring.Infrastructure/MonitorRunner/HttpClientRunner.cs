@@ -2,9 +2,12 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Engineering;
 using System.Diagnostics;
 using System.Net;
+using System.Text.Json;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
@@ -113,9 +116,29 @@ public class HttpClientRunner : IHttpClientRunner
                     }
                 }
             }
+            // catch database issue
+            catch (SqlException ex)
+            {
+                SentrySdk.CaptureException(ex);
+                _logger.LogError("Database connectivity issue: {message}", ex.Message);
+            }
             catch (Exception err)
             {
                 retryCount++;
+
+                // Avoid logging when it's a database connectivity issue
+                if (err.Message.Contains("A network-related or instance-specific error occurred while establishing a connection to SQL Server."))
+                {
+                    _logger.LogError("Database connectivity issue: {message}", err.Message);
+                    break; // Exit the loop on database connectivity issues
+                }
+
+                // avoid Execution Timeout Expired.
+                if (err.Message.Contains("Execution Timeout Expired"))
+                {
+                    _logger.LogError("Execution Timeout Expired: {message}", err.Message);
+                    break; // Exit the loop on execution timeout
+                }
 
                 // If max retries reached, update status and save history
                 if (retryCount == maxRetries)
@@ -196,6 +219,16 @@ public class HttpClientRunner : IHttpClientRunner
 
             if (monitorHttp.Body != null)
             {
+                try
+                {
+                    JsonDocument.Parse(monitorHttp.Body); // Throws if invalid
+                }
+                catch (JsonException)
+                {
+                    // Log and reject
+                    throw new ArgumentException("Invalid JSON input");
+                }
+
                 content = new StringContent(monitorHttp.Body, System.Text.Encoding.UTF8, "application/json");
             }
 
