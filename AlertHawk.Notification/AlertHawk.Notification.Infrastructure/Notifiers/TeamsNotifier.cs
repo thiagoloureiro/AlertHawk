@@ -1,5 +1,6 @@
 ﻿using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using System.Text;
+using System.Text.Json;
 
 namespace AlertHawk.Notification.Infrastructure.Notifiers
 {
@@ -11,9 +12,11 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
 
             message = message.Contains("Success") ? "\\n\u2705 " + message : "\\n\u274c " + message;
 
-            string payload = $"{{\"text\": \"{message}\"}}";
+            var payloadObj = new { text = message };
 
-            StringContent content = new StringContent(payload, Encoding.UTF8, "application/json");
+            string jsonPayload = JsonSerializer.Serialize(payloadObj);
+
+            StringContent content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
             HttpResponseMessage response = await httpClient.PostAsync(webHookUrl, content);
 

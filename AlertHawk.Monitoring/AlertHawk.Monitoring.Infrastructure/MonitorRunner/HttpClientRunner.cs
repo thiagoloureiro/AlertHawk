@@ -5,6 +5,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Net;
+using System.Text.Json;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
@@ -196,6 +197,16 @@ public class HttpClientRunner : IHttpClientRunner
 
             if (monitorHttp.Body != null)
             {
+                try
+                {
+                    JsonDocument.Parse(monitorHttp.Body); // Throws if invalid
+                }
+                catch (JsonException)
+                {
+                    // Log and reject
+                    throw new ArgumentException("Invalid JSON input");
+                }
+
                 content = new StringContent(monitorHttp.Body, System.Text.Encoding.UTF8, "application/json");
             }
 
