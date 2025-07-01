@@ -2,7 +2,9 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Engineering;
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
@@ -114,9 +116,29 @@ public class HttpClientRunner : IHttpClientRunner
                     }
                 }
             }
+            // catch database issue
+            catch (SqlException ex)
+            {
+                SentrySdk.CaptureException(ex);
+                _logger.LogError("Database connectivity issue: {message}", ex.Message);
+            }
             catch (Exception err)
             {
                 retryCount++;
+
+                // Avoid logging when it's a database connectivity issue
+                if (err.Message.Contains("A network-related or instance-specific error occurred while establishing a connection to SQL Server."))
+                {
+                    _logger.LogError("Database connectivity issue: {message}", err.Message);
+                    break; // Exit the loop on database connectivity issues
+                }
+
+                // avoid Execution Timeout Expired.
+                if (err.Message.Contains("Execution Timeout Expired"))
+                {
+                    _logger.LogError("Execution Timeout Expired: {message}", err.Message);
+                    break; // Exit the loop on execution timeout
+                }
 
                 // If max retries reached, update status and save history
                 if (retryCount == maxRetries)
