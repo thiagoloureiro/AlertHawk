@@ -217,19 +217,19 @@ public class HttpClientRunner : IHttpClientRunner
 
             StringContent? content = null;
 
-            if (monitorHttp.Body != null)
+            if (!string.IsNullOrEmpty(monitorHttp.Body))
             {
+                Console.WriteLine($"Body: {monitorHttp.Body}");
                 try
                 {
                     JsonDocument.Parse(monitorHttp.Body); // Throws if invalid
+                    content = new StringContent(monitorHttp.Body, System.Text.Encoding.UTF8, "application/json");
                 }
-                catch (JsonException)
+                catch (JsonException err)
                 {
                     // Log and reject
-                    throw new ArgumentException("Invalid JSON input");
+                    _logger.LogError("Invalid JSON input: {message}", err.Message);
                 }
-
-                content = new StringContent(monitorHttp.Body, System.Text.Encoding.UTF8, "application/json");
             }
 
             client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
@@ -261,8 +261,9 @@ public class HttpClientRunner : IHttpClientRunner
                 response?.Dispose();
             }
         }
-        catch (Exception)
+        catch (Exception err)
         {
+            Console.WriteLine($"Error making HTTP call: {err.Message}");
             client?.Dispose();
         }
         finally
