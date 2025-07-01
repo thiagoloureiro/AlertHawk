@@ -223,9 +223,10 @@ public class HttpClientRunner : IHttpClientRunner
                 {
                     JsonDocument.Parse(monitorHttp.Body); // Throws if invalid
                 }
-                catch (JsonException)
+                catch (JsonException err)
                 {
                     // Log and reject
+                    Console.WriteLine($"Invalid JSON in monitorHttp.Body: {err.Message}");
                     throw new ArgumentException("Invalid JSON input");
                 }
 
