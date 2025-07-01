@@ -176,7 +176,6 @@ public class HttpClientRunner : IHttpClientRunner
 
     public async Task<HttpResponseMessage> MakeHttpClientCall(MonitorHttp monitorHttp)
     {
-        Console.WriteLine($"Making HTTP call to {monitorHttp.UrlToCheck}");
         var notAfter = DateTime.UtcNow;
 
         using HttpClientHandler handler = new HttpClientHandler();
@@ -218,7 +217,7 @@ public class HttpClientRunner : IHttpClientRunner
 
             StringContent? content = null;
 
-            if (monitorHttp.Body != null)
+            if (!string.IsNullOrEmpty(monitorHttp.Body))
             {
                 try
                 {
@@ -227,7 +226,6 @@ public class HttpClientRunner : IHttpClientRunner
                 catch (JsonException err)
                 {
                     // Log and reject
-                    Console.WriteLine($"Invalid JSON in monitorHttp.Body: {err.Message}");
                     throw new ArgumentException("Invalid JSON input");
                 }
 
