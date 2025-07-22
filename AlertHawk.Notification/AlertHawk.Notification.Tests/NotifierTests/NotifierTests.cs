@@ -188,7 +188,7 @@ public class NotifierTests : IClassFixture<NotificationController>
             NotificationWebHook = new NotificationWebHook()
             {
                 NotificationId = 1,
-                WebHookUrl = GlobalVariables.WebHookUrl,
+                WebHookUrl = GlobalVariables.SlackWebHookUrl,
                 Message = "test From WebHook Test",
                 Body = body,
                 HeadersJson = headers
