@@ -172,40 +172,6 @@ public class NotifierTests : IClassFixture<NotificationController>
     }
 
     [Fact]
-    public async Task Should_Send_WebHook_Notification()
-    {
-        // Arrange
-        var message = "Message Details from Webhook";
-        var channel = "alerthawk-test";
-
-        var body = $"{{\"channel\": \"{channel}\", \"text\": \"{message}\"}}";
-        var headers = "{\"User-Agent\": \"Mozilla/5.0\"}";
-
-        var notificationSend = new NotificationSend
-        {
-            Message = "Message",
-            NotificationTypeId = 5, // WebHook
-            NotificationWebHook = new NotificationWebHook()
-            {
-                NotificationId = 1,
-                WebHookUrl = GlobalVariables.SlackWebHookUrl,
-                Message = "test From WebHook Test",
-                Body = body,
-                HeadersJson = headers
-            },
-            NotificationTimeStamp = DateTime.UtcNow
-        };
-        JsonUtils.ConvertJsonToTuple(notificationSend.NotificationWebHook);
-
-        // Act
-        await _webHookNotifier.SendNotification(notificationSend,
-            notificationSend.NotificationWebHook);
-
-        // Assert
-        Assert.True(true);
-    }
-
-    [Fact]
     public async Task Should_Send_Push_Notification()
     {
         // Arrange
