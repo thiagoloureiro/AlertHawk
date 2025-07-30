@@ -6,6 +6,7 @@
     <mapping directory="$PROJECT_DIR$/../../ABBELMSGraphService" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../ABBY_EL_INTERNAL_ASSISTANT" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../ABBY_EL_INTERNAL_ASSISTANT_INTEGRATION_FRAMEWORK" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../ABBY_FOR_TECHNICAL_SUPPORT" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/.." vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../AlertHawk.Chart" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../AlertHawk.Mobile" vcs="Git" />
@@ -19,6 +20,7 @@
     <mapping directory="$PROJECT_DIR$/../../PMDemo" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../ProjectMonitor2" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../SFx.Scanning" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../SalesConfigurator_Frontend" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../SapConsoleTerminalServer" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../SecurityPortal" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../SecurityPortal.API" vcs="Git" />
