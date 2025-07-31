@@ -105,7 +105,8 @@ public class HttpClientRunner : IHttpClientRunner
                         // only send notification when goes from online into offline to avoid flood
                         if (monitorHttp.LastStatus)
                         {
-                            _logger.LogWarning("Error calling {monitorHttp.UrlToCheck}, Response ReasonPhrase: {response.ReasonPhrase}");
+                            _logger.LogWarning(
+                                "Error calling {monitorHttp.UrlToCheck}, Response ReasonPhrase: {response.ReasonPhrase}");
                             await _notificationProducer.HandleFailedNotifications(monitorHttp,
                                 response.ReasonPhrase);
 
@@ -127,7 +128,8 @@ public class HttpClientRunner : IHttpClientRunner
                 retryCount++;
 
                 // Avoid logging when it's a database connectivity issue
-                if (err.Message.Contains("A network-related or instance-specific error occurred while establishing a connection to SQL Server."))
+                if (err.Message.Contains(
+                        "A network-related or instance-specific error occurred while establishing a connection to SQL Server."))
                 {
                     _logger.LogError("Database connectivity issue: {message}", err.Message);
                     break; // Exit the loop on database connectivity issues
@@ -143,7 +145,8 @@ public class HttpClientRunner : IHttpClientRunner
                 // If max retries reached, update status and save history
                 if (retryCount == maxRetries)
                 {
-                    _logger.LogWarning("Error calling {monitorHttp.UrlToCheck}, Response ReasonPhrase: {response.ReasonPhrase}");
+                    _logger.LogWarning(
+                        "Error calling {monitorHttp.UrlToCheck}, Response ReasonPhrase: {response.ReasonPhrase}");
                     await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, false, 0);
 
                     var monitorHistory = new MonitorHistory
@@ -237,33 +240,27 @@ public class HttpClientRunner : IHttpClientRunner
             var sw = new Stopwatch();
             sw.Start();
             HttpResponseMessage? response = null;
-
-            try
+            
+            response = monitorHttp.MonitorHttpMethod switch
             {
-                response = monitorHttp.MonitorHttpMethod switch
-                {
-                    MonitorHttpMethod.Get => await client.GetAsync(monitorHttp.UrlToCheck),
-                    MonitorHttpMethod.Post => await client.PostAsync(monitorHttp.UrlToCheck, content),
-                    MonitorHttpMethod.Put => await client.PutAsync(monitorHttp.UrlToCheck, content),
-                    _ => throw new ArgumentOutOfRangeException()
-                };
+                MonitorHttpMethod.Get => await client.GetAsync(monitorHttp.UrlToCheck),
+                MonitorHttpMethod.Post => await client.PostAsync(monitorHttp.UrlToCheck, content),
+                MonitorHttpMethod.Put => await client.PutAsync(monitorHttp.UrlToCheck, content),
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
-                var elapsed = sw.ElapsedMilliseconds;
-                monitorHttp.ResponseTime = (int)elapsed;
-                sw.Stop();
+            var elapsed = sw.ElapsedMilliseconds;
+            monitorHttp.ResponseTime = (int)elapsed;
+            sw.Stop();
 
-                monitorHttp.ResponseStatusCode = response.StatusCode;
-                monitorHttp.HttpVersion = response.Version.ToString();
-                return response;
-            }
-            finally
-            {
-                response?.Dispose();
-            }
+            monitorHttp.ResponseStatusCode = response.StatusCode;
+            monitorHttp.HttpVersion = response.Version.ToString();
+            return response;
         }
         catch (Exception err)
         {
-            Console.WriteLine($"Error making HTTP call: {err.Message}");
+            _logger.LogError("Error making HTTP call: {message}", err.Message);
+            SentrySdk.CaptureException(err);
             client?.Dispose();
         }
         finally
