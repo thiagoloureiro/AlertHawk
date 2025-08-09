@@ -13,11 +13,11 @@
         <PackageReference Include="EPPlus" Version="8.0.8" />
         <PackageReference Include="Hangfire.Core" Version="1.8.20" />
         <PackageReference Include="KubernetesClient" Version="17.0.4" />
-        <PackageReference Include="MassTransit.Abstractions" Version="8.5.1" />
+        <PackageReference Include="MassTransit.Abstractions" Version="8.5.2" />
         <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.0" />
-        <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.7" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.8" />
         <PackageReference Include="Polly" Version="8.6.2" />
-        <PackageReference Include="Sentry" Version="5.13.0" />
+        <PackageReference Include="Sentry" Version="5.14.0" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AlertHawk.Monitoring.Domain\AlertHawk.Monitoring.Domain.csproj" />

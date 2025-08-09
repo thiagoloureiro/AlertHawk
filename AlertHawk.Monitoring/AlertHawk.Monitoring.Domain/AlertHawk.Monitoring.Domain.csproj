@@ -27,7 +27,7 @@
       <PackageReference Include="Azure.Identity" Version="1.14.2" />
       <PackageReference Include="EasyMemoryCache" Version="3.0.4" />
       <PackageReference Include="Hangfire.Core" Version="1.8.20" />
-      <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.7" />
+      <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.8" />
     </ItemGroup>
 
 
