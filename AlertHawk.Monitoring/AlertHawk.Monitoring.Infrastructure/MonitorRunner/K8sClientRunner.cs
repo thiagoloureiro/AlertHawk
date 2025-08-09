@@ -257,22 +257,94 @@ public class K8sClientRunner : IK8sClientRunner
                     }
                 }
             }
-            catch (Exception ex)
+            catch (HttpRequestException httpEx) when (httpEx.Message.Contains("401") || httpEx.Message.Contains("Unauthorized"))
             {
-                Console.WriteLine(ex.Message);
+                _logger.LogError("Kubernetes authentication failed (401): {message}", httpEx.Message);
+                
                 var monitorHistory = new MonitorHistory
                 {
                     MonitorId = monitorK8s.MonitorId,
                     Status = false,
                     TimeStamp = DateTime.UtcNow,
-                    ResponseMessage = "Failed to connect to Kubernetes cluster."
+                    ResponseMessage = $"Authentication failed (401): {httpEx.Message}"
                 };
+
+                // Save the authentication failure to history
+                await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
                 
+                // Pause the monitor to prevent continuous authentication failures
+                await _monitorRepository.PauseMonitor(monitorK8s.MonitorId, true);
+                _logger.LogWarning("Monitor {monitorId} has been paused due to authentication failure", monitorK8s.MonitorId);
+
+                // Send notification about the authentication failure and monitor pause
                 await _notificationProducer.HandleFailedK8sNotifications(monitorK8s,
-                    "Failed to connect to Kubernetes cluster.");
+                    $"Authentication failed - Monitor paused: {httpEx.Message}");
 
                 await _monitorAlertRepository.SaveMonitorAlert(monitorHistory,
                     monitorK8s.MonitorEnvironment);
+
+                // Break out of retry loop for authentication failures
+                break;
+            }
+            catch (Exception ex) when (ex.Message.Contains("401") || ex.Message.Contains("Unauthorized"))
+            {
+                _logger.LogError("Kubernetes authentication failed: {message}", ex.Message);
+                
+                var monitorHistory = new MonitorHistory
+                {
+                    MonitorId = monitorK8s.MonitorId,
+                    Status = false,
+                    TimeStamp = DateTime.UtcNow,
+                    ResponseMessage = $"Authentication failed: {ex.Message}"
+                };
+
+                // Save the authentication failure to history
+                await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
+                
+                // Pause the monitor to prevent continuous authentication failures
+                await _monitorRepository.PauseMonitor(monitorK8s.MonitorId, true);
+                _logger.LogWarning("Monitor {monitorId} has been paused due to authentication failure", monitorK8s.MonitorId);
+
+                // Send notification about the authentication failure and monitor pause
+                await _notificationProducer.HandleFailedK8sNotifications(monitorK8s,
+                    $"Authentication failed - Monitor paused: {ex.Message}");
+
+                await _monitorAlertRepository.SaveMonitorAlert(monitorHistory,
+                    monitorK8s.MonitorEnvironment);
+
+                // Break out of retry loop for authentication failures
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error connecting to kubernetes: {message}", ex.Message);
+                retryCount++;
+                
+                var monitorHistory = new MonitorHistory
+                {
+                    MonitorId = monitorK8s.MonitorId,
+                    Status = false,
+                    TimeStamp = DateTime.UtcNow,
+                    ResponseMessage = $"Failed to connect to Kubernetes cluster: {ex.Message}"
+                };
+                
+                // Only save history and send notifications on final retry
+                if (retryCount == maxRetries)
+                {
+                    await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
+                    await _monitorRepository.UpdateMonitorStatus(monitorK8s.MonitorId, false, 0);
+                    
+                    await _notificationProducer.HandleFailedK8sNotifications(monitorK8s,
+                        $"Failed to connect to Kubernetes cluster: {ex.Message}");
+
+                    await _monitorAlertRepository.SaveMonitorAlert(monitorHistory,
+                        monitorK8s.MonitorEnvironment);
+                }
+                else
+                {
+                    // Wait before retrying
+                    Thread.Sleep(_retryIntervalMilliseconds);
+                }
             }
         }
     }
