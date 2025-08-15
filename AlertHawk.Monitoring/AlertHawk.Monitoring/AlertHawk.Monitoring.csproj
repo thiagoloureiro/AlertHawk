@@ -8,6 +8,10 @@
     <UserSecretsId>ab0ab026-d0f2-438a-a3e6-98b1e78a406d</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
+  
+  <PropertyGroup>
+    <SkippedInstrumentations>StackExchange.Redis</SkippedInstrumentations>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.14.2" />
@@ -22,6 +26,12 @@
     <PackageReference Include="Microsoft.Identity.Web" Version="3.13.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="OpenTelemetry" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.AutoInstrumentation" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.12.0" />
     <PackageReference Include="Sentry" Version="5.14.0" />
     <PackageReference Include="Sentry.AspNetCore" Version="5.14.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />

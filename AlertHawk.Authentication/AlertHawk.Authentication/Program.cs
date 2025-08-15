@@ -10,6 +10,10 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +43,62 @@ var audiences = configuration["Jwt:Audiences"] ??
 
 var key = configuration["Jwt:Key"] ?? "fakeKey";
 var sentryEnabled = configuration.GetValue<string>("Sentry:Enabled") ?? "false";
+
+var serviceName = configuration.GetSection("SigNoz:serviceName").Value ?? "AlertHawk.Authentication";
+var environment = configuration.GetSection("SigNoz:environment").Value ?? "Development";
+var otlpEndpoint = configuration.GetSection("SigNoz:otlpEndpoint").Value;
+
+if (!string.IsNullOrEmpty(otlpEndpoint))
+{
+// Configure OpenTelemetry with tracing and auto-start.
+    builder.Services.AddOpenTelemetry()
+        .ConfigureResource(resource =>
+            resource.AddService(serviceName: serviceName,
+                    serviceVersion: Assembly.GetEntryAssembly()?.GetName().Version?.ToString())
+                .AddAttributes(new Dictionary<string, object>
+                {
+                    { "deployment.environment", environment }
+                }))
+        .WithTracing(tracing => tracing
+            .AddAspNetCoreInstrumentation(options =>
+            {
+                // Configure the ASP.NET Core instrumentation options if needed
+                options.RecordException = true; // Record exceptions in traces
+                options.EnrichWithHttpRequest = (activity, request) =>
+                {
+                    // Enrich the activity with additional HTTP request information if needed
+                    activity.SetTag("http.method", request.Method);
+                    activity.SetTag("http.url", request.Path + request.QueryString);
+                };
+
+                // Ignore traces for the /api/version endpoint
+                options.Filter = (context) => { return !context.Request.Path.StartsWithSegments("/api/version"); };
+            })
+            .AddHttpClientInstrumentation()
+            .AddSqlClientInstrumentation(options =>
+            {
+                // Configure SQL client instrumentation options if needed
+                options.SetDbStatementForText = true; // Set the SQL statement for text queries
+            })
+            .AddOtlpExporter(otlpOptions =>
+            {
+                //SigNoz Cloud Endpoint
+                otlpOptions.Endpoint = new Uri(otlpEndpoint);
+
+                otlpOptions.Protocol = OtlpExportProtocol.Grpc;
+            }))
+        .WithMetrics(metrics => metrics
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddOtlpExporter(otlpOptions =>
+            {
+                //SigNoz Cloud Endpoint
+                otlpOptions.Endpoint = new Uri(otlpEndpoint);
+
+                otlpOptions.Protocol = OtlpExportProtocol.Grpc;
+            }));
+}
 
 // Add services to the container
 builder.Services.AddAuthentication(options =>
