@@ -9,6 +9,10 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <SkippedInstrumentations>StackExchange.Redis</SkippedInstrumentations>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="15.0.1" />
     <PackageReference Include="AutoMapper.Collection" Version="11.0.0" />
@@ -17,6 +21,12 @@
     <PackageReference Include="EasyMemoryCache" Version="3.0.4" />
     <PackageReference Include="Microsoft.Identity.Web" Version="3.11.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
+    <PackageReference Include="OpenTelemetry" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.AutoInstrumentation" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.12.0" />
     <PackageReference Include="Sentry.AspNetCore" Version="5.13.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="9.0.3" />
