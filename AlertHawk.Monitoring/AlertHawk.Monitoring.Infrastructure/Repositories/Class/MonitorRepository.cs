@@ -144,7 +144,6 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                     ,[HeartBeatInterval] = @HeartBeatInterval
                     ,[Retries] = @Retries
                     ,[Status] = @Status
-                    ,[DaysToExpireCert] = @DaysToExpireCert
                     ,[Paused] = @Paused
                     ,[MonitorRegion] = @MonitorRegion
                     ,[MonitorEnvironment] = @MonitorEnvironment
