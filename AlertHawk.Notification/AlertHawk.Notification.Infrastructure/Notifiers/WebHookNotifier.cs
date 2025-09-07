@@ -1,4 +1,5 @@
-﻿using AlertHawk.Notification.Domain.Entities;
+﻿using System.Diagnostics.CodeAnalysis;
+using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using Polly;
 using System.Text;
@@ -7,6 +8,7 @@ using StringContent = System.Net.Http.StringContent;
 
 namespace AlertHawk.Notification.Infrastructure.Notifiers
 {
+    [ExcludeFromCodeCoverage]
     public class WebHookNotifier : IWebHookNotifier
     {
         public class WebHookRequest

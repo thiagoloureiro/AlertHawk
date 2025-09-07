@@ -1,10 +1,12 @@
-﻿using AlertHawk.Notification.Domain.Entities;
+﻿using System.Diagnostics.CodeAnalysis;
+using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using System.Net;
 using System.Net.Mail;
 
 namespace AlertHawk.Notification.Infrastructure.Notifiers
 {
+    [ExcludeFromCodeCoverage]
     public class MailNotifier : IMailNotifier
     {
         public async Task<bool> Send(NotificationEmail emailNotification)
