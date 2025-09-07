@@ -4,9 +4,11 @@ using Polly;
 using Polly.Retry;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring.Infrastructure.Utils
 {
+    [ExcludeFromCodeCoverage]
     public static class DapperExtensions
     {
         private static readonly IEnumerable<TimeSpan> RetryTimes =
