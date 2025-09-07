@@ -1,11 +1,5 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
-using AlertHawk.Monitoring.Domain.Interfaces.Producers;
-using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
-using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
-using NSubstitute;
-using System.Net;
-using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
 namespace AlertHawk.Monitoring.Tests.RunnerTests
 {
@@ -22,19 +16,25 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
         public async Task RunMonitorAsync_WhenCalled_ReturnsTrue()
         {
             // Arrange
+            var configfile = File.ReadAllText("/home/vsts/work/_temp/local.yaml");
+
+            var base64Config = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(configfile));
+
             var monitor = new MonitorK8s
             {
                 MonitorId = 1,
                 ClusterName = "TestCluster",
-                KubeConfig = "",
+                KubeConfig = base64Config,
                 LastStatus = false
             };
 
             // Act
-          //  await _k8SClientRunner.CheckK8sAsync(monitor);
+            var result = await _k8SClientRunner.CallK8S(monitor);
 
             // Assert
-            Assert.True(true);
+            Assert.True(result.succeeded);
+            Assert.NotNull(result.responseMessage);
+            Assert.NotNull(result.monitorHistory);
         }
     }
 }
