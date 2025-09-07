@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace AlertHawk.Monitoring.Domain.Entities;
 
+[ExcludeFromCodeCoverage]
 public class K8sNodeStatusModel
 {
     public string NodeName { get; set; }

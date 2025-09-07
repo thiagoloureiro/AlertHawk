@@ -1,8 +1,10 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring.Infrastructure.Utils
 {
+    [ExcludeFromCodeCoverage]
     public static class SqlServerTransientExceptionDetector
     {
         public static bool ShouldRetryOn(SqlException ex)
