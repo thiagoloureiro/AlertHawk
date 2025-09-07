@@ -880,4 +880,62 @@ public class MonitorControllerTests
 
         return fileMock.Object;
     }
+    
+    [Fact]
+    public async Task GetMonitorK8sByMonitorId_ReturnsOkResult_With_Expected_Result()
+    {
+        // Arrange
+        var monitorServiceMock = Substitute.For<IMonitorService>();
+        var expectedMonitorK8s = new MonitorK8s
+        {
+            Name = "Test Monitor",
+            ClusterName = "TestCluster",
+            KubeConfig = "base64Config",
+            HeartBeatInterval = 0,
+            Retries = 0
+        };
+        monitorServiceMock.GetK8sMonitorByMonitorId(1).Returns(expectedMonitorK8s);
+
+        var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+
+        // Act
+        var result = await controller.getMonitorK8sByMonitorId(1);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var resultMonitorK8s = Assert.IsAssignableFrom<MonitorK8s>(okResult.Value);
+        Assert.Equal(expectedMonitorK8s, resultMonitorK8s);
+    }
+    
+    [Fact]
+    public async Task CreateMonitorK8s_Returns_OkResult_With_Expected_Result()
+    {
+        // Arrange
+        var monitorK8s = new MonitorK8s
+        {
+            Name = "Test Monitor",
+            ClusterName = "TestCluster",
+            KubeConfig = "base64Config",
+            HeartBeatInterval = 0,
+            Retries = 0
+        };
+        var monitorServiceMock = Substitute.For<IMonitorService>();
+        var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        monitorServiceMock.CreateMonitorK8s(monitorK8s).Returns(Task.FromResult(1));
+
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+
+        // Act
+        var result = await controller.CreateMonitorK8s(monitorK8s);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(1, okResult.Value);
+    }
 }
