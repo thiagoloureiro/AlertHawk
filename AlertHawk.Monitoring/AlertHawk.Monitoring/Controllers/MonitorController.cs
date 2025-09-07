@@ -1,4 +1,5 @@
-﻿using AlertHawk.Authentication.Domain.Custom;
+﻿using System.Diagnostics.CodeAnalysis;
+using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
@@ -136,6 +137,7 @@ namespace AlertHawk.Monitoring.Controllers
             return Ok(monitorId);
         }
 
+        [ExcludeFromCodeCoverage]
         [SwaggerOperation(Summary = "Clone a Monitor")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [HttpPost("clone/{id}")]
