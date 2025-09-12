@@ -147,8 +147,6 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                     ,[Paused] = @Paused
                     ,[MonitorRegion] = @MonitorRegion
                     ,[MonitorEnvironment] = @MonitorEnvironment
-                    ,HttpResponseCodeFrom = @HttpResponseCodeFrom
-                    ,HttpResponseCodeTo = @HttpResponseCodeTo
                     WHERE Id = @MonitorId";
         await db.ExecuteAsync(sqlMonitor,
             new
@@ -161,15 +159,14 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 monitorHttp.DaysToExpireCert,
                 monitorHttp.Paused,
                 monitorHttp.MonitorRegion,
-                monitorHttp.MonitorEnvironment,
-                monitorHttp.HttpResponseCodeFrom,
-                monitorHttp.HttpResponseCodeTo
+                monitorHttp.MonitorEnvironment
             }, commandType: CommandType.Text);
 
         string sqlMonitorHttp =
             @"UPDATE [MonitorHttp] SET CheckCertExpiry = @CheckCertExpiry, IgnoreTlsSsl = @IgnoreTlsSsl,
             MaxRedirects = @MaxRedirects, UrlToCheck = @UrlToCheck, Timeout = @Timeout, MonitorHttpMethod = @MonitorHttpMethod,
-            Body = @Body, HeadersJson = @HeadersJson WHERE MonitorId = @monitorId";
+            Body = @Body, HeadersJson = @HeadersJson, HttpResponseCodeFrom = @HttpResponseCodeFrom ,HttpResponseCodeTo = @HttpResponseCodeTo
+            WHERE MonitorId = @monitorId";
 
         await db.ExecuteAsync(sqlMonitorHttp,
             new
@@ -182,7 +179,9 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 monitorHttp.Body,
                 monitorHttp.HeadersJson,
                 monitorHttp.UrlToCheck,
-                monitorHttp.Timeout
+                monitorHttp.Timeout,
+                monitorHttp.HttpResponseCodeFrom,
+                monitorHttp.HttpResponseCodeTo
             }, commandType: CommandType.Text);
     }
 
