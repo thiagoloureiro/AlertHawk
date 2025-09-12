@@ -40,7 +40,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            @"SELECT M.Id, M.Name, HTTP.UrlToCheck, CAST(IP AS VARCHAR(255)) + ':' + CAST(Port AS VARCHAR(10)) AS MonitorTcp, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag, HTTP.CheckCertExpiry FROM [Monitor] M
+            @"SELECT M.Id, M.Name, HTTP.UrlToCheck, CAST(IP AS VARCHAR(255)) + ':' + CAST(Port AS VARCHAR(10)) AS MonitorTcp, MonitorTypeId, HeartBeatInterval, Retries, Status, DaysToExpireCert, Paused, MonitorRegion, MonitorEnvironment, Tag, HTTP.CheckCertExpiry, HTTP.HttpResponseCodeFrom, HTTP.HttpResponseCodeTo FROM [Monitor] M
                 LEFT JOIN MonitorHttp HTTP on HTTP.MonitorId = M.Id
                 LEFT JOIN MonitorTcp TCP ON TCP.MonitorId = M.Id";
         return await db.QueryAsync<Monitor>(sql, new { }, commandType: CommandType.Text);
@@ -50,7 +50,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
     {
         await using var db = new SqlConnection(_connstring);
         string sql =
-            "SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp]";
+            "SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson, HttpResponseCodeFrom, HttpResponseCodeTo FROM [MonitorHttp]";
         return await db.QueryAsync<MonitorHttp>(sql, commandType: CommandType.Text);
     }
 
@@ -147,6 +147,8 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                     ,[Paused] = @Paused
                     ,[MonitorRegion] = @MonitorRegion
                     ,[MonitorEnvironment] = @MonitorEnvironment
+                    ,HttpResponseCodeFrom = @HttpResponseCodeFrom
+                    ,HttpResponseCodeTo = @HttpResponseCodeTo
                     WHERE Id = @MonitorId";
         await db.ExecuteAsync(sqlMonitor,
             new
@@ -159,7 +161,9 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 monitorHttp.DaysToExpireCert,
                 monitorHttp.Paused,
                 monitorHttp.MonitorRegion,
-                monitorHttp.MonitorEnvironment
+                monitorHttp.MonitorEnvironment,
+                monitorHttp.HttpResponseCodeFrom,
+                monitorHttp.HttpResponseCodeTo
             }, commandType: CommandType.Text);
 
         string sqlMonitorHttp =
@@ -407,7 +411,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
 
         string sql =
             $@"SELECT a.Id, a.Name, a.MonitorTypeId, a.HeartBeatInterval, a.Retries, a.Status, a.DaysToExpireCert, a.Paused, a.MonitorRegion, a.MonitorEnvironment, a.Tag,
-                b.MonitorId, b.CheckCertExpiry, b.IgnoreTlsSsl, b.MaxRedirects, b.UrlToCheck, b.Timeout, b.MonitorHttpMethod, b.Body, b.HeadersJson, MGI.MonitorGroupId as MonitorGroup
+                b.MonitorId, b.CheckCertExpiry, b.IgnoreTlsSsl, b.MaxRedirects, b.UrlToCheck, b.Timeout, b.MonitorHttpMethod, b.Body, b.HeadersJson, MGI.MonitorGroupId, b.HttpResponseCodeFrom, b.HttpResponseCodeTo as MonitorGroup
                 FROM [Monitor] a 
                 inner join [MonitorHttp] b on a.Id = b.MonitorId
                 inner join [MonitorGroupItems] MGI on MGI.MonitorId = a.Id
@@ -543,8 +547,8 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
             }, commandType: CommandType.Text);
 
         string sqlMonitorHttp =
-            @"INSERT INTO [MonitorHttp] (MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson)
-        VALUES (@MonitorId, @CheckCertExpiry, @IgnoreTlsSsl, @MaxRedirects, @UrlToCheck, @Timeout, @MonitorHttpMethod, @Body, @HeadersJson)";
+            @"INSERT INTO [MonitorHttp] (MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson, HttpResponseCodeFrom, HttpResponseCodeTo)
+        VALUES (@MonitorId, @CheckCertExpiry, @IgnoreTlsSsl, @MaxRedirects, @UrlToCheck, @Timeout, @MonitorHttpMethod, @Body, @HeadersJson, @HttpResponseCodeFrom, @HttpResponseCodeTo)";
         await db.ExecuteAsync(sqlMonitorHttp,
             new
             {
@@ -556,7 +560,9 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
                 monitorHttp.Body,
                 monitorHttp.HeadersJson,
                 monitorHttp.UrlToCheck,
-                monitorHttp.Timeout
+                monitorHttp.Timeout,
+                monitorHttp.HttpResponseCodeFrom, 
+                monitorHttp.HttpResponseCodeTo
             }, commandType: CommandType.Text);
         return id;
     }
@@ -566,7 +572,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
         await using var db = new SqlConnection(_connstring);
 
         string sql =
-            $@"SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson FROM [MonitorHttp] WHERE MonitorId IN @ids";
+            $@"SELECT MonitorId, CheckCertExpiry, IgnoreTlsSsl, MaxRedirects, UrlToCheck, Timeout, MonitorHttpMethod, Body, HeadersJson, HttpResponseCodeFrom, HttpResponseCodeTo FROM [MonitorHttp] WHERE MonitorId IN @ids";
 
         return await db.QueryAsync<MonitorHttp>(sql, new { ids }, commandType: CommandType.Text);
     }

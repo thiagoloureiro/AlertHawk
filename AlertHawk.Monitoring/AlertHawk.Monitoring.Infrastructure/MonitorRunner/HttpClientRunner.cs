@@ -54,8 +54,12 @@ public class HttpClientRunner : IHttpClientRunner
             monitorHttp.ResponseStatusCode = response.StatusCode;
             try
             {
-                var succeeded = ((int)monitorHttp.ResponseStatusCode >= 200) &&
-                                ((int)monitorHttp.ResponseStatusCode <= 299);
+                // Fetch succeeded status based on monitor.HttpResponseCodeFrom and HttpResponseCodeTo
+                var fromStatus = monitorHttp.HttpResponseCodeFrom ?? 200;
+                var toStatus = monitorHttp.HttpResponseCodeTo ?? 299;
+
+                var succeeded = ((int)monitorHttp.ResponseStatusCode >= fromStatus) &&
+                                ((int)monitorHttp.ResponseStatusCode <= toStatus);
 
                 var monitorHistory = new MonitorHistory
                 {
@@ -240,7 +244,7 @@ public class HttpClientRunner : IHttpClientRunner
             var sw = new Stopwatch();
             sw.Start();
             HttpResponseMessage? response = null;
-            
+
             response = monitorHttp.MonitorHttpMethod switch
             {
                 MonitorHttpMethod.Get => await client.GetAsync(monitorHttp.UrlToCheck),

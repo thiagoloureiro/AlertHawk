@@ -19,4 +19,6 @@ public class MonitorHttp : Monitor
     public string? Body { get; set; }
     public string? HeadersJson { get; set; }
     public List<Tuple<string, string>>? Headers { get; set; }
+    public int? HttpResponseCodeFrom { get; set; }
+    public int? HttpResponseCodeTo { get; set; }
 }
