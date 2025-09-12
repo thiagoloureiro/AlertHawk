@@ -410,7 +410,7 @@ public class MonitorRepository : RepositoryBase, IMonitorRepository
 
         string sql =
             $@"SELECT a.Id, a.Name, a.MonitorTypeId, a.HeartBeatInterval, a.Retries, a.Status, a.DaysToExpireCert, a.Paused, a.MonitorRegion, a.MonitorEnvironment, a.Tag,
-                b.MonitorId, b.CheckCertExpiry, b.IgnoreTlsSsl, b.MaxRedirects, b.UrlToCheck, b.Timeout, b.MonitorHttpMethod, b.Body, b.HeadersJson, MGI.MonitorGroupId, b.HttpResponseCodeFrom, b.HttpResponseCodeTo as MonitorGroup
+                b.MonitorId, b.CheckCertExpiry, b.IgnoreTlsSsl, b.MaxRedirects, b.UrlToCheck, b.Timeout, b.MonitorHttpMethod, b.Body, b.HeadersJson, MGI.MonitorGroupId as MonitorGroup, b.HttpResponseCodeFrom, b.HttpResponseCodeTo
                 FROM [Monitor] a 
                 inner join [MonitorHttp] b on a.Id = b.MonitorId
                 inner join [MonitorGroupItems] MGI on MGI.MonitorId = a.Id
