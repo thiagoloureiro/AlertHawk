@@ -1,4 +1,6 @@
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS base
+RUN apk update && apk upgrade
+
 USER app
 WORKDIR /app
 EXPOSE 8080
