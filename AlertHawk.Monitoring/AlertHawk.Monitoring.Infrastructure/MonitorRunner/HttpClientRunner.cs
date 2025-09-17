@@ -269,7 +269,7 @@ public class HttpClientRunner : IHttpClientRunner
             return new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.ServiceUnavailable,
-                ReasonPhrase = "Service Unavailable"
+                ReasonPhrase = httpRequestException.Message
             };
         }
         catch (Exception err)
