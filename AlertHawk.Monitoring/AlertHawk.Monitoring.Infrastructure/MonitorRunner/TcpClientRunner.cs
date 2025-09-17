@@ -33,7 +33,6 @@ public class TcpClientRunner : ITcpClientRunner
             try
             {
                 isConnected = await MakeTcpCall(monitorTcp);
-                _logger.LogInformation("Checking {monitorTcp.IP}:{monitorTcp.Port}, isConnected: {isConnected}");
                 var monitorHistory = new MonitorHistory
                 {
                     MonitorId = monitorTcp.MonitorId,
