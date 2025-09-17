@@ -261,6 +261,17 @@ public class HttpClientRunner : IHttpClientRunner
             monitorHttp.HttpVersion = response.Version.ToString();
             return response;
         }
+        // catch if System.Net.Http.HttpRequestException
+        catch (HttpRequestException httpRequestException)
+        {
+            _logger.LogError("HTTP Request error: {message}", httpRequestException.Message);
+            client?.Dispose();
+            return new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.ServiceUnavailable,
+                ReasonPhrase = "Service Unavailable"
+            };
+        }
         catch (Exception err)
         {
             _logger.LogError("Error making HTTP call: {message}", err.Message);
