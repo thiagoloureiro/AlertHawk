@@ -34,6 +34,8 @@ public class NotificationProducer : INotificationProducer
         {
             foreach (var item in notificationIdList)
             {
+                _notificationLogger.LogInformation(
+                    $"Notification Details: notificationId {item.NotificationId}, monitorId: {item.MonitorId}, ResponseStatusCode: {monitorHttp.ResponseStatusCode}, reasonPhrase {reasonPhrase}, name:  {monitorHttp.Name}");
                 await _publishEndpoint.Publish<NotificationAlert>(new
                 {
                     NotificationId = item.NotificationId,
