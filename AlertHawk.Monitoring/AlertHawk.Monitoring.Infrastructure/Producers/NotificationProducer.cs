@@ -50,6 +50,8 @@ public class NotificationProducer : INotificationProducer
                     StatusCode = (int)monitorHttp.ResponseStatusCode,
                     ReasonPhrase = reasonPhrase,
                 });
+
+                _notificationLogger.LogInformation("Notification sent successfully");
             }
         }
         catch (Exception err)
