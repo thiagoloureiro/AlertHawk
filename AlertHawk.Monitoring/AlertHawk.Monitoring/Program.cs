@@ -49,7 +49,7 @@ var queueType = configuration.GetValue<string>("QueueType") ?? "RABBITMQ";
 var serviceBusConnectionString = configuration.GetValue<string>("ServiceBus:ConnectionString");
 var serviceBusQueueName = configuration.GetValue<string>("ServiceBus:QueueName");
 
-var cacheFrequency = configuration.GetValue<string>("DataCacheFrequencyCron") ?? "*/2 * * * *"; 
+var cacheFrequency = configuration.GetValue<string>("DataCacheFrequencyCron") ?? "*/2 * * * *";
 
 var serviceName = configuration.GetSection("SigNoz:serviceName").Value ?? "AlertHawk.Monitoring";
 var environment = configuration.GetSection("SigNoz:environment").Value ?? "Development";
@@ -57,7 +57,7 @@ var otlpEndpoint = configuration.GetSection("SigNoz:otlpEndpoint").Value;
 
 if (!string.IsNullOrEmpty(otlpEndpoint))
 {
-// Configure OpenTelemetry with tracing and auto-start.
+    // Configure OpenTelemetry with tracing and auto-start.
     builder.Services.AddOpenTelemetry()
         .ConfigureResource(resource =>
             resource.AddService(serviceName: serviceName,
@@ -141,6 +141,7 @@ builder.Services.AddMassTransit(x =>
         case "RABBITMQ":
             x.UsingRabbitMq((_, cfg) =>
             {
+                Console.WriteLine($"Connecting to RabbitMQ at {rabbitMqHost}");
                 cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
                 {
                     if (rabbitMqUser != null) h.Username(rabbitMqUser);
@@ -148,9 +149,11 @@ builder.Services.AddMassTransit(x =>
                 });
             });
             break;
+
         case "SERVICEBUS":
             x.UsingAzureServiceBus((context, cfg) =>
             {
+                Console.WriteLine($"Connecting to Azure Service Bus");
                 cfg.Host(serviceBusConnectionString);
                 cfg.Message<NotificationAlert>(config =>
                 {
