@@ -30,22 +30,30 @@ public class NotificationProducer : INotificationProducer
         _notificationLogger.LogInformation(
             $"sending notification Error calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}");
 
-        foreach (var item in notificationIdList)
+        try
         {
-            await _publishEndpoint.Publish<NotificationAlert>(new
+            foreach (var item in notificationIdList)
             {
-                NotificationId = item.NotificationId,
-                MonitorId = item.MonitorId,
-                Service = monitorHttp.Name,
-                Region = (int)monitorHttp?.MonitorRegion,
-                Environment = (int)monitorHttp?.MonitorEnvironment,
-                URL = monitorHttp?.UrlToCheck,
-                Success = false,
-                TimeStamp = DateTime.UtcNow,
-                Message = $"Error calling {monitorHttp?.Name}, Response StatusCode: {monitorHttp?.ResponseStatusCode}",
-                StatusCode = (int)monitorHttp.ResponseStatusCode,
-                ReasonPhrase = reasonPhrase,
-            });
+                await _publishEndpoint.Publish<NotificationAlert>(new
+                {
+                    NotificationId = item.NotificationId,
+                    MonitorId = item.MonitorId,
+                    Service = monitorHttp.Name,
+                    Region = (int)monitorHttp?.MonitorRegion,
+                    Environment = (int)monitorHttp?.MonitorEnvironment,
+                    URL = monitorHttp?.UrlToCheck,
+                    Success = false,
+                    TimeStamp = DateTime.UtcNow,
+                    Message = $"Error calling {monitorHttp?.Name}, Response StatusCode: {monitorHttp?.ResponseStatusCode}",
+                    StatusCode = (int)monitorHttp.ResponseStatusCode,
+                    ReasonPhrase = reasonPhrase,
+                });
+            }
+        }
+        catch (Exception err)
+        {
+            _notificationLogger.LogError($"Error in HandleFailedNotifications: {err.Message}");
+            Sentry.SentrySdk.CaptureException(err);
         }
     }
 
