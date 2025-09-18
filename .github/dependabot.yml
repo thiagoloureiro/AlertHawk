@@ -1,0 +1,6 @@
+version: 2
+updates:
+  - package-ecosystem: "nuget" # Specifies this is a .NET project using NuGet
+    directory: "/" # Adjust if your .csproj or .sln files are in a subdirectory
+    schedule:
+      interval: "weekly"

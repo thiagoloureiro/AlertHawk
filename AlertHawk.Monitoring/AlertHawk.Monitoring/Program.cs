@@ -49,63 +49,7 @@ var queueType = configuration.GetValue<string>("QueueType") ?? "RABBITMQ";
 var serviceBusConnectionString = configuration.GetValue<string>("ServiceBus:ConnectionString");
 var serviceBusQueueName = configuration.GetValue<string>("ServiceBus:QueueName");
 
-var cacheFrequency = configuration.GetValue<string>("DataCacheFrequencyCron") ?? "*/2 * * * *"; 
-
-var serviceName = configuration.GetSection("SigNoz:serviceName").Value ?? "AlertHawk.Monitoring";
-var environment = configuration.GetSection("SigNoz:environment").Value ?? "Development";
-var otlpEndpoint = configuration.GetSection("SigNoz:otlpEndpoint").Value;
-
-if (!string.IsNullOrEmpty(otlpEndpoint))
-{
-// Configure OpenTelemetry with tracing and auto-start.
-    builder.Services.AddOpenTelemetry()
-        .ConfigureResource(resource =>
-            resource.AddService(serviceName: serviceName,
-                    serviceVersion: Assembly.GetEntryAssembly()?.GetName().Version?.ToString())
-                .AddAttributes(new Dictionary<string, object>
-                {
-                    { "deployment.environment", environment }
-                }))
-        .WithTracing(tracing => tracing
-            .AddAspNetCoreInstrumentation(options =>
-            {
-                // Configure the ASP.NET Core instrumentation options if needed
-                options.RecordException = true; // Record exceptions in traces
-                options.EnrichWithHttpRequest = (activity, request) =>
-                {
-                    // Enrich the activity with additional HTTP request information if needed
-                    activity.SetTag("http.method", request.Method);
-                    activity.SetTag("http.url", request.Path + request.QueryString);
-                };
-
-                // Ignore traces for the /api/version endpoint
-                options.Filter = (context) => { return !context.Request.Path.StartsWithSegments("/api/version"); };
-            })
-            .AddHttpClientInstrumentation()
-            .AddSqlClientInstrumentation(options =>
-            {
-                // Configure SQL client instrumentation options if needed
-                options.SetDbStatementForText = true; // Set the SQL statement for text queries
-            })
-            .AddOtlpExporter(otlpOptions =>
-            {
-                //SigNoz Cloud Endpoint
-                otlpOptions.Endpoint = new Uri(otlpEndpoint);
-
-                otlpOptions.Protocol = OtlpExportProtocol.Grpc;
-            }))
-        .WithMetrics(metrics => metrics
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddRuntimeInstrumentation()
-            .AddOtlpExporter(otlpOptions =>
-            {
-                //SigNoz Cloud Endpoint
-                otlpOptions.Endpoint = new Uri(otlpEndpoint);
-
-                otlpOptions.Protocol = OtlpExportProtocol.Grpc;
-            }));
-}
+var cacheFrequency = configuration.GetValue<string>("DataCacheFrequencyCron") ?? "*/2 * * * *";
 
 if (string.Equals(sentryEnabled, "true", StringComparison.InvariantCultureIgnoreCase))
 {
@@ -134,6 +78,8 @@ if (string.Equals(sentryEnabled, "true", StringComparison.InvariantCultureIgnore
     );
 }
 
+Console.WriteLine("Starting MassTransit Configuration");
+
 builder.Services.AddMassTransit(x =>
 {
     switch (queueType.ToUpper())
@@ -141,6 +87,7 @@ builder.Services.AddMassTransit(x =>
         case "RABBITMQ":
             x.UsingRabbitMq((_, cfg) =>
             {
+                Console.WriteLine($"Connecting to RabbitMQ at {rabbitMqHost}");
                 cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
                 {
                     if (rabbitMqUser != null) h.Username(rabbitMqUser);
@@ -148,9 +95,11 @@ builder.Services.AddMassTransit(x =>
                 });
             });
             break;
+
         case "SERVICEBUS":
             x.UsingAzureServiceBus((context, cfg) =>
             {
+                Console.WriteLine($"Connecting to Azure Service Bus");
                 cfg.Host(serviceBusConnectionString);
                 cfg.Message<NotificationAlert>(config =>
                 {
