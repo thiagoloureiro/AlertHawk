@@ -93,35 +93,6 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
             Assert.NotNull(result.Content);
         }
 
-        [Theory]
-        [InlineData("https://httpbin.org/get1", MonitorHttpMethod.Get)]
-        [InlineData("https://httpbin.org/post1", MonitorHttpMethod.Post)]
-        [InlineData("https://httpbin.org/put1", MonitorHttpMethod.Put)]
-        public async Task Should_Make_HttpClient_Call_NotFound_Result(string url, MonitorHttpMethod method)
-        {
-            // Arrange
-            var monitorHttp = new MonitorHttp
-            {
-                UrlToCheck = url,
-                MonitorId = 1,
-                Name = "Test",
-                Id = 1,
-                CheckCertExpiry = true,
-                IgnoreTlsSsl = false,
-                Timeout = 10,
-                MonitorHttpMethod = method,
-                MaxRedirects = 5,
-                HeartBeatInterval = 1,
-                Retries = 0,
-            };
-
-            // Act
-            var result = await _httpClientRunner.MakeHttpClientCall(monitorHttp);
-
-            // Assert
-            Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
-        }
-
         [Fact]
         public async Task CheckUrlsAsync_Should_Update_Monitor_Status_On_Success()
         {

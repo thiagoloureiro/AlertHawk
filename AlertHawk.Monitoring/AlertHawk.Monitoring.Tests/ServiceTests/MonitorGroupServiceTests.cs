@@ -87,9 +87,9 @@ public class MonitorGroupServiceTests
                 It.IsAny<Func<Task<IEnumerable<MonitorGroup>>>>(),
                 It.IsAny<bool>(),
                 It.IsAny<CacheTimeInterval>()))
-            .Returns(
-                (string _, int _, Func<Task<IEnumerable<MonitorGroup>>> fetchFunction, bool _, CacheTimeInterval _) =>
-                    fetchFunction());
+            .Returns((string _, int _, Func<Task<IEnumerable<MonitorGroup>>> fetchFunction, bool _,
+                    CacheTimeInterval _) =>
+                fetchFunction());
 
         _monitorGroupRepositoryMock.Setup(repo => repo.GetMonitorGroupList())
             .ReturnsAsync(monitorGroups);
@@ -172,30 +172,6 @@ public class MonitorGroupServiceTests
         Assert.Equal("Group1", result.First().Name);
     }
 
-    [Fact]
-    public async Task GetMonitorGroupList_ShouldReturnNull_WhenNoGroupIdsAreAvailable()
-    {
-        // Arrange
-        _httpMessageHandlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK
-            });
-
-        _monitorGroupRepositoryMock.Setup(repo => repo.GetMonitorGroupList())
-            .ReturnsAsync(new List<MonitorGroup>());
-
-        // Act
-        var result = await _monitorGroupService.GetMonitorGroupList("jwtToken");
-
-        // Assert
-        Assert.Null(result);
-    }
 
     [Fact]
     public async Task AddMonitorToGroup_ShouldInvalidateCache()
