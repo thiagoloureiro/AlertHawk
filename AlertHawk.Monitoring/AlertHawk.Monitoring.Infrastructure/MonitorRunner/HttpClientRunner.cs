@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using OfficeOpenXml.FormulaParsing.Excel.Functions.Engineering;
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
@@ -39,8 +40,6 @@ public class HttpClientRunner : IHttpClientRunner
     {
         int maxRetries = monitorHttp.Retries + 1;
         int retryCount = 0;
-
-        _logger.LogInformation($"Checking {monitorHttp.UrlToCheck}");
 
         var monitor = await _monitorRepository.GetMonitorById(monitorHttp.MonitorId);
 
@@ -83,6 +82,21 @@ public class HttpClientRunner : IHttpClientRunner
                     await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded, _daysToExpireCert);
                     await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
 
+                    if (monitorHttp.CheckMonitorHttpHeaders == true)
+                    {
+                        try
+                        {
+                            var headers = CheckHttpHeaders(response);
+                            headers.MonitorId = monitorHttp.MonitorId;
+                            await _monitorHistoryRepository.SaveMonitorSecurityHeaders(headers);
+                        }
+                        catch (Exception e)
+                        {
+                            SentrySdk.CaptureException(e);
+                            _logger.LogError("Error checking HTTP headers: {message}", e.Message);
+                        }
+                    }
+    
                     if (!monitorHttp.LastStatus)
                     {
                         await _notificationProducer.HandleSuccessNotifications(monitorHttp, response.ReasonPhrase);
@@ -131,6 +145,7 @@ public class HttpClientRunner : IHttpClientRunner
             }
             catch (Exception err)
             {
+                Console.WriteLine(err);
                 retryCount++;
 
                 // Avoid logging when it's a database connectivity issue
@@ -174,7 +189,8 @@ public class HttpClientRunner : IHttpClientRunner
                         await _notificationProducer.HandleFailedNotifications(monitorHttp, err.Message);
 
                         // Save monitor alert
-                        _logger.LogInformation("Saving monitor alert for {monitorHttp.UrlToCheck}", monitorHttp.UrlToCheck);
+                        _logger.LogInformation("Saving monitor alert for {monitorHttp.UrlToCheck}",
+                            monitorHttp.UrlToCheck);
                         await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
                     }
 
@@ -293,5 +309,34 @@ public class HttpClientRunner : IHttpClientRunner
             StatusCode = HttpStatusCode.InternalServerError,
             ReasonPhrase = "Internal Server Error"
         };
+    }
+
+    public MonitorHttpHeaders CheckHttpHeaders(HttpResponseMessage response)
+    {
+        // Get the response headers
+        var headers = response.Headers;
+
+        var monitorHttpHeaders = new MonitorHttpHeaders
+        {
+            CacheControl = TryGetHeaderValue(headers, "Cache-Control"),
+            StrictTransportSecurity = TryGetHeaderValue(headers, "Strict-Transport-Security"),
+            PermissionsPolicy = TryGetHeaderValue(headers, "Permissions-Policy"),
+            XFrameOptions = TryGetHeaderValue(headers, "X-Frame-Options"),
+            XContentTypeOptions = TryGetHeaderValue(headers, "X-Content-Type-Options"),
+            ReferrerPolicy = TryGetHeaderValue(headers, "Referrer-Policy"),
+            ContentSecurityPolicy = TryGetHeaderValue(headers, "Content-Security-Policy")
+        };
+
+        return monitorHttpHeaders;
+    }
+    
+    // Helper method to safely get header values
+    private string? TryGetHeaderValue(HttpHeaders headers, string headerName)
+    {
+        if (headers.TryGetValues(headerName, out var values))
+        {
+            return values.FirstOrDefault();
+        }
+        return null; // Return null if the header is not found
     }
 }
