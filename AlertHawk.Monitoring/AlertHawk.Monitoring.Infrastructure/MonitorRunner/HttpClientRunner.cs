@@ -79,7 +79,6 @@ public class HttpClientRunner : IHttpClientRunner
                     succeeded = false;
                     monitorHistory.ResponseMessage = "Certificate expired";
                 }
-                Console.WriteLine("Succeed status: {succeeded}", succeeded);
 
                 if (succeeded)
                 {
