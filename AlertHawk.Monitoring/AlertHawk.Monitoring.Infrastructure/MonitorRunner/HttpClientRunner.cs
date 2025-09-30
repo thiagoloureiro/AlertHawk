@@ -40,7 +40,7 @@ public class HttpClientRunner : IHttpClientRunner
         int maxRetries = monitorHttp.Retries + 1;
         int retryCount = 0;
 
-        _logger.LogInformation($"Checking {monitorHttp.UrlToCheck}");
+        Console.WriteLine($"Checking {monitorHttp.UrlToCheck}");
 
         var monitor = await _monitorRepository.GetMonitorById(monitorHttp.MonitorId);
 
@@ -83,16 +83,16 @@ public class HttpClientRunner : IHttpClientRunner
                     await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded, _daysToExpireCert);
                     await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
                     
-                    _logger.LogInformation(
+                    Console.WriteLine(
                         "Successful call to {monitorHttp.UrlToCheck}, Response ReasonPhrase: {response.ReasonPhrase}",
                         monitorHttp.UrlToCheck, response.ReasonPhrase);
                     // Check Security headers if enabled
-                    _logger.LogInformation("CheckMonitorHttpHeaders is set to {CheckMonitorHttpHeaders}",
+                    Console.WriteLine("CheckMonitorHttpHeaders is set to {CheckMonitorHttpHeaders}",
                         monitorHttp.CheckMonitorHttpHeaders);
 
                     if (monitorHttp.CheckMonitorHttpHeaders == true)
                     {
-                        _logger.LogInformation("Checking Security headers for {monitorHttp.UrlToCheck}",
+                        Console.WriteLine("Checking Security headers for {monitorHttp.UrlToCheck}",
                             monitorHttp.UrlToCheck);
                         try
                         {
@@ -105,7 +105,7 @@ public class HttpClientRunner : IHttpClientRunner
                             _logger.LogError("Error checking HTTP headers: {message}", e.Message);
                         }
                     }
-
+    
                     if (!monitorHttp.LastStatus)
                     {
                         await _notificationProducer.HandleSuccessNotifications(monitorHttp, response.ReasonPhrase);
