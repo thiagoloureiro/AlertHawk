@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using OfficeOpenXml.FormulaParsing.Excel.Functions.Engineering;
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
@@ -40,8 +41,6 @@ public class HttpClientRunner : IHttpClientRunner
         int maxRetries = monitorHttp.Retries + 1;
         int retryCount = 0;
 
-        Console.WriteLine($"Checking {monitorHttp.UrlToCheck}");
-
         var monitor = await _monitorRepository.GetMonitorById(monitorHttp.MonitorId);
 
         monitorHttp.MonitorEnvironment = monitor.MonitorEnvironment;
@@ -50,12 +49,10 @@ public class HttpClientRunner : IHttpClientRunner
 
         while (retryCount < maxRetries)
         {
-            Console.WriteLine("Calling {monitorHttp.UrlToCheck}, Attempt {retryCount + 1} of {maxRetries}");
             var response = await MakeHttpClientCall(monitorHttp);
             monitorHttp.ResponseStatusCode = response.StatusCode;
             try
             {
-                Console.WriteLine("Inside try block after making HTTP call");
                 // Fetch succeeded status based on monitor.HttpResponseCodeFrom and HttpResponseCodeTo
                 var fromStatus = monitorHttp.HttpResponseCodeFrom ?? 200;
                 var toStatus = monitorHttp.HttpResponseCodeTo ?? 299;
@@ -87,7 +84,6 @@ public class HttpClientRunner : IHttpClientRunner
 
                     if (monitorHttp.CheckMonitorHttpHeaders == true)
                     {
-                        Console.WriteLine("Checking Security headers");
                         try
                         {
                             var headers = CheckHttpHeaders(response);
@@ -317,18 +313,27 @@ public class HttpClientRunner : IHttpClientRunner
         // Get the response headers
         var headers = response.Headers;
 
-        // Create a MonitorHttpHeaders object to store the relevant headers
         var monitorHttpHeaders = new MonitorHttpHeaders
         {
-            CacheControl = headers.GetValues("Cache-Control").FirstOrDefault(),
-            StrictTransportSecurity = headers.GetValues("Strict-Transport-Security").FirstOrDefault(),
-            XXssProtection = headers.GetValues("X-XSS-Protection").FirstOrDefault(),
-            XFrameOptions = headers.GetValues("X-Frame-Options").FirstOrDefault(),
-            XContentTypeOptions = headers.GetValues("X-Content-Type-Options").FirstOrDefault(),
-            ReferrerPolicy = headers.GetValues("Referrer-Policy").FirstOrDefault(),
-            ContentSecurityPolicy = headers.GetValues("Content-Security-Policy").FirstOrDefault()
+            CacheControl = TryGetHeaderValue(headers, "Cache-Control"),
+            StrictTransportSecurity = TryGetHeaderValue(headers, "Strict-Transport-Security"),
+            XXssProtection = TryGetHeaderValue(headers, "X-XSS-Protection"),
+            XFrameOptions = TryGetHeaderValue(headers, "X-Frame-Options"),
+            XContentTypeOptions = TryGetHeaderValue(headers, "X-Content-Type-Options"),
+            ReferrerPolicy = TryGetHeaderValue(headers, "Referrer-Policy"),
+            ContentSecurityPolicy = TryGetHeaderValue(headers, "Content-Security-Policy")
         };
 
         return monitorHttpHeaders;
+    }
+    
+    // Helper method to safely get header values
+    private string? TryGetHeaderValue(HttpHeaders headers, string headerName)
+    {
+        if (headers.TryGetValues(headerName, out var values))
+        {
+            return values.FirstOrDefault();
+        }
+        return null; // Return null if the header is not found
     }
 }
