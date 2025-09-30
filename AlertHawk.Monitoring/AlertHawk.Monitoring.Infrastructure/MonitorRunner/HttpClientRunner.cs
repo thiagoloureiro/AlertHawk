@@ -50,10 +50,12 @@ public class HttpClientRunner : IHttpClientRunner
 
         while (retryCount < maxRetries)
         {
+            Console.WriteLine("Calling {monitorHttp.UrlToCheck}, Attempt {retryCount + 1} of {maxRetries}");
             var response = await MakeHttpClientCall(monitorHttp);
             monitorHttp.ResponseStatusCode = response.StatusCode;
             try
             {
+                Console.WriteLine("Inside try block after making HTTP call");
                 // Fetch succeeded status based on monitor.HttpResponseCodeFrom and HttpResponseCodeTo
                 var fromStatus = monitorHttp.HttpResponseCodeFrom ?? 200;
                 var toStatus = monitorHttp.HttpResponseCodeTo ?? 299;
@@ -77,6 +79,7 @@ public class HttpClientRunner : IHttpClientRunner
                     succeeded = false;
                     monitorHistory.ResponseMessage = "Certificate expired";
                 }
+                Console.WriteLine("Succeed status: {succeeded}", succeeded);
 
                 if (succeeded)
                 {
