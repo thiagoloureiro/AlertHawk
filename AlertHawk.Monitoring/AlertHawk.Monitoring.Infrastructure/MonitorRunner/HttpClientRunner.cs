@@ -84,18 +84,10 @@ public class HttpClientRunner : IHttpClientRunner
                 {
                     await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded, _daysToExpireCert);
                     await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
-                    
-                    Console.WriteLine(
-                        "Successful call to {monitorHttp.UrlToCheck}, Response ReasonPhrase: {response.ReasonPhrase}",
-                        monitorHttp.UrlToCheck, response.ReasonPhrase);
-                    // Check Security headers if enabled
-                    Console.WriteLine("CheckMonitorHttpHeaders is set to {CheckMonitorHttpHeaders}",
-                        monitorHttp.CheckMonitorHttpHeaders);
 
                     if (monitorHttp.CheckMonitorHttpHeaders == true)
                     {
-                        Console.WriteLine("Checking Security headers for {monitorHttp.UrlToCheck}",
-                            monitorHttp.UrlToCheck);
+                        Console.WriteLine("Checking Security headers");
                         try
                         {
                             var headers = CheckHttpHeaders(response);
