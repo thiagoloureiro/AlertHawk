@@ -21,4 +21,5 @@ public class MonitorHttp : Monitor
     public List<Tuple<string, string>>? Headers { get; set; }
     public int? HttpResponseCodeFrom { get; set; }
     public int? HttpResponseCodeTo { get; set; }
+    public bool? CheckMonitorHttpHeaders { get; set; } = false;
 }

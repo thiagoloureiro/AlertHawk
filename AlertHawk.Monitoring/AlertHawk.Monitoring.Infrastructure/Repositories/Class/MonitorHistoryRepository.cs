@@ -49,6 +49,55 @@ public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepositor
         await db.ExecuteAsync(sql, new { days }, commandType: CommandType.Text);
     }
 
+    public async Task<MonitorHttpHeaders> GetMonitorSecurityHeaders(int id)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sql = @"SELECT TOP 1 MonitorId, CacheControl, StrictTransportSecurity, PermissionsPolicy, XFrameOptions, XContentTypeOptions, ReferrerPolicy, ContentSecurityPolicy FROM [MonitorHttpHeaders] WHERE MonitorId=@id";
+        return await db.QueryFirstOrDefaultAsync<MonitorHttpHeaders>(sql, new { id }, commandType: CommandType.Text);
+    }
+    
+    public async Task<MonitorHttpHeaders> SaveMonitorSecurityHeaders(MonitorHttpHeaders monitorHttpHeaders)
+    {
+        await using var db = new SqlConnection(_connstring);
+        string sqlCheck = @"SELECT COUNT(1) FROM [MonitorHttpHeaders] WHERE MonitorId=@MonitorId";
+        int count = await db.ExecuteScalarAsync<int>(sqlCheck, new { monitorHttpHeaders.MonitorId }, commandType: CommandType.Text);
+
+        if (count > 0)
+        {
+            string sqlUpdate = @"UPDATE [MonitorHttpHeaders] SET CacheControl=@CacheControl, StrictTransportSecurity=@StrictTransportSecurity, PermissionsPolicy=@PermissionsPolicy, XFrameOptions=@XFrameOptions, XContentTypeOptions=@XContentTypeOptions, ReferrerPolicy=@ReferrerPolicy, ContentSecurityPolicy=@ContentSecurityPolicy WHERE MonitorId=@MonitorId";
+            await db.ExecuteAsync(sqlUpdate,
+                new
+                {
+                    monitorHttpHeaders.CacheControl,
+                    monitorHttpHeaders.StrictTransportSecurity,
+                    monitorHttpHeaders.PermissionsPolicy,
+                    monitorHttpHeaders.XFrameOptions,
+                    monitorHttpHeaders.XContentTypeOptions,
+                    monitorHttpHeaders.ReferrerPolicy,
+                    monitorHttpHeaders.ContentSecurityPolicy,
+                    monitorHttpHeaders.MonitorId
+                }, commandType: CommandType.Text);
+        }
+        else
+        {
+            string sqlInsert = @"INSERT INTO [MonitorHttpHeaders] (MonitorId, CacheControl, StrictTransportSecurity, PermissionsPolicy, XFrameOptions, XContentTypeOptions, ReferrerPolicy, ContentSecurityPolicy) VALUES (@MonitorId, @CacheControl, @StrictTransportSecurity, @PermissionsPolicy, @XFrameOptions, @XContentTypeOptions, @ReferrerPolicy, @ContentSecurityPolicy)";
+            await db.ExecuteAsync(sqlInsert,
+                new
+                {
+                    monitorHttpHeaders.MonitorId,
+                    monitorHttpHeaders.CacheControl,
+                    monitorHttpHeaders.StrictTransportSecurity,
+                    monitorHttpHeaders.PermissionsPolicy,
+                    monitorHttpHeaders.XFrameOptions,
+                    monitorHttpHeaders.XContentTypeOptions,
+                    monitorHttpHeaders.ReferrerPolicy,
+                    monitorHttpHeaders.ContentSecurityPolicy
+                }, commandType: CommandType.Text);
+        }
+
+        return monitorHttpHeaders;
+    }
+
     public async Task SaveMonitorHistory(MonitorHistory monitorHistory)
     {
         await using var db = new SqlConnection(_connstring);
