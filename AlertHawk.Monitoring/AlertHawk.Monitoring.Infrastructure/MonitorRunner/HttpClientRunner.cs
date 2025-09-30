@@ -155,6 +155,7 @@ public class HttpClientRunner : IHttpClientRunner
             }
             catch (Exception err)
             {
+                Console.WriteLine(err);
                 retryCount++;
 
                 // Avoid logging when it's a database connectivity issue
