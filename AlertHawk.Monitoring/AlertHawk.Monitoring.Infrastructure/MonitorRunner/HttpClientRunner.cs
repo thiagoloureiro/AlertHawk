@@ -83,6 +83,20 @@ public class HttpClientRunner : IHttpClientRunner
                     await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, succeeded, _daysToExpireCert);
                     await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
 
+                    if (monitorHttp.CheckMonitorHttpHeaders == true)
+                    {
+                        try
+                        {
+                            var headers = CheckHttpHeaders(response);
+                            await _monitorHistoryRepository.SaveMonitorSecurityHeaders(headers);
+                        }
+                        catch (Exception e)
+                        {
+                            SentrySdk.CaptureException(e);
+                            _logger.LogError("Error checking HTTP headers: {message}", e.Message);
+                        }
+                    }
+
                     if (!monitorHttp.LastStatus)
                     {
                         await _notificationProducer.HandleSuccessNotifications(monitorHttp, response.ReasonPhrase);
@@ -172,7 +186,8 @@ public class HttpClientRunner : IHttpClientRunner
                         await _notificationProducer.HandleFailedNotifications(monitorHttp, err.Message);
 
                         // Save monitor alert
-                        _logger.LogInformation("Saving monitor alert for {monitorHttp.UrlToCheck}", monitorHttp.UrlToCheck);
+                        _logger.LogInformation("Saving monitor alert for {monitorHttp.UrlToCheck}",
+                            monitorHttp.UrlToCheck);
                         await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
                     }
 
@@ -291,5 +306,25 @@ public class HttpClientRunner : IHttpClientRunner
             StatusCode = HttpStatusCode.InternalServerError,
             ReasonPhrase = "Internal Server Error"
         };
+    }
+
+    public MonitorHttpHeaders CheckHttpHeaders(HttpResponseMessage response)
+    {
+        // Get the response headers
+        var headers = response.Headers;
+
+        // Create a MonitorHttpHeaders object to store the relevant headers
+        var monitorHttpHeaders = new MonitorHttpHeaders
+        {
+            CacheControl = headers.GetValues("Cache-Control").FirstOrDefault(),
+            StrictTransportSecurity = headers.GetValues("Strict-Transport-Security").FirstOrDefault(),
+            XXssProtection = headers.GetValues("X-XSS-Protection").FirstOrDefault(),
+            XFrameOptions = headers.GetValues("X-Frame-Options").FirstOrDefault(),
+            XContentTypeOptions = headers.GetValues("X-Content-Type-Options").FirstOrDefault(),
+            ReferrerPolicy = headers.GetValues("Referrer-Policy").FirstOrDefault(),
+            ContentSecurityPolicy = headers.GetValues("Content-Security-Policy").FirstOrDefault()
+        };
+
+        return monitorHttpHeaders;
     }
 }

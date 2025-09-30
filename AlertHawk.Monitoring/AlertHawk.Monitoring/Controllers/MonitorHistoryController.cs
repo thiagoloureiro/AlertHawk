@@ -120,6 +120,15 @@ namespace AlertHawk.Monitoring.Controllers
             return Ok();
         }
 
+        [HttpGet("GetMonitorSecurityHeaders/{id}")]
+        [ProducesResponseType(typeof(MonitorHttpHeaders), StatusCodes.Status200OK)]
+        [SwaggerOperation(Summary = "Get the latest security headers for a given HTTP monitor")]
+        public async Task<IActionResult> GetMonitorSecurityHeaders(int id)
+        {
+            var monitorHeaders = await _monitorHistoryService.GetMonitorSecurityHeaders(id);
+            return Ok(monitorHeaders);
+        }
+
         private async Task<bool> IsUserAdmin()
         {
             var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());

@@ -92,4 +92,9 @@ public class MonitorHistoryService : IMonitorHistoryService
     {
         return await _monitorHistoryRepository.GetMonitorHistoryRetention();
     }
+
+    public async Task<MonitorHttpHeaders> GetMonitorSecurityHeaders(int id)
+    {
+        return await _monitorHistoryRepository.GetMonitorSecurityHeaders(id);
+    }
 }

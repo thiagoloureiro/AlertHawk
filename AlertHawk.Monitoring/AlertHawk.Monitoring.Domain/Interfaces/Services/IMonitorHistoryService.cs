@@ -15,4 +15,5 @@ public interface IMonitorHistoryService
     Task SetMonitorHistoryRetention(int days);
 
     Task<MonitorSettings?> GetMonitorHistoryRetention();
+    Task<MonitorHttpHeaders> GetMonitorSecurityHeaders(int id);
 }
