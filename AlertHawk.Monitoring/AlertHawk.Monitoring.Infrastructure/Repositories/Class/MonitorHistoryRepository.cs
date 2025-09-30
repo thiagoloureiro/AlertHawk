@@ -52,7 +52,7 @@ public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepositor
     public async Task<MonitorHttpHeaders> GetMonitorSecurityHeaders(int id)
     {
         await using var db = new SqlConnection(_connstring);
-        string sql = @"SELECT TOP 1 MonitorId, CacheControl, StrictTransportSecurity, XXssProtection, XFrameOptions, XContentTypeOptions, ReferrerPolicy, ContentSecurityPolicy FROM [MonitorHttpHeaders] WHERE MonitorId=@id";
+        string sql = @"SELECT TOP 1 MonitorId, CacheControl, StrictTransportSecurity, PermissionsPolicy, XFrameOptions, XContentTypeOptions, ReferrerPolicy, ContentSecurityPolicy FROM [MonitorHttpHeaders] WHERE MonitorId=@id";
         return await db.QueryFirstOrDefaultAsync<MonitorHttpHeaders>(sql, new { id }, commandType: CommandType.Text);
     }
     
@@ -64,13 +64,13 @@ public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepositor
 
         if (count > 0)
         {
-            string sqlUpdate = @"UPDATE [MonitorHttpHeaders] SET CacheControl=@CacheControl, StrictTransportSecurity=@StrictTransportSecurity, XXssProtection=@XXssProtection, XFrameOptions=@XFrameOptions, XContentTypeOptions=@XContentTypeOptions, ReferrerPolicy=@ReferrerPolicy, ContentSecurityPolicy=@ContentSecurityPolicy WHERE MonitorId=@MonitorId";
+            string sqlUpdate = @"UPDATE [MonitorHttpHeaders] SET CacheControl=@CacheControl, StrictTransportSecurity=@StrictTransportSecurity, PermissionsPolicy=@PermissionsPolicy, XFrameOptions=@XFrameOptions, XContentTypeOptions=@XContentTypeOptions, ReferrerPolicy=@ReferrerPolicy, ContentSecurityPolicy=@ContentSecurityPolicy WHERE MonitorId=@MonitorId";
             await db.ExecuteAsync(sqlUpdate,
                 new
                 {
                     monitorHttpHeaders.CacheControl,
                     monitorHttpHeaders.StrictTransportSecurity,
-                    monitorHttpHeaders.XXssProtection,
+                    monitorHttpHeaders.PermissionsPolicy,
                     monitorHttpHeaders.XFrameOptions,
                     monitorHttpHeaders.XContentTypeOptions,
                     monitorHttpHeaders.ReferrerPolicy,
@@ -80,14 +80,14 @@ public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepositor
         }
         else
         {
-            string sqlInsert = @"INSERT INTO [MonitorHttpHeaders] (MonitorId, CacheControl, StrictTransportSecurity, XXssProtection, XFrameOptions, XContentTypeOptions, ReferrerPolicy, ContentSecurityPolicy) VALUES (@MonitorId, @CacheControl, @StrictTransportSecurity, @XXssProtection, @XFrameOptions, @XContentTypeOptions, @ReferrerPolicy, @ContentSecurityPolicy)";
+            string sqlInsert = @"INSERT INTO [MonitorHttpHeaders] (MonitorId, CacheControl, StrictTransportSecurity, PermissionsPolicy, XFrameOptions, XContentTypeOptions, ReferrerPolicy, ContentSecurityPolicy) VALUES (@MonitorId, @CacheControl, @StrictTransportSecurity, @PermissionsPolicy, @XFrameOptions, @XContentTypeOptions, @ReferrerPolicy, @ContentSecurityPolicy)";
             await db.ExecuteAsync(sqlInsert,
                 new
                 {
                     monitorHttpHeaders.MonitorId,
                     monitorHttpHeaders.CacheControl,
                     monitorHttpHeaders.StrictTransportSecurity,
-                    monitorHttpHeaders.XXssProtection,
+                    monitorHttpHeaders.PermissionsPolicy,
                     monitorHttpHeaders.XFrameOptions,
                     monitorHttpHeaders.XContentTypeOptions,
                     monitorHttpHeaders.ReferrerPolicy,

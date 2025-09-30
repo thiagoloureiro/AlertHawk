@@ -87,6 +87,7 @@ public class HttpClientRunner : IHttpClientRunner
                         try
                         {
                             var headers = CheckHttpHeaders(response);
+                            headers.MonitorId = monitorHttp.MonitorId;
                             await _monitorHistoryRepository.SaveMonitorSecurityHeaders(headers);
                         }
                         catch (Exception e)
@@ -317,7 +318,7 @@ public class HttpClientRunner : IHttpClientRunner
         {
             CacheControl = TryGetHeaderValue(headers, "Cache-Control"),
             StrictTransportSecurity = TryGetHeaderValue(headers, "Strict-Transport-Security"),
-            XXssProtection = TryGetHeaderValue(headers, "X-XSS-Protection"),
+            PermissionsPolicy = TryGetHeaderValue(headers, "Permissions-Policy"),
             XFrameOptions = TryGetHeaderValue(headers, "X-Frame-Options"),
             XContentTypeOptions = TryGetHeaderValue(headers, "X-Content-Type-Options"),
             ReferrerPolicy = TryGetHeaderValue(headers, "Referrer-Policy"),
