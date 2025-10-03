@@ -16,8 +16,8 @@
         <PackageReference Include="MassTransit.Abstractions" Version="8.5.3" />
         <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.9" />
-        <PackageReference Include="Polly" Version="8.6.3" />
-        <PackageReference Include="Sentry" Version="5.15.1" />
+        <PackageReference Include="Polly" Version="8.6.4" />
+        <PackageReference Include="Sentry" Version="5.16.0" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AlertHawk.Monitoring.Domain\AlertHawk.Monitoring.Domain.csproj" />
