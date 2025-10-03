@@ -721,9 +721,31 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
                     new MonitorGroup
                     {
                         Name = "Group1",
-                        Id = 1
+                        Id = 1,
+                        Monitors = new List<Monitor>
+                        {
+                            new MonitorHttp
+                            {
+                                Name = "HTTP Monitor 1",
+                                UrlToCheck = "https://example.com",
+                                HeartBeatInterval = 5,
+                                Retries = 2,
+                                MaxRedirects = 3,
+                                Timeout = 1000,
+                                Headers = new List<Tuple<string, string>>
+                                {
+                                    new Tuple<string, string>("Authorization", "Bearer token")
+                                }
+                            },
+                            new MonitorTcp
+                            {
+                                Name = "TCP Monitor 1",
+                                IP = "1.1.1.1",
+                                Port = 80
+                            }
+                        }
                     }
-                },
+                }
             };
 
             _monitorRepositoryMock.Setup(repo => repo.WipeMonitorData()).Returns(Task.CompletedTask);
