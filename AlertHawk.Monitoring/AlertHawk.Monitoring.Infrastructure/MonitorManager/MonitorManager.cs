@@ -152,8 +152,8 @@ public class MonitorManager : IMonitorManager
             }
         }
     }
-    
-      private async Task StartK8sMonitorJobs(IEnumerable<Monitor> monitorListByIds)
+
+    private async Task StartK8sMonitorJobs(IEnumerable<Monitor> monitorListByIds)
     {
         var lstMonitorByK8sType = monitorListByIds.Where(x => x.MonitorTypeId == 4);
         var monitorbyK8sType = lstMonitorByK8sType.ToList();
@@ -169,13 +169,16 @@ public class MonitorManager : IMonitorManager
 
             foreach (var monitorK8S in monitorK8sList)
             {
-                monitorK8S.LastStatus =
-                    monitorbyK8sType.FirstOrDefault(x => x.Id == monitorK8S.MonitorId).Status;
-                monitorK8S.Name = monitorbyK8sType.FirstOrDefault(x => x.Id == monitorK8S.MonitorId).Name;
-                monitorK8S.Retries = monitorbyK8sType.FirstOrDefault(x => x.Id == monitorK8S.MonitorId).Retries;
+                var monitor = monitorbyK8sType.FirstOrDefault(x => x.Id == monitorK8S.MonitorId);
+                if (monitor != null)
+                {
+                    monitorK8S.LastStatus = monitor.Status;
+                    monitorK8S.Name = monitor.Name;
+                    monitorK8S.Retries = monitor.Retries;
 
-                string jobId = $"StartRunnerManager_CheckK8sAsync_JobId_{monitorK8S.MonitorId}";
-                lstStringsToAdd.Add(jobId);
+                    string jobId = $"StartRunnerManager_CheckK8sAsync_JobId_{monitorK8S.MonitorId}";
+                    lstStringsToAdd.Add(jobId);
+                }
             }
 
             IEnumerable<RecurringJobDto> recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();

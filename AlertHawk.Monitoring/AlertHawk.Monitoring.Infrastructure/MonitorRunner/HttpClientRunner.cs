@@ -96,7 +96,7 @@ public class HttpClientRunner : IHttpClientRunner
                             _logger.LogError("Error checking HTTP headers: {message}", e.Message);
                         }
                     }
-    
+
                     if (!monitorHttp.LastStatus)
                     {
                         await _notificationProducer.HandleSuccessNotifications(monitorHttp, response.ReasonPhrase);
@@ -123,8 +123,6 @@ public class HttpClientRunner : IHttpClientRunner
                         // only send notification when goes from online into offline to avoid flood
                         if (monitorHttp.LastStatus)
                         {
-                            _logger.LogWarning(
-                                "Error calling {monitorHttp.UrlToCheck}, Response ReasonPhrase: {response.ReasonPhrase}");
                             await _notificationProducer.HandleFailedNotifications(monitorHttp,
                                 response.ReasonPhrase);
 
@@ -164,8 +162,6 @@ public class HttpClientRunner : IHttpClientRunner
                 // If max retries reached, update status and save history
                 if (retryCount == maxRetries)
                 {
-                    _logger.LogWarning(
-                        "Error calling {monitorHttp.UrlToCheck}, Response ReasonPhrase: {response.ReasonPhrase}");
                     await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, false, 0);
 
                     var monitorHistory = new MonitorHistory
@@ -327,7 +323,7 @@ public class HttpClientRunner : IHttpClientRunner
 
         return monitorHttpHeaders;
     }
-    
+
     // Helper method to safely get header values
     private string? TryGetHeaderValue(HttpHeaders headers, string headerName)
     {
