@@ -183,8 +183,6 @@ public class HttpClientRunner : IHttpClientRunner
                         await _notificationProducer.HandleFailedNotifications(monitorHttp, err.Message);
 
                         // Save monitor alert
-                        _logger.LogInformation("Saving monitor alert for {monitorHttp.UrlToCheck}",
-                            monitorHttp.UrlToCheck);
                         await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
                     }
 
