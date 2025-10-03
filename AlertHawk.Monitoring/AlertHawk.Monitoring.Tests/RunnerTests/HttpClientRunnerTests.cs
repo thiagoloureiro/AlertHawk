@@ -199,5 +199,35 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
             // Assert
             Assert.Equal(HttpStatusCode.InternalServerError, result.StatusCode);
         }
+
+        [Fact]
+        public async Task Should_Check_CheckHttpHeaders()
+        {
+            // Arrange
+            var monitorHttp = new MonitorHttp
+            {
+                UrlToCheck = "https://postman-echo1.com/get",
+                MonitorId = 1,
+                Name = "Test",
+                Id = 1,
+                CheckCertExpiry = true,
+                IgnoreTlsSsl = false,
+                Timeout = 10,
+                MonitorHttpMethod = MonitorHttpMethod.Get,
+                MaxRedirects = 5,
+                HeartBeatInterval = 1,
+                Retries = 0,
+            };
+
+            // we should mock HttpResponseMessage
+            var responseMessage = await _httpClientRunner.MakeHttpClientCall(monitorHttp);
+
+
+            // Act
+            var result = _httpClientRunner.CheckHttpHeaders(responseMessage);
+
+            // Assert
+            Assert.NotNull(result);
+        }
     }
 }
