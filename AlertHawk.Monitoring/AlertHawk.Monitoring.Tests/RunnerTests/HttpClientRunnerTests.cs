@@ -48,7 +48,8 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
                 HeartBeatInterval = 1,
                 Retries = 0,
                 LastStatus = true,
-                ResponseTime = 10
+                ResponseTime = 10,
+                CheckMonitorHttpHeaders = true
             };
 
             // Act
