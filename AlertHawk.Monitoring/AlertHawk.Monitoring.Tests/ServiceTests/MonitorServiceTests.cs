@@ -709,5 +709,31 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             Assert.Equal(monitor, result);
         }
+
+        [Fact]
+        public async Task UploadMonitorJsonBackup_RestoresMonitors()
+        {
+            // Arrange
+            var monitorBackupJson = new MonitorBackup
+            {
+                MonitorGroupList = new List<MonitorGroup>
+                {
+                    new MonitorGroup
+                    {
+                        Name = "Group1",
+                        Id = 1
+                    }
+                },
+            };
+
+            _monitorRepositoryMock.Setup(repo => repo.WipeMonitorData()).Returns(Task.CompletedTask);
+            _monitorRepositoryMock.Setup(repo => repo.CreateMonitorHttp(It.IsAny<MonitorHttp>())).ReturnsAsync(1);
+
+            // Act
+            await _monitorService.UploadMonitorJsonBackup(monitorBackupJson);
+
+            // Assert
+            _monitorRepositoryMock.Verify(repo => repo.WipeMonitorData(), Times.Once);
+        }
     }
 }
