@@ -1,6 +1,7 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using SharedModels;
@@ -14,13 +15,74 @@ public class NotificationProducer : INotificationProducer
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IMonitorNotificationRepository _monitorNotificationRepository;
     private readonly ILogger<NotificationProducer> _notificationLogger;
+    private readonly ISignalRNotificationService _signalRNotificationService;
 
     public NotificationProducer(IPublishEndpoint publishEndpoint,
-        IMonitorNotificationRepository monitorNotificationRepository, ILogger<NotificationProducer> notificationLogger)
+        IMonitorNotificationRepository monitorNotificationRepository, 
+        ILogger<NotificationProducer> notificationLogger,
+        ISignalRNotificationService signalRNotificationService)
     {
         _publishEndpoint = publishEndpoint;
         _monitorNotificationRepository = monitorNotificationRepository;
         _notificationLogger = notificationLogger;
+        _signalRNotificationService = signalRNotificationService;
+    }
+
+    private AlertHawk.Monitoring.Domain.Interfaces.Services.NotificationAlert CreateNotificationAlert(MonitorHttp monitorHttp, bool success, string? reasonPhrase, int notificationId, int monitorId)
+    {
+        return new AlertHawk.Monitoring.Domain.Interfaces.Services.NotificationAlert
+        {
+            NotificationId = notificationId,
+            MonitorId = monitorId,
+            Service = monitorHttp.Name,
+            Region = (int)monitorHttp?.MonitorRegion,
+            Environment = (int)monitorHttp?.MonitorEnvironment,
+            URL = monitorHttp?.UrlToCheck,
+            Success = success,
+            TimeStamp = DateTime.UtcNow,
+            Message = success 
+                ? $"Success calling {monitorHttp?.Name}, Response StatusCode: {monitorHttp?.ResponseStatusCode}"
+                : $"Error calling {monitorHttp?.Name}, Response StatusCode: {monitorHttp?.ResponseStatusCode}",
+            StatusCode = (int)monitorHttp.ResponseStatusCode,
+            ReasonPhrase = reasonPhrase
+        };
+    }
+
+    private AlertHawk.Monitoring.Domain.Interfaces.Services.NotificationAlert CreateTcpNotificationAlert(MonitorTcp monitorTcp, bool success, int notificationId, int monitorId)
+    {
+        return new AlertHawk.Monitoring.Domain.Interfaces.Services.NotificationAlert
+        {
+            NotificationId = notificationId,
+            MonitorId = monitorId,
+            Service = monitorTcp.Name,
+            Region = (int)monitorTcp.MonitorRegion,
+            Environment = (int)monitorTcp.MonitorEnvironment,
+            IP = monitorTcp.IP,
+            Port = monitorTcp.Port,
+            Success = success,
+            TimeStamp = DateTime.UtcNow,
+            Message = success 
+                ? $"Success calling {monitorTcp.Name}, Response StatusCode: {monitorTcp.Response}"
+                : $"Error calling {monitorTcp?.Name}, Response StatusCode: {monitorTcp?.Response}"
+        };
+    }
+
+    private AlertHawk.Monitoring.Domain.Interfaces.Services.NotificationAlert CreateK8sNotificationAlert(MonitorK8s monitorK8s, bool success, string response, int notificationId, int monitorId)
+    {
+        return new AlertHawk.Monitoring.Domain.Interfaces.Services.NotificationAlert
+        {
+            NotificationId = notificationId,
+            MonitorId = monitorId,
+            Service = monitorK8s.Name,
+            Region = (int)monitorK8s.MonitorRegion,
+            Environment = (int)monitorK8s.MonitorEnvironment,
+            ClusterName = monitorK8s.ClusterName,
+            Success = success,
+            TimeStamp = DateTime.UtcNow,
+            Message = success 
+                ? $"Success calling {monitorK8s.ClusterName}"
+                : $"Error calling {monitorK8s?.Name}, Error Detail: {response}"
+        };
     }
 
     public async Task HandleFailedNotifications(MonitorHttp monitorHttp, string? reasonPhrase)
@@ -36,7 +98,12 @@ public class NotificationProducer : INotificationProducer
             {
                 _notificationLogger.LogInformation(
                     $"Notification Details: notificationId {item.NotificationId}, monitorId: {item.MonitorId}, ResponseStatusCode: {monitorHttp.ResponseStatusCode}, reasonPhrase {reasonPhrase}, name:  {monitorHttp.Name}");
-                await _publishEndpoint.Publish<NotificationAlert>(new
+                
+                // Create notification alert for both MassTransit and SignalR
+                var notificationAlert = CreateNotificationAlert(monitorHttp, false, reasonPhrase, item.NotificationId, item.MonitorId);
+                
+                // Send via MassTransit
+                await _publishEndpoint.Publish<SharedModels.NotificationAlert>(new
                 {
                     NotificationId = item.NotificationId,
                     MonitorId = item.MonitorId,
@@ -50,6 +117,11 @@ public class NotificationProducer : INotificationProducer
                     StatusCode = (int)monitorHttp.ResponseStatusCode,
                     ReasonPhrase = reasonPhrase,
                 });
+
+                // Send via SignalR (groups only)
+                await _signalRNotificationService.SendNotificationToMonitorGroupAsync(monitorHttp.MonitorId, notificationAlert);
+                await _signalRNotificationService.SendNotificationToEnvironmentGroupAsync((int)monitorHttp.MonitorEnvironment, notificationAlert);
+                await _signalRNotificationService.SendNotificationToRegionGroupAsync((int)monitorHttp.MonitorRegion, notificationAlert);
 
                 _notificationLogger.LogInformation("Notification sent successfully");
             }
@@ -72,7 +144,12 @@ public class NotificationProducer : INotificationProducer
         {
             _notificationLogger.LogInformation(
                 $"Notification Details: notificationId {item.NotificationId}, monitorId: {item.MonitorId}, ResponseStatusCode: {monitorHttp.ResponseStatusCode}, reasonPhrase {reasonPhrase}, name:  {monitorHttp.Name}");
-            await _publishEndpoint.Publish<NotificationAlert>(new
+            
+            // Create notification alert for both MassTransit and SignalR
+            var notificationAlert = CreateNotificationAlert(monitorHttp, true, reasonPhrase, item.NotificationId, item.MonitorId);
+            
+            // Send via MassTransit
+            await _publishEndpoint.Publish<SharedModels.NotificationAlert>(new
             {
                 NotificationId = item.NotificationId,
                 MonitorId = item.MonitorId,
@@ -86,6 +163,11 @@ public class NotificationProducer : INotificationProducer
                 StatusCode = (int)monitorHttp.ResponseStatusCode,
                 ReasonPhrase = reasonPhrase
             });
+
+            // Send via SignalR (groups only)
+            await _signalRNotificationService.SendNotificationToMonitorGroupAsync(monitorHttp.MonitorId, notificationAlert);
+            await _signalRNotificationService.SendNotificationToEnvironmentGroupAsync((int)monitorHttp.MonitorEnvironment, notificationAlert);
+            await _signalRNotificationService.SendNotificationToRegionGroupAsync((int)monitorHttp.MonitorRegion, notificationAlert);
         }
     }
 
@@ -98,7 +180,11 @@ public class NotificationProducer : INotificationProducer
 
         foreach (var item in notificationIdList)
         {
-            await _publishEndpoint.Publish<NotificationAlert>(new
+            // Create notification alert for both MassTransit and SignalR
+            var notificationAlert = CreateTcpNotificationAlert(monitorTcp, true, item.NotificationId, item.MonitorId);
+            
+            // Send via MassTransit
+            await _publishEndpoint.Publish<SharedModels.NotificationAlert>(new
             {
                 NotificationId = item.NotificationId,
                 MonitorId = item.MonitorId,
@@ -111,6 +197,11 @@ public class NotificationProducer : INotificationProducer
                 TimeStamp = DateTime.UtcNow,
                 Message = $"Success calling {monitorTcp.Name}, Response StatusCode: {monitorTcp.Response}"
             });
+
+            // Send via SignalR (groups only)
+            await _signalRNotificationService.SendNotificationToMonitorGroupAsync(monitorTcp.MonitorId, notificationAlert);
+            await _signalRNotificationService.SendNotificationToEnvironmentGroupAsync((int)monitorTcp.MonitorEnvironment, notificationAlert);
+            await _signalRNotificationService.SendNotificationToRegionGroupAsync((int)monitorTcp.MonitorRegion, notificationAlert);
         }
     }
 
@@ -123,7 +214,11 @@ public class NotificationProducer : INotificationProducer
 
         foreach (var item in notificationIdList)
         {
-            await _publishEndpoint.Publish<NotificationAlert>(new
+            // Create notification alert for both MassTransit and SignalR
+            var notificationAlert = CreateTcpNotificationAlert(monitorTcp, false, item.NotificationId, item.MonitorId);
+            
+            // Send via MassTransit
+            await _publishEndpoint.Publish<SharedModels.NotificationAlert>(new
             {
                 NotificationId = item.NotificationId,
                 MonitorId = item.MonitorId,
@@ -136,6 +231,11 @@ public class NotificationProducer : INotificationProducer
                 TimeStamp = DateTime.UtcNow,
                 Message = $"Error calling {monitorTcp?.Name}, Response StatusCode: {monitorTcp?.Response}"
             });
+
+            // Send via SignalR (groups only)
+            await _signalRNotificationService.SendNotificationToMonitorGroupAsync(monitorTcp.MonitorId, notificationAlert);
+            await _signalRNotificationService.SendNotificationToEnvironmentGroupAsync((int)monitorTcp.MonitorEnvironment, notificationAlert);
+            await _signalRNotificationService.SendNotificationToRegionGroupAsync((int)monitorTcp.MonitorRegion, notificationAlert);
         }
     }
 
@@ -148,7 +248,11 @@ public class NotificationProducer : INotificationProducer
 
         foreach (var item in notificationIdList)
         {
-            await _publishEndpoint.Publish<NotificationAlert>(new
+            // Create notification alert for both MassTransit and SignalR
+            var notificationAlert = CreateK8sNotificationAlert(monitorK8S, true, response, item.NotificationId, item.MonitorId);
+            
+            // Send via MassTransit
+            await _publishEndpoint.Publish<SharedModels.NotificationAlert>(new
             {
                 NotificationId = item.NotificationId,
                 MonitorId = item.MonitorId,
@@ -160,6 +264,11 @@ public class NotificationProducer : INotificationProducer
                 TimeStamp = DateTime.UtcNow,
                 Message = $"Success calling {monitorK8S.ClusterName}"
             });
+
+            // Send via SignalR (groups only)
+            await _signalRNotificationService.SendNotificationToMonitorGroupAsync(monitorK8S.MonitorId, notificationAlert);
+            await _signalRNotificationService.SendNotificationToEnvironmentGroupAsync((int)monitorK8S.MonitorEnvironment, notificationAlert);
+            await _signalRNotificationService.SendNotificationToRegionGroupAsync((int)monitorK8S.MonitorRegion, notificationAlert);
         }
     }
 
@@ -172,7 +281,11 @@ public class NotificationProducer : INotificationProducer
 
         foreach (var item in notificationIdList)
         {
-            await _publishEndpoint.Publish<NotificationAlert>(new
+            // Create notification alert for both MassTransit and SignalR
+            var notificationAlert = CreateK8sNotificationAlert(monitorK8S, false, response, item.NotificationId, item.MonitorId);
+            
+            // Send via MassTransit
+            await _publishEndpoint.Publish<SharedModels.NotificationAlert>(new
             {
                 NotificationId = item.NotificationId,
                 MonitorId = item.MonitorId,
@@ -184,6 +297,11 @@ public class NotificationProducer : INotificationProducer
                 TimeStamp = DateTime.UtcNow,
                 Message = $"Error calling {monitorK8S?.Name}, Error Detail: {response}"
             });
+
+            // Send via SignalR (groups only)
+            await _signalRNotificationService.SendNotificationToMonitorGroupAsync(monitorK8S.MonitorId, notificationAlert);
+            await _signalRNotificationService.SendNotificationToEnvironmentGroupAsync((int)monitorK8S.MonitorEnvironment, notificationAlert);
+            await _signalRNotificationService.SendNotificationToRegionGroupAsync((int)monitorK8S.MonitorRegion, notificationAlert);
         }
     }
 }

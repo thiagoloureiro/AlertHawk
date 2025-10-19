@@ -5,8 +5,10 @@ using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Helpers;
+using AlertHawk.Monitoring.Infrastructure.Hubs;
 using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 using AlertHawk.Monitoring.Infrastructure.Producers;
+using AlertHawk.Monitoring.Infrastructure.Services;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using EasyMemoryCache.Configuration;
 using Hangfire;
@@ -101,11 +103,11 @@ builder.Services.AddMassTransit(x =>
             {
                 Console.WriteLine($"Connecting to Azure Service Bus");
                 cfg.Host(serviceBusConnectionString);
-                cfg.Message<NotificationAlert>(config =>
+                cfg.Message<SharedModels.NotificationAlert>(config =>
                 {
                     config.SetEntityName(serviceBusQueueName);
                 });
-                cfg.Message<NotificationAlert>(c => c.SetEntityName("notificationsTopic"));
+                cfg.Message<SharedModels.NotificationAlert>(c => c.SetEntityName("notificationsTopic"));
             });
             break;
     }
@@ -168,6 +170,10 @@ builder.Services.AddTransient<ITcpClientRunner, TcpClientRunner>();
 builder.Services.AddTransient<IK8sClientRunner, K8sClientRunner>();
 
 builder.Services.AddTransient<INotificationProducer, NotificationProducer>();
+
+// Add SignalR services
+builder.Services.AddSignalR();
+builder.Services.AddTransient<ISignalRNotificationService, SignalRNotificationService>();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -262,6 +268,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<NotificationHub>("/notificationHub");
 app.UseResponseCompression();
 
 app.Run();
