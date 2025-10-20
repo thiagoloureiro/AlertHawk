@@ -109,7 +109,11 @@ public class HttpClientRunner : IHttpClientRunner
                     // Setting Response time to zero when the call fails.
                     monitorHttp.ResponseTime = 0;
 
-                    monitorHistory.ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}";
+                    if(monitorHistory.ResponseMessage != "Certificate expired")
+                    {
+                        monitorHistory.ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}";
+                    }
+                    
                     retryCount++;
                     Thread.Sleep(_retryIntervalMilliseconds);
 
