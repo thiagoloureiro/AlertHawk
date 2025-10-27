@@ -78,6 +78,8 @@ Console.WriteLine("Starting MassTransit Configuration");
 
 builder.Services.AddMassTransit(x =>
 {
+    x.DisableUsageTelemetry();
+
     switch (queueType.ToUpper())
     {
         case "RABBITMQ":
