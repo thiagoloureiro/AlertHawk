@@ -1,4 +1,5 @@
 using AlertHawk.Application.Config;
+using AlertHawk.Authentication.Filters;
 using AlertHawk.Authentication.Helpers;
 using AlertHawk.Authentication.Infrastructure.Config;
 using EasyMemoryCache.Configuration;
@@ -24,7 +25,10 @@ var configuration = new ConfigurationBuilder()
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<BlockedDomainsFilter>();
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

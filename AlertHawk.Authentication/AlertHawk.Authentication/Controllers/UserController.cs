@@ -5,8 +5,6 @@ using AlertHawk.Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using System.Net;
-using System.Security.Claims;
 
 namespace AlertHawk.Authentication.Controllers;
 
@@ -272,21 +270,8 @@ public class UserController : ControllerBase
     [Authorize]
     [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> Get(string email)
+    public async Task<IActionResult> Get(string email)
     {
-        // Check if domain is allowed
-        var blockedDomains = Environment.GetEnvironmentVariable("BLOCKED_DOMAINS") ?? "";
-
-        var claims = User.Identity as ClaimsIdentity;
-
-        // fetch upn
-        var upnMail = claims?.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn")?.Value ?? "";
-
-        if (upnMail == null || blockedDomains.Split(',').Any(domain => upnMail!.EndsWith("@" + domain.Trim(), StringComparison.OrdinalIgnoreCase)))
-        {
-            return StatusCode(403);
-        }
-
         var result = await _userService.GetByEmail(email);
         if (ReferenceEquals(result, null))
         {
