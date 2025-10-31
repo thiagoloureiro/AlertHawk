@@ -5,6 +5,7 @@ using AlertHawk.Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Security.Claims;
 
 namespace AlertHawk.Authentication.Controllers;
 
@@ -85,7 +86,7 @@ public class UserController : Controller
         await _userService.Delete(userId);
         return Ok();
     }
-    
+
     [HttpDelete("delete")]
     [SwaggerOperation(Summary = "Self Delete User by Token")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -206,7 +207,7 @@ public class UserController : Controller
 
         return Ok(await _userService.GetAll());
     }
-    
+
     [HttpGet("GetAllByGroupId/{groupId}")]
     [SwaggerOperation(Summary = "Get All Users by GroupId")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -272,15 +273,16 @@ public class UserController : Controller
     public async Task<ActionResult> Get(string email)
     {
         // Check if domain is allowed
-        var allowedDomains = Environment.GetEnvironmentVariable("ALLOWED_DOMAINS") ?? "";
-        if (!string.IsNullOrEmpty(allowedDomains))
+        var blockedDomains = Environment.GetEnvironmentVariable("BLOCKED_DOMAINS") ?? "";
+
+        var claims = User.Identity as ClaimsIdentity;
+
+        // fetch upn
+        var upnMail = claims?.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn")?.Value ?? "";
+
+        if (upnMail == null || blockedDomains.Split(',').Any(domain => upnMail!.EndsWith("@" + domain.Trim(), StringComparison.OrdinalIgnoreCase)))
         {
-            var emailDomain = email.Split('@').Last();
-            var allowedDomainList = allowedDomains.Split(';').Select(d => d.Trim().ToLower()).ToList();
-            if (!allowedDomainList.Contains(emailDomain.ToLower()))
-            {
-                return Forbid();
-            }
+            return Unauthorized();
         }
 
         var result = await _userService.GetByEmail(email);
@@ -325,7 +327,7 @@ public class UserController : Controller
         await _userService.UpdateUserDeviceToken(userDeviceToken.DeviceToken, user.Id);
         return Ok();
     }
-    
+
     [HttpGet("GetUserDeviceTokenList")]
     [SwaggerOperation(Summary = "GetUserDeviceTokenList by Bearer Token")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -339,7 +341,7 @@ public class UserController : Controller
 
         return Ok(await _userService.GetUserDeviceTokenList(user.Id));
     }
-    
+
     [HttpGet("GetUserDeviceTokenListByUserId/{userId}")]
     [SwaggerOperation(Summary = "GetUserDeviceTokenList by userId")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -347,7 +349,7 @@ public class UserController : Controller
     {
         return Ok(await _userService.GetUserDeviceTokenList(userId));
     }
-    
+
     [AllowAnonymous]
     [HttpGet("GetUserDeviceTokenListByGroupId/{groupId}")]
     [SwaggerOperation(Summary = "GetUserDeviceTokenList by groupId")]
