@@ -272,7 +272,7 @@ public class UserController : Controller
     public async Task<ActionResult> Get(string email)
     {
         // Check if domain is allowed
-        var allowedDomains = Environment.GetEnvironmentVariable("ALLOWED_EMAIL_DOMAINS") ?? "";
+        var allowedDomains = Environment.GetEnvironmentVariable("ALLOWED_DOMAINS") ?? "";
         if (!string.IsNullOrEmpty(allowedDomains))
         {
             var emailDomain = email.Split('@').Last();
