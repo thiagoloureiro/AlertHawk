@@ -18,15 +18,15 @@
     <PackageReference Include="EasyMemoryCache" Version="3.0.4" />
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.21" />
     <PackageReference Include="Hangfire.InMemory" Version="1.0.0" />
-    <PackageReference Include="MassTransit" Version="8.5.4" />
+    <PackageReference Include="MassTransit" Version="8.5.5" />
     <PackageReference Include="MassTransit.AspNetCore" Version="7.3.1" />
-    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.5.4" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.4" />
-    <PackageReference Include="Microsoft.Identity.Web" Version="4.0.0" />
+    <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.5.5" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.5" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="4.0.1" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="Sentry" Version="5.16.1" />
-    <PackageReference Include="Sentry.AspNetCore" Version="5.16.1" />
+    <PackageReference Include="Sentry" Version="5.16.2" />
+    <PackageReference Include="Sentry.AspNetCore" Version="5.16.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="9.0.6" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="9.0.6" />
