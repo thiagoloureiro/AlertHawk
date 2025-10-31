@@ -2,7 +2,6 @@ using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Authentication.Infrastructure.Helpers;
 using AlertHawk.Authentication.Infrastructure.Interfaces;
-using AutoMapper;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using System.Diagnostics.CodeAnalysis;
@@ -13,13 +12,11 @@ namespace AlertHawk.Authentication.Infrastructure.Repositories;
 [ExcludeFromCodeCoverage]
 public class UserRepository : BaseRepository, IUserRepository
 {
-    private readonly IMapper _mapper;
     private readonly IUsersMonitorGroupRepository _usersMonitorGroupRepository;
 
-    public UserRepository(IConfiguration configuration, IMapper mapper,
+    public UserRepository(IConfiguration configuration,
         IUsersMonitorGroupRepository usersMonitorGroupRepository) : base(configuration)
     {
-        _mapper = mapper;
         _usersMonitorGroupRepository = usersMonitorGroupRepository;
     }
 
@@ -28,7 +25,7 @@ public class UserRepository : BaseRepository, IUserRepository
         const string sql =
             "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE Id = @Id";
         var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { Id = id });
-        return _mapper.Map<UserDto>(user);
+        return user == null ? null : new UserDto(user.Id, user.Username, user.Email, user.IsAdmin);
     }
 
     public async Task<UserDto?> GetByEmail(string email)
@@ -37,7 +34,7 @@ public class UserRepository : BaseRepository, IUserRepository
             "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE LOWER(Email) = LOWER(@Email)";
         var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql,
             new { Email = email.ToLower(CultureInfo.InvariantCulture) });
-        return _mapper.Map<UserDto>(user);
+        return user == null ? null : new UserDto(user.Id, user.Username, user.Email, user.IsAdmin);
     }
 
     public async Task<UserDto?> GetByUsername(string username)
@@ -46,14 +43,14 @@ public class UserRepository : BaseRepository, IUserRepository
             "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE LOWER(Username) = LOWER(@Username)";
         var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql,
             new { Username = username.ToLower(CultureInfo.InvariantCulture) });
-        return _mapper.Map<UserDto>(user);
+        return user == null ? null : new UserDto(user.Id, user.Username, user.Email, user.IsAdmin);
     }
 
     public async Task<IEnumerable<UserDto>?> GetAll()
     {
         const string sql = "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon FROM Users";
         var user = await ExecuteQueryAsync<User>(sql);
-        return _mapper.Map<List<UserDto>?>(user);
+        return user?.Select(u => new UserDto(u.Id, u.Username, u.Email, u.IsAdmin)).ToList();
     }
 
     public async Task Delete(Guid id)
@@ -68,7 +65,7 @@ public class UserRepository : BaseRepository, IUserRepository
     {
         const string sql = "SELECT Username, Email, IsAdmin FROM Users WHERE Token = @jwtToken";
         var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { jwtToken });
-        return _mapper.Map<UserDto>(user);
+        return user == null ? null : new UserDto(user.Id, user.Username, user.Email, user.IsAdmin);
     }
 
     public async Task UpdateUserToken(string token, string username)
@@ -99,7 +96,7 @@ public class UserRepository : BaseRepository, IUserRepository
             return null;
         }
 
-        return _mapper.Map<UserDto>(user);
+        return new UserDto(user.Id, user.Username, user.Email, user.IsAdmin);
     }
 
     public async Task<IEnumerable<string>?> GetUserDeviceTokenList(Guid userId)
@@ -122,7 +119,7 @@ public class UserRepository : BaseRepository, IUserRepository
                           "JOIN UsersMonitorGroup umg ON u.Id = umg.UserId " +
                           "WHERE umg.GroupMonitorId = @groupId";
         var list = await ExecuteQueryAsyncWithParameters<User>(sql, new { groupId });
-        return _mapper.Map<List<UserDto>?>(list);
+        return list?.Select(u => new UserDto(u.Id, u.Username, u.Email, u.IsAdmin)).ToList();
     }
 
     public async Task UpdateUserDeviceToken(string deviceToken, Guid userId)
