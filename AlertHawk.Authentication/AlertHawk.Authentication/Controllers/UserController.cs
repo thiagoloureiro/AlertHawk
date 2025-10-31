@@ -271,6 +271,18 @@ public class UserController : Controller
     [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
     public async Task<ActionResult> Get(string email)
     {
+        // Check if domain is allowed
+        var allowedDomains = Environment.GetEnvironmentVariable("ALLOWED_EMAIL_DOMAINS") ?? "";
+        if (!string.IsNullOrEmpty(allowedDomains))
+        {
+            var emailDomain = email.Split('@').Last();
+            var allowedDomainList = allowedDomains.Split(';').Select(d => d.Trim().ToLower()).ToList();
+            if (!allowedDomainList.Contains(emailDomain.ToLower()))
+            {
+                return Forbid();
+            }
+        }
+
         var result = await _userService.GetByEmail(email);
         if (ReferenceEquals(result, null))
         {
