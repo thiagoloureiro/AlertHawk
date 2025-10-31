@@ -5,6 +5,7 @@ using AlertHawk.Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Net;
 using System.Security.Claims;
 
 namespace AlertHawk.Authentication.Controllers;
@@ -12,7 +13,7 @@ namespace AlertHawk.Authentication.Controllers;
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
-public class UserController : Controller
+public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IGetOrCreateUserService _getOrCreateUserService;
@@ -270,6 +271,7 @@ public class UserController : Controller
         "Returns user by email. If user does not exist, it will create a new user. (Azure AD Login) - JWT Token required")]
     [Authorize]
     [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult> Get(string email)
     {
         // Check if domain is allowed
@@ -282,7 +284,8 @@ public class UserController : Controller
 
         if (upnMail == null || blockedDomains.Split(',').Any(domain => upnMail!.EndsWith("@" + domain.Trim(), StringComparison.OrdinalIgnoreCase)))
         {
-            return Unauthorized();
+            // return 403
+            return Forbid();
         }
 
         var result = await _userService.GetByEmail(email);
