@@ -284,8 +284,7 @@ public class UserController : ControllerBase
 
         if (upnMail == null || blockedDomains.Split(',').Any(domain => upnMail!.EndsWith("@" + domain.Trim(), StringComparison.OrdinalIgnoreCase)))
         {
-            // return 403
-            return Forbid();
+            return StatusCode(403);
         }
 
         var result = await _userService.GetByEmail(email);
