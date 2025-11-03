@@ -1,17 +1,44 @@
 ﻿using System.Text.Json;
 using AlertHawk.Metrics;
 using k8s;
+using Prometheus;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
-// Read collection interval from environment variable (default: 30 seconds)
+// Read configuration from environment variables
 var collectionIntervalSeconds = int.TryParse(
     Environment.GetEnvironmentVariable("METRICS_COLLECTION_INTERVAL_SECONDS"),
     out var interval) && interval > 0
     ? interval
     : 30;
 
+var metricsPort = int.TryParse(
+    Environment.GetEnvironmentVariable("METRICS_PORT"),
+    out var port) && port > 0
+    ? port
+    : 8080;
+
 Console.WriteLine($"Starting metrics collection service (interval: {collectionIntervalSeconds} seconds)");
+Console.WriteLine($"Prometheus metrics endpoint: http://0.0.0.0:{metricsPort}/metrics");
 Console.WriteLine("Press Ctrl+C to stop...");
 Console.WriteLine();
+
+// Create Prometheus metrics
+var cpuUsageGauge = Metrics.CreateGauge(
+    "k8s_container_cpu_usage_cores",
+    "CPU usage in cores",
+    new[] { "namespace", "pod", "container" });
+
+var cpuLimitGauge = Metrics.CreateGauge(
+    "k8s_container_cpu_limit_cores",
+    "CPU limit in cores",
+    new[] { "namespace", "pod", "container" });
+
+var memoryUsageGauge = Metrics.CreateGauge(
+    "k8s_container_memory_usage_bytes",
+    "Memory usage in bytes",
+    new[] { "namespace", "pod", "container" });
 
 var config = KubernetesClientConfiguration.InClusterConfig();
 var client = new Kubernetes(config);
@@ -25,15 +52,30 @@ Console.CancelKeyPress += (sender, e) =>
     cancellationTokenSource.Cancel();
 };
 
+// Start Prometheus metrics server
+var builder = WebApplication.CreateBuilder();
+builder.Services.AddRouting();
+var app = builder.Build();
+app.UseRouting();
+app.UseHttpMetrics();
+app.MapMetrics();
+app.MapGet("/", () => "AlertHawk Metrics Collector - Prometheus endpoint: /metrics");
+
+var metricsServerTask = app.RunAsync($"http://0.0.0.0:{metricsPort}");
+
+// Start metrics collection loop
 try
 {
-    while (!cancellationTokenSource.Token.IsCancellationRequested)
+    var collectionTask = Task.Run(async () =>
     {
-        await CollectMetricsAsync(client, namespacesToWatch);
-        
-        // Wait for the specified interval before next collection
-        await Task.Delay(TimeSpan.FromSeconds(collectionIntervalSeconds), cancellationTokenSource.Token);
-    }
+        while (!cancellationTokenSource.Token.IsCancellationRequested)
+        {
+            await CollectMetricsAsync(client, namespacesToWatch, cpuUsageGauge, cpuLimitGauge, memoryUsageGauge);
+            await Task.Delay(TimeSpan.FromSeconds(collectionIntervalSeconds), cancellationTokenSource.Token);
+        }
+    }, cancellationTokenSource.Token);
+
+    await Task.WhenAny(metricsServerTask, collectionTask);
 }
 catch (OperationCanceledException)
 {
@@ -44,8 +86,17 @@ catch (Exception ex)
     Console.WriteLine($"Error: {ex.Message}");
     Environment.Exit(1);
 }
+finally
+{
+    cancellationTokenSource.Cancel();
+}
 
-static async Task CollectMetricsAsync(Kubernetes client, string[] namespacesToWatch)
+static async Task CollectMetricsAsync(
+    Kubernetes client, 
+    string[] namespacesToWatch,
+    Gauge cpuUsageGauge,
+    Gauge cpuLimitGauge,
+    Gauge memoryUsageGauge)
 {
     var jsonOptions = new JsonSerializerOptions
     {
@@ -118,6 +169,22 @@ static async Task CollectMetricsAsync(Kubernetes client, string[] namespacesToWa
                                 ? limit
                                 : null;
 
+                            // Record Prometheus metrics
+                            var cpuCores = ResourceFormatter.ParseCpuToCores(container.Usage.Cpu);
+                            cpuUsageGauge.WithLabels(item.Metadata.Namespace, item.Metadata.Name, container.Name).Set(cpuCores);
+
+                            if (cpuLimit != null)
+                            {
+                                var limitCores = ResourceFormatter.ParseCpuToCores(cpuLimit);
+                                cpuLimitGauge.WithLabels(item.Metadata.Namespace, item.Metadata.Name, container.Name).Set(limitCores);
+                            }
+
+                            var memoryBytes = ParseMemoryToBytes(container.Usage.Memory);
+                            if (memoryBytes > 0)
+                            {
+                                memoryUsageGauge.WithLabels(item.Metadata.Namespace, item.Metadata.Name, container.Name).Set(memoryBytes);
+                            }
+
                             var formattedCpu = ResourceFormatter.FormatCpu(container.Usage.Cpu, cpuLimit);
                             var formattedMemory = ResourceFormatter.FormatMemory(container.Usage.Memory);
                             Console.WriteLine($"  Container: {container.Name} - CPU: {formattedCpu}, Memory: {formattedMemory}");
@@ -137,4 +204,44 @@ static async Task CollectMetricsAsync(Kubernetes client, string[] namespacesToWa
     {
         Console.WriteLine($"Error during metrics collection: {ex.Message}");
     }
+}
+
+static double ParseMemoryToBytes(string? memoryValue)
+{
+    if (string.IsNullOrWhiteSpace(memoryValue))
+        return 0;
+
+    memoryValue = memoryValue.Trim();
+    double value = 0;
+
+    if (memoryValue.EndsWith("Ki", StringComparison.OrdinalIgnoreCase))
+    {
+        var numericPart = memoryValue.Substring(0, memoryValue.Length - 2);
+        if (double.TryParse(numericPart, out value))
+            return value * 1024;
+    }
+    else if (memoryValue.EndsWith("Mi", StringComparison.OrdinalIgnoreCase))
+    {
+        var numericPart = memoryValue.Substring(0, memoryValue.Length - 2);
+        if (double.TryParse(numericPart, out value))
+            return value * 1024 * 1024;
+    }
+    else if (memoryValue.EndsWith("Gi", StringComparison.OrdinalIgnoreCase))
+    {
+        var numericPart = memoryValue.Substring(0, memoryValue.Length - 2);
+        if (double.TryParse(numericPart, out value))
+            return value * 1024 * 1024 * 1024;
+    }
+    else if (memoryValue.EndsWith("Ti", StringComparison.OrdinalIgnoreCase))
+    {
+        var numericPart = memoryValue.Substring(0, memoryValue.Length - 2);
+        if (double.TryParse(numericPart, out value))
+            return value * 1024L * 1024 * 1024 * 1024;
+    }
+    else if (double.TryParse(memoryValue, out value))
+    {
+        return value; // Assume bytes if no unit
+    }
+
+    return 0;
 }
