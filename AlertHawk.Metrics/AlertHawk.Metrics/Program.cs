@@ -1,4 +1,6 @@
-﻿using k8s;
+﻿using System.Text.Json;
+using AlertHawk.Metrics;
+using k8s;
 
 var config = KubernetesClientConfiguration.InClusterConfig();
 var client = new Kubernetes(config);
@@ -18,5 +20,24 @@ foreach (var ns in namespacesToWatch)
         version: "v1beta1",
         plural: "pods");
 
-    Console.WriteLine(response);
+    var jsonOptions = new JsonSerializerOptions
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    var jsonString = JsonSerializer.Serialize(response);
+    var podMetricsList = JsonSerializer.Deserialize<PodMetricsList>(jsonString, jsonOptions);
+
+    if (podMetricsList != null)
+    {
+        Console.WriteLine($"Found {podMetricsList.Items.Length} pod metrics");
+        foreach (var item in podMetricsList.Items)
+        {
+            Console.WriteLine($"Pod: {item.Metadata.Namespace}/{item.Metadata.Name} - Timestamp: {item.Timestamp}");
+            foreach (var container in item.Containers)
+            {
+                Console.WriteLine($"  Container: {container.Name} - CPU: {container.Usage.Cpu}, Memory: {container.Usage.Memory}");
+            }
+        }
+    }
 }
