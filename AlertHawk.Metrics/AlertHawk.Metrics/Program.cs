@@ -31,12 +31,14 @@ foreach (var ns in namespacesToWatch)
     if (podMetricsList != null)
     {
         Console.WriteLine($"Found {podMetricsList.Items.Length} pod metrics");
-        foreach (var item in podMetricsList.Items)
+        foreach (var item in podMetricsList.Items)  
         {
-            Console.WriteLine($"Pod: {item.Metadata.Namespace}/{item.Metadata.Name} - Timestamp: {item.Timestamp}");
+            Console.WriteLine($"Pod: {item.Metadata.Namespace}/{item.Metadata.Name} - Timestamp: {item.Timestamp:yyyy-MM-dd HH:mm:ss}");
             foreach (var container in item.Containers)
             {
-                Console.WriteLine($"  Container: {container.Name} - CPU: {container.Usage.Cpu}, Memory: {container.Usage.Memory}");
+                var formattedCpu = ResourceFormatter.FormatCpu(container.Usage.Cpu);
+                var formattedMemory = ResourceFormatter.FormatMemory(container.Usage.Memory);
+                Console.WriteLine($"  Container: {container.Name} - CPU: {formattedCpu}, Memory: {formattedMemory}");
             }
         }
     }
