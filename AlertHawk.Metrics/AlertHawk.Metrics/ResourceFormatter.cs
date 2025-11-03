@@ -2,7 +2,62 @@ namespace AlertHawk.Metrics;
 
 public static class ResourceFormatter
 {
-    public static string FormatCpu(string? cpuValue)
+    /// <summary>
+    /// Parses a CPU value string to cores (as double)
+    /// </summary>
+    public static double ParseCpuToCores(string? cpuValue)
+    {
+        if (string.IsNullOrWhiteSpace(cpuValue))
+            return 0;
+
+        cpuValue = cpuValue.Trim();
+        double value = 0;
+
+        // Check for nanocores (n)
+        if (cpuValue.EndsWith("n", StringComparison.OrdinalIgnoreCase))
+        {
+            var numericPart = cpuValue.Substring(0, cpuValue.Length - 1);
+            if (double.TryParse(numericPart, out value))
+            {
+                return value / 1_000_000_000; // Convert nanocores to cores
+            }
+        }
+        // Check for millicores (m)
+        else if (cpuValue.EndsWith("m", StringComparison.OrdinalIgnoreCase))
+        {
+            var numericPart = cpuValue.Substring(0, cpuValue.Length - 1);
+            if (double.TryParse(numericPart, out value))
+            {
+                return value / 1000; // Convert millicores to cores
+            }
+        }
+        // Try parsing as plain number (cores)
+        else if (double.TryParse(cpuValue, out value))
+        {
+            return value;
+        }
+
+        return 0;
+    }
+
+    /// <summary>
+    /// Calculates CPU usage percentage
+    /// </summary>
+    public static double? CalculateCpuPercentage(string? cpuUsage, string? cpuLimit)
+    {
+        if (string.IsNullOrWhiteSpace(cpuUsage) || string.IsNullOrWhiteSpace(cpuLimit))
+            return null;
+
+        var usageCores = ParseCpuToCores(cpuUsage);
+        var limitCores = ParseCpuToCores(cpuLimit);
+
+        if (limitCores <= 0)
+            return null;
+
+        return (usageCores / limitCores) * 100;
+    }
+
+    public static string FormatCpu(string? cpuValue, string? cpuLimit = null)
     {
         if (string.IsNullOrWhiteSpace(cpuValue))
             return "N/A";
@@ -12,7 +67,7 @@ public static class ResourceFormatter
         
         // Parse the value and unit
         double value = 0;
-        string unit = "";
+        string formatted = "";
         
         // Check for nanocores (n)
         if (cpuValue.EndsWith("n", StringComparison.OrdinalIgnoreCase))
@@ -22,7 +77,7 @@ public static class ResourceFormatter
             {
                 // Convert nanocores to millicores (divide by 1,000,000)
                 value = value / 1_000_000;
-                return $"{value:F3} m";
+                formatted = $"{value:F3} m";
             }
         }
         // Check for millicores (m)
@@ -34,23 +89,40 @@ public static class ResourceFormatter
                 if (value >= 1000)
                 {
                     // Convert to cores
-                    return $"{value / 1000:F2} cores";
+                    formatted = $"{value / 1000:F2} cores";
                 }
-                return $"{value:F2} m";
+                else
+                {
+                    formatted = $"{value:F2} m";
+                }
             }
         }
         // Try parsing as plain number (cores)
         else if (double.TryParse(cpuValue, out value))
         {
             if (value >= 1)
-                return $"{value:F2} cores";
+                formatted = $"{value:F2} cores";
             else if (value >= 0.001)
-                return $"{(value * 1000):F2} m";
+                formatted = $"{(value * 1000):F2} m";
             else
-                return $"{(value * 1_000_000):F0} n";
+                formatted = $"{(value * 1_000_000):F0} n";
+        }
+        else
+        {
+            formatted = cpuValue; // Return original if we can't parse
         }
 
-        return cpuValue; // Return original if we can't parse
+        // If we have a CPU limit, calculate and append percentage
+        if (!string.IsNullOrWhiteSpace(cpuLimit))
+        {
+            var percentage = CalculateCpuPercentage(cpuValue, cpuLimit);
+            if (percentage.HasValue)
+            {
+                formatted += $" ({percentage.Value:F1}%)";
+            }
+        }
+
+        return formatted;
     }
 
     public static string FormatMemory(string? memoryValue)
