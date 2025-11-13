@@ -709,5 +709,53 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
             // Assert
             Assert.Equal(monitor, result);
         }
+
+        [Fact]
+        public async Task UploadMonitorJsonBackup_RestoresMonitors()
+        {
+            // Arrange
+            var monitorBackupJson = new MonitorBackup
+            {
+                MonitorGroupList = new List<MonitorGroup>
+                {
+                    new MonitorGroup
+                    {
+                        Name = "Group1",
+                        Id = 1,
+                        Monitors = new List<Monitor>
+                        {
+                            new MonitorHttp
+                            {
+                                Name = "HTTP Monitor 1",
+                                UrlToCheck = "https://example.com",
+                                HeartBeatInterval = 5,
+                                Retries = 2,
+                                MaxRedirects = 3,
+                                Timeout = 1000,
+                                Headers = new List<Tuple<string, string>>
+                                {
+                                    new Tuple<string, string>("Authorization", "Bearer token")
+                                }
+                            },
+                            new MonitorTcp
+                            {
+                                Name = "TCP Monitor 1",
+                                IP = "1.1.1.1",
+                                Port = 80
+                            }
+                        }
+                    }
+                }
+            };
+
+            _monitorRepositoryMock.Setup(repo => repo.WipeMonitorData()).Returns(Task.CompletedTask);
+            _monitorRepositoryMock.Setup(repo => repo.CreateMonitorHttp(It.IsAny<MonitorHttp>())).ReturnsAsync(1);
+
+            // Act
+            await _monitorService.UploadMonitorJsonBackup(monitorBackupJson);
+
+            // Assert
+            _monitorRepositoryMock.Verify(repo => repo.WipeMonitorData(), Times.Once);
+        }
     }
 }

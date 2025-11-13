@@ -11,7 +11,7 @@ namespace AlertHawk.Authentication.Controllers;
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
-public class UserController : Controller
+public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IGetOrCreateUserService _getOrCreateUserService;
@@ -85,7 +85,7 @@ public class UserController : Controller
         await _userService.Delete(userId);
         return Ok();
     }
-    
+
     [HttpDelete("delete")]
     [SwaggerOperation(Summary = "Self Delete User by Token")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -206,7 +206,7 @@ public class UserController : Controller
 
         return Ok(await _userService.GetAll());
     }
-    
+
     [HttpGet("GetAllByGroupId/{groupId}")]
     [SwaggerOperation(Summary = "Get All Users by GroupId")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -269,7 +269,8 @@ public class UserController : Controller
         "Returns user by email. If user does not exist, it will create a new user. (Azure AD Login) - JWT Token required")]
     [Authorize]
     [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
-    public async Task<ActionResult> Get(string email)
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> Get(string email)
     {
         var result = await _userService.GetByEmail(email);
         if (ReferenceEquals(result, null))
@@ -313,7 +314,7 @@ public class UserController : Controller
         await _userService.UpdateUserDeviceToken(userDeviceToken.DeviceToken, user.Id);
         return Ok();
     }
-    
+
     [HttpGet("GetUserDeviceTokenList")]
     [SwaggerOperation(Summary = "GetUserDeviceTokenList by Bearer Token")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -327,7 +328,7 @@ public class UserController : Controller
 
         return Ok(await _userService.GetUserDeviceTokenList(user.Id));
     }
-    
+
     [HttpGet("GetUserDeviceTokenListByUserId/{userId}")]
     [SwaggerOperation(Summary = "GetUserDeviceTokenList by userId")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -335,7 +336,7 @@ public class UserController : Controller
     {
         return Ok(await _userService.GetUserDeviceTokenList(userId));
     }
-    
+
     [AllowAnonymous]
     [HttpGet("GetUserDeviceTokenListByGroupId/{groupId}")]
     [SwaggerOperation(Summary = "GetUserDeviceTokenList by groupId")]

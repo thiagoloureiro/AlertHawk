@@ -4,7 +4,6 @@ using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
-using OfficeOpenXml.FormulaParsing.Excel.Functions.Engineering;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
@@ -96,7 +95,7 @@ public class HttpClientRunner : IHttpClientRunner
                             _logger.LogError("Error checking HTTP headers: {message}", e.Message);
                         }
                     }
-    
+
                     if (!monitorHttp.LastStatus)
                     {
                         await _notificationProducer.HandleSuccessNotifications(monitorHttp, response.ReasonPhrase);
@@ -110,7 +109,11 @@ public class HttpClientRunner : IHttpClientRunner
                     // Setting Response time to zero when the call fails.
                     monitorHttp.ResponseTime = 0;
 
-                    monitorHistory.ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}";
+                    if(monitorHistory.ResponseMessage != "Certificate expired")
+                    {
+                        monitorHistory.ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}";
+                    }
+                    
                     retryCount++;
                     Thread.Sleep(_retryIntervalMilliseconds);
 
@@ -123,8 +126,6 @@ public class HttpClientRunner : IHttpClientRunner
                         // only send notification when goes from online into offline to avoid flood
                         if (monitorHttp.LastStatus)
                         {
-                            _logger.LogWarning(
-                                "Error calling {monitorHttp.UrlToCheck}, Response ReasonPhrase: {response.ReasonPhrase}");
                             await _notificationProducer.HandleFailedNotifications(monitorHttp,
                                 response.ReasonPhrase);
 
@@ -166,8 +167,6 @@ public class HttpClientRunner : IHttpClientRunner
                 // If max retries reached, update status and save history
                 if (retryCount == maxRetries)
                 {
-                    _logger.LogWarning(
-                        "Error calling {monitorHttp.UrlToCheck}, Response ReasonPhrase: {response.ReasonPhrase}");
                     await _monitorRepository.UpdateMonitorStatus(monitorHttp.MonitorId, false, 0);
 
                     var monitorHistory = new MonitorHistory
@@ -189,8 +188,6 @@ public class HttpClientRunner : IHttpClientRunner
                         await _notificationProducer.HandleFailedNotifications(monitorHttp, err.Message);
 
                         // Save monitor alert
-                        _logger.LogInformation("Saving monitor alert for {monitorHttp.UrlToCheck}",
-                            monitorHttp.UrlToCheck);
                         await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
                     }
 
@@ -329,7 +326,7 @@ public class HttpClientRunner : IHttpClientRunner
 
         return monitorHttpHeaders;
     }
-    
+
     // Helper method to safely get header values
     private string? TryGetHeaderValue(HttpHeaders headers, string headerName)
     {

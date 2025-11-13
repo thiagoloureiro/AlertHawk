@@ -87,7 +87,6 @@ public class TcpClientRunner : ITcpClientRunner
 
             if (monitorTcp.LastStatus)
             {
-                _logger.LogWarning("Failed to establish a connection to {monitorTcp.IP}:{monitorTcp.Port}, Response: {monitorTcp.Response}");
                 await _notificationProducer.HandleFailedTcpNotifications(monitorTcp);
             }
         }
