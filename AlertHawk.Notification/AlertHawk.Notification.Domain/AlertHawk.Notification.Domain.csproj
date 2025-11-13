@@ -16,8 +16,8 @@
   <ItemGroup>
     <PackageReference Include="AlertHawk.Authentication.Domain" Version="1.0.5" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="Sentry" Version="5.15.1" />
-    <PackageReference Include="Telegram.Bot" Version="22.7.2" />
+    <PackageReference Include="Sentry" Version="5.16.2" />
+    <PackageReference Include="Telegram.Bot" Version="22.7.5" />
   </ItemGroup>
 
   <ItemGroup>
