@@ -70,7 +70,7 @@ public class HttpClientRunner : IHttpClientRunner
                     ResponseMessage = $"{(int)response.StatusCode} - {response.ReasonPhrase}"
                 };
 
-                if (monitorHttp.CheckCertExpiry && _daysToExpireCert <= 0)
+                if (monitorHttp.CheckCertExpiry && _daysToExpireCert <= 0 && succeeded)
                 {
                     succeeded = false;
                     monitorHistory.ResponseMessage = "Certificate expired";
