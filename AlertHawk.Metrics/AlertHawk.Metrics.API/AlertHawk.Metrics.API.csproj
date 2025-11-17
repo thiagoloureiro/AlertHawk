@@ -8,7 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="ClickHouse.Client" Version="7.14.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0-rc.1.25451.107"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AlertHawk.Metrics\AlertHawk.Metrics.csproj" />
     </ItemGroup>
 
     <ItemGroup>

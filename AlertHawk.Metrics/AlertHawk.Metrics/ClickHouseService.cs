@@ -173,9 +173,144 @@ public class ClickHouseService : IDisposable
         }
     }
 
+    public async Task<List<PodMetricDto>> GetMetricsByNamespaceAsync(string? namespaceFilter = null, int? hours = 24, int limit = 100)
+    {
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var whereClause = $"timestamp >= now() - INTERVAL {hours ?? 24} HOUR";
+            if (!string.IsNullOrWhiteSpace(namespaceFilter))
+            {
+                var escapedNamespace = namespaceFilter.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND namespace = '{escapedNamespace}'";
+            }
+
+            var query = $@"
+                SELECT 
+                    timestamp,
+                    namespace,
+                    pod,
+                    container,
+                    cpu_usage_cores,
+                    cpu_limit_cores,
+                    memory_usage_bytes
+                FROM {_database}.{_tableName}
+                WHERE {whereClause}
+                ORDER BY timestamp DESC
+                LIMIT {limit}
+            ";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = query;
+            
+            var results = new List<PodMetricDto>();
+            await using var reader = await command.ExecuteReaderAsync();
+            
+            while (await reader.ReadAsync())
+            {
+                results.Add(new PodMetricDto
+                {
+                    Timestamp = reader.GetDateTime(0),
+                    Namespace = reader.GetString(1),
+                    Pod = reader.GetString(2),
+                    Container = reader.GetString(3),
+                    CpuUsageCores = reader.GetDouble(4),
+                    CpuLimitCores = reader.IsDBNull(5) ? null : reader.GetDouble(5),
+                    MemoryUsageBytes = reader.GetDouble(6)
+                });
+            }
+
+            return results;
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
+    public async Task<List<NodeMetricDto>> GetNodeMetricsAsync(string? nodeNameFilter = null, int? hours = 24, int limit = 100)
+    {
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var whereClause = $"timestamp >= now() - INTERVAL {hours ?? 24} HOUR";
+            if (!string.IsNullOrWhiteSpace(nodeNameFilter))
+            {
+                var escapedNodeName = nodeNameFilter.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND node_name = '{escapedNodeName}'";
+            }
+
+            var query = $@"
+                SELECT 
+                    timestamp,
+                    node_name,
+                    cpu_usage_cores,
+                    cpu_capacity_cores,
+                    memory_usage_bytes,
+                    memory_capacity_bytes
+                FROM {_database}.{_nodeTableName}
+                WHERE {whereClause}
+                ORDER BY timestamp DESC
+                LIMIT {limit}
+            ";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = query;
+            
+            var results = new List<NodeMetricDto>();
+            await using var reader = await command.ExecuteReaderAsync();
+            
+            while (await reader.ReadAsync())
+            {
+                results.Add(new NodeMetricDto
+                {
+                    Timestamp = reader.GetDateTime(0),
+                    NodeName = reader.GetString(1),
+                    CpuUsageCores = reader.GetDouble(2),
+                    CpuCapacityCores = reader.GetDouble(3),
+                    MemoryUsageBytes = reader.GetDouble(4),
+                    MemoryCapacityBytes = reader.GetDouble(5)
+                });
+            }
+
+            return results;
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
     public void Dispose()
     {
         _connectionSemaphore?.Dispose();
     }
+}
+
+public class PodMetricDto
+{
+    public DateTime Timestamp { get; set; }
+    public string Namespace { get; set; } = string.Empty;
+    public string Pod { get; set; } = string.Empty;
+    public string Container { get; set; } = string.Empty;
+    public double CpuUsageCores { get; set; }
+    public double? CpuLimitCores { get; set; }
+    public double MemoryUsageBytes { get; set; }
+}
+
+public class NodeMetricDto
+{
+    public DateTime Timestamp { get; set; }
+    public string NodeName { get; set; } = string.Empty;
+    public double CpuUsageCores { get; set; }
+    public double CpuCapacityCores { get; set; }
+    public double MemoryUsageBytes { get; set; }
+    public double MemoryCapacityBytes { get; set; }
 }
 
