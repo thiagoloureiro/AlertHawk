@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS k8s_metrics
 )
 ENGINE = MergeTree()
 ORDER BY (timestamp, namespace, pod, container)
-TTL timestamp + INTERVAL 90 DAY
+TTL toDateTime(timestamp) + INTERVAL 90 DAY
 ```
 
 ### Table Details
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS k8s_metrics
 )
 ENGINE = MergeTree()
 ORDER BY (timestamp, namespace, pod, container)
-TTL timestamp + INTERVAL 90 DAY
+TTL toDateTime(timestamp) + INTERVAL 90 DAY
 ```
 
 ## Querying Metrics

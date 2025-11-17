@@ -33,7 +33,7 @@ public class ClickHouseService : IDisposable
             )
             ENGINE = MergeTree()
             ORDER BY (timestamp, namespace, pod, container)
-            TTL timestamp + INTERVAL 90 DAY
+            TTL toDateTime(timestamp) + INTERVAL 90 DAY
         ";
 
         await using var command = connection.CreateCommand();
