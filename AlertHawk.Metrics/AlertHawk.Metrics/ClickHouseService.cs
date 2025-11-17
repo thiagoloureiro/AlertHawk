@@ -5,6 +5,7 @@ namespace AlertHawk.Metrics;
 public class ClickHouseService : IDisposable
 {
     private readonly string _connectionString;
+    private readonly string _database;
     private readonly string _tableName;
     private readonly string _nodeTableName;
     private readonly SemaphoreSlim _connectionSemaphore = new(1, 1);
@@ -12,9 +13,25 @@ public class ClickHouseService : IDisposable
     public ClickHouseService(string connectionString, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics")
     {
         _connectionString = connectionString;
+        _database = ExtractDatabaseFromConnectionString(connectionString);
         _tableName = tableName;
         _nodeTableName = nodeTableName;
         EnsureTablesExistAsync().GetAwaiter().GetResult();
+    }
+
+    private static string ExtractDatabaseFromConnectionString(string connectionString)
+    {
+        // Parse Database=value from connection string
+        var parts = connectionString.Split(';');
+        foreach (var part in parts)
+        {
+            var keyValue = part.Split('=', 2);
+            if (keyValue.Length == 2 && keyValue[0].Trim().Equals("Database", StringComparison.OrdinalIgnoreCase))
+            {
+                return keyValue[1].Trim();
+            }
+        }
+        return "default";
     }
 
     private async Task EnsureTablesExistAsync()
@@ -22,9 +39,14 @@ public class ClickHouseService : IDisposable
         await using var connection = new ClickHouseConnection(_connectionString);
         await connection.OpenAsync();
         
+        // Use the database explicitly
+        await using var useDbCommand = connection.CreateCommand();
+        useDbCommand.CommandText = $"USE {_database}";
+        await useDbCommand.ExecuteNonQueryAsync();
+        
         // Create pod/container metrics table
         var createTableSql = $@"
-            CREATE TABLE IF NOT EXISTS {_tableName}
+            CREATE TABLE IF NOT EXISTS {_database}.{_tableName}
             (
                 timestamp DateTime64(3) DEFAULT now64(),
                 namespace String,
@@ -45,7 +67,7 @@ public class ClickHouseService : IDisposable
 
         // Create node metrics table
         var createNodeTableSql = $@"
-            CREATE TABLE IF NOT EXISTS {_nodeTableName}
+            CREATE TABLE IF NOT EXISTS {_database}.{_nodeTableName}
             (
                 timestamp DateTime64(3) DEFAULT now64(),
                 node_name String,
@@ -86,7 +108,7 @@ public class ClickHouseService : IDisposable
             var cpuLimitValue = cpuLimitCores?.ToString("F6", System.Globalization.CultureInfo.InvariantCulture) ?? "NULL";
 
             var insertSql = $@"
-                INSERT INTO {_tableName}
+                INSERT INTO {_database}.{_tableName}
                 (timestamp, namespace, pod, container, cpu_usage_cores, cpu_limit_cores, memory_usage_bytes)
                 VALUES
                 ('{timestamp}', '{escapedNamespace}', '{escapedPod}', '{escapedContainer}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuLimitValue}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)})
@@ -120,7 +142,7 @@ public class ClickHouseService : IDisposable
             var escapedNodeName = nodeName.Replace("'", "''").Replace("\\", "\\\\");
 
             var insertSql = $@"
-                INSERT INTO {_nodeTableName}
+                INSERT INTO {_database}.{_nodeTableName}
                 (timestamp, node_name, cpu_usage_cores, cpu_capacity_cores, memory_usage_bytes, memory_capacity_bytes)
                 VALUES
                 ('{timestamp}', '{escapedNodeName}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuCapacityCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {memoryCapacityBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)})

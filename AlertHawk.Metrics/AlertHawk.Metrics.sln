@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Metrics", "AlertHawk.Metrics\AlertHawk.Metrics.csproj", "{E8270C1F-21CC-4223-B108-2EC2948782EB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlertHawk.Metrics.API", "AlertHawk.Metrics.API\AlertHawk.Metrics.API.csproj", "{9F56CE16-880C-4259-8707-613A1576F1B9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{E8270C1F-21CC-4223-B108-2EC2948782EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E8270C1F-21CC-4223-B108-2EC2948782EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E8270C1F-21CC-4223-B108-2EC2948782EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F56CE16-880C-4259-8707-613A1576F1B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F56CE16-880C-4259-8707-613A1576F1B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F56CE16-880C-4259-8707-613A1576F1B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F56CE16-880C-4259-8707-613A1576F1B9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
