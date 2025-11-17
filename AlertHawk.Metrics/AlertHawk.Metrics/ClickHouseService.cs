@@ -39,6 +39,19 @@ public class ClickHouseService : IDisposable
         await using var connection = new ClickHouseConnection(_connectionString);
         await connection.OpenAsync();
         
+        // Ensure database exists
+        try
+        {
+            await using var createDbCommand = connection.CreateCommand();
+            createDbCommand.CommandText = $"CREATE DATABASE IF NOT EXISTS {_database}";
+            await createDbCommand.ExecuteNonQueryAsync();
+            Console.WriteLine($"Database '{_database}' ensured to exist");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not ensure database exists (it may already exist): {ex.Message}");
+        }
+        
         // Use the database explicitly
         await using var useDbCommand = connection.CreateCommand();
         useDbCommand.CommandText = $"USE {_database}";
@@ -64,6 +77,7 @@ public class ClickHouseService : IDisposable
         await using var command = connection.CreateCommand();
         command.CommandText = createTableSql;
         await command.ExecuteNonQueryAsync();
+        Console.WriteLine($"Table '{_database}.{_tableName}' ensured to exist");
 
         // Create node metrics table
         var createNodeTableSql = $@"
@@ -84,6 +98,7 @@ public class ClickHouseService : IDisposable
         await using var nodeCommand = connection.CreateCommand();
         nodeCommand.CommandText = createNodeTableSql;
         await nodeCommand.ExecuteNonQueryAsync();
+        Console.WriteLine($"Table '{_database}.{_nodeTableName}' ensured to exist");
     }
 
     public async Task WriteMetricsAsync(
