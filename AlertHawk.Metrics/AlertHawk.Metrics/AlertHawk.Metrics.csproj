@@ -15,8 +15,8 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="ClickHouse.Client" Version="7.0.0" />
       <PackageReference Include="KubernetesClient" Version="18.0.5" />
-      <PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
     </ItemGroup>
 
 </Project>

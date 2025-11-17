@@ -1,10 +1,6 @@
 ﻿using System.Text.Json;
 using AlertHawk.Metrics;
 using k8s;
-using Prometheus;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 // Read configuration from environment variables
 var collectionIntervalSeconds = int.TryParse(
@@ -13,32 +9,20 @@ var collectionIntervalSeconds = int.TryParse(
     ? interval
     : 30;
 
-var metricsPort = int.TryParse(
-    Environment.GetEnvironmentVariable("METRICS_PORT"),
-    out var port) && port > 0
-    ? port
-    : 8080;
+var clickHouseConnectionString = Environment.GetEnvironmentVariable("CLICKHOUSE_CONNECTION_STRING")
+    ?? "Host=localhost;Port=8123;Database=default;Username=default;Password=";
+
+var clickHouseTableName = Environment.GetEnvironmentVariable("CLICKHOUSE_TABLE_NAME")
+    ?? "k8s_metrics";
 
 Console.WriteLine($"Starting metrics collection service (interval: {collectionIntervalSeconds} seconds)");
-Console.WriteLine($"Prometheus metrics endpoint: http://0.0.0.0:{metricsPort}/metrics");
+Console.WriteLine($"ClickHouse connection: {clickHouseConnectionString.Replace("Password=", "Password=***")}");
+Console.WriteLine($"ClickHouse table: {clickHouseTableName}");
 Console.WriteLine("Press Ctrl+C to stop...");
 Console.WriteLine();
 
-// Create Prometheus metrics
-var cpuUsageGauge = Metrics.CreateGauge(
-    "k8s_container_cpu_usage_cores",
-    "CPU usage in cores",
-    new[] { "namespace", "pod", "container" });
-
-var cpuLimitGauge = Metrics.CreateGauge(
-    "k8s_container_cpu_limit_cores",
-    "CPU limit in cores",
-    new[] { "namespace", "pod", "container" });
-
-var memoryUsageGauge = Metrics.CreateGauge(
-    "k8s_container_memory_usage_bytes",
-    "Memory usage in bytes",
-    new[] { "namespace", "pod", "container" });
+// Initialize ClickHouse service
+using var clickHouseService = new ClickHouseService(clickHouseConnectionString, clickHouseTableName);
 
 var config = KubernetesClientConfiguration.InClusterConfig();
 var client = new Kubernetes(config);
@@ -52,30 +36,14 @@ Console.CancelKeyPress += (sender, e) =>
     cancellationTokenSource.Cancel();
 };
 
-// Start Prometheus metrics server
-var builder = WebApplication.CreateBuilder();
-builder.Services.AddRouting();
-var app = builder.Build();
-app.UseRouting();
-app.UseHttpMetrics();
-app.MapMetrics();
-app.MapGet("/", () => "AlertHawk Metrics Collector - Prometheus endpoint: /metrics");
-
-var metricsServerTask = app.RunAsync($"http://0.0.0.0:{metricsPort}");
-
 // Start metrics collection loop
 try
 {
-    var collectionTask = Task.Run(async () =>
+    while (!cancellationTokenSource.Token.IsCancellationRequested)
     {
-        while (!cancellationTokenSource.Token.IsCancellationRequested)
-        {
-            await CollectMetricsAsync(client, namespacesToWatch, cpuUsageGauge, cpuLimitGauge, memoryUsageGauge);
-            await Task.Delay(TimeSpan.FromSeconds(collectionIntervalSeconds), cancellationTokenSource.Token);
-        }
-    }, cancellationTokenSource.Token);
-
-    await Task.WhenAny(metricsServerTask, collectionTask);
+        await CollectMetricsAsync(client, namespacesToWatch, clickHouseService);
+        await Task.Delay(TimeSpan.FromSeconds(collectionIntervalSeconds), cancellationTokenSource.Token);
+    }
 }
 catch (OperationCanceledException)
 {
@@ -94,9 +62,7 @@ finally
 static async Task CollectMetricsAsync(
     Kubernetes client, 
     string[] namespacesToWatch,
-    Gauge cpuUsageGauge,
-    Gauge cpuLimitGauge,
-    Gauge memoryUsageGauge)
+    ClickHouseService clickHouseService)
 {
     var jsonOptions = new JsonSerializerOptions
     {
@@ -169,20 +135,25 @@ static async Task CollectMetricsAsync(
                                 ? limit
                                 : null;
 
-                            // Record Prometheus metrics
+                            // Write metrics to ClickHouse
                             var cpuCores = ResourceFormatter.ParseCpuToCores(container.Usage.Cpu);
-                            cpuUsageGauge.WithLabels(item.Metadata.Namespace, item.Metadata.Name, container.Name).Set(cpuCores);
+                            var memoryBytes = ParseMemoryToBytes(container.Usage.Memory);
+                            double? cpuLimitCores = null;
 
                             if (cpuLimit != null)
                             {
-                                var limitCores = ResourceFormatter.ParseCpuToCores(cpuLimit);
-                                cpuLimitGauge.WithLabels(item.Metadata.Namespace, item.Metadata.Name, container.Name).Set(limitCores);
+                                cpuLimitCores = ResourceFormatter.ParseCpuToCores(cpuLimit);
                             }
 
-                            var memoryBytes = ParseMemoryToBytes(container.Usage.Memory);
                             if (memoryBytes > 0)
                             {
-                                memoryUsageGauge.WithLabels(item.Metadata.Namespace, item.Metadata.Name, container.Name).Set(memoryBytes);
+                                await clickHouseService.WriteMetricsAsync(
+                                    item.Metadata.Namespace,
+                                    item.Metadata.Name,
+                                    container.Name,
+                                    cpuCores,
+                                    cpuLimitCores,
+                                    memoryBytes);
                             }
 
                             var formattedCpu = ResourceFormatter.FormatCpu(container.Usage.Cpu, cpuLimit);
