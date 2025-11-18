@@ -15,14 +15,23 @@ var clickHouseConnectionString = Environment.GetEnvironmentVariable("CLICKHOUSE_
 var clickHouseTableName = Environment.GetEnvironmentVariable("CLICKHOUSE_TABLE_NAME")
     ?? "k8s_metrics";
 
+var clusterName = Environment.GetEnvironmentVariable("CLUSTER_NAME");
+if (string.IsNullOrWhiteSpace(clusterName))
+{
+    Console.Error.WriteLine("ERROR: CLUSTER_NAME environment variable is required but not set!");
+    Console.Error.WriteLine("Please set the CLUSTER_NAME environment variable before starting the application.");
+    Environment.Exit(1);
+}
+
 Console.WriteLine($"Starting metrics collection service (interval: {collectionIntervalSeconds} seconds)");
+Console.WriteLine($"Cluster name: {clusterName}");
 Console.WriteLine($"ClickHouse connection: {clickHouseConnectionString.Replace("Password=", "Password=***")}");
 Console.WriteLine($"ClickHouse table: {clickHouseTableName}");
 Console.WriteLine("Press Ctrl+C to stop...");
 Console.WriteLine();
 
 // Initialize ClickHouse service
-using var clickHouseService = new ClickHouseService(clickHouseConnectionString, clickHouseTableName);
+using var clickHouseService = new ClickHouseService(clickHouseConnectionString, clusterName, clickHouseTableName);
 
 var config = KubernetesClientConfiguration.InClusterConfig();
 var client = new Kubernetes(config);

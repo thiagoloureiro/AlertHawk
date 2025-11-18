@@ -8,12 +8,19 @@ public class ClickHouseService : IDisposable
     private readonly string _database;
     private readonly string _tableName;
     private readonly string _nodeTableName;
+    private readonly string _clusterName;
     private readonly SemaphoreSlim _connectionSemaphore = new(1, 1);
 
-    public ClickHouseService(string connectionString, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics")
+    public ClickHouseService(string connectionString, string clusterName, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics")
     {
+        if (string.IsNullOrWhiteSpace(clusterName))
+        {
+            throw new ArgumentException("Cluster name is required and cannot be empty.", nameof(clusterName));
+        }
+
         _connectionString = connectionString;
         _database = ExtractDatabaseFromConnectionString(connectionString);
+        _clusterName = clusterName;
         _tableName = tableName;
         _nodeTableName = nodeTableName;
         EnsureTablesExistAsync().GetAwaiter().GetResult();
@@ -62,6 +69,7 @@ public class ClickHouseService : IDisposable
             CREATE TABLE IF NOT EXISTS {_database}.{_tableName}
             (
                 timestamp DateTime64(3) DEFAULT now64(),
+                cluster_name String,
                 namespace String,
                 pod String,
                 container String,
@@ -70,7 +78,7 @@ public class ClickHouseService : IDisposable
                 memory_usage_bytes Float64
             )
             ENGINE = MergeTree()
-            ORDER BY (timestamp, namespace, pod, container)
+            ORDER BY (timestamp, cluster_name, namespace, pod, container)
             TTL toDateTime(timestamp) + INTERVAL 90 DAY
         ";
 
@@ -84,6 +92,7 @@ public class ClickHouseService : IDisposable
             CREATE TABLE IF NOT EXISTS {_database}.{_nodeTableName}
             (
                 timestamp DateTime64(3) DEFAULT now64(),
+                cluster_name String,
                 node_name String,
                 cpu_usage_cores Float64,
                 cpu_capacity_cores Float64,
@@ -91,7 +100,7 @@ public class ClickHouseService : IDisposable
                 memory_capacity_bytes Float64
             )
             ENGINE = MergeTree()
-            ORDER BY (timestamp, node_name)
+            ORDER BY (timestamp, cluster_name, node_name)
             TTL toDateTime(timestamp) + INTERVAL 90 DAY
         ";
 
@@ -122,11 +131,12 @@ public class ClickHouseService : IDisposable
             var escapedContainer = container.Replace("'", "''").Replace("\\", "\\\\");
             var cpuLimitValue = cpuLimitCores?.ToString("F6", System.Globalization.CultureInfo.InvariantCulture) ?? "NULL";
 
+            var escapedClusterName = _clusterName.Replace("'", "''").Replace("\\", "\\\\");
             var insertSql = $@"
                 INSERT INTO {_database}.{_tableName}
-                (timestamp, namespace, pod, container, cpu_usage_cores, cpu_limit_cores, memory_usage_bytes)
+                (timestamp, cluster_name, namespace, pod, container, cpu_usage_cores, cpu_limit_cores, memory_usage_bytes)
                 VALUES
-                ('{timestamp}', '{escapedNamespace}', '{escapedPod}', '{escapedContainer}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuLimitValue}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)})
+                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedPod}', '{escapedContainer}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuLimitValue}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)})
             ";
 
             await using var command = connection.CreateCommand();
@@ -156,11 +166,12 @@ public class ClickHouseService : IDisposable
             var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
             var escapedNodeName = nodeName.Replace("'", "''").Replace("\\", "\\\\");
 
+            var escapedClusterName = _clusterName.Replace("'", "''").Replace("\\", "\\\\");
             var insertSql = $@"
                 INSERT INTO {_database}.{_nodeTableName}
-                (timestamp, node_name, cpu_usage_cores, cpu_capacity_cores, memory_usage_bytes, memory_capacity_bytes)
+                (timestamp, cluster_name, node_name, cpu_usage_cores, cpu_capacity_cores, memory_usage_bytes, memory_capacity_bytes)
                 VALUES
-                ('{timestamp}', '{escapedNodeName}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuCapacityCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {memoryCapacityBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)})
+                ('{timestamp}', '{escapedClusterName}', '{escapedNodeName}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuCapacityCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {memoryCapacityBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)})
             ";
 
             await using var command = connection.CreateCommand();
@@ -191,6 +202,7 @@ public class ClickHouseService : IDisposable
             var query = $@"
                 SELECT 
                     timestamp,
+                    cluster_name,
                     namespace,
                     pod,
                     container,
@@ -214,12 +226,13 @@ public class ClickHouseService : IDisposable
                 results.Add(new PodMetricDto
                 {
                     Timestamp = reader.GetDateTime(0),
-                    Namespace = reader.GetString(1),
-                    Pod = reader.GetString(2),
-                    Container = reader.GetString(3),
-                    CpuUsageCores = reader.GetDouble(4),
-                    CpuLimitCores = reader.IsDBNull(5) ? null : reader.GetDouble(5),
-                    MemoryUsageBytes = reader.GetDouble(6)
+                    ClusterName = reader.GetString(1),
+                    Namespace = reader.GetString(2),
+                    Pod = reader.GetString(3),
+                    Container = reader.GetString(4),
+                    CpuUsageCores = reader.GetDouble(5),
+                    CpuLimitCores = reader.IsDBNull(6) ? null : reader.GetDouble(6),
+                    MemoryUsageBytes = reader.GetDouble(7)
                 });
             }
 
@@ -249,6 +262,7 @@ public class ClickHouseService : IDisposable
             var query = $@"
                 SELECT 
                     timestamp,
+                    cluster_name,
                     node_name,
                     cpu_usage_cores,
                     cpu_capacity_cores,
@@ -271,11 +285,12 @@ public class ClickHouseService : IDisposable
                 results.Add(new NodeMetricDto
                 {
                     Timestamp = reader.GetDateTime(0),
-                    NodeName = reader.GetString(1),
-                    CpuUsageCores = reader.GetDouble(2),
-                    CpuCapacityCores = reader.GetDouble(3),
-                    MemoryUsageBytes = reader.GetDouble(4),
-                    MemoryCapacityBytes = reader.GetDouble(5)
+                    ClusterName = reader.GetString(1),
+                    NodeName = reader.GetString(2),
+                    CpuUsageCores = reader.GetDouble(3),
+                    CpuCapacityCores = reader.GetDouble(4),
+                    MemoryUsageBytes = reader.GetDouble(5),
+                    MemoryCapacityBytes = reader.GetDouble(6)
                 });
             }
 
@@ -296,6 +311,7 @@ public class ClickHouseService : IDisposable
 public class PodMetricDto
 {
     public DateTime Timestamp { get; set; }
+    public string ClusterName { get; set; } = string.Empty;
     public string Namespace { get; set; } = string.Empty;
     public string Pod { get; set; } = string.Empty;
     public string Container { get; set; } = string.Empty;
@@ -307,6 +323,7 @@ public class PodMetricDto
 public class NodeMetricDto
 {
     public DateTime Timestamp { get; set; }
+    public string ClusterName { get; set; } = string.Empty;
     public string NodeName { get; set; } = string.Empty;
     public double CpuUsageCores { get; set; }
     public double CpuCapacityCores { get; set; }
