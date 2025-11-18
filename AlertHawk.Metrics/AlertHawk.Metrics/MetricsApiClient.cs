@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Polly;
 using Polly.Retry;
+using Serilog;
 
 namespace AlertHawk.Metrics;
 
@@ -42,7 +43,8 @@ public class MetricsApiClient : IDisposable
                 onRetry: (outcome, timespan, retryCount, context) =>
                 {
                     var statusCode = outcome.Result?.StatusCode.ToString() ?? "Exception";
-                    Console.WriteLine($"Retry {retryCount}/3: API call failed ({statusCode}). Retrying in {timespan.TotalSeconds:F1}s...");
+                    Log.Warning("Retry {RetryCount}/3: API call failed ({StatusCode}). Retrying in {DelaySeconds:F1}s...", 
+                        retryCount, statusCode, timespan.TotalSeconds);
                 });
     }
 
@@ -78,7 +80,7 @@ public class MetricsApiClient : IDisposable
         var json = JsonSerializer.Serialize(request);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        Console.WriteLine($"calling API: {_apiBaseUrl}/api/metrics/pod with payload: {json}");
+        Log.Debug("Calling API: {ApiUrl}/api/metrics/pod with payload: {Payload}", _apiBaseUrl, json);
         
         var response = await _retryPolicy.ExecuteAsync(async () =>
             await _httpClient.PostAsync($"{_apiBaseUrl}/api/metrics/pod", content));

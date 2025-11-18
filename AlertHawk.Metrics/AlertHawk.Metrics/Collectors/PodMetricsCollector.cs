@@ -1,6 +1,7 @@
 using System.Text.Json;
 using AlertHawk.Metrics;
 using k8s;
+using Serilog;
 
 namespace AlertHawk.Metrics.Collectors;
 
@@ -18,7 +19,7 @@ public static class PodMetricsCollector
 
         try
         {
-            Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Collecting metrics...");
+            Log.Information("Collecting pod metrics...");
 
             foreach (var ns in namespacesToWatch)
             {
@@ -53,7 +54,8 @@ public static class PodMetricsCollector
 
                     foreach (var pod in pods.Items)
                     {
-                        Console.WriteLine($"{pod.Metadata.NamespaceProperty}/{pod.Metadata.Name} - {pod.Status.Phase}");
+                        Log.Debug("Pod: {Namespace}/{PodName} - Phase: {Phase}", 
+                            pod.Metadata.NamespaceProperty, pod.Metadata.Name, pod.Status.Phase);
                     }
 
                     var response = await client.CustomObjects.ListClusterCustomObjectAsync(
@@ -66,14 +68,15 @@ public static class PodMetricsCollector
 
                     if (podMetricsList != null)
                     {
-                        Console.WriteLine($"Found {podMetricsList.Items.Length} pod metrics");
+                        Log.Debug("Found {Count} pod metrics", podMetricsList.Items.Length);
                         foreach (var item in podMetricsList.Items)
                         {
                             // Only show metrics for pods in current namespace
                             if (item.Metadata.Namespace != ns)
                                 continue;
 
-                            Console.WriteLine($"Pod: {item.Metadata.Namespace}/{item.Metadata.Name} - Timestamp: {item.Timestamp:yyyy-MM-dd HH:mm:ss}");
+                            Log.Debug("Pod: {Namespace}/{PodName} - Timestamp: {Timestamp}", 
+                                item.Metadata.Namespace, item.Metadata.Name, item.Timestamp);
                             foreach (var container in item.Containers)
                             {
                                 // Get CPU limit for this container
@@ -106,28 +109,28 @@ public static class PodMetricsCollector
                                     }
                                     catch (Exception ex)
                                     {
-                                        Console.WriteLine($"Error sending pod metric to API: {ex.Message}");
+                                        Log.Error(ex, "Error sending pod metric to API for {Namespace}/{PodName}/{Container}", 
+                                            item.Metadata.Namespace, item.Metadata.Name, container.Name);
                                     }
                                 }
 
                                 var formattedCpu = ResourceFormatter.FormatCpu(container.Usage.Cpu, cpuLimit);
                                 var formattedMemory = ResourceFormatter.FormatMemory(container.Usage.Memory);
-                                Console.WriteLine($"  Container: {container.Name} - CPU: {formattedCpu}, Memory: {formattedMemory}");
+                                Log.Debug("Container: {Container} - CPU: {Cpu}, Memory: {Memory}", 
+                                    container.Name, formattedCpu, formattedMemory);
                             }
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error collecting metrics for namespace '{ns}': {ex.Message}");
+                    Log.Error(ex, "Error collecting metrics for namespace '{Namespace}'", ns);
                 }
             }
-
-            Console.WriteLine();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error during metrics collection: {ex.Message}");
+            Log.Error(ex, "Error during pod metrics collection");
         }
     }
 }

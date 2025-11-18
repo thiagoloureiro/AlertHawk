@@ -1,6 +1,7 @@
 using System.Text.Json;
 using AlertHawk.Metrics;
 using k8s;
+using Serilog;
 
 namespace AlertHawk.Metrics.Collectors;
 
@@ -17,7 +18,7 @@ public static class NodeMetricsCollector
 
         try
         {
-            Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Collecting node metrics...");
+            Log.Information("Collecting node metrics...");
 
             // Get node list to retrieve capacity information
             var nodes = await client.CoreV1.ListNodeAsync();
@@ -62,7 +63,7 @@ public static class NodeMetricsCollector
 
             if (nodeMetricsList != null)
             {
-                Console.WriteLine($"Found {nodeMetricsList.Items.Length} node metrics");
+                Log.Debug("Found {Count} node metrics", nodeMetricsList.Items.Length);
                 foreach (var nodeMetric in nodeMetricsList.Items)
                 {
                     var nodeName = nodeMetric.Metadata.Name;
@@ -88,21 +89,21 @@ public static class NodeMetricsCollector
                             var cpuPercent = cpuCapacityCores > 0 ? (cpuUsageCores / cpuCapacityCores * 100) : 0;
                             var memoryPercent = memoryCapacityBytes > 0 ? (memoryUsageBytes / memoryCapacityBytes * 100) : 0;
 
-                            Console.WriteLine($"  Node: {nodeName} - CPU: {cpuUsageCores:F2}/{cpuCapacityCores:F2} cores ({cpuPercent:F1}%), Memory: {ResourceFormatter.FormatMemory(nodeMetric.Usage.Memory)} ({memoryPercent:F1}%)");
+                            Log.Debug("Node: {NodeName} - CPU: {CpuUsage:F2}/{CpuCapacity:F2} cores ({CpuPercent:F1}%), Memory: {Memory} ({MemoryPercent:F1}%)", 
+                                nodeName, cpuUsageCores, cpuCapacityCores, cpuPercent, 
+                                ResourceFormatter.FormatMemory(nodeMetric.Usage.Memory), memoryPercent);
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"Error sending node metric to API: {ex.Message}");
+                            Log.Error(ex, "Error sending node metric to API for node {NodeName}", nodeName);
                         }
                     }
                 }
             }
-
-            Console.WriteLine();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error during node metrics collection: {ex.Message}");
+            Log.Error(ex, "Error during node metrics collection");
         }
     }
 }
