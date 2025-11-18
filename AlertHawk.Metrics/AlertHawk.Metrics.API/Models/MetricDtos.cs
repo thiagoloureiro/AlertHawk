@@ -23,19 +23,6 @@ public class NodeMetricDto
     public double MemoryCapacityBytes { get; set; }
 }
 
-public class PvcMetricDto
-{
-    public DateTime Timestamp { get; set; }
-    public string ClusterName { get; set; } = string.Empty;
-    public string Namespace { get; set; } = string.Empty;
-    public string PvcName { get; set; } = string.Empty;
-    public string StorageClass { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-    public double CapacityBytes { get; set; }
-    public double? UsedBytes { get; set; }
-    public string? VolumeName { get; set; }
-}
-
 public class PodMetricRequest
 {
     public string ClusterName { get; set; } = string.Empty;
@@ -55,17 +42,5 @@ public class NodeMetricRequest
     public double CpuCapacityCores { get; set; }
     public double MemoryUsageBytes { get; set; }
     public double MemoryCapacityBytes { get; set; }
-}
-
-public class PvcMetricRequest
-{
-    public string ClusterName { get; set; } = string.Empty;
-    public string Namespace { get; set; } = string.Empty;
-    public string PvcName { get; set; } = string.Empty;
-    public string StorageClass { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-    public double CapacityBytes { get; set; }
-    public double? UsedBytes { get; set; }
-    public string? VolumeName { get; set; }
 }
 

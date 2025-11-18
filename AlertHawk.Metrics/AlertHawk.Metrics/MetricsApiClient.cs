@@ -112,36 +112,6 @@ public class MetricsApiClient : IDisposable
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task WritePvcMetricAsync(
-        string @namespace,
-        string pvcName,
-        string storageClass,
-        string status,
-        double capacityBytes,
-        double? usedBytes = null,
-        string? volumeName = null)
-    {
-        var request = new
-        {
-            ClusterName = _clusterName,
-            Namespace = @namespace,
-            PvcName = pvcName,
-            StorageClass = storageClass,
-            Status = status,
-            CapacityBytes = capacityBytes,
-            UsedBytes = usedBytes,
-            VolumeName = volumeName
-        };
-
-        var json = JsonSerializer.Serialize(request);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        var response = await _retryPolicy.ExecuteAsync(async () =>
-            await _httpClient.PostAsync($"{_apiBaseUrl}/api/metrics/pvc", content));
-
-        response.EnsureSuccessStatusCode();
-    }
-
     public void Dispose()
     {
         _httpClient?.Dispose();

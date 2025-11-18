@@ -113,32 +113,6 @@ public class MetricsController : ControllerBase
     }
 
     /// <summary>
-    /// Get PVC metrics
-    /// </summary>
-    /// <param name="namespace">Optional namespace filter</param>
-    /// <param name="pvcName">Optional PVC name filter</param>
-    /// <param name="hours">Number of hours to look back (default: 24)</param>
-    /// <param name="limit">Maximum number of results (default: 100)</param>
-    /// <returns>List of PVC metrics</returns>
-    [HttpGet("pvc")]
-    public async Task<ActionResult<List<PvcMetricDto>>> GetPvcMetrics(
-        [FromQuery] string? @namespace = null,
-        [FromQuery] string? pvcName = null,
-        [FromQuery] int? hours = 24,
-        [FromQuery] int limit = 100)
-    {
-        try
-        {
-            var metrics = await _clickHouseService.GetPvcMetricsAsync(@namespace, pvcName, hours, limit);
-            return Ok(metrics);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { error = ex.Message });
-        }
-    }
-
-    /// <summary>
     /// Write pod/container metrics
     /// </summary>
     /// <param name="request">Pod metric data</param>
@@ -200,38 +174,4 @@ public class MetricsController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Write PVC metrics
-    /// </summary>
-    /// <param name="request">PVC metric data</param>
-    /// <returns>Success status</returns>
-    [HttpPost("pvc")]
-    [AllowAnonymous]
-    public async Task<ActionResult> WritePvcMetric([FromBody] PvcMetricRequest request)
-    {
-        try
-        {
-            Console.WriteLine($"Received PVC metric: Namespace={request.Namespace}, PvcName={request.PvcName}, StorageClass={request.StorageClass}, Status={request.Status}, CapacityBytes={request.CapacityBytes}, UsedBytes={request.UsedBytes}, VolumeName={request.VolumeName}, ClusterName={request.ClusterName}");
-            var clusterName = !string.IsNullOrWhiteSpace(request.ClusterName) 
-                ? request.ClusterName 
-                : null;
-
-            await _clickHouseService.WritePvcMetricsAsync(
-                request.Namespace,
-                request.PvcName,
-                request.StorageClass,
-                request.Status,
-                request.CapacityBytes,
-                request.UsedBytes,
-                request.VolumeName,
-                clusterName);
-            return Ok(new { success = true });
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            SentrySdk.CaptureException(ex);
-            return StatusCode(500, new { error = ex.Message });
-        }
-    }
 }
