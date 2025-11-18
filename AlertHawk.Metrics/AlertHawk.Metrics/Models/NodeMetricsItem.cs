@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace AlertHawk.Metrics;
 
-public class PodMetricsItem
+public class NodeMetricsItem
 {
     [JsonPropertyName("metadata")]
     public Metadata Metadata { get; set; } = new();
@@ -11,8 +11,9 @@ public class PodMetricsItem
     public DateTime Timestamp { get; set; }
 
     [JsonPropertyName("window")]
-    public string Window { get; set; } = string.Empty;
+    public string? Window { get; set; }
 
-    [JsonPropertyName("containers")]
-    public ContainerMetrics[] Containers { get; set; } = Array.Empty<ContainerMetrics>();
+    [JsonPropertyName("usage")]
+    public ResourceUsage Usage { get; set; } = new();
 }
+
