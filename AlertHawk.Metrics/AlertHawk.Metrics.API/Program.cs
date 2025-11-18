@@ -1,7 +1,6 @@
 using System.Reflection;
 using AlertHawk.Metrics.API.Services;
 using Microsoft.OpenApi;
-using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 

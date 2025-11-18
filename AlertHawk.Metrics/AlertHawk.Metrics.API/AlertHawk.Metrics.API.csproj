@@ -9,11 +9,11 @@
 
     <ItemGroup>
         <PackageReference Include="ClickHouse.Client" Version="7.14.0" />
-        <PackageReference Include="Azure.Identity" Version="1.16.0" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
-        <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="9.0.4" />
-        <PackageReference Include="Sentry.AspNetCore" Version="5.15.1" />
-        <PackageReference Include="Microsoft.Identity.Web" Version="3.14.1" />
+        <PackageReference Include="Azure.Identity" Version="1.17.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.0.1" />
+        <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.0.1" />
+        <PackageReference Include="Sentry.AspNetCore" Version="5.16.2" />
+        <PackageReference Include="Microsoft.Identity.Web" Version="4.0.1" />
         <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     </ItemGroup>
 
