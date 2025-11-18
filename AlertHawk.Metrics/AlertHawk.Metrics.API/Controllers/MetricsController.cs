@@ -1,5 +1,6 @@
 using AlertHawk.Metrics.API.Models;
 using AlertHawk.Metrics.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AlertHawk.Metrics.API.Controllers;
@@ -143,6 +144,7 @@ public class MetricsController : ControllerBase
     /// <param name="request">Pod metric data</param>
     /// <returns>Success status</returns>
     [HttpPost("pod")]
+    [AllowAnonymous]
     public async Task<ActionResult> WritePodMetric([FromBody] PodMetricRequest request)
     {
         try
@@ -173,6 +175,7 @@ public class MetricsController : ControllerBase
     /// <param name="request">Node metric data</param>
     /// <returns>Success status</returns>
     [HttpPost("node")]
+    [AllowAnonymous]
     public async Task<ActionResult> WriteNodeMetric([FromBody] NodeMetricRequest request)
     {
         try
@@ -202,6 +205,7 @@ public class MetricsController : ControllerBase
     /// <param name="request">PVC metric data</param>
     /// <returns>Success status</returns>
     [HttpPost("pvc")]
+    [AllowAnonymous]
     public async Task<ActionResult> WritePvcMetric([FromBody] PvcMetricRequest request)
     {
         try
