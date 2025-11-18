@@ -109,4 +109,30 @@ public class MetricsController : ControllerBase
             return StatusCode(500, new { error = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Get PVC metrics
+    /// </summary>
+    /// <param name="namespace">Optional namespace filter</param>
+    /// <param name="pvcName">Optional PVC name filter</param>
+    /// <param name="hours">Number of hours to look back (default: 24)</param>
+    /// <param name="limit">Maximum number of results (default: 100)</param>
+    /// <returns>List of PVC metrics</returns>
+    [HttpGet("pvc")]
+    public async Task<ActionResult<List<PvcMetricDto>>> GetPvcMetrics(
+        [FromQuery] string? @namespace = null,
+        [FromQuery] string? pvcName = null,
+        [FromQuery] int? hours = 24,
+        [FromQuery] int limit = 100)
+    {
+        try
+        {
+            var metrics = await _clickHouseService.GetPvcMetricsAsync(@namespace, pvcName, hours, limit);
+            return Ok(metrics);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
 }

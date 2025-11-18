@@ -8,16 +8,18 @@ public class ClickHouseService : IDisposable
     private readonly string _database;
     private readonly string _tableName;
     private readonly string _nodeTableName;
+    private readonly string _pvcTableName;
     private readonly string _clusterName;
     private readonly SemaphoreSlim _connectionSemaphore = new(1, 1);
 
-    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics")
+    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string pvcTableName = "k8s_pvc_metrics")
     {
         _connectionString = connectionString;
         _database = ExtractDatabaseFromConnectionString(connectionString);
         _clusterName = clusterName ?? string.Empty;
         _tableName = tableName;
         _nodeTableName = nodeTableName;
+        _pvcTableName = pvcTableName;
         EnsureTablesExistAsync().GetAwaiter().GetResult();
     }
 
@@ -103,6 +105,30 @@ public class ClickHouseService : IDisposable
         nodeCommand.CommandText = createNodeTableSql;
         await nodeCommand.ExecuteNonQueryAsync();
         Console.WriteLine($"Table '{_database}.{_nodeTableName}' ensured to exist");
+
+        // Create PVC metrics table
+        var createPvcTableSql = $@"
+            CREATE TABLE IF NOT EXISTS {_database}.{_pvcTableName}
+            (
+                timestamp DateTime64(3) DEFAULT now64(),
+                cluster_name String,
+                namespace String,
+                pvc_name String,
+                storage_class String,
+                status String,
+                capacity_bytes Float64,
+                used_bytes Nullable(Float64),
+                volume_name Nullable(String)
+            )
+            ENGINE = MergeTree()
+            ORDER BY (timestamp, cluster_name, namespace, pvc_name)
+            TTL toDateTime(timestamp) + INTERVAL 90 DAY
+        ";
+
+        await using var pvcCommand = connection.CreateCommand();
+        pvcCommand.CommandText = createPvcTableSql;
+        await pvcCommand.ExecuteNonQueryAsync();
+        Console.WriteLine($"Table '{_database}.{_pvcTableName}' ensured to exist");
     }
 
     public async Task WriteMetricsAsync(
@@ -307,6 +333,119 @@ public class ClickHouseService : IDisposable
         }
     }
 
+    public async Task WritePvcMetricsAsync(
+        string @namespace,
+        string pvcName,
+        string storageClass,
+        string status,
+        double capacityBytes,
+        double? usedBytes = null,
+        string? volumeName = null)
+    {
+        if (string.IsNullOrWhiteSpace(_clusterName))
+        {
+            throw new InvalidOperationException("Cluster name is required for writing metrics. Please set CLUSTER_NAME environment variable.");
+        }
+
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            var escapedClusterName = _clusterName.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedNamespace = @namespace.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedPvcName = pvcName.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedStorageClass = storageClass.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedStatus = status.Replace("'", "''").Replace("\\", "\\\\");
+            var usedBytesValue = usedBytes?.ToString("F0", System.Globalization.CultureInfo.InvariantCulture) ?? "NULL";
+            var volumeNameValue = volumeName != null ? $"'{volumeName.Replace("'", "''").Replace("\\", "\\\\")}'" : "NULL";
+
+            var insertSql = $@"
+                INSERT INTO {_database}.{_pvcTableName}
+                (timestamp, cluster_name, namespace, pvc_name, storage_class, status, capacity_bytes, used_bytes, volume_name)
+                VALUES
+                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedPvcName}', '{escapedStorageClass}', '{escapedStatus}', {capacityBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {usedBytesValue}, {volumeNameValue})
+            ";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = insertSql;
+            await command.ExecuteNonQueryAsync();
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
+    public async Task<List<PvcMetricDto>> GetPvcMetricsAsync(string? namespaceFilter = null, string? pvcNameFilter = null, int? hours = 24, int limit = 100)
+    {
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var whereClause = $"timestamp >= now() - INTERVAL {hours ?? 24} HOUR";
+            if (!string.IsNullOrWhiteSpace(namespaceFilter))
+            {
+                var escapedNamespace = namespaceFilter.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND namespace = '{escapedNamespace}'";
+            }
+            if (!string.IsNullOrWhiteSpace(pvcNameFilter))
+            {
+                var escapedPvcName = pvcNameFilter.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND pvc_name = '{escapedPvcName}'";
+            }
+
+            var query = $@"
+                SELECT 
+                    timestamp,
+                    cluster_name,
+                    namespace,
+                    pvc_name,
+                    storage_class,
+                    status,
+                    capacity_bytes,
+                    used_bytes,
+                    volume_name
+                FROM {_database}.{_pvcTableName}
+                WHERE {whereClause}
+                ORDER BY timestamp DESC
+                LIMIT {limit}
+            ";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = query;
+            
+            var results = new List<PvcMetricDto>();
+            await using var reader = await command.ExecuteReaderAsync();
+            
+            while (await reader.ReadAsync())
+            {
+                results.Add(new PvcMetricDto
+                {
+                    Timestamp = reader.GetDateTime(0),
+                    ClusterName = reader.GetString(1),
+                    Namespace = reader.GetString(2),
+                    PvcName = reader.GetString(3),
+                    StorageClass = reader.GetString(4),
+                    Status = reader.GetString(5),
+                    CapacityBytes = reader.GetDouble(6),
+                    UsedBytes = reader.IsDBNull(7) ? null : reader.GetDouble(7),
+                    VolumeName = reader.IsDBNull(8) ? null : reader.GetString(8)
+                });
+            }
+
+            return results;
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
     public void Dispose()
     {
         _connectionSemaphore?.Dispose();
@@ -334,5 +473,18 @@ public class NodeMetricDto
     public double CpuCapacityCores { get; set; }
     public double MemoryUsageBytes { get; set; }
     public double MemoryCapacityBytes { get; set; }
+}
+
+public class PvcMetricDto
+{
+    public DateTime Timestamp { get; set; }
+    public string ClusterName { get; set; } = string.Empty;
+    public string Namespace { get; set; } = string.Empty;
+    public string PvcName { get; set; } = string.Empty;
+    public string StorageClass { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public double CapacityBytes { get; set; }
+    public double? UsedBytes { get; set; }
+    public string? VolumeName { get; set; }
 }
 

@@ -52,6 +52,7 @@ try
     {
         await CollectMetricsAsync(client, namespacesToWatch, clickHouseService);
         await CollectNodeMetricsAsync(client, clickHouseService);
+        await CollectPvcMetricsAsync(client, namespacesToWatch, clickHouseService);
         await Task.Delay(TimeSpan.FromSeconds(collectionIntervalSeconds), cancellationTokenSource.Token);
     }
 }
@@ -277,6 +278,77 @@ static async Task CollectNodeMetricsAsync(
     catch (Exception ex)
     {
         Console.WriteLine($"Error during node metrics collection: {ex.Message}");
+    }
+}
+
+static async Task CollectPvcMetricsAsync(
+    Kubernetes client,
+    string[] namespacesToWatch,
+    ClickHouseService clickHouseService)
+{
+    try
+    {
+        Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Collecting PVC metrics...");
+
+        foreach (var ns in namespacesToWatch)
+        {
+            try
+            {
+                var pvcs = await client.CoreV1.ListNamespacedPersistentVolumeClaimAsync(ns);
+
+                Console.WriteLine($"Found {pvcs.Items.Count} PVCs in namespace '{ns}'");
+
+                foreach (var pvc in pvcs.Items)
+                {
+                    var pvcName = pvc.Metadata?.Name ?? "unknown";
+                    var status = pvc.Status?.Phase ?? "Unknown";
+                    var storageClass = pvc.Spec?.StorageClassName ?? "unknown";
+                    var volumeName = pvc.Spec?.VolumeName;
+
+                    // Parse capacity
+                    double capacityBytes = 0;
+                    if (pvc.Status?.Capacity != null && pvc.Status.Capacity.ContainsKey("storage"))
+                    {
+                        var capacityStr = pvc.Status.Capacity["storage"].ToString();
+                        capacityBytes = ParseMemoryToBytes(capacityStr);
+                    }
+
+                    // Note: Actual usage (used_bytes) is not available through Kubernetes API
+                    // It would need to be obtained from:
+                    // 1. Kubelet metrics endpoint (kubelet_volume_stats_used_bytes)
+                    // 2. Storage provider APIs (CSI drivers, cloud storage APIs)
+                    // For now, we'll store capacity and leave used_bytes as null
+                    double? usedBytes = null;
+
+                    if (capacityBytes > 0)
+                    {
+                        await clickHouseService.WritePvcMetricsAsync(
+                            ns,
+                            pvcName,
+                            storageClass,
+                            status,
+                            capacityBytes,
+                            usedBytes,
+                            volumeName);
+
+                        var capacityFormatted = ResourceFormatter.FormatMemory(pvc.Status?.Capacity?.ContainsKey("storage") == true 
+                            ? pvc.Status.Capacity["storage"].ToString() 
+                            : capacityBytes.ToString());
+                        Console.WriteLine($"  PVC: {ns}/{pvcName} - Status: {status}, StorageClass: {storageClass}, Capacity: {capacityFormatted}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error collecting PVC metrics for namespace '{ns}': {ex.Message}");
+            }
+        }
+
+        Console.WriteLine();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error during PVC metrics collection: {ex.Message}");
     }
 }
 
