@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace AlertHawk.Metrics.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/metrics")]
 public class MetricsController : ControllerBase
 {
     private readonly ClickHouseService _clickHouseService;
@@ -195,6 +195,7 @@ public class MetricsController : ControllerBase
         }
         catch (Exception ex)
         {
+            SentrySdk.CaptureException(ex);
             return StatusCode(500, new { error = ex.Message });
         }
     }

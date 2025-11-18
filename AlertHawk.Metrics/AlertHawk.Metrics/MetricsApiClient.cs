@@ -78,6 +78,8 @@ public class MetricsApiClient : IDisposable
         var json = JsonSerializer.Serialize(request);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
+        Console.WriteLine($"calling API: {_apiBaseUrl}/api/metrics/pod with payload: {json}");
+        
         var response = await _retryPolicy.ExecuteAsync(async () =>
             await _httpClient.PostAsync($"{_apiBaseUrl}/api/metrics/pod", content));
 
