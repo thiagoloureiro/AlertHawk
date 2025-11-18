@@ -38,16 +38,8 @@ var clickHouseConnectionString = Environment.GetEnvironmentVariable("CLICKHOUSE_
 var clickHouseTableName = Environment.GetEnvironmentVariable("CLICKHOUSE_TABLE_NAME")
     ?? "k8s_metrics";
 
-var clusterName = Environment.GetEnvironmentVariable("CLUSTER_NAME");
-if (string.IsNullOrWhiteSpace(clusterName))
-{
-    Console.Error.WriteLine("ERROR: CLUSTER_NAME environment variable is required but not set!");
-    Console.Error.WriteLine("Please set the CLUSTER_NAME environment variable before starting the application.");
-    Environment.Exit(1);
-}
-
 builder.Services.AddSingleton<ClickHouseService>(sp => 
-    new ClickHouseService(clickHouseConnectionString, clusterName, clickHouseTableName));
+    new ClickHouseService(clickHouseConnectionString, "", clickHouseTableName));
 
 var app = builder.Build();
 
