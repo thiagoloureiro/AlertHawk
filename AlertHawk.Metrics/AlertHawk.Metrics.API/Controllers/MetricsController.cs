@@ -211,6 +211,7 @@ public class MetricsController : ControllerBase
     {
         try
         {
+            Console.WriteLine($"Received PVC metric: Namespace={request.Namespace}, PvcName={request.PvcName}, StorageClass={request.StorageClass}, Status={request.Status}, CapacityBytes={request.CapacityBytes}, UsedBytes={request.UsedBytes}, VolumeName={request.VolumeName}, ClusterName={request.ClusterName}");
             var clusterName = !string.IsNullOrWhiteSpace(request.ClusterName) 
                 ? request.ClusterName 
                 : null;
@@ -228,6 +229,7 @@ public class MetricsController : ControllerBase
         }
         catch (Exception ex)
         {
+            Console.WriteLine(ex.Message);
             SentrySdk.CaptureException(ex);
             return StatusCode(500, new { error = ex.Message });
         }
