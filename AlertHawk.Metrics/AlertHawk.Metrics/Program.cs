@@ -64,7 +64,11 @@ using var apiClient = new MetricsApiClient(apiBaseUrl, clusterName);
 
 var config = KubernetesClientConfiguration.InClusterConfig();
 var client = new Kubernetes(config);
-var namespacesToWatch = new[] { "alerthawk", "traefik", "ilstudio" };
+
+// Fetch from Env Variables the namespaces to watch, or use defaults
+var namespacesEnv = Environment.GetEnvironmentVariable("NAMESPACES_TO_WATCH") ?? "alerthawk,traefik,ilstudio,clickhouse,thiagoloureiro";
+var namespacesToWatch = namespacesEnv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+Log.Information("Watching namespaces: {Namespaces}", string.Join(", ", namespacesToWatch));
 
 var cancellationTokenSource = new CancellationTokenSource();
 Console.CancelKeyPress += (sender, e) =>
