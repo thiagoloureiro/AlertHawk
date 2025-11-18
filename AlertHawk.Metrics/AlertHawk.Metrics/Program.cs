@@ -9,11 +9,8 @@ var collectionIntervalSeconds = int.TryParse(
     ? interval
     : 30;
 
-var clickHouseConnectionString = Environment.GetEnvironmentVariable("CLICKHOUSE_CONNECTION_STRING")
-    ?? "Host=localhost;Port=8123;Database=default;Username=default;Password=";
-
-var clickHouseTableName = Environment.GetEnvironmentVariable("CLICKHOUSE_TABLE_NAME")
-    ?? "k8s_metrics";
+var apiBaseUrl = Environment.GetEnvironmentVariable("METRICS_API_URL")
+    ?? "http://localhost:5000";
 
 var clusterName = Environment.GetEnvironmentVariable("CLUSTER_NAME");
 if (string.IsNullOrWhiteSpace(clusterName))
@@ -25,13 +22,12 @@ if (string.IsNullOrWhiteSpace(clusterName))
 
 Console.WriteLine($"Starting metrics collection service (interval: {collectionIntervalSeconds} seconds)");
 Console.WriteLine($"Cluster name: {clusterName}");
-Console.WriteLine($"ClickHouse connection: {clickHouseConnectionString.Replace("Password=", "Password=***")}");
-Console.WriteLine($"ClickHouse table: {clickHouseTableName}");
+Console.WriteLine($"Metrics API URL: {apiBaseUrl}");
 Console.WriteLine("Press Ctrl+C to stop...");
 Console.WriteLine();
 
-// Initialize ClickHouse service
-using var clickHouseService = new ClickHouseService(clickHouseConnectionString, clusterName, clickHouseTableName);
+// Initialize API client
+using var apiClient = new MetricsApiClient(apiBaseUrl, clusterName);
 
 var config = KubernetesClientConfiguration.InClusterConfig();
 var client = new Kubernetes(config);
@@ -50,9 +46,9 @@ try
 {
     while (!cancellationTokenSource.Token.IsCancellationRequested)
     {
-        await CollectMetricsAsync(client, namespacesToWatch, clickHouseService);
-        await CollectNodeMetricsAsync(client, clickHouseService);
-        await CollectPvcMetricsAsync(client, namespacesToWatch, clickHouseService);
+        await CollectMetricsAsync(client, namespacesToWatch, apiClient);
+        await CollectNodeMetricsAsync(client, apiClient);
+        await CollectPvcMetricsAsync(client, namespacesToWatch, apiClient);
         await Task.Delay(TimeSpan.FromSeconds(collectionIntervalSeconds), cancellationTokenSource.Token);
     }
 }
@@ -73,7 +69,7 @@ finally
 static async Task CollectMetricsAsync(
     Kubernetes client, 
     string[] namespacesToWatch,
-    ClickHouseService clickHouseService)
+    MetricsApiClient apiClient)
 {
     var jsonOptions = new JsonSerializerOptions
     {
@@ -158,13 +154,20 @@ static async Task CollectMetricsAsync(
 
                             if (memoryBytes > 0)
                             {
-                                await clickHouseService.WriteMetricsAsync(
-                                    item.Metadata.Namespace,
-                                    item.Metadata.Name,
-                                    container.Name,
-                                    cpuCores,
-                                    cpuLimitCores,
-                                    memoryBytes);
+                                try
+                                {
+                                    await apiClient.WritePodMetricAsync(
+                                        item.Metadata.Namespace,
+                                        item.Metadata.Name,
+                                        container.Name,
+                                        cpuCores,
+                                        cpuLimitCores,
+                                        memoryBytes);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"Error sending pod metric to API: {ex.Message}");
+                                }
                             }
 
                             var formattedCpu = ResourceFormatter.FormatCpu(container.Usage.Cpu, cpuLimit);
@@ -190,7 +193,7 @@ static async Task CollectMetricsAsync(
 
 static async Task CollectNodeMetricsAsync(
     Kubernetes client,
-    ClickHouseService clickHouseService)
+    MetricsApiClient apiClient)
 {
     var jsonOptions = new JsonSerializerOptions
     {
@@ -258,17 +261,24 @@ static async Task CollectNodeMetricsAsync(
 
                 if (memoryUsageBytes > 0)
                 {
-                    await clickHouseService.WriteNodeMetricsAsync(
-                        nodeName,
-                        cpuUsageCores,
-                        cpuCapacityCores,
-                        memoryUsageBytes,
-                        memoryCapacityBytes);
+                    try
+                    {
+                        await apiClient.WriteNodeMetricAsync(
+                            nodeName,
+                            cpuUsageCores,
+                            cpuCapacityCores,
+                            memoryUsageBytes,
+                            memoryCapacityBytes);
 
-                    var cpuPercent = cpuCapacityCores > 0 ? (cpuUsageCores / cpuCapacityCores * 100) : 0;
-                    var memoryPercent = memoryCapacityBytes > 0 ? (memoryUsageBytes / memoryCapacityBytes * 100) : 0;
+                        var cpuPercent = cpuCapacityCores > 0 ? (cpuUsageCores / cpuCapacityCores * 100) : 0;
+                        var memoryPercent = memoryCapacityBytes > 0 ? (memoryUsageBytes / memoryCapacityBytes * 100) : 0;
 
-                    Console.WriteLine($"  Node: {nodeName} - CPU: {cpuUsageCores:F2}/{cpuCapacityCores:F2} cores ({cpuPercent:F1}%), Memory: {ResourceFormatter.FormatMemory(nodeMetric.Usage.Memory)} ({memoryPercent:F1}%)");
+                        Console.WriteLine($"  Node: {nodeName} - CPU: {cpuUsageCores:F2}/{cpuCapacityCores:F2} cores ({cpuPercent:F1}%), Memory: {ResourceFormatter.FormatMemory(nodeMetric.Usage.Memory)} ({memoryPercent:F1}%)");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error sending node metric to API: {ex.Message}");
+                    }
                 }
             }
         }
@@ -284,7 +294,7 @@ static async Task CollectNodeMetricsAsync(
 static async Task CollectPvcMetricsAsync(
     Kubernetes client,
     string[] namespacesToWatch,
-    ClickHouseService clickHouseService)
+    MetricsApiClient apiClient)
 {
     try
     {
@@ -322,19 +332,26 @@ static async Task CollectPvcMetricsAsync(
 
                     if (capacityBytes > 0)
                     {
-                        await clickHouseService.WritePvcMetricsAsync(
-                            ns,
-                            pvcName,
-                            storageClass,
-                            status,
-                            capacityBytes,
-                            usedBytes,
-                            volumeName);
+                        try
+                        {
+                            await apiClient.WritePvcMetricAsync(
+                                ns,
+                                pvcName,
+                                storageClass,
+                                status,
+                                capacityBytes,
+                                usedBytes,
+                                volumeName);
 
-                        var capacityFormatted = ResourceFormatter.FormatMemory(pvc.Status?.Capacity?.ContainsKey("storage") == true 
-                            ? pvc.Status.Capacity["storage"].ToString() 
-                            : capacityBytes.ToString());
-                        Console.WriteLine($"  PVC: {ns}/{pvcName} - Status: {status}, StorageClass: {storageClass}, Capacity: {capacityFormatted}");
+                            var capacityFormatted = ResourceFormatter.FormatMemory(pvc.Status?.Capacity?.ContainsKey("storage") == true 
+                                ? pvc.Status.Capacity["storage"].ToString() 
+                                : capacityBytes.ToString());
+                            Console.WriteLine($"  PVC: {ns}/{pvcName} - Status: {status}, StorageClass: {storageClass}, Capacity: {capacityFormatted}");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error sending PVC metric to API: {ex.Message}");
+                        }
                     }
                 }
             }

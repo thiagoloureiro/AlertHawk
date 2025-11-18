@@ -1,5 +1,5 @@
 using System.Reflection;
-using AlertHawk.Metrics;
+using AlertHawk.Metrics.API.Services;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
 
@@ -38,8 +38,10 @@ var clickHouseConnectionString = Environment.GetEnvironmentVariable("CLICKHOUSE_
 var clickHouseTableName = Environment.GetEnvironmentVariable("CLICKHOUSE_TABLE_NAME")
     ?? "k8s_metrics";
 
+var clusterName = Environment.GetEnvironmentVariable("CLUSTER_NAME");
+
 builder.Services.AddSingleton<ClickHouseService>(sp => 
-    new ClickHouseService(clickHouseConnectionString, clickHouseTableName));
+    new ClickHouseService(clickHouseConnectionString, clusterName, clickHouseTableName));
 
 var app = builder.Build();
 

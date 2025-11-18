@@ -1,4 +1,5 @@
-using AlertHawk.Metrics;
+using AlertHawk.Metrics.API.Models;
+using AlertHawk.Metrics.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AlertHawk.Metrics.API.Controllers;
@@ -129,6 +130,96 @@ public class MetricsController : ControllerBase
         {
             var metrics = await _clickHouseService.GetPvcMetricsAsync(@namespace, pvcName, hours, limit);
             return Ok(metrics);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Write pod/container metrics
+    /// </summary>
+    /// <param name="request">Pod metric data</param>
+    /// <returns>Success status</returns>
+    [HttpPost("pod")]
+    public async Task<ActionResult> WritePodMetric([FromBody] PodMetricRequest request)
+    {
+        try
+        {
+            var clusterName = !string.IsNullOrWhiteSpace(request.ClusterName) 
+                ? request.ClusterName 
+                : null;
+
+            await _clickHouseService.WriteMetricsAsync(
+                request.Namespace,
+                request.Pod,
+                request.Container,
+                request.CpuUsageCores,
+                request.CpuLimitCores,
+                request.MemoryUsageBytes,
+                clusterName);
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Write node metrics
+    /// </summary>
+    /// <param name="request">Node metric data</param>
+    /// <returns>Success status</returns>
+    [HttpPost("node")]
+    public async Task<ActionResult> WriteNodeMetric([FromBody] NodeMetricRequest request)
+    {
+        try
+        {
+            var clusterName = !string.IsNullOrWhiteSpace(request.ClusterName) 
+                ? request.ClusterName 
+                : null;
+
+            await _clickHouseService.WriteNodeMetricsAsync(
+                request.NodeName,
+                request.CpuUsageCores,
+                request.CpuCapacityCores,
+                request.MemoryUsageBytes,
+                request.MemoryCapacityBytes,
+                clusterName);
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Write PVC metrics
+    /// </summary>
+    /// <param name="request">PVC metric data</param>
+    /// <returns>Success status</returns>
+    [HttpPost("pvc")]
+    public async Task<ActionResult> WritePvcMetric([FromBody] PvcMetricRequest request)
+    {
+        try
+        {
+            var clusterName = !string.IsNullOrWhiteSpace(request.ClusterName) 
+                ? request.ClusterName 
+                : null;
+
+            await _clickHouseService.WritePvcMetricsAsync(
+                request.Namespace,
+                request.PvcName,
+                request.StorageClass,
+                request.Status,
+                request.CapacityBytes,
+                request.UsedBytes,
+                request.VolumeName,
+                clusterName);
+            return Ok(new { success = true });
         }
         catch (Exception ex)
         {

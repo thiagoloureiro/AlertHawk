@@ -15,8 +15,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="ClickHouse.Client" Version="7.0.0" />
       <PackageReference Include="KubernetesClient" Version="18.0.5" />
+      <PackageReference Include="Polly" Version="8.6.4" />
     </ItemGroup>
 
 </Project>
