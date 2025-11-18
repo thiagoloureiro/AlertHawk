@@ -11,16 +11,11 @@ public class ClickHouseService : IDisposable
     private readonly string _clusterName;
     private readonly SemaphoreSlim _connectionSemaphore = new(1, 1);
 
-    public ClickHouseService(string connectionString, string? clusterName, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics")
+    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics")
     {
-        if (string.IsNullOrWhiteSpace(clusterName))
-        {
-            throw new ArgumentException("Cluster name is required and cannot be empty.", nameof(clusterName));
-        }
-
         _connectionString = connectionString;
         _database = ExtractDatabaseFromConnectionString(connectionString);
-        _clusterName = clusterName;
+        _clusterName = clusterName ?? string.Empty;
         _tableName = tableName;
         _nodeTableName = nodeTableName;
         EnsureTablesExistAsync().GetAwaiter().GetResult();
@@ -118,6 +113,11 @@ public class ClickHouseService : IDisposable
         double? cpuLimitCores,
         double memoryUsageBytes)
     {
+        if (string.IsNullOrWhiteSpace(_clusterName))
+        {
+            throw new InvalidOperationException("Cluster name is required for writing metrics. Please set CLUSTER_NAME environment variable.");
+        }
+
         await _connectionSemaphore.WaitAsync();
         try
         {
@@ -156,6 +156,11 @@ public class ClickHouseService : IDisposable
         double memoryUsageBytes,
         double memoryCapacityBytes)
     {
+        if (string.IsNullOrWhiteSpace(_clusterName))
+        {
+            throw new InvalidOperationException("Cluster name is required for writing metrics. Please set CLUSTER_NAME environment variable.");
+        }
+
         await _connectionSemaphore.WaitAsync();
         try
         {

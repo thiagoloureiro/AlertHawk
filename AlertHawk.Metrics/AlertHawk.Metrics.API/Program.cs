@@ -39,7 +39,7 @@ var clickHouseTableName = Environment.GetEnvironmentVariable("CLICKHOUSE_TABLE_N
     ?? "k8s_metrics";
 
 builder.Services.AddSingleton<ClickHouseService>(sp => 
-    new ClickHouseService(clickHouseConnectionString, "", clickHouseTableName));
+    new ClickHouseService(clickHouseConnectionString, clickHouseTableName));
 
 var app = builder.Build();
 
