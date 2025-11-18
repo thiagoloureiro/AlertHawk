@@ -11,7 +11,7 @@ public class ClickHouseService : IDisposable
     private readonly string _clusterName;
     private readonly SemaphoreSlim _connectionSemaphore = new(1, 1);
 
-    public ClickHouseService(string connectionString, string clusterName, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics")
+    public ClickHouseService(string connectionString, string? clusterName, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics")
     {
         if (string.IsNullOrWhiteSpace(clusterName))
         {
