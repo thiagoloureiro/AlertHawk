@@ -1,6 +1,24 @@
-﻿using System.Text.Json;
+﻿using System.Net.Http.Headers;
+using System.Text.Json;
 using AlertHawk.Metrics;
 using k8s;
+
+SentrySdk.Init(options =>
+{
+    // A Sentry Data Source Name (DSN) is required.
+    // See https://docs.sentry.io/product/sentry-basics/dsn-explainer/
+    // You can set it in the SENTRY_DSN environment variable, or you can set it in code here.
+    options.Dsn = "https://7539147312d4c51ccf970c6ddd0f15ca@o418696.ingest.us.sentry.io/4510386963283968";
+
+    // When debug is enabled, the Sentry client will emit detailed debugging information to the console.
+    // This might be helpful, or might interfere with the normal operation of your application.
+    // We enable it here for demonstration purposes when first trying Sentry.
+    // You shouldn't do this in your applications unless you're troubleshooting issues with Sentry.
+    options.Debug = false;
+
+    // This option is recommended. It enables Sentry's "Release Health" feature.
+    options.AutoSessionTracking = true;
+});
 
 // Read configuration from environment variables
 var collectionIntervalSeconds = int.TryParse(
@@ -300,6 +318,9 @@ static async Task CollectPvcMetricsAsync(
     {
         Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Collecting PVC metrics...");
 
+        // Cache Kubelet metrics per node to avoid repeated calls
+        var kubeletMetricsCache = new Dictionary<string, string?>();
+
         foreach (var ns in namespacesToWatch)
         {
             try
@@ -323,12 +344,8 @@ static async Task CollectPvcMetricsAsync(
                         capacityBytes = ParseMemoryToBytes(capacityStr);
                     }
 
-                    // Note: Actual usage (used_bytes) is not available through Kubernetes API
-                    // It would need to be obtained from:
-                    // 1. Kubelet metrics endpoint (kubelet_volume_stats_used_bytes)
-                    // 2. Storage provider APIs (CSI drivers, cloud storage APIs)
-                    // For now, we'll store capacity and leave used_bytes as null
-                    double? usedBytes = null;
+                    // Try to fetch usedBytes from Kubelet metrics endpoint
+                    double? usedBytes = await GetPvcUsedBytesFromKubeletAsync(client, ns, pvcName, kubeletMetricsCache);
 
                     if (capacityBytes > 0)
                     {
@@ -346,7 +363,8 @@ static async Task CollectPvcMetricsAsync(
                             var capacityFormatted = ResourceFormatter.FormatMemory(pvc.Status?.Capacity?.ContainsKey("storage") == true 
                                 ? pvc.Status.Capacity["storage"].ToString() 
                                 : capacityBytes.ToString());
-                            Console.WriteLine($"  PVC: {ns}/{pvcName} - Status: {status}, StorageClass: {storageClass}, Capacity: {capacityFormatted}, usedBytes: {usedBytes}");
+                            var usedFormatted = usedBytes.HasValue ? ResourceFormatter.FormatMemory(usedBytes.Value.ToString()) : "N/A";
+                            Console.WriteLine($"  PVC: {ns}/{pvcName} - Status: {status}, StorageClass: {storageClass}, Capacity: {capacityFormatted}, Used: {usedFormatted}");
                         }
                         catch (Exception ex)
                         {
@@ -367,6 +385,158 @@ static async Task CollectPvcMetricsAsync(
     {
         Console.WriteLine($"Error during PVC metrics collection: {ex.Message}");
     }
+}
+
+static async Task<double?> GetPvcUsedBytesFromKubeletAsync(
+    Kubernetes client,
+    string @namespace,
+    string pvcName,
+    Dictionary<string, string?> metricsCache)
+{
+    try
+    {
+        // Get list of nodes
+        var nodes = await client.CoreV1.ListNodeAsync();
+        
+        if (nodes.Items.Count == 0)
+        {
+            return null;
+        }
+
+        // Use the Kubernetes client's HttpClient directly for authenticated requests
+        // The Kubernetes client handles authentication automatically
+        var httpClient = client.HttpClient;
+
+        // Try to get metrics from each node until we find the metric
+        foreach (var node in nodes.Items)
+        {
+            var nodeName = node.Metadata?.Name;
+            if (string.IsNullOrWhiteSpace(nodeName))
+                continue;
+
+            try
+            {
+                // Check cache first
+                if (!metricsCache.TryGetValue(nodeName, out var metricsText))
+                {
+                    // Fetch metrics from Kubelet via Kubernetes API proxy
+                    // Endpoint: /api/v1/nodes/{nodeName}/proxy/metrics
+                    try
+                    {
+                        // Use the Kubernetes API proxy endpoint
+                        var baseUri = client.BaseUri?.ToString().TrimEnd('/') ?? "https://kubernetes.default.svc";
+                        var proxyUrl = $"{baseUri}/api/v1/nodes/{nodeName}/proxy/metrics";
+                        var response = await httpClient.GetAsync(proxyUrl);
+                        
+                        if (response.IsSuccessStatusCode)
+                        {
+                            metricsText = await response.Content.ReadAsStringAsync();
+                            metricsCache[nodeName] = metricsText;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"  Warning: Failed to fetch metrics from node '{nodeName}': {response.StatusCode}");
+                            metricsCache[nodeName] = null;
+                            continue;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"  Warning: Could not fetch metrics via proxy for node '{nodeName}': {ex.Message}");
+                        metricsCache[nodeName] = null;
+                        continue;
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(metricsText))
+                    continue;
+
+                // Parse the metric value
+                var usedBytes = ParseKubeletVolumeStatsUsedBytes(metricsText, @namespace, pvcName);
+                if (usedBytes.HasValue)
+                {
+                    return usedBytes;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log but continue to next node
+                Console.WriteLine($"  Warning: Could not fetch Kubelet metrics from node '{nodeName}': {ex.Message}");
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"  Warning: Error fetching Kubelet metrics: {ex.Message}");
+    }
+
+    return null;
+}
+
+static double? ParseKubeletVolumeStatsUsedBytes(string metricsText, string @namespace, string pvcName)
+{
+    if (string.IsNullOrWhiteSpace(metricsText))
+        return null;
+
+    // Look for the metric: kubelet_volume_stats_used_bytes{namespace="<namespace>",persistentvolumeclaim="<pvc-name>"} <value>
+    var metricName = "kubelet_volume_stats_used_bytes";
+    var lines = metricsText.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+    foreach (var line in lines)
+    {
+        var trimmedLine = line.Trim();
+        
+        // Skip comments
+        if (trimmedLine.StartsWith('#'))
+            continue;
+
+        // Check if this line contains our metric
+        if (!trimmedLine.StartsWith(metricName))
+            continue;
+
+        // Parse the metric line
+        // Format: kubelet_volume_stats_used_bytes{namespace="<ns>",persistentvolumeclaim="<pvc>"} <value>
+        var openBraceIndex = trimmedLine.IndexOf('{');
+        if (openBraceIndex < 0)
+            continue;
+
+        var closeBraceIndex = trimmedLine.IndexOf('}', openBraceIndex);
+        if (closeBraceIndex < 0)
+            continue;
+
+        // Extract labels
+        var labelsSection = trimmedLine.Substring(openBraceIndex + 1, closeBraceIndex - openBraceIndex - 1);
+        
+        // Check if namespace and pvcName match
+        var namespaceMatch = labelsSection.Contains($"namespace=\"{@namespace}\"", StringComparison.OrdinalIgnoreCase) ||
+                            labelsSection.Contains($"namespace='{@namespace}'", StringComparison.OrdinalIgnoreCase);
+        var pvcMatch = labelsSection.Contains($"persistentvolumeclaim=\"{pvcName}\"", StringComparison.OrdinalIgnoreCase) ||
+                      labelsSection.Contains($"persistentvolumeclaim='{pvcName}'", StringComparison.OrdinalIgnoreCase);
+
+        if (!namespaceMatch || !pvcMatch)
+            continue;
+
+        // Extract the value (after the closing brace)
+        var valueStart = closeBraceIndex + 1;
+        if (valueStart >= trimmedLine.Length)
+            continue;
+
+        var valuePart = trimmedLine.Substring(valueStart).Trim();
+        
+        // The value might be followed by a timestamp in some formats, so take the first part
+        var valueStr = valuePart.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+        
+        if (string.IsNullOrWhiteSpace(valueStr))
+            continue;
+
+        // Try to parse the value
+        if (double.TryParse(valueStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var value))
+        {
+            return value;
+        }
+    }
+
+    return null;
 }
 
 static double ParseMemoryToBytes(string? memoryValue)
