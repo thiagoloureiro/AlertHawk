@@ -346,7 +346,7 @@ static async Task CollectPvcMetricsAsync(
                             var capacityFormatted = ResourceFormatter.FormatMemory(pvc.Status?.Capacity?.ContainsKey("storage") == true 
                                 ? pvc.Status.Capacity["storage"].ToString() 
                                 : capacityBytes.ToString());
-                            Console.WriteLine($"  PVC: {ns}/{pvcName} - Status: {status}, StorageClass: {storageClass}, Capacity: {capacityFormatted}");
+                            Console.WriteLine($"  PVC: {ns}/{pvcName} - Status: {status}, StorageClass: {storageClass}, Capacity: {capacityFormatted}, usedBytes: {usedBytes}");
                         }
                         catch (Exception ex)
                         {

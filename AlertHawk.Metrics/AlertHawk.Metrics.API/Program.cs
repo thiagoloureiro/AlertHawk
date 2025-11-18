@@ -8,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 
+builder.WebHost.UseSentry();
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.EnableAnnotations();
