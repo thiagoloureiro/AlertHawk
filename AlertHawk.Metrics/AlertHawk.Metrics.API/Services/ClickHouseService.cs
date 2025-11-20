@@ -367,6 +367,45 @@ public class ClickHouseService : IClickHouseService, IDisposable
         }
     }
 
+    public async Task<List<string>> GetUniqueNamespaceNamesAsync()
+    {
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            // Get distinct namespace names from the metrics table
+            var query = $@"
+                SELECT DISTINCT namespace
+                FROM {_database}.{_tableName}
+                WHERE namespace != ''
+                ORDER BY namespace
+            ";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = query;
+            
+            var results = new List<string>();
+            await using var reader = await command.ExecuteReaderAsync();
+            
+            while (await reader.ReadAsync())
+            {
+                var namespaceName = reader.GetString(0);
+                if (!string.IsNullOrWhiteSpace(namespaceName))
+                {
+                    results.Add(namespaceName);
+                }
+            }
+
+            return results;
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
     public async Task CleanupMetricsAsync(int days)
     {
         await _connectionSemaphore.WaitAsync();

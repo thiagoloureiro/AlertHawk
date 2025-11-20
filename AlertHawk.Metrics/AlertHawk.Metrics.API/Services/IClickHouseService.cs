@@ -27,6 +27,8 @@ public interface IClickHouseService
 
     Task<List<string>> GetUniqueClusterNamesAsync();
 
+    Task<List<string>> GetUniqueNamespaceNamesAsync();
+
     Task CleanupMetricsAsync(int days);
 }
 

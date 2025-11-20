@@ -206,6 +206,25 @@ public class MetricsController : ControllerBase
     }
 
     /// <summary>
+    /// Get unique namespace names from the metrics table
+    /// </summary>
+    /// <returns>List of unique namespace names</returns>
+    [HttpGet("namespaces")]
+    [Authorize]
+    public async Task<ActionResult<List<string>>> GetUniqueNamespaceNames()
+    {
+        try
+        {
+            var namespaceNames = await _clickHouseService.GetUniqueNamespaceNamesAsync();
+            return Ok(namespaceNames);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Clean up metrics tables
     /// </summary>
     /// <param name="days">Number of days of retention. If 0, truncates both tables.</param>
