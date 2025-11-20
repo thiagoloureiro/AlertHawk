@@ -208,14 +208,15 @@ public class MetricsController : ControllerBase
     /// <summary>
     /// Get unique namespace names from the metrics table
     /// </summary>
+    /// <param name="clusterName">Optional cluster name filter</param>
     /// <returns>List of unique namespace names</returns>
     [HttpGet("namespaces")]
     [Authorize]
-    public async Task<ActionResult<List<string>>> GetUniqueNamespaceNames()
+    public async Task<ActionResult<List<string>>> GetUniqueNamespaceNames([FromQuery] string? clusterName = null)
     {
         try
         {
-            var namespaceNames = await _clickHouseService.GetUniqueNamespaceNamesAsync();
+            var namespaceNames = await _clickHouseService.GetUniqueNamespaceNamesAsync(clusterName);
             return Ok(namespaceNames);
         }
         catch (Exception ex)

@@ -367,7 +367,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         }
     }
 
-    public async Task<List<string>> GetUniqueNamespaceNamesAsync()
+    public async Task<List<string>> GetUniqueNamespaceNamesAsync(string? clusterName = null)
     {
         await _connectionSemaphore.WaitAsync();
         try
@@ -375,11 +375,19 @@ public class ClickHouseService : IClickHouseService, IDisposable
             await using var connection = new ClickHouseConnection(_connectionString);
             await connection.OpenAsync();
 
+            var effectiveClusterName = clusterName ?? _clusterName;
+            var whereClause = "namespace != ''";
+            if (!string.IsNullOrWhiteSpace(effectiveClusterName))
+            {
+                var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND cluster_name = '{escapedClusterName}'";
+            }
+
             // Get distinct namespace names from the metrics table
             var query = $@"
                 SELECT DISTINCT namespace
                 FROM {_database}.{_tableName}
-                WHERE namespace != ''
+                WHERE {whereClause}
                 ORDER BY namespace
             ";
 
