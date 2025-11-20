@@ -19,7 +19,28 @@ var configuration = new ConfigurationBuilder()
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 
-builder.WebHost.UseSentry();
+builder.WebHost.UseSentry(options =>
+    {
+        options.SetBeforeSend((sentryEvent, _) =>
+            {
+                if (
+                    sentryEvent.Level == SentryLevel.Error
+                    && sentryEvent.Logger?.Equals("Microsoft.IdentityModel.LoggingExtensions.IdentityLoggerAdapter",
+                        StringComparison.Ordinal) == true
+                    && sentryEvent.Message?.Message?.Contains("IDX10223", StringComparison.Ordinal) == true
+                    || sentryEvent.Message?.Message?.Contains("IDX10205", StringComparison.Ordinal) == true
+                    || sentryEvent.Message?.Message?.Contains("IDX10503", StringComparison.Ordinal) == true
+                )
+                {
+                    // Do not log 'IDX10223: Lifetime validation failed. The token is expired.'
+                    return null;
+                }
+
+                return sentryEvent;
+            }
+        );
+    }
+);
 
 builder.Services.AddSwaggerGen(c =>
 {
