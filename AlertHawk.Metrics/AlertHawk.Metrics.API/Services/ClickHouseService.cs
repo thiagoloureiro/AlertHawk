@@ -196,7 +196,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         }
     }
 
-    public async Task<List<PodMetricDto>> GetMetricsByNamespaceAsync(string? namespaceFilter = null, int? hours = 24, int limit = 100)
+    public async Task<List<PodMetricDto>> GetMetricsByNamespaceAsync(string? namespaceFilter = null, int? hours = 24, int limit = 100, string? clusterName = null)
     {
         await _connectionSemaphore.WaitAsync();
         try
@@ -204,7 +204,13 @@ public class ClickHouseService : IClickHouseService, IDisposable
             await using var connection = new ClickHouseConnection(_connectionString);
             await connection.OpenAsync();
 
+            var effectiveClusterName = clusterName ?? _clusterName;
             var whereClause = $"timestamp >= now() - INTERVAL {hours ?? 24} HOUR";
+            if (!string.IsNullOrWhiteSpace(effectiveClusterName))
+            {
+                var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND cluster_name = '{escapedClusterName}'";
+            }
             if (!string.IsNullOrWhiteSpace(namespaceFilter))
             {
                 var escapedNamespace = namespaceFilter.Replace("'", "''").Replace("\\", "\\\\");
@@ -255,7 +261,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         }
     }
 
-    public async Task<List<NodeMetricDto>> GetNodeMetricsAsync(string? nodeNameFilter = null, int? hours = 24, int limit = 100)
+    public async Task<List<NodeMetricDto>> GetNodeMetricsAsync(string? nodeNameFilter = null, int? hours = 24, int limit = 100, string? clusterName = null)
     {
         await _connectionSemaphore.WaitAsync();
         try
@@ -263,7 +269,13 @@ public class ClickHouseService : IClickHouseService, IDisposable
             await using var connection = new ClickHouseConnection(_connectionString);
             await connection.OpenAsync();
 
+            var effectiveClusterName = clusterName ?? _clusterName;
             var whereClause = $"timestamp >= now() - INTERVAL {hours ?? 24} HOUR";
+            if (!string.IsNullOrWhiteSpace(effectiveClusterName))
+            {
+                var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND cluster_name = '{escapedClusterName}'";
+            }
             if (!string.IsNullOrWhiteSpace(nodeNameFilter))
             {
                 var escapedNodeName = nodeNameFilter.Replace("'", "''").Replace("\\", "\\\\");

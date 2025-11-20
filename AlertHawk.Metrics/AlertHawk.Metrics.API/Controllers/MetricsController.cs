@@ -22,17 +22,19 @@ public class MetricsController : ControllerBase
     /// <param name="namespace">Optional namespace filter</param>
     /// <param name="hours">Number of hours to look back (default: 24)</param>
     /// <param name="limit">Maximum number of results (default: 100)</param>
+    /// <param name="clusterName"></param>
     /// <returns>List of pod/container metrics</returns>
     [HttpGet("namespace")]
     [Authorize]
     public async Task<ActionResult<List<PodMetricDto>>> GetMetricsByNamespace(
         [FromQuery] string? @namespace = null,
         [FromQuery] int? hours = 24,
-        [FromQuery] int limit = 100)
+        [FromQuery] int limit = 100,
+        [FromQuery] string? clusterName = null)
     {
         try
         {
-            var metrics = await _clickHouseService.GetMetricsByNamespaceAsync(@namespace, hours, limit);
+            var metrics = await _clickHouseService.GetMetricsByNamespaceAsync(@namespace, hours, limit, clusterName);
             return Ok(metrics);
         }
         catch (Exception ex)
@@ -72,17 +74,19 @@ public class MetricsController : ControllerBase
     /// <param name="nodeName">Optional node name filter</param>
     /// <param name="hours">Number of hours to look back (default: 24)</param>
     /// <param name="limit">Maximum number of results (default: 100)</param>
+    /// <param name="clusterName"></param>
     /// <returns>List of node metrics</returns>
     [HttpGet("node")]
     [Authorize]
     public async Task<ActionResult<List<NodeMetricDto>>> GetNodeMetrics(
         [FromQuery] string? nodeName = null,
         [FromQuery] int? hours = 24,
-        [FromQuery] int limit = 100)
+        [FromQuery] int limit = 100,
+        [FromQuery] string? clusterName = null)
     {
         try
         {
-            var metrics = await _clickHouseService.GetNodeMetricsAsync(nodeName, hours, limit);
+            var metrics = await _clickHouseService.GetNodeMetricsAsync(nodeName, hours, limit, clusterName);
             return Ok(metrics);
         }
         catch (Exception ex)
