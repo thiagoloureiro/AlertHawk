@@ -224,7 +224,6 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 FROM {_database}.{_tableName}
                 WHERE {whereClause}
                 ORDER BY timestamp DESC
-                LIMIT {limit}
             ";
 
             await using var command = connection.CreateCommand();
@@ -283,7 +282,6 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 FROM {_database}.{_nodeTableName}
                 WHERE {whereClause}
                 ORDER BY timestamp DESC
-                LIMIT {limit}
             ";
 
             await using var command = connection.CreateCommand();
