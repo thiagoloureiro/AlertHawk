@@ -7,7 +7,7 @@ using Serilog;
 
 namespace AlertHawk.Metrics;
 
-public class MetricsApiClient : IDisposable
+public class MetricsApiClient : IMetricsApiClient, IDisposable
 {
     private readonly HttpClient _httpClient;
     private readonly string _apiBaseUrl;

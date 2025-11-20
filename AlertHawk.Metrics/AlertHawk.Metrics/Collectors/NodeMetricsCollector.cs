@@ -11,6 +11,13 @@ public static class NodeMetricsCollector
         Kubernetes client,
         MetricsApiClient apiClient)
     {
+        await CollectAsync(new KubernetesClientWrapper(client), apiClient);
+    }
+
+    public static async Task CollectAsync(
+        IKubernetesClientWrapper clientWrapper,
+        IMetricsApiClient apiClient)
+    {
         var jsonOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
@@ -21,7 +28,7 @@ public static class NodeMetricsCollector
             Log.Information("Collecting node metrics...");
 
             // Get node list to retrieve capacity information
-            var nodes = await client.CoreV1.ListNodeAsync();
+            var nodes = await clientWrapper.ListNodeAsync();
             var nodeCapacities = new Dictionary<string, (double cpuCores, double memoryBytes)>();
 
             foreach (var node in nodes.Items)
@@ -53,7 +60,7 @@ public static class NodeMetricsCollector
             }
 
             // Get node metrics from metrics API
-            var nodeMetricsResponse = await client.CustomObjects.ListClusterCustomObjectAsync(
+            var nodeMetricsResponse = await clientWrapper.ListClusterCustomObjectAsync(
                 group: "metrics.k8s.io",
                 version: "v1beta1",
                 plural: "nodes");

@@ -9,9 +9,9 @@ namespace AlertHawk.Metrics.API.Controllers;
 [Route("api/metrics")]
 public class MetricsController : ControllerBase
 {
-    private readonly ClickHouseService _clickHouseService;
+    private readonly IClickHouseService _clickHouseService;
 
-    public MetricsController(ClickHouseService clickHouseService)
+    public MetricsController(IClickHouseService clickHouseService)
     {
         _clickHouseService = clickHouseService;
     }

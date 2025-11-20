@@ -52,7 +52,7 @@ var clickHouseTableName = Environment.GetEnvironmentVariable("CLICKHOUSE_TABLE_N
 
 var clusterName = Environment.GetEnvironmentVariable("CLUSTER_NAME");
 
-builder.Services.AddSingleton<ClickHouseService>(sp => 
+builder.Services.AddSingleton<IClickHouseService>(sp => 
     new ClickHouseService(clickHouseConnectionString, clusterName, clickHouseTableName));
 
 var issuers = configuration["Jwt:Issuers"] ??

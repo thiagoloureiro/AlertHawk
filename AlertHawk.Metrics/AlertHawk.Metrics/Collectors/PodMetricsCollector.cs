@@ -12,6 +12,14 @@ public static class PodMetricsCollector
         string[] namespacesToWatch,
         MetricsApiClient apiClient)
     {
+        await CollectAsync(new KubernetesClientWrapper(client), namespacesToWatch, apiClient);
+    }
+
+    public static async Task CollectAsync(
+        IKubernetesClientWrapper clientWrapper,
+        string[] namespacesToWatch,
+        IMetricsApiClient apiClient)
+    {
         var jsonOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
@@ -25,7 +33,7 @@ public static class PodMetricsCollector
             {
                 try
                 {
-                    var pods = await client.CoreV1.ListNamespacedPodAsync(ns);
+                    var pods = await clientWrapper.ListNamespacedPodAsync(ns);
 
                     // Build a dictionary of pod name -> container CPU limits
                     var podCpuLimits = new Dictionary<string, Dictionary<string, string>>();
@@ -58,7 +66,7 @@ public static class PodMetricsCollector
                             pod.Metadata.NamespaceProperty, pod.Metadata.Name, pod.Status.Phase);
                     }
 
-                    var response = await client.CustomObjects.ListClusterCustomObjectAsync(
+                    var response = await clientWrapper.ListClusterCustomObjectAsync(
                         group: "metrics.k8s.io",
                         version: "v1beta1",
                         plural: "pods");

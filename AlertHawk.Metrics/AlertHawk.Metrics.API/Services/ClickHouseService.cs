@@ -3,7 +3,7 @@ using AlertHawk.Metrics.API.Models;
 
 namespace AlertHawk.Metrics.API.Services;
 
-public class ClickHouseService : IDisposable
+public class ClickHouseService : IClickHouseService, IDisposable
 {
     private readonly string _connectionString;
     private readonly string _database;
