@@ -49,17 +49,19 @@ public class MetricsController : ControllerBase
     /// <param name="namespace">Namespace name</param>
     /// <param name="hours">Number of hours to look back (default: 24)</param>
     /// <param name="limit">Maximum number of results (default: 100)</param>
+    /// <param name="clusterName"></param>
     /// <returns>List of pod/container metrics for the namespace</returns>
     [HttpGet("namespace/{namespace}")]
     [Authorize]
     public async Task<ActionResult<List<PodMetricDto>>> GetMetricsByNamespaceName(
         string @namespace,
         [FromQuery] int? hours = 24,
-        [FromQuery] int limit = 100)
+        [FromQuery] int limit = 100,
+        [FromQuery] string? clusterName = null)
     {
         try
         {
-            var metrics = await _clickHouseService.GetMetricsByNamespaceAsync(@namespace, hours, limit);
+            var metrics = await _clickHouseService.GetMetricsByNamespaceAsync(@namespace, hours, limit, clusterName);
             return Ok(metrics);
         }
         catch (Exception ex)
@@ -101,17 +103,19 @@ public class MetricsController : ControllerBase
     /// <param name="nodeName">Node name</param>
     /// <param name="hours">Number of hours to look back (default: 24)</param>
     /// <param name="limit">Maximum number of results (default: 100)</param>
+    /// <param name="clusterName"></param>
     /// <returns>List of node metrics for the specified node</returns>
     [HttpGet("node/{nodeName}")]
     [Authorize]
     public async Task<ActionResult<List<NodeMetricDto>>> GetNodeMetricsByName(
         string nodeName,
         [FromQuery] int? hours = 24,
-        [FromQuery] int limit = 100)
+        [FromQuery] int limit = 100,
+        [FromQuery] string? clusterName = null)
     {
         try
         {
-            var metrics = await _clickHouseService.GetNodeMetricsAsync(nodeName, hours, limit);
+            var metrics = await _clickHouseService.GetNodeMetricsAsync(nodeName, hours, limit, clusterName);
             return Ok(metrics);
         }
         catch (Exception ex)
@@ -178,6 +182,25 @@ public class MetricsController : ControllerBase
         catch (Exception ex)
         {
             SentrySdk.CaptureException(ex);
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get unique cluster names from both node and namespace tables
+    /// </summary>
+    /// <returns>List of unique cluster names</returns>
+    [HttpGet("clusters")]
+    [Authorize]
+    public async Task<ActionResult<List<string>>> GetUniqueClusterNames()
+    {
+        try
+        {
+            var clusterNames = await _clickHouseService.GetUniqueClusterNamesAsync();
+            return Ok(clusterNames);
+        }
+        catch (Exception ex)
+        {
             return StatusCode(500, new { error = ex.Message });
         }
     }

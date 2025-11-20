@@ -324,6 +324,49 @@ public class ClickHouseService : IClickHouseService, IDisposable
         }
     }
 
+    public async Task<List<string>> GetUniqueClusterNamesAsync()
+    {
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            // Get distinct cluster names from both tables using UNION
+            var query = $@"
+                SELECT DISTINCT cluster_name
+                FROM (
+                    SELECT cluster_name FROM {_database}.{_tableName}
+                    UNION ALL
+                    SELECT cluster_name FROM {_database}.{_nodeTableName}
+                )
+                WHERE cluster_name != ''
+                ORDER BY cluster_name
+            ";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = query;
+            
+            var results = new List<string>();
+            await using var reader = await command.ExecuteReaderAsync();
+            
+            while (await reader.ReadAsync())
+            {
+                var clusterName = reader.GetString(0);
+                if (!string.IsNullOrWhiteSpace(clusterName))
+                {
+                    results.Add(clusterName);
+                }
+            }
+
+            return results;
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
     public async Task CleanupMetricsAsync(int days)
     {
         await _connectionSemaphore.WaitAsync();

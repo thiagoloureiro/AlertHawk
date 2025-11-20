@@ -25,6 +25,8 @@ public interface IClickHouseService
 
     Task<List<NodeMetricDto>> GetNodeMetricsAsync(string? nodeNameFilter = null, int? hours = 24, int limit = 100, string? clusterName = null);
 
+    Task<List<string>> GetUniqueClusterNamesAsync();
+
     Task CleanupMetricsAsync(int days);
 }
 
