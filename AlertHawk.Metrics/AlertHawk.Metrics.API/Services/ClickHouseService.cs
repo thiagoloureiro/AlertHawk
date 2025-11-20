@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using ClickHouse.Client.ADO;
 using AlertHawk.Metrics.API.Models;
 
 namespace AlertHawk.Metrics.API.Services;
 
+[ExcludeFromCodeCoverage]
 public class ClickHouseService : IClickHouseService, IDisposable
 {
     private readonly string _connectionString;
