@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using k8s;
 using k8s.Models;
 
@@ -6,6 +7,7 @@ namespace AlertHawk.Metrics.Collectors;
 /// <summary>
 /// Default implementation of IKubernetesClientWrapper that wraps the real Kubernetes client.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public class KubernetesClientWrapper : IKubernetesClientWrapper
 {
     private readonly Kubernetes _kubernetes;
