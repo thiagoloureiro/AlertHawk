@@ -1,8 +1,19 @@
 using System.Reflection;
+using System.Text;
 using AlertHawk.Metrics.API.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.Identity.Web;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", true, false)
+    .AddEnvironmentVariables()
+    .Build();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -44,6 +55,47 @@ var clusterName = Environment.GetEnvironmentVariable("CLUSTER_NAME");
 builder.Services.AddSingleton<ClickHouseService>(sp => 
     new ClickHouseService(clickHouseConnectionString, clusterName, clickHouseTableName));
 
+var issuers = configuration["Jwt:Issuers"] ??
+              "issuer";
+
+var audiences = configuration["Jwt:Audiences"] ??
+                "aud";
+
+var key = configuration["Jwt:Key"] ?? "fakeKey";
+
+// Add services to the container
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer("JwtBearer", options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuers = issuers.Split(","),
+            ValidateAudience = true,
+            ValidAudiences = audiences.Split(","),
+            ValidateIssuerSigningKey = false,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+            RequireExpirationTime = true,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
+        };
+    })
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"), jwtBearerScheme: "AzureAd");
+
+builder.Services.AddAuthorization(options =>
+{
+    var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(
+        "JwtBearer",
+        "AzureAd"
+    );
+    defaultAuthorizationPolicyBuilder = defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
+    options.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -61,6 +113,9 @@ if (app.Environment.IsDevelopment())
     });
     app.UseSwaggerUI();
 }
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseHttpsRedirection();
 app.MapControllers();

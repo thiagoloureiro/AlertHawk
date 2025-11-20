@@ -24,6 +24,7 @@ public class MetricsController : ControllerBase
     /// <param name="limit">Maximum number of results (default: 100)</param>
     /// <returns>List of pod/container metrics</returns>
     [HttpGet("namespace")]
+    [Authorize]
     public async Task<ActionResult<List<PodMetricDto>>> GetMetricsByNamespace(
         [FromQuery] string? @namespace = null,
         [FromQuery] int? hours = 24,
@@ -48,6 +49,7 @@ public class MetricsController : ControllerBase
     /// <param name="limit">Maximum number of results (default: 100)</param>
     /// <returns>List of pod/container metrics for the namespace</returns>
     [HttpGet("namespace/{namespace}")]
+    [Authorize]
     public async Task<ActionResult<List<PodMetricDto>>> GetMetricsByNamespaceName(
         string @namespace,
         [FromQuery] int? hours = 24,
@@ -72,6 +74,7 @@ public class MetricsController : ControllerBase
     /// <param name="limit">Maximum number of results (default: 100)</param>
     /// <returns>List of node metrics</returns>
     [HttpGet("node")]
+    [Authorize]
     public async Task<ActionResult<List<NodeMetricDto>>> GetNodeMetrics(
         [FromQuery] string? nodeName = null,
         [FromQuery] int? hours = 24,
@@ -96,6 +99,7 @@ public class MetricsController : ControllerBase
     /// <param name="limit">Maximum number of results (default: 100)</param>
     /// <returns>List of node metrics for the specified node</returns>
     [HttpGet("node/{nodeName}")]
+    [Authorize]
     public async Task<ActionResult<List<NodeMetricDto>>> GetNodeMetricsByName(
         string nodeName,
         [FromQuery] int? hours = 24,
