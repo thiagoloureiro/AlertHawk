@@ -178,4 +178,28 @@ public class MetricsController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Clean up metrics tables
+    /// </summary>
+    /// <param name="days">Number of days of retention. If 0, truncates both tables.</param>
+    /// <returns>Success status with information about the cleanup operation</returns>
+    [HttpDelete("cleanup")]
+    [Authorize]
+    public async Task<ActionResult> CleanupMetrics([FromQuery] int days = 0)
+    {
+        try
+        {
+            await _clickHouseService.CleanupMetricsAsync(days);
+            var message = days == 0 
+                ? "Both tables (k8s_metrics and k8s_node_metrics) have been truncated." 
+                : $"Records older than {days} days have been deleted from both tables (k8s_metrics and k8s_node_metrics).";
+            return Ok(new { success = true, message });
+        }
+        catch (Exception ex)
+        {
+            SentrySdk.CaptureException(ex);
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
 }

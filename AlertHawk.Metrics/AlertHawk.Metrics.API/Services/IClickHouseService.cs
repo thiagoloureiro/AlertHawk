@@ -24,5 +24,7 @@ public interface IClickHouseService
     Task<List<PodMetricDto>> GetMetricsByNamespaceAsync(string? namespaceFilter = null, int? hours = 24, int limit = 100);
 
     Task<List<NodeMetricDto>> GetNodeMetricsAsync(string? nodeNameFilter = null, int? hours = 24, int limit = 100);
+
+    Task CleanupMetricsAsync(int days);
 }
 

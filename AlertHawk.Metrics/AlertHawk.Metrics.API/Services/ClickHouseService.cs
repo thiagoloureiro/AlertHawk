@@ -314,6 +314,56 @@ public class ClickHouseService : IClickHouseService, IDisposable
         }
     }
 
+    public async Task CleanupMetricsAsync(int days)
+    {
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            await using var useDbCommand = connection.CreateCommand();
+            useDbCommand.CommandText = $"USE {_database}";
+            await useDbCommand.ExecuteNonQueryAsync();
+
+            if (days == 0)
+            {
+                // Truncate both tables
+                await using var truncateMetricsCommand = connection.CreateCommand();
+                truncateMetricsCommand.CommandText = $"TRUNCATE TABLE IF EXISTS {_database}.{_tableName}";
+                await truncateMetricsCommand.ExecuteNonQueryAsync();
+
+                await using var truncateNodeMetricsCommand = connection.CreateCommand();
+                truncateNodeMetricsCommand.CommandText = $"TRUNCATE TABLE IF EXISTS {_database}.{_nodeTableName}";
+                await truncateNodeMetricsCommand.ExecuteNonQueryAsync();
+            }
+            else
+            {
+                // Delete records older than the specified number of days
+                var cutoffDate = DateTime.UtcNow.AddDays(-days);
+                var cutoffDateString = cutoffDate.ToString("yyyy-MM-dd HH:mm:ss.fff");
+
+                await using var deleteMetricsCommand = connection.CreateCommand();
+                deleteMetricsCommand.CommandText = $@"
+                    ALTER TABLE {_database}.{_tableName}
+                    DELETE WHERE timestamp < '{cutoffDateString}'
+                ";
+                await deleteMetricsCommand.ExecuteNonQueryAsync();
+
+                await using var deleteNodeMetricsCommand = connection.CreateCommand();
+                deleteNodeMetricsCommand.CommandText = $@"
+                    ALTER TABLE {_database}.{_nodeTableName}
+                    DELETE WHERE timestamp < '{cutoffDateString}'
+                ";
+                await deleteNodeMetricsCommand.ExecuteNonQueryAsync();
+            }
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
     public void Dispose()
     {
         _connectionSemaphore?.Dispose();
