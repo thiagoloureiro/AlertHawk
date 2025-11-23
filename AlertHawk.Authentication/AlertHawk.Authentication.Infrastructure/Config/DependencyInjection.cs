@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddTransient<IUserRepository, UserRepository>();
         services.AddTransient<IUsersMonitorGroupRepository, UsersMonitorGroupRepository>();
         services.AddTransient<IUserActionRepository, UserActionRepository>();
+        services.AddTransient<IUserClustersRepository, UserClustersRepository>();
         return services;
     }
 }
