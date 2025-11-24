@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -7,6 +8,7 @@ using Serilog;
 
 namespace AlertHawk.Metrics;
 
+[ExcludeFromCodeCoverage]
 public class MetricsApiClient : IMetricsApiClient, IDisposable
 {
     private readonly HttpClient _httpClient;
