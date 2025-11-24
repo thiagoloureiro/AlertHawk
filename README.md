@@ -25,7 +25,6 @@ Create a new account or login with any personal Microsoft Account and try it!
 **Cloud Ready:** AlertHawk is designed to seamlessly integrate with cloud environments, providing flexibility and adaptability to your infrastructure. Whether you're hosted on-premises or in the cloud, AlertHawk has you covered.
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/20da64ba9f9d48abb0733064d2491da4)](https://app.codacy.com/gh/thiagoloureiro/AlertHawk/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![codebeat badge](https://codebeat.co/badges/793a050a-d71c-404a-8cef-f747c4114be8)](https://codebeat.co/projects/github-com-thiagoloureiro-alerthawk-main)
 
 ## AlertHawk.Notification - Docker Container
 ![Docker Image Size (tag)](https://img.shields.io/docker/image-size/thiagoguaru/alerthawk.notification/latest)
@@ -44,6 +43,13 @@ Create a new account or login with any personal Microsoft Account and try it!
 [![Build status](https://thiagoguaru.visualstudio.com/AlertHawk/_apis/build/status/AlertHawk.Monitoring%20-%20Docker)](https://thiagoguaru.visualstudio.com/AlertHawk/_build/latest?definitionId=11)
 ![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/thiagoguaru/alerthawk/12)
 ![Azure DevOps tests](https://img.shields.io/azure-devops/tests/thiagoguaru/alerthawk/12)
+
+## AlertHawk.Metrics - Docker Container
+![Docker Image Size (tag)](https://img.shields.io/docker/image-size/thiagoguaru/alerthawk.metrics.api/latest)
+![Docker Image Size (tag)](https://img.shields.io/docker/image-size/thiagoguaru/alerthawk.metrics/latest)
+[![Build status](https://dev.azure.com/thiagoguaru/AlertHawk/_apis/build/status/AlertHawk.Monitoring/AlertHawk.Metrics%20-%20Tests)](https://dev.azure.com/thiagoguaru/AlertHawk/_build/latest?definitionId=54)
+![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/thiagoguaru/alerthawk/54)
+![Azure DevOps tests](https://img.shields.io/azure-devops/tests/thiagoguaru/alerthawk/54)
 
 ## Contributors
 
