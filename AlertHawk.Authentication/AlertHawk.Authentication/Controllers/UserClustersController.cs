@@ -57,7 +57,7 @@ public class UserClustersController : Controller
     }
 
     [HttpPost("CreateOrUpdate")]
-    [SwaggerOperation(Summary = "Add or update multiple clusters for a user")]
+    [SwaggerOperation(Summary = "Add or update multiple clusters for a user. Send empty list to remove all clusters.")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -74,9 +74,9 @@ public class UserClustersController : Controller
             return BadRequest(ModelState);
         }
 
-        if (request.Clusters == null || !request.Clusters.Any())
+        if (request.Clusters == null)
         {
-            return BadRequest(new Message("Clusters list cannot be empty"));
+            return BadRequest(new Message("Clusters list cannot be null"));
         }
 
         try
