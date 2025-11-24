@@ -2,6 +2,7 @@ using AlertHawk.Application.Config;
 using AlertHawk.Authentication.Filters;
 using AlertHawk.Authentication.Helpers;
 using AlertHawk.Authentication.Infrastructure.Config;
+using AlertHawk.Authentication.Infrastructure.Interfaces;
 using EasyMemoryCache.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -185,6 +186,13 @@ if (string.Equals(sentryEnabled, "true", StringComparison.InvariantCultureIgnore
 }
 
 var app = builder.Build();
+
+// Initialize database tables
+using (var scope = app.Services.CreateScope())
+{
+    var userClustersRepository = scope.ServiceProvider.GetRequiredService<IUserClustersRepository>();
+    await userClustersRepository.EnsureTableExistsAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
