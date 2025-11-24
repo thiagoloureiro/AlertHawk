@@ -1,4 +1,5 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS base
+RUN apk update && apk upgrade
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
