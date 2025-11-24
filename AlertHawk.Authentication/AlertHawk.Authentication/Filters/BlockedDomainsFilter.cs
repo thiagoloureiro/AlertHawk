@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -5,6 +6,7 @@ using System.Security.Claims;
 
 namespace AlertHawk.Authentication.Filters;
 
+[ExcludeFromCodeCoverage]
 public class BlockedDomainsFilter : IActionFilter
 {
     public void OnActionExecuting(ActionExecutingContext context)
