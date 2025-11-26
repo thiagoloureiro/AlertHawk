@@ -73,7 +73,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 container String,
                 cpu_usage_cores Float64,
                 cpu_limit_cores Nullable(Float64),
-                memory_usage_bytes Float64
+                memory_usage_bytes Float64,
+                node_name Nullable(String)
             )
             ENGINE = MergeTree()
             ORDER BY (timestamp, cluster_name, namespace, pod, container)
@@ -84,6 +85,22 @@ public class ClickHouseService : IClickHouseService, IDisposable
         command.CommandText = createTableSql;
         await command.ExecuteNonQueryAsync();
         Console.WriteLine($"Table '{_database}.{_tableName}' ensured to exist");
+
+        // Add node_name column if it doesn't exist (for existing tables)
+        try
+        {
+            await using var alterCommand = connection.CreateCommand();
+            alterCommand.CommandText = $@"
+                ALTER TABLE {_database}.{_tableName}
+                ADD COLUMN IF NOT EXISTS node_name Nullable(String)
+            ";
+            await alterCommand.ExecuteNonQueryAsync();
+            Console.WriteLine($"Column 'node_name' ensured to exist in '{_database}.{_tableName}'");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not add node_name column (it may already exist): {ex.Message}");
+        }
 
         // Create node metrics table
         var createNodeTableSql = $@"
@@ -115,7 +132,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
         double cpuUsageCores,
         double? cpuLimitCores,
         double memoryUsageBytes,
-        string? clusterName = null)
+        string? clusterName = null,
+        string? nodeName = null)
     {
         var effectiveClusterName = clusterName ?? _clusterName;
         if (string.IsNullOrWhiteSpace(effectiveClusterName))
@@ -135,13 +153,16 @@ public class ClickHouseService : IClickHouseService, IDisposable
             var escapedPod = pod.Replace("'", "''").Replace("\\", "\\\\");
             var escapedContainer = container.Replace("'", "''").Replace("\\", "\\\\");
             var cpuLimitValue = cpuLimitCores?.ToString("F6", System.Globalization.CultureInfo.InvariantCulture) ?? "NULL";
+            var nodeNameValue = !string.IsNullOrWhiteSpace(nodeName)
+                ? $"'{nodeName.Replace("'", "''").Replace("\\", "\\\\")}'"
+                : "NULL";
 
             var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
             var insertSql = $@"
                 INSERT INTO {_database}.{_tableName}
-                (timestamp, cluster_name, namespace, pod, container, cpu_usage_cores, cpu_limit_cores, memory_usage_bytes)
+                (timestamp, cluster_name, namespace, pod, container, cpu_usage_cores, cpu_limit_cores, memory_usage_bytes, node_name)
                 VALUES
-                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedPod}', '{escapedContainer}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuLimitValue}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)})
+                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedPod}', '{escapedContainer}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuLimitValue}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {nodeNameValue})
             ";
 
             await using var command = connection.CreateCommand();
@@ -226,7 +247,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     container,
                     cpu_usage_cores,
                     cpu_limit_cores,
-                    memory_usage_bytes
+                    memory_usage_bytes,
+                    node_name
                 FROM {_database}.{_tableName}
                 WHERE {whereClause}
                 ORDER BY timestamp DESC
@@ -249,7 +271,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     Container = reader.GetString(4),
                     CpuUsageCores = reader.GetDouble(5),
                     CpuLimitCores = reader.IsDBNull(6) ? null : reader.GetDouble(6),
-                    MemoryUsageBytes = reader.GetDouble(7)
+                    MemoryUsageBytes = reader.GetDouble(7),
+                    NodeName = reader.IsDBNull(8) ? null : reader.GetString(8)
                 });
             }
 

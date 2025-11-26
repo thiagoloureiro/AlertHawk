@@ -11,7 +11,8 @@ public interface IClickHouseService
         double cpuUsageCores,
         double? cpuLimitCores,
         double memoryUsageBytes,
-        string? clusterName = null);
+        string? clusterName = null,
+        string? nodeName = null);
 
     Task WriteNodeMetricsAsync(
         string nodeName,

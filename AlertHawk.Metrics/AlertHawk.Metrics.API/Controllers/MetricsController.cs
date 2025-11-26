@@ -146,7 +146,8 @@ public class MetricsController : ControllerBase
                 request.CpuUsageCores,
                 request.CpuLimitCores,
                 request.MemoryUsageBytes,
-                clusterName);
+                clusterName,
+                request.NodeName);
             return Ok(new { success = true });
         }
         catch (Exception ex)

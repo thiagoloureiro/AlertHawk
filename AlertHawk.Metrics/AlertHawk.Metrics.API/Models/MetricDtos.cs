@@ -10,6 +10,7 @@ public class PodMetricDto
     public double CpuUsageCores { get; set; }
     public double? CpuLimitCores { get; set; }
     public double MemoryUsageBytes { get; set; }
+    public string? NodeName { get; set; }
 }
 
 public class NodeMetricDto
@@ -32,6 +33,7 @@ public class PodMetricRequest
     public double CpuUsageCores { get; set; }
     public double? CpuLimitCores { get; set; }
     public double MemoryUsageBytes { get; set; }
+    public string? NodeName { get; set; }
 }
 
 public class NodeMetricRequest

@@ -11,7 +11,8 @@ public interface IMetricsApiClient
         string container,
         double cpuUsageCores,
         double? cpuLimitCores,
-        double memoryUsageBytes);
+        double memoryUsageBytes,
+        string? nodeName = null);
 
     Task WriteNodeMetricAsync(
         string nodeName,

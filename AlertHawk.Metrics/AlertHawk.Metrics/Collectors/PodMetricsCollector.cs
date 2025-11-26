@@ -37,6 +37,8 @@ public static class PodMetricsCollector
 
                     // Build a dictionary of pod name -> container CPU limits
                     var podCpuLimits = new Dictionary<string, Dictionary<string, string>>();
+                    // Build a dictionary of pod name -> node name
+                    var podNodeNames = new Dictionary<string, string>();
                     foreach (var pod in pods.Items)
                     {
                         var containerLimits = new Dictionary<string, string>();
@@ -58,6 +60,12 @@ public static class PodMetricsCollector
                             }
                         }
                         podCpuLimits[pod.Metadata.Name] = containerLimits;
+                        
+                        // Store node name for this pod
+                        if (!string.IsNullOrWhiteSpace(pod.Spec?.NodeName))
+                        {
+                            podNodeNames[pod.Metadata.Name] = pod.Spec.NodeName;
+                        }
                     }
 
                     foreach (var pod in pods.Items)
@@ -93,6 +101,11 @@ public static class PodMetricsCollector
                                     ? limit
                                     : null;
 
+                                // Get node name for this pod
+                                var nodeName = podNodeNames.TryGetValue(item.Metadata.Name, out var node)
+                                    ? node
+                                    : null;
+
                                 // Write metrics to ClickHouse
                                 var cpuCores = ResourceFormatter.ParseCpuToCores(container.Usage.Cpu);
                                 var memoryBytes = Utils.MemoryParser.ParseToBytes(container.Usage.Memory);
@@ -113,7 +126,8 @@ public static class PodMetricsCollector
                                             container.Name,
                                             cpuCores,
                                             cpuLimitCores,
-                                            memoryBytes);
+                                            memoryBytes,
+                                            nodeName);
                                     }
                                     catch (Exception ex)
                                     {

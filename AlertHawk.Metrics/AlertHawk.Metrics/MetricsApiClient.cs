@@ -71,7 +71,8 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
         string container,
         double cpuUsageCores,
         double? cpuLimitCores,
-        double memoryUsageBytes)
+        double memoryUsageBytes,
+        string? nodeName = null)
     {
         var request = new
         {
@@ -81,7 +82,8 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
             Container = container,
             CpuUsageCores = cpuUsageCores,
             CpuLimitCores = cpuLimitCores,
-            MemoryUsageBytes = memoryUsageBytes
+            MemoryUsageBytes = memoryUsageBytes,
+            NodeName = nodeName
         };
 
         var json = JsonSerializer.Serialize(request);
