@@ -104,7 +104,11 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
         double memoryUsageBytes,
         double memoryCapacityBytes,
         string? kubernetesVersion = null,
-        string? cloudProvider = null)
+        string? cloudProvider = null,
+        bool? isReady = null,
+        bool? hasMemoryPressure = null,
+        bool? hasDiskPressure = null,
+        bool? hasPidPressure = null)
     {
         var request = new
         {
@@ -115,7 +119,11 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
             MemoryUsageBytes = memoryUsageBytes,
             MemoryCapacityBytes = memoryCapacityBytes,
             KubernetesVersion = kubernetesVersion,
-            CloudProvider = cloudProvider
+            CloudProvider = cloudProvider,
+            IsReady = isReady,
+            HasMemoryPressure = hasMemoryPressure,
+            HasDiskPressure = hasDiskPressure,
+            HasPidPressure = hasPidPressure
         };
 
         var json = JsonSerializer.Serialize(request);

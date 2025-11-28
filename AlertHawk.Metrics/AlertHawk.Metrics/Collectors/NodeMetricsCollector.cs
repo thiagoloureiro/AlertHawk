@@ -52,14 +52,19 @@ public static class NodeMetricsCollector
                 Log.Warning(ex, "Could not detect cloud provider");
             }
 
-            // Get node list to retrieve capacity information
+            // Get node list to retrieve capacity information and conditions
             var nodes = await clientWrapper.ListNodeAsync();
             var nodeCapacities = new Dictionary<string, (double cpuCores, double memoryBytes)>();
+            var nodeConditions = new Dictionary<string, (bool? isReady, bool? hasMemoryPressure, bool? hasDiskPressure, bool? hasPidPressure)>();
 
             foreach (var node in nodes.Items)
             {
                 var cpuCapacity = 0.0;
                 var memoryCapacity = 0.0;
+                bool? isReady = null;
+                bool? hasMemoryPressure = null;
+                bool? hasDiskPressure = null;
+                bool? hasPidPressure = null;
 
                 if (node.Status?.Capacity != null)
                 {
@@ -78,9 +83,35 @@ public static class NodeMetricsCollector
                     }
                 }
 
+                // Extract node conditions
+                if (node.Status?.Conditions != null)
+                {
+                    foreach (var condition in node.Status.Conditions)
+                    {
+                        var isTrue = condition.Status?.Equals("True", StringComparison.OrdinalIgnoreCase) ?? false;
+                        
+                        switch (condition.Type?.ToLowerInvariant())
+                        {
+                            case "ready":
+                                isReady = isTrue;
+                                break;
+                            case "memorypressure":
+                                hasMemoryPressure = isTrue;
+                                break;
+                            case "diskpressure":
+                                hasDiskPressure = isTrue;
+                                break;
+                            case "pidpressure":
+                                hasPidPressure = isTrue;
+                                break;
+                        }
+                    }
+                }
+
                 if (node.Metadata?.Name != null)
                 {
                     nodeCapacities[node.Metadata.Name] = (cpuCapacity, memoryCapacity);
+                    nodeConditions[node.Metadata.Name] = (isReady, hasMemoryPressure, hasDiskPressure, hasPidPressure);
                 }
             }
 
@@ -107,6 +138,11 @@ public static class NodeMetricsCollector
                         ? capacity
                         : (0.0, 0.0);
 
+                    // Get conditions for this node
+                    var (isReady, hasMemoryPressure, hasDiskPressure, hasPidPressure) = nodeConditions.TryGetValue(nodeName, out var conditions)
+                        ? conditions
+                        : ((bool?)null, (bool?)null, (bool?)null, (bool?)null);
+
                     if (memoryUsageBytes > 0)
                     {
                         try
@@ -118,7 +154,11 @@ public static class NodeMetricsCollector
                                 memoryUsageBytes,
                                 memoryCapacityBytes,
                                 kubernetesVersion,
-                                cloudProvider);
+                                cloudProvider,
+                                isReady,
+                                hasMemoryPressure,
+                                hasDiskPressure,
+                                hasPidPressure);
 
                             var cpuPercent = cpuCapacityCores > 0 ? (cpuUsageCores / cpuCapacityCores * 100) : 0;
                             var memoryPercent = memoryCapacityBytes > 0 ? (memoryUsageBytes / memoryCapacityBytes * 100) : 0;

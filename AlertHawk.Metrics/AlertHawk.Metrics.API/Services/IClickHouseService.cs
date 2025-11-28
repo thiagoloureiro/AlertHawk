@@ -22,7 +22,11 @@ public interface IClickHouseService
         double memoryCapacityBytes,
         string? clusterName = null,
         string? kubernetesVersion = null,
-        string? cloudProvider = null);
+        string? cloudProvider = null,
+        bool? isReady = null,
+        bool? hasMemoryPressure = null,
+        bool? hasDiskPressure = null,
+        bool? hasPidPressure = null);
 
     Task<List<PodMetricDto>> GetMetricsByNamespaceAsync(string? namespaceFilter = null, int? hours = 24, int limit = 100, string? clusterName = null);
 

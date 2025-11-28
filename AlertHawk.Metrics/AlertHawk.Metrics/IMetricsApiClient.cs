@@ -21,6 +21,10 @@ public interface IMetricsApiClient
         double memoryUsageBytes,
         double memoryCapacityBytes,
         string? kubernetesVersion = null,
-        string? cloudProvider = null);
+        string? cloudProvider = null,
+        bool? isReady = null,
+        bool? hasMemoryPressure = null,
+        bool? hasDiskPressure = null,
+        bool? hasPidPressure = null);
 }
 

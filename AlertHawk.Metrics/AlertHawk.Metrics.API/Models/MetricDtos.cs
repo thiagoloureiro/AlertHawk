@@ -24,6 +24,10 @@ public class NodeMetricDto
     public double MemoryCapacityBytes { get; set; }
     public string? KubernetesVersion { get; set; }
     public string? CloudProvider { get; set; }
+    public bool? IsReady { get; set; }
+    public bool? HasMemoryPressure { get; set; }
+    public bool? HasDiskPressure { get; set; }
+    public bool? HasPidPressure { get; set; }
 }
 
 public class PodMetricRequest
@@ -48,5 +52,9 @@ public class NodeMetricRequest
     public double MemoryCapacityBytes { get; set; }
     public string? KubernetesVersion { get; set; }
     public string? CloudProvider { get; set; }
+    public bool? IsReady { get; set; }
+    public bool? HasMemoryPressure { get; set; }
+    public bool? HasDiskPressure { get; set; }
+    public bool? HasPidPressure { get; set; }
 }
 
