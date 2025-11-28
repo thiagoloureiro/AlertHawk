@@ -27,6 +27,31 @@ public static class NodeMetricsCollector
         {
             Log.Information("Collecting node metrics...");
 
+            // Fetch Kubernetes version and cloud provider once per collection cycle
+            string? kubernetesVersion = null;
+            string? cloudProvider = null;
+            
+            try
+            {
+                var version = await clientWrapper.GetVersionAsync();
+                kubernetesVersion = version.GitVersion;
+                Log.Debug("Kubernetes version: {Version}", kubernetesVersion);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Could not fetch Kubernetes version");
+            }
+
+            try
+            {
+                cloudProvider = await clientWrapper.DetectCloudProviderAsync();
+                Log.Debug("Cloud provider: {Provider}", cloudProvider);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Could not detect cloud provider");
+            }
+
             // Get node list to retrieve capacity information
             var nodes = await clientWrapper.ListNodeAsync();
             var nodeCapacities = new Dictionary<string, (double cpuCores, double memoryBytes)>();
@@ -91,7 +116,9 @@ public static class NodeMetricsCollector
                                 cpuUsageCores,
                                 cpuCapacityCores,
                                 memoryUsageBytes,
-                                memoryCapacityBytes);
+                                memoryCapacityBytes,
+                                kubernetesVersion,
+                                cloudProvider);
 
                             var cpuPercent = cpuCapacityCores > 0 ? (cpuUsageCores / cpuCapacityCores * 100) : 0;
                             var memoryPercent = memoryCapacityBytes > 0 ? (memoryUsageBytes / memoryCapacityBytes * 100) : 0;

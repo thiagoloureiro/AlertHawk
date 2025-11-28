@@ -22,6 +22,8 @@ public class NodeMetricDto
     public double CpuCapacityCores { get; set; }
     public double MemoryUsageBytes { get; set; }
     public double MemoryCapacityBytes { get; set; }
+    public string? KubernetesVersion { get; set; }
+    public string? CloudProvider { get; set; }
 }
 
 public class PodMetricRequest
@@ -44,5 +46,7 @@ public class NodeMetricRequest
     public double CpuCapacityCores { get; set; }
     public double MemoryUsageBytes { get; set; }
     public double MemoryCapacityBytes { get; set; }
+    public string? KubernetesVersion { get; set; }
+    public string? CloudProvider { get; set; }
 }
 

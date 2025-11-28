@@ -177,7 +177,9 @@ public class MetricsController : ControllerBase
                 request.CpuCapacityCores,
                 request.MemoryUsageBytes,
                 request.MemoryCapacityBytes,
-                clusterName);
+                clusterName,
+                request.KubernetesVersion,
+                request.CloudProvider);
             return Ok(new { success = true });
         }
         catch (Exception ex)

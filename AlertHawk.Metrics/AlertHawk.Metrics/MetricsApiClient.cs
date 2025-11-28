@@ -102,7 +102,9 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
         double cpuUsageCores,
         double cpuCapacityCores,
         double memoryUsageBytes,
-        double memoryCapacityBytes)
+        double memoryCapacityBytes,
+        string? kubernetesVersion = null,
+        string? cloudProvider = null)
     {
         var request = new
         {
@@ -111,7 +113,9 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
             CpuUsageCores = cpuUsageCores,
             CpuCapacityCores = cpuCapacityCores,
             MemoryUsageBytes = memoryUsageBytes,
-            MemoryCapacityBytes = memoryCapacityBytes
+            MemoryCapacityBytes = memoryCapacityBytes,
+            KubernetesVersion = kubernetesVersion,
+            CloudProvider = cloudProvider
         };
 
         var json = JsonSerializer.Serialize(request);

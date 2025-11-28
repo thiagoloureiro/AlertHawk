@@ -112,7 +112,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 cpu_usage_cores Float64,
                 cpu_capacity_cores Float64,
                 memory_usage_bytes Float64,
-                memory_capacity_bytes Float64
+                memory_capacity_bytes Float64,
+                kubernetes_version Nullable(String),
+                cloud_provider Nullable(String)
             )
             ENGINE = MergeTree()
             ORDER BY (timestamp, cluster_name, node_name)
@@ -123,6 +125,30 @@ public class ClickHouseService : IClickHouseService, IDisposable
         nodeCommand.CommandText = createNodeTableSql;
         await nodeCommand.ExecuteNonQueryAsync();
         Console.WriteLine($"Table '{_database}.{_nodeTableName}' ensured to exist");
+
+        // Add kubernetes_version and cloud_provider columns if they don't exist (for existing tables)
+        try
+        {
+            await using var alterCommand1 = connection.CreateCommand();
+            alterCommand1.CommandText = $@"
+                ALTER TABLE {_database}.{_nodeTableName}
+                ADD COLUMN IF NOT EXISTS kubernetes_version Nullable(String)
+            ";
+            await alterCommand1.ExecuteNonQueryAsync();
+            
+            await using var alterCommand2 = connection.CreateCommand();
+            alterCommand2.CommandText = $@"
+                ALTER TABLE {_database}.{_nodeTableName}
+                ADD COLUMN IF NOT EXISTS cloud_provider Nullable(String)
+            ";
+            await alterCommand2.ExecuteNonQueryAsync();
+            
+            Console.WriteLine($"Columns 'kubernetes_version' and 'cloud_provider' ensured to exist in '{_database}.{_nodeTableName}'");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not add kubernetes_version/cloud_provider columns (they may already exist): {ex.Message}");
+        }
     }
 
     public async Task WriteMetricsAsync(
@@ -181,7 +207,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
         double cpuCapacityCores,
         double memoryUsageBytes,
         double memoryCapacityBytes,
-        string? clusterName = null)
+        string? clusterName = null,
+        string? kubernetesVersion = null,
+        string? cloudProvider = null)
     {
         var effectiveClusterName = clusterName ?? _clusterName;
         if (string.IsNullOrWhiteSpace(effectiveClusterName))
@@ -198,13 +226,19 @@ public class ClickHouseService : IClickHouseService, IDisposable
             // Use ClickHouse format with proper escaping
             var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
             var escapedNodeName = nodeName.Replace("'", "''").Replace("\\", "\\\\");
+            var kubernetesVersionValue = !string.IsNullOrWhiteSpace(kubernetesVersion)
+                ? $"'{kubernetesVersion.Replace("'", "''").Replace("\\", "\\\\")}'"
+                : "NULL";
+            var cloudProviderValue = !string.IsNullOrWhiteSpace(cloudProvider)
+                ? $"'{cloudProvider.Replace("'", "''").Replace("\\", "\\\\")}'"
+                : "NULL";
 
             var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
             var insertSql = $@"
                 INSERT INTO {_database}.{_nodeTableName}
-                (timestamp, cluster_name, node_name, cpu_usage_cores, cpu_capacity_cores, memory_usage_bytes, memory_capacity_bytes)
+                (timestamp, cluster_name, node_name, cpu_usage_cores, cpu_capacity_cores, memory_usage_bytes, memory_capacity_bytes, kubernetes_version, cloud_provider)
                 VALUES
-                ('{timestamp}', '{escapedClusterName}', '{escapedNodeName}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuCapacityCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {memoryCapacityBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)})
+                ('{timestamp}', '{escapedClusterName}', '{escapedNodeName}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuCapacityCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {memoryCapacityBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {kubernetesVersionValue}, {cloudProviderValue})
             ";
 
             await using var command = connection.CreateCommand();
@@ -313,7 +347,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     cpu_usage_cores,
                     cpu_capacity_cores,
                     memory_usage_bytes,
-                    memory_capacity_bytes
+                    memory_capacity_bytes,
+                    kubernetes_version,
+                    cloud_provider
                 FROM {_database}.{_nodeTableName}
                 WHERE {whereClause}
                 ORDER BY timestamp DESC
@@ -335,7 +371,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     CpuUsageCores = reader.GetDouble(3),
                     CpuCapacityCores = reader.GetDouble(4),
                     MemoryUsageBytes = reader.GetDouble(5),
-                    MemoryCapacityBytes = reader.GetDouble(6)
+                    MemoryCapacityBytes = reader.GetDouble(6),
+                    KubernetesVersion = reader.IsDBNull(7) ? null : reader.GetString(7),
+                    CloudProvider = reader.IsDBNull(8) ? null : reader.GetString(8)
                 });
             }
 

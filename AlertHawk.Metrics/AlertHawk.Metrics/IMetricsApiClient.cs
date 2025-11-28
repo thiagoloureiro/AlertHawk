@@ -19,6 +19,8 @@ public interface IMetricsApiClient
         double cpuUsageCores,
         double cpuCapacityCores,
         double memoryUsageBytes,
-        double memoryCapacityBytes);
+        double memoryCapacityBytes,
+        string? kubernetesVersion = null,
+        string? cloudProvider = null);
 }
 
