@@ -39,5 +39,20 @@ public interface IClickHouseService
     Task<List<string>> GetUniqueNamespaceNamesAsync(string? clusterName = null);
 
     Task CleanupMetricsAsync(int days);
+
+    Task WritePodLogAsync(
+        string @namespace,
+        string pod,
+        string container,
+        string logContent,
+        string? clusterName = null);
+
+    Task<List<PodLogDto>> GetPodLogsAsync(
+        string? namespaceFilter = null,
+        string? podFilter = null,
+        string? containerFilter = null,
+        int? hours = 24,
+        int limit = 100,
+        string? clusterName = null);
 }
 

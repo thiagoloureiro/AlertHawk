@@ -139,6 +139,33 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task WritePodLogAsync(
+        string @namespace,
+        string pod,
+        string container,
+        string logContent)
+    {
+        var request = new
+        {
+            ClusterName = _clusterName,
+            Namespace = @namespace,
+            Pod = pod,
+            Container = container,
+            LogContent = logContent
+        };
+
+        var json = JsonSerializer.Serialize(request);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        Log.Debug("Calling API: {ApiUrl}/api/metrics/pod/log with payload for {Namespace}/{Pod}/{Container}", 
+            _apiBaseUrl, @namespace, pod, container);
+        
+        var response = await _retryPolicy.ExecuteAsync(async () =>
+            await _httpClient.PostAsync($"{_apiBaseUrl}/api/metrics/pod/log", content));
+
+        response.EnsureSuccessStatusCode();
+    }
+
     public void Dispose()
     {
         _httpClient?.Dispose();

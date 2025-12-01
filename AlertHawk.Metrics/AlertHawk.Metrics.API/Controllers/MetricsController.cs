@@ -258,4 +258,126 @@ public class MetricsController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Write pod logs
+    /// </summary>
+    /// <param name="request">Pod log data</param>
+    /// <returns>Success status</returns>
+    [HttpPost("pod/log")]
+    [AllowAnonymous]
+    public async Task<ActionResult> WritePodLog([FromBody] PodLogRequest request)
+    {
+        try
+        {
+            var clusterName = !string.IsNullOrWhiteSpace(request.ClusterName) 
+                ? request.ClusterName 
+                : null;
+
+            await _clickHouseService.WritePodLogAsync(
+                request.Namespace,
+                request.Pod,
+                request.Container,
+                request.LogContent,
+                clusterName);
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get pod logs
+    /// </summary>
+    /// <param name="namespace">Optional namespace filter</param>
+    /// <param name="pod">Optional pod name filter</param>
+    /// <param name="container">Optional container name filter</param>
+    /// <param name="hours">Number of hours to look back (default: 24)</param>
+    /// <param name="limit">Maximum number of results (default: 100)</param>
+    /// <param name="clusterName">Optional cluster name filter</param>
+    /// <returns>List of pod logs</returns>
+    [HttpGet("pod/log")]
+    [Authorize]
+    public async Task<ActionResult<List<PodLogDto>>> GetPodLogs(
+        [FromQuery] string? @namespace = null,
+        [FromQuery] string? pod = null,
+        [FromQuery] string? container = null,
+        [FromQuery] int? hours = 24,
+        [FromQuery] int limit = 100,
+        [FromQuery] string? clusterName = null)
+    {
+        try
+        {
+            var logs = await _clickHouseService.GetPodLogsAsync(@namespace, pod, container, hours, limit, clusterName);
+            return Ok(logs);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get pod logs for a specific namespace
+    /// </summary>
+    /// <param name="namespace">Namespace name</param>
+    /// <param name="pod">Optional pod name filter</param>
+    /// <param name="container">Optional container name filter</param>
+    /// <param name="hours">Number of hours to look back (default: 24)</param>
+    /// <param name="limit">Maximum number of results (default: 100)</param>
+    /// <param name="clusterName">Optional cluster name filter</param>
+    /// <returns>List of pod logs for the namespace</returns>
+    [HttpGet("pod/log/namespace/{namespace}")]
+    [Authorize]
+    public async Task<ActionResult<List<PodLogDto>>> GetPodLogsByNamespace(
+        string @namespace,
+        [FromQuery] string? pod = null,
+        [FromQuery] string? container = null,
+        [FromQuery] int? hours = 24,
+        [FromQuery] int limit = 100,
+        [FromQuery] string? clusterName = null)
+    {
+        try
+        {
+            var logs = await _clickHouseService.GetPodLogsAsync(@namespace, pod, container, hours, limit, clusterName);
+            return Ok(logs);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get pod logs for a specific pod
+    /// </summary>
+    /// <param name="namespace">Namespace name</param>
+    /// <param name="pod">Pod name</param>
+    /// <param name="container">Optional container name filter</param>
+    /// <param name="hours">Number of hours to look back (default: 24)</param>
+    /// <param name="limit">Maximum number of results (default: 100)</param>
+    /// <param name="clusterName">Optional cluster name filter</param>
+    /// <returns>List of pod logs for the specified pod</returns>
+    [HttpGet("pod/log/namespace/{namespace}/pod/{pod}")]
+    [Authorize]
+    public async Task<ActionResult<List<PodLogDto>>> GetPodLogsByPod(
+        string @namespace,
+        string pod,
+        [FromQuery] string? container = null,
+        [FromQuery] int? hours = 24,
+        [FromQuery] int limit = 100,
+        [FromQuery] string? clusterName = null)
+    {
+        try
+        {
+            var logs = await _clickHouseService.GetPodLogsAsync(@namespace, pod, container, hours, limit, clusterName);
+            return Ok(logs);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
 }

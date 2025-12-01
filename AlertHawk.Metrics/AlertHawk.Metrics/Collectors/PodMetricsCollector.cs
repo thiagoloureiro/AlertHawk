@@ -143,6 +143,51 @@ public static class PodMetricsCollector
                             }
                         }
                     }
+
+                    // Fetch and store pod logs
+                    foreach (var pod in pods.Items)
+                    {
+                        try
+                        {
+                            if (pod.Spec?.Containers != null)
+                            {
+                                foreach (var container in pod.Spec.Containers)
+                                {
+                                    try
+                                    {
+                                        // Fetch logs for this container (last 100 lines)
+                                        var logContent = await clientWrapper.ReadNamespacedPodLogAsync(
+                                            pod.Metadata.Name,
+                                            pod.Metadata.NamespaceProperty,
+                                            container.Name,
+                                            tailLines: 100);
+
+                                        if (!string.IsNullOrWhiteSpace(logContent))
+                                        {
+                                            await apiClient.WritePodLogAsync(
+                                                pod.Metadata.NamespaceProperty,
+                                                pod.Metadata.Name,
+                                                container.Name,
+                                                logContent);
+                                            
+                                            Log.Debug("Stored logs for {Namespace}/{Pod}/{Container} ({LogLength} characters)", 
+                                                pod.Metadata.NamespaceProperty, pod.Metadata.Name, container.Name, logContent.Length);
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Log.Warning(ex, "Error fetching logs for {Namespace}/{Pod}/{Container}", 
+                                            pod.Metadata.NamespaceProperty, pod.Metadata.Name, container.Name);
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Warning(ex, "Error processing logs for pod {Namespace}/{Pod}", 
+                                pod.Metadata.NamespaceProperty, pod.Metadata.Name);
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
