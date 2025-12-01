@@ -283,6 +283,7 @@ public class MetricsController : ControllerBase
         }
         catch (Exception ex)
         {
+            SentrySdk.CaptureException(ex);
             return StatusCode(500, new { error = ex.Message });
         }
     }
@@ -314,6 +315,7 @@ public class MetricsController : ControllerBase
         }
         catch (Exception ex)
         {
+            SentrySdk.CaptureException(ex);
             return StatusCode(500, new { error = ex.Message });
         }
     }
@@ -345,6 +347,7 @@ public class MetricsController : ControllerBase
         }
         catch (Exception ex)
         {
+            SentrySdk.CaptureException(ex);
             return StatusCode(500, new { error = ex.Message });
         }
     }
@@ -376,8 +379,8 @@ public class MetricsController : ControllerBase
         }
         catch (Exception ex)
         {
+            SentrySdk.CaptureException(ex);
             return StatusCode(500, new { error = ex.Message });
         }
     }
-
 }
