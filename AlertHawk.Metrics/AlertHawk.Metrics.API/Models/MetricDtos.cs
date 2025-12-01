@@ -28,6 +28,8 @@ public class NodeMetricDto
     public bool? HasMemoryPressure { get; set; }
     public bool? HasDiskPressure { get; set; }
     public bool? HasPidPressure { get; set; }
+    public string? Architecture { get; set; }
+    public string? OperatingSystem { get; set; }
 }
 
 public class PodMetricRequest
@@ -56,5 +58,7 @@ public class NodeMetricRequest
     public bool? HasMemoryPressure { get; set; }
     public bool? HasDiskPressure { get; set; }
     public bool? HasPidPressure { get; set; }
+    public string? Architecture { get; set; }
+    public string? OperatingSystem { get; set; }
 }
 

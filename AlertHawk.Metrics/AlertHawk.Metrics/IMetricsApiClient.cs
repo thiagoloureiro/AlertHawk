@@ -25,6 +25,8 @@ public interface IMetricsApiClient
         bool? isReady = null,
         bool? hasMemoryPressure = null,
         bool? hasDiskPressure = null,
-        bool? hasPidPressure = null);
+        bool? hasPidPressure = null,
+        string? architecture = null,
+        string? operatingSystem = null);
 }
 

@@ -56,6 +56,7 @@ public static class NodeMetricsCollector
             var nodes = await clientWrapper.ListNodeAsync();
             var nodeCapacities = new Dictionary<string, (double cpuCores, double memoryBytes)>();
             var nodeConditions = new Dictionary<string, (bool? isReady, bool? hasMemoryPressure, bool? hasDiskPressure, bool? hasPidPressure)>();
+            var nodeInfo = new Dictionary<string, (string? architecture, string? operatingSystem)>();
 
             foreach (var node in nodes.Items)
             {
@@ -65,6 +66,8 @@ public static class NodeMetricsCollector
                 bool? hasMemoryPressure = null;
                 bool? hasDiskPressure = null;
                 bool? hasPidPressure = null;
+                string? architecture = null;
+                string? operatingSystem = null;
 
                 if (node.Status?.Capacity != null)
                 {
@@ -108,10 +111,18 @@ public static class NodeMetricsCollector
                     }
                 }
 
+                // Extract architecture and operating system
+                if (node.Status?.NodeInfo != null)
+                {
+                    architecture = node.Status.NodeInfo.Architecture;
+                    operatingSystem = node.Status.NodeInfo.OperatingSystem;
+                }
+
                 if (node.Metadata?.Name != null)
                 {
                     nodeCapacities[node.Metadata.Name] = (cpuCapacity, memoryCapacity);
                     nodeConditions[node.Metadata.Name] = (isReady, hasMemoryPressure, hasDiskPressure, hasPidPressure);
+                    nodeInfo[node.Metadata.Name] = (architecture, operatingSystem);
                 }
             }
 
@@ -143,6 +154,11 @@ public static class NodeMetricsCollector
                         ? conditions
                         : ((bool?)null, (bool?)null, (bool?)null, (bool?)null);
 
+                    // Get architecture and OS for this node
+                    var (architecture, operatingSystem) = nodeInfo.TryGetValue(nodeName, out var info)
+                        ? info
+                        : ((string?)null, (string?)null);
+
                     if (memoryUsageBytes > 0)
                     {
                         try
@@ -158,7 +174,9 @@ public static class NodeMetricsCollector
                                 isReady,
                                 hasMemoryPressure,
                                 hasDiskPressure,
-                                hasPidPressure);
+                                hasPidPressure,
+                                architecture,
+                                operatingSystem);
 
                             var cpuPercent = cpuCapacityCores > 0 ? (cpuUsageCores / cpuCapacityCores * 100) : 0;
                             var memoryPercent = memoryCapacityBytes > 0 ? (memoryUsageBytes / memoryCapacityBytes * 100) : 0;

@@ -118,7 +118,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 is_ready Nullable(UInt8),
                 has_memory_pressure Nullable(UInt8),
                 has_disk_pressure Nullable(UInt8),
-                has_pid_pressure Nullable(UInt8)
+                has_pid_pressure Nullable(UInt8),
+                architecture Nullable(String),
+                operating_system Nullable(String)
             )
             ENGINE = MergeTree()
             ORDER BY (timestamp, cluster_name, node_name)
@@ -191,6 +193,30 @@ public class ClickHouseService : IClickHouseService, IDisposable
         {
             Console.WriteLine($"Warning: Could not add node condition columns (they may already exist): {ex.Message}");
         }
+
+        // Add architecture and operating_system columns if they don't exist (for existing tables)
+        try
+        {
+            await using var alterCommand1 = connection.CreateCommand();
+            alterCommand1.CommandText = $@"
+                ALTER TABLE {_database}.{_nodeTableName}
+                ADD COLUMN IF NOT EXISTS architecture Nullable(String)
+            ";
+            await alterCommand1.ExecuteNonQueryAsync();
+            
+            await using var alterCommand2 = connection.CreateCommand();
+            alterCommand2.CommandText = $@"
+                ALTER TABLE {_database}.{_nodeTableName}
+                ADD COLUMN IF NOT EXISTS operating_system Nullable(String)
+            ";
+            await alterCommand2.ExecuteNonQueryAsync();
+            
+            Console.WriteLine($"Columns 'architecture' and 'operating_system' ensured to exist in '{_database}.{_nodeTableName}'");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not add architecture/operating_system columns (they may already exist): {ex.Message}");
+        }
     }
 
     public async Task WriteMetricsAsync(
@@ -255,7 +281,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
         bool? isReady = null,
         bool? hasMemoryPressure = null,
         bool? hasDiskPressure = null,
-        bool? hasPidPressure = null)
+        bool? hasPidPressure = null,
+        string? architecture = null,
+        string? operatingSystem = null)
     {
         var effectiveClusterName = clusterName ?? _clusterName;
         if (string.IsNullOrWhiteSpace(effectiveClusterName))
@@ -282,13 +310,19 @@ public class ClickHouseService : IClickHouseService, IDisposable
             var hasMemoryPressureValue = hasMemoryPressure.HasValue ? (hasMemoryPressure.Value ? "1" : "0") : "NULL";
             var hasDiskPressureValue = hasDiskPressure.HasValue ? (hasDiskPressure.Value ? "1" : "0") : "NULL";
             var hasPidPressureValue = hasPidPressure.HasValue ? (hasPidPressure.Value ? "1" : "0") : "NULL";
+            var architectureValue = !string.IsNullOrWhiteSpace(architecture)
+                ? $"'{architecture.Replace("'", "''").Replace("\\", "\\\\")}'"
+                : "NULL";
+            var operatingSystemValue = !string.IsNullOrWhiteSpace(operatingSystem)
+                ? $"'{operatingSystem.Replace("'", "''").Replace("\\", "\\\\")}'"
+                : "NULL";
 
             var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
             var insertSql = $@"
                 INSERT INTO {_database}.{_nodeTableName}
-                (timestamp, cluster_name, node_name, cpu_usage_cores, cpu_capacity_cores, memory_usage_bytes, memory_capacity_bytes, kubernetes_version, cloud_provider, is_ready, has_memory_pressure, has_disk_pressure, has_pid_pressure)
+                (timestamp, cluster_name, node_name, cpu_usage_cores, cpu_capacity_cores, memory_usage_bytes, memory_capacity_bytes, kubernetes_version, cloud_provider, is_ready, has_memory_pressure, has_disk_pressure, has_pid_pressure, architecture, operating_system)
                 VALUES
-                ('{timestamp}', '{escapedClusterName}', '{escapedNodeName}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuCapacityCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {memoryCapacityBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {kubernetesVersionValue}, {cloudProviderValue}, {isReadyValue}, {hasMemoryPressureValue}, {hasDiskPressureValue}, {hasPidPressureValue})
+                ('{timestamp}', '{escapedClusterName}', '{escapedNodeName}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuCapacityCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {memoryCapacityBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {kubernetesVersionValue}, {cloudProviderValue}, {isReadyValue}, {hasMemoryPressureValue}, {hasDiskPressureValue}, {hasPidPressureValue}, {architectureValue}, {operatingSystemValue})
             ";
 
             await using var command = connection.CreateCommand();
@@ -403,7 +437,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     is_ready,
                     has_memory_pressure,
                     has_disk_pressure,
-                    has_pid_pressure
+                    has_pid_pressure,
+                    architecture,
+                    operating_system
                 FROM {_database}.{_nodeTableName}
                 WHERE {whereClause}
                 ORDER BY timestamp DESC
@@ -431,7 +467,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     IsReady = reader.IsDBNull(9) ? null : (reader.GetByte(9) == 1),
                     HasMemoryPressure = reader.IsDBNull(10) ? null : (reader.GetByte(10) == 1),
                     HasDiskPressure = reader.IsDBNull(11) ? null : (reader.GetByte(11) == 1),
-                    HasPidPressure = reader.IsDBNull(12) ? null : (reader.GetByte(12) == 1)
+                    HasPidPressure = reader.IsDBNull(12) ? null : (reader.GetByte(12) == 1),
+                    Architecture = reader.IsDBNull(13) ? null : reader.GetString(13),
+                    OperatingSystem = reader.IsDBNull(14) ? null : reader.GetString(14)
                 });
             }
 

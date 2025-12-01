@@ -183,7 +183,9 @@ public class MetricsController : ControllerBase
                 request.IsReady,
                 request.HasMemoryPressure,
                 request.HasDiskPressure,
-                request.HasPidPressure);
+                request.HasPidPressure,
+                request.Architecture,
+                request.OperatingSystem);
             return Ok(new { success = true });
         }
         catch (Exception ex)

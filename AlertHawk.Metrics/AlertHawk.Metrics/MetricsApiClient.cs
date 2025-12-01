@@ -108,7 +108,9 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
         bool? isReady = null,
         bool? hasMemoryPressure = null,
         bool? hasDiskPressure = null,
-        bool? hasPidPressure = null)
+        bool? hasPidPressure = null,
+        string? architecture = null,
+        string? operatingSystem = null)
     {
         var request = new
         {
@@ -123,7 +125,9 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
             IsReady = isReady,
             HasMemoryPressure = hasMemoryPressure,
             HasDiskPressure = hasDiskPressure,
-            HasPidPressure = hasPidPressure
+            HasPidPressure = hasPidPressure,
+            Architecture = architecture,
+            OperatingSystem = operatingSystem
         };
 
         var json = JsonSerializer.Serialize(request);
