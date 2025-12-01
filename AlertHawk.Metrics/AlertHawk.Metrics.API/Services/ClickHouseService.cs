@@ -257,6 +257,35 @@ public class ClickHouseService : IClickHouseService, IDisposable
         {
             Console.WriteLine($"Warning: Could not add version column (it may already exist): {ex.Message}");
         }
+
+        // Verify the table is using ReplacingMergeTree engine
+        try
+        {
+            await using var checkEngineCommand = connection.CreateCommand();
+            checkEngineCommand.CommandText = $@"
+                SELECT engine 
+                FROM system.tables 
+                WHERE database = '{_database}' AND name = '{_podLogsTableName}'
+            ";
+            await using var reader = await checkEngineCommand.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                var engine = reader.GetString(0);
+                if (!engine.Contains("ReplacingMergeTree"))
+                {
+                    Console.WriteLine($"WARNING: Table '{_database}.{_podLogsTableName}' is using '{engine}' engine instead of 'ReplacingMergeTree'.");
+                    Console.WriteLine($"This will cause errors when using FINAL clause in queries. Please run the migration script: migrate_pod_logs_to_replacing_merge_tree.sql");
+                }
+                else
+                {
+                    Console.WriteLine($"Table '{_database}.{_podLogsTableName}' is correctly using '{engine}' engine");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not verify table engine: {ex.Message}");
+        }
     }
 
     public async Task WriteMetricsAsync(
