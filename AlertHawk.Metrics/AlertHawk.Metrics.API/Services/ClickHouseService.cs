@@ -274,13 +274,29 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 if (!engine.Contains("ReplacingMergeTree"))
                 {
                     Console.WriteLine($"WARNING: Table '{_database}.{_podLogsTableName}' is using '{engine}' engine instead of 'ReplacingMergeTree'.");
-                    Console.WriteLine($"The table needs to be recreated with ReplacingMergeTree engine. You may need to drop and recreate it manually.");
+                    Console.WriteLine($"Dropping and recreating the table with ReplacingMergeTree engine...");
+                    
+                    // Drop the old table
+                    await using var dropCommand = connection.CreateCommand();
+                    dropCommand.CommandText = $"DROP TABLE IF EXISTS {_database}.{_podLogsTableName}";
+                    await dropCommand.ExecuteNonQueryAsync();
+                    Console.WriteLine($"Dropped old table '{_database}.{_podLogsTableName}'");
+                    
+                    // Recreate with ReplacingMergeTree
+                    await using var recreateCommand = connection.CreateCommand();
+                    recreateCommand.CommandText = createPodLogsTableSql;
+                    await recreateCommand.ExecuteNonQueryAsync();
+                    Console.WriteLine($"Recreated table '{_database}.{_podLogsTableName}' with ReplacingMergeTree engine");
+                }
+                else
+                {
+                    Console.WriteLine($"Table '{_database}.{_podLogsTableName}' is correctly using '{engine}' engine");
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Warning: Could not verify table engine: {ex.Message}");
+            Console.WriteLine($"Warning: Could not verify or migrate table engine: {ex.Message}");
         }
     }
 
@@ -771,7 +787,30 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 whereClause += $" AND container = '{escapedContainer}'";
             }
 
-            // Use FINAL to get deduplicated results from ReplacingMergeTree (latest version per pod/container)
+            // Check table engine to determine if we can use FINAL
+            string? tableEngine = null;
+            try
+            {
+                await using var checkEngineCommand = connection.CreateCommand();
+                checkEngineCommand.CommandText = $@"
+                    SELECT engine 
+                    FROM system.tables 
+                    WHERE database = '{_database}' AND name = '{_podLogsTableName}'
+                ";
+                await using var engineReader = await checkEngineCommand.ExecuteReaderAsync();
+                if (await engineReader.ReadAsync())
+                {
+                    tableEngine = engineReader.GetString(0);
+                }
+            }
+            catch
+            {
+                // If we can't check, assume ReplacingMergeTree and try FINAL
+            }
+
+            // Use FINAL only if table is using ReplacingMergeTree, otherwise query without FINAL
+            var finalClause = (tableEngine != null && tableEngine.Contains("ReplacingMergeTree")) ? " FINAL" : "";
+            
             var query = $@"
                 SELECT 
                     timestamp,
@@ -780,7 +819,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     pod,
                     container,
                     log_content
-                FROM {_database}.{_podLogsTableName} FINAL
+                FROM {_database}.{_podLogsTableName}{finalClause}
                 WHERE {whereClause}
                 ORDER BY timestamp DESC
                 LIMIT {limit}
