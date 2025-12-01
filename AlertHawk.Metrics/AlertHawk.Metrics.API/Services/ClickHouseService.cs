@@ -220,7 +220,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
             Console.WriteLine($"Warning: Could not add architecture/operating_system columns (they may already exist): {ex.Message}");
         }
 
-        // Create pod logs table
+        // Create pod logs table with ReplacingMergeTree for upsert behavior
         var createPodLogsTableSql = $@"
             CREATE TABLE IF NOT EXISTS {_database}.{_podLogsTableName}
             (
@@ -229,10 +229,11 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 namespace String,
                 pod String,
                 container String,
-                log_content String
+                log_content String,
+                version DateTime64(3) DEFAULT now64()
             )
-            ENGINE = MergeTree()
-            ORDER BY (timestamp, cluster_name, namespace, pod, container)
+            ENGINE = ReplacingMergeTree(version)
+            ORDER BY (cluster_name, namespace, pod, container)
             TTL toDateTime(timestamp) + INTERVAL 90 DAY
         ";
 
@@ -240,6 +241,22 @@ public class ClickHouseService : IClickHouseService, IDisposable
         podLogsCommand.CommandText = createPodLogsTableSql;
         await podLogsCommand.ExecuteNonQueryAsync();
         Console.WriteLine($"Table '{_database}.{_podLogsTableName}' ensured to exist");
+
+        // Add version column if it doesn't exist (for existing tables)
+        try
+        {
+            await using var alterCommand = connection.CreateCommand();
+            alterCommand.CommandText = $@"
+                ALTER TABLE {_database}.{_podLogsTableName}
+                ADD COLUMN IF NOT EXISTS version DateTime64(3) DEFAULT now64()
+            ";
+            await alterCommand.ExecuteNonQueryAsync();
+            Console.WriteLine($"Column 'version' ensured to exist in '{_database}.{_podLogsTableName}'");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not add version column (it may already exist): {ex.Message}");
+        }
     }
 
     public async Task WriteMetricsAsync(
@@ -665,17 +682,53 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
             // Use ClickHouse format with proper escaping
             var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            var version = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
             var escapedNamespace = @namespace.Replace("'", "''").Replace("\\", "\\\\");
             var escapedPod = pod.Replace("'", "''").Replace("\\", "\\\\");
             var escapedContainer = container.Replace("'", "''").Replace("\\", "\\\\");
-            var escapedLogContent = logContent.Replace("'", "''").Replace("\\", "\\\\");
             var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
 
+            // Query for existing log content to append to it (upsert behavior)
+            // Use FINAL to get deduplicated results from ReplacingMergeTree
+            var existingLogQuery = $@"
+                SELECT log_content
+                FROM {_database}.{_podLogsTableName} FINAL
+                WHERE cluster_name = '{escapedClusterName}'
+                  AND namespace = '{escapedNamespace}'
+                  AND pod = '{escapedPod}'
+                  AND container = '{escapedContainer}'
+                ORDER BY version DESC
+                LIMIT 1
+            ";
+
+            string finalLogContent;
+            await using (var queryCommand = connection.CreateCommand())
+            {
+                queryCommand.CommandText = existingLogQuery;
+                await using var reader = await queryCommand.ExecuteReaderAsync();
+                
+                if (await reader.ReadAsync())
+                {
+                    // Append new log content to existing content
+                    var existingContent = reader.GetString(0);
+                    finalLogContent = existingContent + Environment.NewLine + logContent;
+                }
+                else
+                {
+                    // No existing log, use new content
+                    finalLogContent = logContent;
+                }
+            }
+
+            // Escape the final log content
+            var escapedLogContent = finalLogContent.Replace("'", "''").Replace("\\", "\\\\");
+
+            // Insert new row with updated content and new version (ReplacingMergeTree will replace old row)
             var insertSql = $@"
                 INSERT INTO {_database}.{_podLogsTableName}
-                (timestamp, cluster_name, namespace, pod, container, log_content)
+                (timestamp, cluster_name, namespace, pod, container, log_content, version)
                 VALUES
-                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedPod}', '{escapedContainer}', '{escapedLogContent}')
+                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedPod}', '{escapedContainer}', '{escapedLogContent}', '{version}')
             ";
 
             await using var command = connection.CreateCommand();
@@ -725,6 +778,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 whereClause += $" AND container = '{escapedContainer}'";
             }
 
+            // Use FINAL to get deduplicated results from ReplacingMergeTree
             var query = $@"
                 SELECT 
                     timestamp,
@@ -733,7 +787,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     pod,
                     container,
                     log_content
-                FROM {_database}.{_podLogsTableName}
+                FROM {_database}.{_podLogsTableName} FINAL
                 WHERE {whereClause}
                 ORDER BY timestamp DESC
                 LIMIT {limit}
