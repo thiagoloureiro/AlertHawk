@@ -11,6 +11,7 @@ public class AzurePriceRequest
     public string? ProductName { get; set; }
     public string? ArmRegionName { get; set; }
     public string? Type { get; set; }
+    public string? OperatingSystem { get; set; } // e.g., "Windows", "Linux"
     public string? Filter { get; set; } // Optional: if provided, will be used directly instead of building from other fields
 }
 

@@ -57,6 +57,16 @@ public class AzurePricesService : IAzurePricesService
                     filterParts.Add($"productName eq '{request.ProductName}'");
                 }
                 
+                // Add OS filter if provided (e.g., contains(productName, 'Windows'))
+                if (!string.IsNullOrWhiteSpace(request.OperatingSystem) && request.OperatingSystem.Equals("Windows", StringComparison.OrdinalIgnoreCase))
+                {
+                    filterParts.Add($"contains(productName, '{request.OperatingSystem}')");
+                }
+                else if(request.OperatingSystem.Equals("Linux", StringComparison.OrdinalIgnoreCase))
+                {   
+                    filterParts.Add($"contains(productName, 'Windows') eq false");
+                }
+                
                 if (!string.IsNullOrWhiteSpace(request.ArmSkuName))
                 {
                     filterParts.Add($"armSkuName eq '{request.ArmSkuName}'");
