@@ -55,9 +55,14 @@ if (string.IsNullOrWhiteSpace(clusterName))
     Environment.Exit(1);
 }
 
+var collectLogs = Environment.GetEnvironmentVariable("COLLECT_LOGS");
+var isLogCollectionEnabled = !string.IsNullOrWhiteSpace(collectLogs) && 
+                              collectLogs.Equals("true", StringComparison.OrdinalIgnoreCase);
+
 Log.Information("Starting metrics collection service (interval: {Interval} seconds)", collectionIntervalSeconds);
 Log.Information("Cluster name: {ClusterName}", clusterName);
 Log.Information("Metrics API URL: {ApiUrl}", apiBaseUrl);
+Log.Information("Log collection: {Status}", isLogCollectionEnabled ? "Enabled" : "Disabled (set COLLECT_LOGS=true to enable)");
 Log.Information("Press Ctrl+C to stop...");
 
 // Initialize API client

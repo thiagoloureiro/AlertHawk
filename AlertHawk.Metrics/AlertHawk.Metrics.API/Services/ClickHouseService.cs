@@ -11,16 +11,18 @@ public class ClickHouseService : IClickHouseService, IDisposable
     private readonly string _database;
     private readonly string _tableName;
     private readonly string _nodeTableName;
+    private readonly string _podLogsTableName;
     private readonly string _clusterName;
     private readonly SemaphoreSlim _connectionSemaphore = new(1, 1);
 
-    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics")
+    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string podLogsTableName = "k8s_pod_logs")
     {
         _connectionString = connectionString;
         _database = ExtractDatabaseFromConnectionString(connectionString);
         _clusterName = clusterName ?? string.Empty;
         _tableName = tableName;
         _nodeTableName = nodeTableName;
+        _podLogsTableName = podLogsTableName;
         EnsureTablesExistAsync().GetAwaiter().GetResult();
     }
 
@@ -216,6 +218,85 @@ public class ClickHouseService : IClickHouseService, IDisposable
         catch (Exception ex)
         {
             Console.WriteLine($"Warning: Could not add architecture/operating_system columns (they may already exist): {ex.Message}");
+        }
+
+        // Create pod logs table with ReplacingMergeTree to keep only latest log per pod/container
+        var createPodLogsTableSql = $@"
+            CREATE TABLE IF NOT EXISTS {_database}.{_podLogsTableName}
+            (
+                timestamp DateTime64(3) DEFAULT now64(),
+                cluster_name String,
+                namespace String,
+                pod String,
+                container String,
+                log_content String,
+                version DateTime64(3) DEFAULT now64()
+            )
+            ENGINE = ReplacingMergeTree(version)
+            ORDER BY (cluster_name, namespace, pod, container)
+            TTL toDateTime(timestamp) + INTERVAL 90 DAY
+        ";
+
+        await using var podLogsCommand = connection.CreateCommand();
+        podLogsCommand.CommandText = createPodLogsTableSql;
+        await podLogsCommand.ExecuteNonQueryAsync();
+        Console.WriteLine($"Table '{_database}.{_podLogsTableName}' ensured to exist");
+
+        // Add version column if it doesn't exist (for existing tables that were created with MergeTree)
+        try
+        {
+            await using var alterCommand = connection.CreateCommand();
+            alterCommand.CommandText = $@"
+                ALTER TABLE {_database}.{_podLogsTableName}
+                ADD COLUMN IF NOT EXISTS version DateTime64(3) DEFAULT now64()
+            ";
+            await alterCommand.ExecuteNonQueryAsync();
+            Console.WriteLine($"Column 'version' ensured to exist in '{_database}.{_podLogsTableName}'");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not add version column (it may already exist): {ex.Message}");
+        }
+
+        // Check if table needs to be recreated with ReplacingMergeTree
+        try
+        {
+            await using var checkEngineCommand = connection.CreateCommand();
+            checkEngineCommand.CommandText = $@"
+                SELECT engine 
+                FROM system.tables 
+                WHERE database = '{_database}' AND name = '{_podLogsTableName}'
+            ";
+            await using var reader = await checkEngineCommand.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                var engine = reader.GetString(0);
+                if (!engine.Contains("ReplacingMergeTree"))
+                {
+                    Console.WriteLine($"WARNING: Table '{_database}.{_podLogsTableName}' is using '{engine}' engine instead of 'ReplacingMergeTree'.");
+                    Console.WriteLine($"Dropping and recreating the table with ReplacingMergeTree engine...");
+                    
+                    // Drop the old table
+                    await using var dropCommand = connection.CreateCommand();
+                    dropCommand.CommandText = $"DROP TABLE IF EXISTS {_database}.{_podLogsTableName}";
+                    await dropCommand.ExecuteNonQueryAsync();
+                    Console.WriteLine($"Dropped old table '{_database}.{_podLogsTableName}'");
+                    
+                    // Recreate with ReplacingMergeTree
+                    await using var recreateCommand = connection.CreateCommand();
+                    recreateCommand.CommandText = createPodLogsTableSql;
+                    await recreateCommand.ExecuteNonQueryAsync();
+                    Console.WriteLine($"Recreated table '{_database}.{_podLogsTableName}' with ReplacingMergeTree engine");
+                }
+                else
+                {
+                    Console.WriteLine($"Table '{_database}.{_podLogsTableName}' is correctly using '{engine}' engine");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not verify or migrate table engine: {ex.Message}");
         }
     }
 
@@ -614,6 +695,156 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 ";
                 await deleteNodeMetricsCommand.ExecuteNonQueryAsync();
             }
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
+    public async Task WritePodLogAsync(
+        string @namespace,
+        string pod,
+        string container,
+        string logContent,
+        string? clusterName = null)
+    {
+        var effectiveClusterName = clusterName ?? _clusterName;
+        if (string.IsNullOrWhiteSpace(effectiveClusterName))
+        {
+            throw new InvalidOperationException("Cluster name is required for writing pod logs. Provide it as a parameter or set CLUSTER_NAME environment variable.");
+        }
+
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            // Use ClickHouse format with proper escaping
+            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            var version = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            var escapedNamespace = @namespace.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedPod = pod.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedContainer = container.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedLogContent = logContent.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
+
+            // Insert new log entry with new version
+            // ReplacingMergeTree will automatically replace old rows with the same ORDER BY key (cluster_name, namespace, pod, container)
+            // when the version is higher, keeping only the latest log per pod/container
+            var insertSql = $@"
+                INSERT INTO {_database}.{_podLogsTableName}
+                (timestamp, cluster_name, namespace, pod, container, log_content, version)
+                VALUES
+                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedPod}', '{escapedContainer}', '{escapedLogContent}', '{version}')
+            ";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = insertSql;
+            await command.ExecuteNonQueryAsync();
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
+    public async Task<List<PodLogDto>> GetPodLogsAsync(
+        string? namespaceFilter = null,
+        string? podFilter = null,
+        string? containerFilter = null,
+        int? hours = 24,
+        int limit = 100,
+        string? clusterName = null)
+    {
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var effectiveClusterName = clusterName ?? _clusterName;
+            var whereClause = $"timestamp >= now() - INTERVAL {hours ?? 24} HOUR";
+            if (!string.IsNullOrWhiteSpace(effectiveClusterName))
+            {
+                var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND cluster_name = '{escapedClusterName}'";
+            }
+            if (!string.IsNullOrWhiteSpace(namespaceFilter))
+            {
+                var escapedNamespace = namespaceFilter.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND namespace = '{escapedNamespace}'";
+            }
+            if (!string.IsNullOrWhiteSpace(podFilter))
+            {
+                var escapedPod = podFilter.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND pod = '{escapedPod}'";
+            }
+            if (!string.IsNullOrWhiteSpace(containerFilter))
+            {
+                var escapedContainer = containerFilter.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND container = '{escapedContainer}'";
+            }
+
+            // Check table engine to determine if we can use FINAL
+            string? tableEngine = null;
+            try
+            {
+                await using var checkEngineCommand = connection.CreateCommand();
+                checkEngineCommand.CommandText = $@"
+                    SELECT engine 
+                    FROM system.tables 
+                    WHERE database = '{_database}' AND name = '{_podLogsTableName}'
+                ";
+                await using var engineReader = await checkEngineCommand.ExecuteReaderAsync();
+                if (await engineReader.ReadAsync())
+                {
+                    tableEngine = engineReader.GetString(0);
+                }
+            }
+            catch
+            {
+                // If we can't check, assume ReplacingMergeTree and try FINAL
+            }
+
+            // Use FINAL only if table is using ReplacingMergeTree, otherwise query without FINAL
+            var finalClause = (tableEngine != null && tableEngine.Contains("ReplacingMergeTree")) ? " FINAL" : "";
+            
+            var query = $@"
+                SELECT 
+                    timestamp,
+                    cluster_name,
+                    namespace,
+                    pod,
+                    container,
+                    log_content
+                FROM {_database}.{_podLogsTableName}{finalClause}
+                WHERE {whereClause}
+                ORDER BY timestamp DESC
+                LIMIT {limit}
+            ";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = query;
+            
+            var results = new List<PodLogDto>();
+            await using var reader = await command.ExecuteReaderAsync();
+            
+            while (await reader.ReadAsync())
+            {
+                results.Add(new PodLogDto
+                {
+                    Timestamp = reader.GetDateTime(0),
+                    ClusterName = reader.GetString(1),
+                    Namespace = reader.GetString(2),
+                    Pod = reader.GetString(3),
+                    Container = reader.GetString(4),
+                    LogContent = reader.GetString(5)
+                });
+            }
+
+            return results;
         }
         finally
         {

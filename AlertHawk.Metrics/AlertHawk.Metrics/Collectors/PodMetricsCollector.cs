@@ -25,6 +25,11 @@ public static class PodMetricsCollector
             PropertyNameCaseInsensitive = true
         };
 
+        // Check if log collection is enabled (once per collection cycle)
+        var collectLogs = Environment.GetEnvironmentVariable("COLLECT_LOGS");
+        var isLogCollectionEnabled = !string.IsNullOrWhiteSpace(collectLogs) && 
+                                      collectLogs.Equals("true", StringComparison.OrdinalIgnoreCase);
+
         try
         {
             Log.Information("Collecting pod metrics...");
@@ -142,6 +147,58 @@ public static class PodMetricsCollector
                                     container.Name, formattedCpu, formattedMemory);
                             }
                         }
+                    }
+
+                    // Fetch and store pod logs (only if COLLECT_LOGS is enabled)
+                    if (isLogCollectionEnabled)
+                    {
+                        foreach (var pod in pods.Items)
+                        {
+                            try
+                            {
+                                if (pod.Spec?.Containers != null)
+                                {
+                                    foreach (var container in pod.Spec.Containers)
+                                    {
+                                        try
+                                        {
+                                            // Fetch logs for this container (last 100 lines)
+                                            var logContent = await clientWrapper.ReadNamespacedPodLogAsync(
+                                                pod.Metadata.Name,
+                                                pod.Metadata.NamespaceProperty,
+                                                container.Name,
+                                                tailLines: 100);
+
+                                            if (!string.IsNullOrWhiteSpace(logContent))
+                                            {
+                                                await apiClient.WritePodLogAsync(
+                                                    pod.Metadata.NamespaceProperty,
+                                                    pod.Metadata.Name,
+                                                    container.Name,
+                                                    logContent);
+                                                
+                                                Log.Debug("Stored logs for {Namespace}/{Pod}/{Container} ({LogLength} characters)", 
+                                                    pod.Metadata.NamespaceProperty, pod.Metadata.Name, container.Name, logContent.Length);
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Log.Warning(ex, "Error fetching logs for {Namespace}/{Pod}/{Container}", 
+                                                pod.Metadata.NamespaceProperty, pod.Metadata.Name, container.Name);
+                                        }
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Warning(ex, "Error processing logs for pod {Namespace}/{Pod}", 
+                                    pod.Metadata.NamespaceProperty, pod.Metadata.Name);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Log.Debug("Log collection is disabled (COLLECT_LOGS environment variable is not set to 'true')");
                     }
                 }
                 catch (Exception ex)

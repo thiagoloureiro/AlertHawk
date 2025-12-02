@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using k8s;
 using k8s.Models;
 
@@ -95,6 +96,32 @@ public class KubernetesClientWrapper : IKubernetesClientWrapper
         }
 
         return "Other";
+    }
+
+    public async Task<string> ReadNamespacedPodLogAsync(string name, string namespaceParameter, string? container = null, int? tailLines = null)
+    {
+        try
+        {
+            // ReadNamespacedPodLogAsync returns a Stream, so we need to read it
+            var stream = await _kubernetes.CoreV1.ReadNamespacedPodLogAsync(
+                name: name,
+                namespaceParameter: namespaceParameter,
+                container: container,
+                tailLines: tailLines);
+            
+            if (stream == null)
+            {
+                return string.Empty;
+            }
+
+            using var reader = new StreamReader(stream, Encoding.UTF8);
+            return await reader.ReadToEndAsync();
+        }
+        catch (Exception)
+        {
+            // Return empty string if log cannot be read (pod might not be running, container might not exist, etc.)
+            return string.Empty;
+        }
     }
 }
 

@@ -28,5 +28,11 @@ public interface IMetricsApiClient
         bool? hasPidPressure = null,
         string? architecture = null,
         string? operatingSystem = null);
+
+    Task WritePodLogAsync(
+        string @namespace,
+        string pod,
+        string container,
+        string logContent);
 }
 
