@@ -1,3 +1,6 @@
+kubectl create namespace alerthawk
+
+
 kubectl create serviceaccount alerthawk-sa -n alerthawk
 
 
