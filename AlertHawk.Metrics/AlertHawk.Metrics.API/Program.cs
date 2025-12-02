@@ -77,6 +77,9 @@ var clusterName = Environment.GetEnvironmentVariable("CLUSTER_NAME");
 builder.Services.AddSingleton<IClickHouseService>(sp => 
     new ClickHouseService(clickHouseConnectionString, clusterName, clickHouseTableName));
 
+// Register Azure Prices service
+builder.Services.AddHttpClient<IAzurePricesService, AzurePricesService>();
+
 var issuers = configuration["Jwt:Issuers"] ??
               "issuer";
 

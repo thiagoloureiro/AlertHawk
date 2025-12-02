@@ -27,7 +27,9 @@ public interface IMetricsApiClient
         bool? hasDiskPressure = null,
         bool? hasPidPressure = null,
         string? architecture = null,
-        string? operatingSystem = null);
+        string? operatingSystem = null,
+        string? region = null,
+        string? instanceType = null);
 
     Task WritePodLogAsync(
         string @namespace,
