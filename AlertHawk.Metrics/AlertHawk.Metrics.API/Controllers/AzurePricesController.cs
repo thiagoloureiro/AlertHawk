@@ -8,6 +8,7 @@ namespace AlertHawk.Metrics.API.Controllers;
 
 [ApiController]
 [Route("api/azure-prices")]
+[AllowAnonymous]
 public class AzurePricesController : ControllerBase
 {
     private readonly IAzurePricesService _azurePricesService;
@@ -23,7 +24,6 @@ public class AzurePricesController : ControllerBase
     /// <param name="request">Azure price request with filters</param>
     /// <returns>Azure price response with items</returns>
     [HttpPost]
-    [Authorize]
     public async Task<ActionResult<AzurePriceResponse>> GetAzurePrices([FromBody] AzurePriceRequest request)
     {
         try

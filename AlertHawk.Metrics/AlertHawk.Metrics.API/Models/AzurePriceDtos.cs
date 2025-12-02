@@ -7,6 +7,9 @@ public class AzurePriceRequest
     public string CurrencyCode { get; set; } = "USD";
     public string? ServiceName { get; set; }
     public string? ArmSkuName { get; set; }
+    public string? SkuName { get; set; }
+    public string? ProductName { get; set; }
+    public string? ArmRegionName { get; set; }
     public string? Type { get; set; }
     public string? Filter { get; set; } // Optional: if provided, will be used directly instead of building from other fields
 }

@@ -47,15 +47,34 @@ public class AzurePricesService : IAzurePricesService
                     filterParts.Add($"serviceName eq '{request.ServiceName}'");
                 }
                 
+                if (!string.IsNullOrWhiteSpace(request.SkuName))
+                {
+                    filterParts.Add($"skuName eq '{request.SkuName}'");
+                }
+                
+                if (!string.IsNullOrWhiteSpace(request.ProductName))
+                {
+                    filterParts.Add($"productName eq '{request.ProductName}'");
+                }
+                
                 if (!string.IsNullOrWhiteSpace(request.ArmSkuName))
                 {
                     filterParts.Add($"armSkuName eq '{request.ArmSkuName}'");
+                }
+                
+                if (!string.IsNullOrWhiteSpace(request.ArmRegionName))
+                {
+                    filterParts.Add($"armRegionName eq '{request.ArmRegionName}'");
                 }
                 
                 if (!string.IsNullOrWhiteSpace(request.Type))
                 {
                     filterParts.Add($"type eq '{request.Type}'");
                 }
+
+                // Always exclude Spot and Low Priority SKUs
+                filterParts.Add("contains(skuName, 'Spot') eq false");
+                filterParts.Add("contains(skuName, 'Low Priority') eq false");
 
                 if (filterParts.Any())
                 {
