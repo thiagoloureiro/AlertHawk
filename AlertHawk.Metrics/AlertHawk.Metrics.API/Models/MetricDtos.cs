@@ -30,6 +30,8 @@ public class NodeMetricDto
     public bool? HasPidPressure { get; set; }
     public string? Architecture { get; set; }
     public string? OperatingSystem { get; set; }
+    public string? Region { get; set; }
+    public string? InstanceType { get; set; }
 }
 
 public class PodMetricRequest
@@ -60,6 +62,8 @@ public class NodeMetricRequest
     public bool? HasPidPressure { get; set; }
     public string? Architecture { get; set; }
     public string? OperatingSystem { get; set; }
+    public string? Region { get; set; }
+    public string? InstanceType { get; set; }
 }
 
 public class PodLogDto

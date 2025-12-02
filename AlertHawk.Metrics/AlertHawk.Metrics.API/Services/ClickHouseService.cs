@@ -122,7 +122,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 has_disk_pressure Nullable(UInt8),
                 has_pid_pressure Nullable(UInt8),
                 architecture Nullable(String),
-                operating_system Nullable(String)
+                operating_system Nullable(String),
+                region Nullable(String),
+                instance_type Nullable(String)
             )
             ENGINE = MergeTree()
             ORDER BY (timestamp, cluster_name, node_name)
@@ -218,6 +220,30 @@ public class ClickHouseService : IClickHouseService, IDisposable
         catch (Exception ex)
         {
             Console.WriteLine($"Warning: Could not add architecture/operating_system columns (they may already exist): {ex.Message}");
+        }
+
+        // Add region and instance_type columns if they don't exist (for existing tables)
+        try
+        {
+            await using var alterCommand1 = connection.CreateCommand();
+            alterCommand1.CommandText = $@"
+                ALTER TABLE {_database}.{_nodeTableName}
+                ADD COLUMN IF NOT EXISTS region Nullable(String)
+            ";
+            await alterCommand1.ExecuteNonQueryAsync();
+            
+            await using var alterCommand2 = connection.CreateCommand();
+            alterCommand2.CommandText = $@"
+                ALTER TABLE {_database}.{_nodeTableName}
+                ADD COLUMN IF NOT EXISTS instance_type Nullable(String)
+            ";
+            await alterCommand2.ExecuteNonQueryAsync();
+            
+            Console.WriteLine($"Columns 'region' and 'instance_type' ensured to exist in '{_database}.{_nodeTableName}'");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not add region/instance_type columns (they may already exist): {ex.Message}");
         }
 
         // Create pod logs table with ReplacingMergeTree to keep only latest log per pod/container
@@ -364,7 +390,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
         bool? hasDiskPressure = null,
         bool? hasPidPressure = null,
         string? architecture = null,
-        string? operatingSystem = null)
+        string? operatingSystem = null,
+        string? region = null,
+        string? instanceType = null)
     {
         var effectiveClusterName = clusterName ?? _clusterName;
         if (string.IsNullOrWhiteSpace(effectiveClusterName))
@@ -397,13 +425,19 @@ public class ClickHouseService : IClickHouseService, IDisposable
             var operatingSystemValue = !string.IsNullOrWhiteSpace(operatingSystem)
                 ? $"'{operatingSystem.Replace("'", "''").Replace("\\", "\\\\")}'"
                 : "NULL";
+            var regionValue = !string.IsNullOrWhiteSpace(region)
+                ? $"'{region.Replace("'", "''").Replace("\\", "\\\\")}'"
+                : "NULL";
+            var instanceTypeValue = !string.IsNullOrWhiteSpace(instanceType)
+                ? $"'{instanceType.Replace("'", "''").Replace("\\", "\\\\")}'"
+                : "NULL";
 
             var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
             var insertSql = $@"
                 INSERT INTO {_database}.{_nodeTableName}
-                (timestamp, cluster_name, node_name, cpu_usage_cores, cpu_capacity_cores, memory_usage_bytes, memory_capacity_bytes, kubernetes_version, cloud_provider, is_ready, has_memory_pressure, has_disk_pressure, has_pid_pressure, architecture, operating_system)
+                (timestamp, cluster_name, node_name, cpu_usage_cores, cpu_capacity_cores, memory_usage_bytes, memory_capacity_bytes, kubernetes_version, cloud_provider, is_ready, has_memory_pressure, has_disk_pressure, has_pid_pressure, architecture, operating_system, region, instance_type)
                 VALUES
-                ('{timestamp}', '{escapedClusterName}', '{escapedNodeName}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuCapacityCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {memoryCapacityBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {kubernetesVersionValue}, {cloudProviderValue}, {isReadyValue}, {hasMemoryPressureValue}, {hasDiskPressureValue}, {hasPidPressureValue}, {architectureValue}, {operatingSystemValue})
+                ('{timestamp}', '{escapedClusterName}', '{escapedNodeName}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuCapacityCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {memoryCapacityBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {kubernetesVersionValue}, {cloudProviderValue}, {isReadyValue}, {hasMemoryPressureValue}, {hasDiskPressureValue}, {hasPidPressureValue}, {architectureValue}, {operatingSystemValue}, {regionValue}, {instanceTypeValue})
             ";
 
             await using var command = connection.CreateCommand();
@@ -520,7 +554,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     has_disk_pressure,
                     has_pid_pressure,
                     architecture,
-                    operating_system
+                    operating_system,
+                    region,
+                    instance_type
                 FROM {_database}.{_nodeTableName}
                 WHERE {whereClause}
                 ORDER BY timestamp DESC
@@ -550,7 +586,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     HasDiskPressure = reader.IsDBNull(11) ? null : (reader.GetByte(11) == 1),
                     HasPidPressure = reader.IsDBNull(12) ? null : (reader.GetByte(12) == 1),
                     Architecture = reader.IsDBNull(13) ? null : reader.GetString(13),
-                    OperatingSystem = reader.IsDBNull(14) ? null : reader.GetString(14)
+                    OperatingSystem = reader.IsDBNull(14) ? null : reader.GetString(14),
+                    Region = reader.IsDBNull(15) ? null : reader.GetString(15),
+                    InstanceType = reader.IsDBNull(16) ? null : reader.GetString(16)
                 });
             }
 

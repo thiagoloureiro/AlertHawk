@@ -57,6 +57,7 @@ public static class NodeMetricsCollector
             var nodeCapacities = new Dictionary<string, (double cpuCores, double memoryBytes)>();
             var nodeConditions = new Dictionary<string, (bool? isReady, bool? hasMemoryPressure, bool? hasDiskPressure, bool? hasPidPressure)>();
             var nodeInfo = new Dictionary<string, (string? architecture, string? operatingSystem)>();
+            var nodeLabels = new Dictionary<string, (string? region, string? instanceType)>();
 
             foreach (var node in nodes.Items)
             {
@@ -118,11 +119,35 @@ public static class NodeMetricsCollector
                     operatingSystem = node.Status.NodeInfo.OperatingSystem;
                 }
 
+                // Extract labels
+                string? region = null;
+                string? instanceType = null;
+                if (node.Metadata?.Labels != null)
+                {
+                    // Extract topology.kubernetes.io/region
+                    if (node.Metadata.Labels.TryGetValue("topology.kubernetes.io/region", out var regionValue))
+                    {
+                        region = regionValue;
+                    }
+                    
+                    // Extract beta.kubernetes.io/instance-type (or topology.kubernetes.io/zone if region is not found)
+                    if (node.Metadata.Labels.TryGetValue("beta.kubernetes.io/instance-type", out var instanceTypeValue))
+                    {
+                        instanceType = instanceTypeValue;
+                    }
+                    // Also check for node.kubernetes.io/instance-type (newer label format)
+                    else if (node.Metadata.Labels.TryGetValue("node.kubernetes.io/instance-type", out var instanceTypeValue2))
+                    {
+                        instanceType = instanceTypeValue2;
+                    }
+                }
+
                 if (node.Metadata?.Name != null)
                 {
                     nodeCapacities[node.Metadata.Name] = (cpuCapacity, memoryCapacity);
                     nodeConditions[node.Metadata.Name] = (isReady, hasMemoryPressure, hasDiskPressure, hasPidPressure);
                     nodeInfo[node.Metadata.Name] = (architecture, operatingSystem);
+                    nodeLabels[node.Metadata.Name] = (region, instanceType);
                 }
             }
 
@@ -159,6 +184,11 @@ public static class NodeMetricsCollector
                         ? info
                         : ((string?)null, (string?)null);
 
+                    // Get labels for this node
+                    var (region, instanceType) = nodeLabels.TryGetValue(nodeName, out var labels)
+                        ? labels
+                        : ((string?)null, (string?)null);
+
                     if (memoryUsageBytes > 0)
                     {
                         try
@@ -176,7 +206,9 @@ public static class NodeMetricsCollector
                                 hasDiskPressure,
                                 hasPidPressure,
                                 architecture,
-                                operatingSystem);
+                                operatingSystem,
+                                region,
+                                instanceType);
 
                             var cpuPercent = cpuCapacityCores > 0 ? (cpuUsageCores / cpuCapacityCores * 100) : 0;
                             var memoryPercent = memoryCapacityBytes > 0 ? (memoryUsageBytes / memoryCapacityBytes * 100) : 0;

@@ -28,7 +28,9 @@ public interface IClickHouseService
         bool? hasDiskPressure = null,
         bool? hasPidPressure = null,
         string? architecture = null,
-        string? operatingSystem = null);
+        string? operatingSystem = null,
+        string? region = null,
+        string? instanceType = null);
 
     Task<List<PodMetricDto>> GetMetricsByNamespaceAsync(string? namespaceFilter = null, int? hours = 24, int limit = 100, string? clusterName = null);
 
