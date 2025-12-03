@@ -249,8 +249,8 @@ public class MetricsController : ControllerBase
         {
             await _clickHouseService.CleanupMetricsAsync(days);
             var message = days == 0 
-                ? "Both tables (k8s_metrics and k8s_node_metrics) have been truncated." 
-                : $"Records older than {days} days have been deleted from both tables (k8s_metrics and k8s_node_metrics).";
+                ? "All three tables (k8s_metrics, k8s_node_metrics, and k8s_pod_logs) have been truncated." 
+                : $"Records older than {days} days have been deleted from all three tables (k8s_metrics, k8s_node_metrics, and k8s_pod_logs).";
             return Ok(new { success = true, message });
         }
         catch (Exception ex)

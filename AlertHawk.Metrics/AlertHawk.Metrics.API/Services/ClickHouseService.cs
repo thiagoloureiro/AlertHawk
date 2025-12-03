@@ -704,7 +704,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
             if (days == 0)
             {
-                // Truncate both tables
+                // Truncate all three tables
                 await using var truncateMetricsCommand = connection.CreateCommand();
                 truncateMetricsCommand.CommandText = $"TRUNCATE TABLE IF EXISTS {_database}.{_tableName}";
                 await truncateMetricsCommand.ExecuteNonQueryAsync();
@@ -712,6 +712,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 await using var truncateNodeMetricsCommand = connection.CreateCommand();
                 truncateNodeMetricsCommand.CommandText = $"TRUNCATE TABLE IF EXISTS {_database}.{_nodeTableName}";
                 await truncateNodeMetricsCommand.ExecuteNonQueryAsync();
+
+                await using var truncatePodLogsCommand = connection.CreateCommand();
+                truncatePodLogsCommand.CommandText = $"TRUNCATE TABLE IF EXISTS {_database}.{_podLogsTableName}";
+                await truncatePodLogsCommand.ExecuteNonQueryAsync();
             }
             else
             {
@@ -732,6 +736,13 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     DELETE WHERE timestamp < '{cutoffDateString}'
                 ";
                 await deleteNodeMetricsCommand.ExecuteNonQueryAsync();
+
+                await using var deletePodLogsCommand = connection.CreateCommand();
+                deletePodLogsCommand.CommandText = $@"
+                    ALTER TABLE {_database}.{_podLogsTableName}
+                    DELETE WHERE timestamp < '{cutoffDateString}'
+                ";
+                await deletePodLogsCommand.ExecuteNonQueryAsync();
             }
         }
         finally
