@@ -4,8 +4,13 @@ using k8s;
 using Serilog;
 
 // Configure Serilog
+var logLevelEnv = Environment.GetEnvironmentVariable("LOG_LEVEL") ?? "Information";
+var logLevel = Enum.TryParse<Serilog.Events.LogEventLevel>(logLevelEnv, ignoreCase: true, out var parsedLevel)
+    ? parsedLevel
+    : Serilog.Events.LogEventLevel.Information;
+
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
+    .MinimumLevel.Is(logLevel)
     .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
     .WriteTo.Console(
         outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {Message:lj}{NewLine}{Exception}")
