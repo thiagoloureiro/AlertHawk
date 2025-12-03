@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text;
 using AlertHawk.Metrics.API.Services;
+using EasyMemoryCache.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
@@ -42,6 +43,8 @@ builder.WebHost.UseSentry(options =>
         );
     }
 );
+
+builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
 
 builder.Services.AddSwaggerGen(c =>
 {
