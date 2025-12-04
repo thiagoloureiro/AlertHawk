@@ -21,6 +21,7 @@ public interface IClickHouseService
         double memoryUsageBytes,
         double memoryCapacityBytes,
         string? clusterName = null,
+        string? clusterEnvironment = null,
         string? kubernetesVersion = null,
         string? cloudProvider = null,
         bool? isReady = null,

@@ -13,13 +13,15 @@ public class ClickHouseService : IClickHouseService, IDisposable
     private readonly string _nodeTableName;
     private readonly string _podLogsTableName;
     private readonly string _clusterName;
+    private readonly string _clusterEnvironment;
     private readonly SemaphoreSlim _connectionSemaphore = new(1, 1);
 
-    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string podLogsTableName = "k8s_pod_logs")
+    public ClickHouseService(string connectionString, string? clusterName = null, string? clusterEnvironment = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string podLogsTableName = "k8s_pod_logs")
     {
         _connectionString = connectionString;
         _database = ExtractDatabaseFromConnectionString(connectionString);
         _clusterName = clusterName ?? string.Empty;
+        _clusterEnvironment = clusterEnvironment ?? "PROD";
         _tableName = tableName;
         _nodeTableName = nodeTableName;
         _podLogsTableName = podLogsTableName;
@@ -110,6 +112,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
             (
                 timestamp DateTime64(3) DEFAULT now64(),
                 cluster_name String,
+                cluster_environment Nullable(String),
                 node_name String,
                 cpu_usage_cores Float64,
                 cpu_capacity_cores Float64,
@@ -244,6 +247,22 @@ public class ClickHouseService : IClickHouseService, IDisposable
         catch (Exception ex)
         {
             Console.WriteLine($"Warning: Could not add region/instance_type columns (they may already exist): {ex.Message}");
+        }
+
+        // Add cluster_environment column if it doesn't exist (for existing tables)
+        try
+        {
+            await using var alterCommand = connection.CreateCommand();
+            alterCommand.CommandText = $@"
+                ALTER TABLE {_database}.{_nodeTableName}
+                ADD COLUMN IF NOT EXISTS cluster_environment Nullable(String)
+            ";
+            await alterCommand.ExecuteNonQueryAsync();
+            Console.WriteLine($"Column 'cluster_environment' ensured to exist in '{_database}.{_nodeTableName}'");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not add cluster_environment column (it may already exist): {ex.Message}");
         }
 
         // Create pod logs table with ReplacingMergeTree to keep only latest log per pod/container
@@ -383,6 +402,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         double memoryUsageBytes,
         double memoryCapacityBytes,
         string? clusterName = null,
+        string? clusterEnvironment = null,
         string? kubernetesVersion = null,
         string? cloudProvider = null,
         bool? isReady = null,
@@ -399,6 +419,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         {
             throw new InvalidOperationException("Cluster name is required for writing metrics. Provide it as a parameter or set CLUSTER_NAME environment variable.");
         }
+        var effectiveClusterEnvironment = !string.IsNullOrWhiteSpace(clusterEnvironment) ? clusterEnvironment : _clusterEnvironment;
 
         await _connectionSemaphore.WaitAsync();
         try
@@ -431,13 +452,16 @@ public class ClickHouseService : IClickHouseService, IDisposable
             var instanceTypeValue = !string.IsNullOrWhiteSpace(instanceType)
                 ? $"'{instanceType.Replace("'", "''").Replace("\\", "\\\\")}'"
                 : "NULL";
+            var clusterEnvironmentValue = !string.IsNullOrWhiteSpace(effectiveClusterEnvironment)
+                ? $"'{effectiveClusterEnvironment.Replace("'", "''").Replace("\\", "\\\\")}'"
+                : "NULL";
 
             var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
             var insertSql = $@"
                 INSERT INTO {_database}.{_nodeTableName}
-                (timestamp, cluster_name, node_name, cpu_usage_cores, cpu_capacity_cores, memory_usage_bytes, memory_capacity_bytes, kubernetes_version, cloud_provider, is_ready, has_memory_pressure, has_disk_pressure, has_pid_pressure, architecture, operating_system, region, instance_type)
+                (timestamp, cluster_name, cluster_environment, node_name, cpu_usage_cores, cpu_capacity_cores, memory_usage_bytes, memory_capacity_bytes, kubernetes_version, cloud_provider, is_ready, has_memory_pressure, has_disk_pressure, has_pid_pressure, architecture, operating_system, region, instance_type)
                 VALUES
-                ('{timestamp}', '{escapedClusterName}', '{escapedNodeName}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuCapacityCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {memoryCapacityBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {kubernetesVersionValue}, {cloudProviderValue}, {isReadyValue}, {hasMemoryPressureValue}, {hasDiskPressureValue}, {hasPidPressureValue}, {architectureValue}, {operatingSystemValue}, {regionValue}, {instanceTypeValue})
+                ('{timestamp}', '{escapedClusterName}', {clusterEnvironmentValue}, '{escapedNodeName}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuCapacityCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {memoryCapacityBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {kubernetesVersionValue}, {cloudProviderValue}, {isReadyValue}, {hasMemoryPressureValue}, {hasDiskPressureValue}, {hasPidPressureValue}, {architectureValue}, {operatingSystemValue}, {regionValue}, {instanceTypeValue})
             ";
 
             await using var command = connection.CreateCommand();
@@ -542,6 +566,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 SELECT 
                     timestamp,
                     cluster_name,
+                    cluster_environment,
                     node_name,
                     cpu_usage_cores,
                     cpu_capacity_cores,
@@ -574,21 +599,22 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 {
                     Timestamp = reader.GetDateTime(0),
                     ClusterName = reader.GetString(1),
-                    NodeName = reader.GetString(2),
-                    CpuUsageCores = reader.GetDouble(3),
-                    CpuCapacityCores = reader.GetDouble(4),
-                    MemoryUsageBytes = reader.GetDouble(5),
-                    MemoryCapacityBytes = reader.GetDouble(6),
-                    KubernetesVersion = reader.IsDBNull(7) ? null : reader.GetString(7),
-                    CloudProvider = reader.IsDBNull(8) ? null : reader.GetString(8),
-                    IsReady = reader.IsDBNull(9) ? null : (reader.GetByte(9) == 1),
-                    HasMemoryPressure = reader.IsDBNull(10) ? null : (reader.GetByte(10) == 1),
-                    HasDiskPressure = reader.IsDBNull(11) ? null : (reader.GetByte(11) == 1),
-                    HasPidPressure = reader.IsDBNull(12) ? null : (reader.GetByte(12) == 1),
-                    Architecture = reader.IsDBNull(13) ? null : reader.GetString(13),
-                    OperatingSystem = reader.IsDBNull(14) ? null : reader.GetString(14),
-                    Region = reader.IsDBNull(15) ? null : reader.GetString(15),
-                    InstanceType = reader.IsDBNull(16) ? null : reader.GetString(16)
+                    ClusterEnvironment = reader.IsDBNull(2) ? null : reader.GetString(2),
+                    NodeName = reader.GetString(3),
+                    CpuUsageCores = reader.GetDouble(4),
+                    CpuCapacityCores = reader.GetDouble(5),
+                    MemoryUsageBytes = reader.GetDouble(6),
+                    MemoryCapacityBytes = reader.GetDouble(7),
+                    KubernetesVersion = reader.IsDBNull(8) ? null : reader.GetString(8),
+                    CloudProvider = reader.IsDBNull(9) ? null : reader.GetString(9),
+                    IsReady = reader.IsDBNull(10) ? null : (reader.GetByte(10) == 1),
+                    HasMemoryPressure = reader.IsDBNull(11) ? null : (reader.GetByte(11) == 1),
+                    HasDiskPressure = reader.IsDBNull(12) ? null : (reader.GetByte(12) == 1),
+                    HasPidPressure = reader.IsDBNull(13) ? null : (reader.GetByte(13) == 1),
+                    Architecture = reader.IsDBNull(14) ? null : reader.GetString(14),
+                    OperatingSystem = reader.IsDBNull(15) ? null : reader.GetString(15),
+                    Region = reader.IsDBNull(16) ? null : reader.GetString(16),
+                    InstanceType = reader.IsDBNull(17) ? null : reader.GetString(17)
                 });
             }
 

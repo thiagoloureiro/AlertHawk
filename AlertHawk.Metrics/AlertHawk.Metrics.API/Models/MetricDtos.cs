@@ -17,6 +17,7 @@ public class NodeMetricDto
 {
     public DateTime Timestamp { get; set; }
     public string ClusterName { get; set; } = string.Empty;
+    public string? ClusterEnvironment { get; set; }
     public string NodeName { get; set; } = string.Empty;
     public double CpuUsageCores { get; set; }
     public double CpuCapacityCores { get; set; }
@@ -49,6 +50,7 @@ public class PodMetricRequest
 public class NodeMetricRequest
 {
     public string ClusterName { get; set; } = string.Empty;
+    public string? ClusterEnvironment { get; set; }
     public string NodeName { get; set; } = string.Empty;
     public double CpuUsageCores { get; set; }
     public double CpuCapacityCores { get; set; }

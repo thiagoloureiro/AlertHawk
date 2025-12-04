@@ -178,6 +178,7 @@ public class MetricsController : ControllerBase
                 request.MemoryUsageBytes,
                 request.MemoryCapacityBytes,
                 clusterName,
+                request.ClusterEnvironment,
                 request.KubernetesVersion,
                 request.CloudProvider,
                 request.IsReady,

@@ -14,9 +14,10 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
     private readonly HttpClient _httpClient;
     private readonly string _apiBaseUrl;
     private readonly string _clusterName;
+    private readonly string _clusterEnvironment;
     private readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy;
 
-    public MetricsApiClient(string apiBaseUrl, string clusterName)
+    public MetricsApiClient(string apiBaseUrl, string clusterName, string? clusterEnvironment = null)
     {
         if (string.IsNullOrWhiteSpace(apiBaseUrl))
         {
@@ -29,6 +30,7 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
 
         _apiBaseUrl = apiBaseUrl.TrimEnd('/');
         _clusterName = clusterName;
+        _clusterEnvironment = clusterEnvironment ?? "PROD";
         _httpClient = new HttpClient
         {
             Timeout = TimeSpan.FromSeconds(30)

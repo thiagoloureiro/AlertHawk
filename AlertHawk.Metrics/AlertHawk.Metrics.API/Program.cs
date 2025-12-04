@@ -76,9 +76,10 @@ var clickHouseTableName = Environment.GetEnvironmentVariable("CLICKHOUSE_TABLE_N
     ?? "k8s_metrics";
 
 var clusterName = Environment.GetEnvironmentVariable("CLUSTER_NAME");
+var clusterEnvironment = Environment.GetEnvironmentVariable("CLUSTER_ENVIRONMENT") ?? "PROD";
 
 builder.Services.AddSingleton<IClickHouseService>(sp => 
-    new ClickHouseService(clickHouseConnectionString, clusterName, clickHouseTableName));
+    new ClickHouseService(clickHouseConnectionString, clusterName, clusterEnvironment, clickHouseTableName));
 
 // Register Azure Prices service
 builder.Services.AddHttpClient<IAzurePricesService, AzurePricesService>();
