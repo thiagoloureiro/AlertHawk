@@ -133,7 +133,8 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
             Architecture = architecture,
             OperatingSystem = operatingSystem,
             Region = region,
-            InstanceType = instanceType
+            InstanceType = instanceType,
+            ClusterEnvironment = _clusterEnvironment
         };
 
         var json = JsonSerializer.Serialize(request);
