@@ -13,15 +13,13 @@ public class ClickHouseService : IClickHouseService, IDisposable
     private readonly string _nodeTableName;
     private readonly string _podLogsTableName;
     private readonly string _clusterName;
-    private readonly string _clusterEnvironment;
     private readonly SemaphoreSlim _connectionSemaphore = new(1, 1);
 
-    public ClickHouseService(string connectionString, string? clusterName = null, string? clusterEnvironment = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string podLogsTableName = "k8s_pod_logs")
+    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string podLogsTableName = "k8s_pod_logs")
     {
         _connectionString = connectionString;
         _database = ExtractDatabaseFromConnectionString(connectionString);
         _clusterName = clusterName ?? string.Empty;
-        _clusterEnvironment = clusterEnvironment ?? "PROD";
         _tableName = tableName;
         _nodeTableName = nodeTableName;
         _podLogsTableName = podLogsTableName;
@@ -419,7 +417,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
         {
             throw new InvalidOperationException("Cluster name is required for writing metrics. Provide it as a parameter or set CLUSTER_NAME environment variable.");
         }
-        var effectiveClusterEnvironment = !string.IsNullOrWhiteSpace(clusterEnvironment) ? clusterEnvironment : _clusterEnvironment;
+        var effectiveClusterEnvironment = !string.IsNullOrWhiteSpace(clusterEnvironment) 
+            ? clusterEnvironment 
+            : "PROD";
 
         await _connectionSemaphore.WaitAsync();
         try
