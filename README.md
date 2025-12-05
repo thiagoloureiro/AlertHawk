@@ -24,6 +24,8 @@ Create a new account or login with any personal Microsoft Account and try it!
 
 **Cloud Ready:** AlertHawk is designed to seamlessly integrate with cloud environments, providing flexibility and adaptability to your infrastructure. Whether you're hosted on-premises or in the cloud, AlertHawk has you covered.
 
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/alerthawk)](https://artifacthub.io/packages/search?repo=alerthawk)
+
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/20da64ba9f9d48abb0733064d2491da4)](https://app.codacy.com/gh/thiagoloureiro/AlertHawk/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 ## AlertHawk.Notification - Docker Container
