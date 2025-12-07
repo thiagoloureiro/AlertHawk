@@ -7,3 +7,6 @@ public interface IAzurePricesService
     Task<AzurePriceResponse> GetPricesAsync(AzurePriceRequest request);
 }
 
+
+
+

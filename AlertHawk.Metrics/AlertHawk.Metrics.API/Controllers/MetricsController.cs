@@ -135,8 +135,8 @@ public class MetricsController : ControllerBase
     {
         try
         {
-            var clusterName = !string.IsNullOrWhiteSpace(request.ClusterName) 
-                ? request.ClusterName 
+            var clusterName = !string.IsNullOrWhiteSpace(request.ClusterName)
+                ? request.ClusterName
                 : null;
 
             await _clickHouseService.WriteMetricsAsync(
@@ -167,8 +167,8 @@ public class MetricsController : ControllerBase
     {
         try
         {
-            var clusterName = !string.IsNullOrWhiteSpace(request.ClusterName) 
-                ? request.ClusterName 
+            var clusterName = !string.IsNullOrWhiteSpace(request.ClusterName)
+                ? request.ClusterName
                 : null;
 
             await _clickHouseService.WriteNodeMetricsAsync(
@@ -209,7 +209,11 @@ public class MetricsController : ControllerBase
         try
         {
             var clusterNames = await _clickHouseService.GetUniqueClusterNamesAsync();
-            return Ok(clusterNames);
+           
+            // Order alphabetically
+            var orderedClusterNames = clusterNames.OrderBy(name => name).ToList();
+            
+            return Ok(orderedClusterNames);
         }
         catch (Exception ex)
         {
@@ -229,7 +233,11 @@ public class MetricsController : ControllerBase
         try
         {
             var namespaceNames = await _clickHouseService.GetUniqueNamespaceNamesAsync(clusterName);
-            return Ok(namespaceNames);
+          
+            // Order alphabetically
+            var orderedNamespaces = namespaceNames.OrderBy(name => name).ToList();
+            
+            return Ok(orderedNamespaces);
         }
         catch (Exception ex)
         {
@@ -249,8 +257,8 @@ public class MetricsController : ControllerBase
         try
         {
             await _clickHouseService.CleanupMetricsAsync(days);
-            var message = days == 0 
-                ? "All three tables (k8s_metrics, k8s_node_metrics, and k8s_pod_logs) have been truncated." 
+            var message = days == 0
+                ? "All three tables (k8s_metrics, k8s_node_metrics, and k8s_pod_logs) have been truncated."
                 : $"Records older than {days} days have been deleted from all three tables (k8s_metrics, k8s_node_metrics, and k8s_pod_logs).";
             return Ok(new { success = true, message });
         }
@@ -272,8 +280,8 @@ public class MetricsController : ControllerBase
     {
         try
         {
-            var clusterName = !string.IsNullOrWhiteSpace(request.ClusterName) 
-                ? request.ClusterName 
+            var clusterName = !string.IsNullOrWhiteSpace(request.ClusterName)
+                ? request.ClusterName
                 : null;
 
             await _clickHouseService.WritePodLogAsync(
