@@ -33,9 +33,9 @@ public interface IClickHouseService
         string? region = null,
         string? instanceType = null);
 
-    Task<List<PodMetricDto>> GetMetricsByNamespaceAsync(string? namespaceFilter = null, int? hours = 24, int limit = 100, string? clusterName = null);
+    Task<List<PodMetricDto>> GetMetricsByNamespaceAsync(string? namespaceFilter = null, int? minutes = 1440, string? clusterName = null);
 
-    Task<List<NodeMetricDto>> GetNodeMetricsAsync(string? nodeNameFilter = null, int? hours = 24, int limit = 100, string? clusterName = null);
+    Task<List<NodeMetricDto>> GetNodeMetricsAsync(string? nodeNameFilter = null, int? minutes = 1440, string? clusterName = null);
 
     Task<List<string>> GetUniqueClusterNamesAsync();
 
@@ -54,7 +54,7 @@ public interface IClickHouseService
         string? namespaceFilter = null,
         string? podFilter = null,
         string? containerFilter = null,
-        int? hours = 24,
+        int? minutes = 1440,
         int limit = 100,
         string? clusterName = null);
 }

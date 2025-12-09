@@ -54,18 +54,18 @@ public class MetricsControllerTests
         };
 
         _mockClickHouseService
-            .Setup(s => s.GetMetricsByNamespaceAsync("default", 24, 100))
+            .Setup(s => s.GetMetricsByNamespaceAsync("default", 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
-        var result = await _controller.GetMetricsByNamespace("default", 24, 100);
+        var result = await _controller.GetMetricsByNamespace("default", 1440);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var metrics = Assert.IsAssignableFrom<List<PodMetricDto>>(okResult.Value);
         Assert.Single(metrics);
         Assert.Equal("default", metrics[0].Namespace);
-        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync("default", 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync("default", 1440), Times.Once);
     }
 
     [Fact]
@@ -88,17 +88,17 @@ public class MetricsControllerTests
         };
 
         _mockClickHouseService
-            .Setup(s => s.GetMetricsByNamespaceAsync(null, 24, 100))
+            .Setup(s => s.GetMetricsByNamespaceAsync(null, 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
-        var result = await _controller.GetMetricsByNamespace(null, 24, 100);
+        var result = await _controller.GetMetricsByNamespace(null, 1440);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var metrics = Assert.IsAssignableFrom<List<PodMetricDto>>(okResult.Value);
         Assert.Single(metrics);
-        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync(null, 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync(null, 1440), Times.Once);
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public class MetricsControllerTests
         var expectedMetrics = new List<PodMetricDto>();
 
         _mockClickHouseService
-            .Setup(s => s.GetMetricsByNamespaceAsync(null, 24, 100))
+            .Setup(s => s.GetMetricsByNamespaceAsync(null, 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
@@ -116,7 +116,7 @@ public class MetricsControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync(null, 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync(null, 1440), Times.Once);
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class MetricsControllerTests
     {
         // Arrange
         _mockClickHouseService
-            .Setup(s => s.GetMetricsByNamespaceAsync(null, 24, 100))
+            .Setup(s => s.GetMetricsByNamespaceAsync(null, 1440))
             .ThrowsAsync(new Exception("Database connection failed"));
 
         // Act
@@ -133,7 +133,7 @@ public class MetricsControllerTests
         // Assert
         var statusResult = Assert.IsType<ObjectResult>(result.Result);
         Assert.Equal(500, statusResult.StatusCode);
-        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync(null, 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync(null, 1440), Times.Once);
     }
 
     #endregion
@@ -160,18 +160,18 @@ public class MetricsControllerTests
         };
 
         _mockClickHouseService
-            .Setup(s => s.GetMetricsByNamespaceAsync("production", 24, 100))
+            .Setup(s => s.GetMetricsByNamespaceAsync("production", 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
-        var result = await _controller.GetMetricsByNamespaceName("production", 24, 100);
+        var result = await _controller.GetMetricsByNamespaceName("production", 1440);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var metrics = Assert.IsAssignableFrom<List<PodMetricDto>>(okResult.Value);
         Assert.Single(metrics);
         Assert.Equal("production", metrics[0].Namespace);
-        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync("production", 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync("production", 1440), Times.Once);
     }
 
     [Fact]
@@ -181,7 +181,7 @@ public class MetricsControllerTests
         var expectedMetrics = new List<PodMetricDto>();
 
         _mockClickHouseService
-            .Setup(s => s.GetMetricsByNamespaceAsync("default", 24, 100))
+            .Setup(s => s.GetMetricsByNamespaceAsync("default", 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
@@ -189,7 +189,7 @@ public class MetricsControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync("default", 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync("default", 1440), Times.Once);
     }
 
     [Fact]
@@ -197,7 +197,7 @@ public class MetricsControllerTests
     {
         // Arrange
         _mockClickHouseService
-            .Setup(s => s.GetMetricsByNamespaceAsync("test", 24, 100))
+            .Setup(s => s.GetMetricsByNamespaceAsync("test", 1440))
             .ThrowsAsync(new Exception("Query failed"));
 
         // Act
@@ -231,18 +231,18 @@ public class MetricsControllerTests
         };
 
         _mockClickHouseService
-            .Setup(s => s.GetNodeMetricsAsync("node-1", 24, 100))
+            .Setup(s => s.GetNodeMetricsAsync("node-1", 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
-        var result = await _controller.GetNodeMetrics("node-1", 24, 100);
+        var result = await _controller.GetNodeMetrics("node-1", 1440);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var metrics = Assert.IsAssignableFrom<List<NodeMetricDto>>(okResult.Value);
         Assert.Single(metrics);
         Assert.Equal("node-1", metrics[0].NodeName);
-        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync("node-1", 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync("node-1", 1440), Times.Once);
     }
 
     [Fact]
@@ -264,17 +264,17 @@ public class MetricsControllerTests
         };
 
         _mockClickHouseService
-            .Setup(s => s.GetNodeMetricsAsync(null, 24, 100))
+            .Setup(s => s.GetNodeMetricsAsync(null, 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
-        var result = await _controller.GetNodeMetrics(null, 24, 100);
+        var result = await _controller.GetNodeMetrics(null, 1440);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var metrics = Assert.IsAssignableFrom<List<NodeMetricDto>>(okResult.Value);
         Assert.Single(metrics);
-        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync(null, 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync(null, 1440), Times.Once);
     }
 
     [Fact]
@@ -284,7 +284,7 @@ public class MetricsControllerTests
         var expectedMetrics = new List<NodeMetricDto>();
 
         _mockClickHouseService
-            .Setup(s => s.GetNodeMetricsAsync(null, 24, 100))
+            .Setup(s => s.GetNodeMetricsAsync(null, 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
@@ -292,7 +292,7 @@ public class MetricsControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync(null, 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync(null, 1440), Times.Once);
     }
 
     [Fact]
@@ -300,7 +300,7 @@ public class MetricsControllerTests
     {
         // Arrange
         _mockClickHouseService
-            .Setup(s => s.GetNodeMetricsAsync(null, 24, 100))
+            .Setup(s => s.GetNodeMetricsAsync(null, 1440))
             .ThrowsAsync(new Exception("Database error"));
 
         // Act
@@ -334,18 +334,18 @@ public class MetricsControllerTests
         };
 
         _mockClickHouseService
-            .Setup(s => s.GetNodeMetricsAsync("worker-node-1", 24, 100))
+            .Setup(s => s.GetNodeMetricsAsync("worker-node-1", 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
-        var result = await _controller.GetNodeMetricsByName("worker-node-1", 24, 100);
+        var result = await _controller.GetNodeMetricsByName("worker-node-1", 1440);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var metrics = Assert.IsAssignableFrom<List<NodeMetricDto>>(okResult.Value);
         Assert.Single(metrics);
         Assert.Equal("worker-node-1", metrics[0].NodeName);
-        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync("worker-node-1", 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync("worker-node-1", 1440), Times.Once);
     }
 
     [Fact]
@@ -355,7 +355,7 @@ public class MetricsControllerTests
         var expectedMetrics = new List<NodeMetricDto>();
 
         _mockClickHouseService
-            .Setup(s => s.GetNodeMetricsAsync("node-1", 24, 100))
+            .Setup(s => s.GetNodeMetricsAsync("node-1", 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
@@ -363,7 +363,7 @@ public class MetricsControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync("node-1", 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync("node-1", 1440), Times.Once);
     }
 
     [Fact]
@@ -371,7 +371,7 @@ public class MetricsControllerTests
     {
         // Arrange
         _mockClickHouseService
-            .Setup(s => s.GetNodeMetricsAsync("node-1", 24, 100))
+            .Setup(s => s.GetNodeMetricsAsync("node-1", 1440))
             .ThrowsAsync(new Exception("Query execution failed"));
 
         // Act

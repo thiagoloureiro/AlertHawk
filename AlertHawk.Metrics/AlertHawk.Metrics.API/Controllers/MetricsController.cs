@@ -20,21 +20,19 @@ public class MetricsController : ControllerBase
     /// Get metrics by namespace
     /// </summary>
     /// <param name="namespace">Optional namespace filter</param>
-    /// <param name="hours">Number of hours to look back (default: 24)</param>
-    /// <param name="limit">Maximum number of results (default: 100)</param>
+    /// <param name="minutes">Number of minutes to look back (default: 1440 = 24 hours)</param>
     /// <param name="clusterName"></param>
     /// <returns>List of pod/container metrics</returns>
     [HttpGet("namespace")]
     [Authorize]
     public async Task<ActionResult<List<PodMetricDto>>> GetMetricsByNamespace(
         [FromQuery] string? @namespace = null,
-        [FromQuery] int? hours = 24,
-        [FromQuery] int limit = 100,
+        [FromQuery] int? minutes = 1440,
         [FromQuery] string? clusterName = null)
     {
         try
         {
-            var metrics = await _clickHouseService.GetMetricsByNamespaceAsync(@namespace, hours, limit, clusterName);
+            var metrics = await _clickHouseService.GetMetricsByNamespaceAsync(@namespace, minutes, clusterName);
             return Ok(metrics);
         }
         catch (Exception ex)
@@ -47,21 +45,19 @@ public class MetricsController : ControllerBase
     /// Get metrics for a specific namespace
     /// </summary>
     /// <param name="namespace">Namespace name</param>
-    /// <param name="hours">Number of hours to look back (default: 24)</param>
-    /// <param name="limit">Maximum number of results (default: 100)</param>
+    /// <param name="minutes">Number of minutes to look back (default: 1440 = 24 hours)</param>
     /// <param name="clusterName"></param>
     /// <returns>List of pod/container metrics for the namespace</returns>
     [HttpGet("namespace/{namespace}")]
     [Authorize]
     public async Task<ActionResult<List<PodMetricDto>>> GetMetricsByNamespaceName(
         string @namespace,
-        [FromQuery] int? hours = 24,
-        [FromQuery] int limit = 100,
+        [FromQuery] int? minutes = 1440,
         [FromQuery] string? clusterName = null)
     {
         try
         {
-            var metrics = await _clickHouseService.GetMetricsByNamespaceAsync(@namespace, hours, limit, clusterName);
+            var metrics = await _clickHouseService.GetMetricsByNamespaceAsync(@namespace, minutes, clusterName);
             return Ok(metrics);
         }
         catch (Exception ex)
@@ -74,21 +70,19 @@ public class MetricsController : ControllerBase
     /// Get node metrics
     /// </summary>
     /// <param name="nodeName">Optional node name filter</param>
-    /// <param name="hours">Number of hours to look back (default: 24)</param>
-    /// <param name="limit">Maximum number of results (default: 100)</param>
+    /// <param name="minutes">Number of minutes to look back (default: 1440 = 24 hours)</param>
     /// <param name="clusterName"></param>
     /// <returns>List of node metrics</returns>
     [HttpGet("node")]
     [Authorize]
     public async Task<ActionResult<List<NodeMetricDto>>> GetNodeMetrics(
         [FromQuery] string? nodeName = null,
-        [FromQuery] int? hours = 24,
-        [FromQuery] int limit = 100,
+        [FromQuery] int? minutes = 1440,
         [FromQuery] string? clusterName = null)
     {
         try
         {
-            var metrics = await _clickHouseService.GetNodeMetricsAsync(nodeName, hours, limit, clusterName);
+            var metrics = await _clickHouseService.GetNodeMetricsAsync(nodeName, minutes, clusterName);
             return Ok(metrics);
         }
         catch (Exception ex)
@@ -101,21 +95,19 @@ public class MetricsController : ControllerBase
     /// Get metrics for a specific node
     /// </summary>
     /// <param name="nodeName">Node name</param>
-    /// <param name="hours">Number of hours to look back (default: 24)</param>
-    /// <param name="limit">Maximum number of results (default: 100)</param>
+    /// <param name="minutes">Number of minutes to look back (default: 1440 = 24 hours)</param>
     /// <param name="clusterName"></param>
     /// <returns>List of node metrics for the specified node</returns>
     [HttpGet("node/{nodeName}")]
     [Authorize]
     public async Task<ActionResult<List<NodeMetricDto>>> GetNodeMetricsByName(
         string nodeName,
-        [FromQuery] int? hours = 24,
-        [FromQuery] int limit = 100,
+        [FromQuery] int? minutes = 1440,
         [FromQuery] string? clusterName = null)
     {
         try
         {
-            var metrics = await _clickHouseService.GetNodeMetricsAsync(nodeName, hours, limit, clusterName);
+            var metrics = await _clickHouseService.GetNodeMetricsAsync(nodeName, minutes, clusterName);
             return Ok(metrics);
         }
         catch (Exception ex)
@@ -305,7 +297,7 @@ public class MetricsController : ControllerBase
     /// <param name="namespace">Optional namespace filter</param>
     /// <param name="pod">Optional pod name filter</param>
     /// <param name="container">Optional container name filter</param>
-    /// <param name="hours">Number of hours to look back (default: 24)</param>
+    /// <param name="minutes">Number of minutes to look back (default: 1440 = 24 hours)</param>
     /// <param name="limit">Maximum number of results (default: 100)</param>
     /// <param name="clusterName">Optional cluster name filter</param>
     /// <returns>List of pod logs</returns>
@@ -315,13 +307,13 @@ public class MetricsController : ControllerBase
         [FromQuery] string? @namespace = null,
         [FromQuery] string? pod = null,
         [FromQuery] string? container = null,
-        [FromQuery] int? hours = 24,
+        [FromQuery] int? minutes = 1440,
         [FromQuery] int limit = 100,
         [FromQuery] string? clusterName = null)
     {
         try
         {
-            var logs = await _clickHouseService.GetPodLogsAsync(@namespace, pod, container, hours, limit, clusterName);
+            var logs = await _clickHouseService.GetPodLogsAsync(@namespace, pod, container, minutes, limit, clusterName);
             return Ok(logs);
         }
         catch (Exception ex)
@@ -337,7 +329,7 @@ public class MetricsController : ControllerBase
     /// <param name="namespace">Namespace name</param>
     /// <param name="pod">Optional pod name filter</param>
     /// <param name="container">Optional container name filter</param>
-    /// <param name="hours">Number of hours to look back (default: 24)</param>
+    /// <param name="minutes">Number of minutes to look back (default: 1440 = 24 hours)</param>
     /// <param name="limit">Maximum number of results (default: 100)</param>
     /// <param name="clusterName">Optional cluster name filter</param>
     /// <returns>List of pod logs for the namespace</returns>
@@ -347,13 +339,13 @@ public class MetricsController : ControllerBase
         string @namespace,
         [FromQuery] string? pod = null,
         [FromQuery] string? container = null,
-        [FromQuery] int? hours = 24,
+        [FromQuery] int? minutes = 1440,
         [FromQuery] int limit = 100,
         [FromQuery] string? clusterName = null)
     {
         try
         {
-            var logs = await _clickHouseService.GetPodLogsAsync(@namespace, pod, container, hours, limit, clusterName);
+            var logs = await _clickHouseService.GetPodLogsAsync(@namespace, pod, container, minutes, limit, clusterName);
             return Ok(logs);
         }
         catch (Exception ex)
@@ -369,7 +361,7 @@ public class MetricsController : ControllerBase
     /// <param name="namespace">Namespace name</param>
     /// <param name="pod">Pod name</param>
     /// <param name="container">Optional container name filter</param>
-    /// <param name="hours">Number of hours to look back (default: 24)</param>
+    /// <param name="minutes">Number of minutes to look back (default: 1440 = 24 hours)</param>
     /// <param name="limit">Maximum number of results (default: 100)</param>
     /// <param name="clusterName">Optional cluster name filter</param>
     /// <returns>List of pod logs for the specified pod</returns>
@@ -379,13 +371,13 @@ public class MetricsController : ControllerBase
         string @namespace,
         string pod,
         [FromQuery] string? container = null,
-        [FromQuery] int? hours = 24,
+        [FromQuery] int? minutes = 1440,
         [FromQuery] int limit = 100,
         [FromQuery] string? clusterName = null)
     {
         try
         {
-            var logs = await _clickHouseService.GetPodLogsAsync(@namespace, pod, container, hours, limit, clusterName);
+            var logs = await _clickHouseService.GetPodLogsAsync(@namespace, pod, container, minutes, limit, clusterName);
             return Ok(logs);
         }
         catch (Exception ex)
