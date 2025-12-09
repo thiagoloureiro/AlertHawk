@@ -483,7 +483,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
             await connection.OpenAsync();
 
             var effectiveClusterName = clusterName ?? _clusterName;
-            var whereClause = $"timestamp >= now() - INTERVAL {minutes ?? 1440} MINUTE";
+            var timeRangeMinutes = minutes ?? 1440;
+            var whereClause = $"timestamp >= now() - INTERVAL {timeRangeMinutes} MINUTE";
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
                 var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
@@ -495,21 +496,45 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 whereClause += $" AND namespace = '{escapedNamespace}'";
             }
 
-            var query = $@"
-                SELECT 
-                    timestamp,
-                    cluster_name,
-                    namespace,
-                    pod,
-                    container,
-                    cpu_usage_cores,
-                    cpu_limit_cores,
-                    memory_usage_bytes,
-                    node_name
-                FROM {_database}.{_tableName}
-                WHERE {whereClause}
-                ORDER BY timestamp DESC
-            ";
+            // If time range is > 48 hours, interpolate data using hourly buckets
+            string query;
+            if (timeRangeMinutes > 2880) // 48 hours = 2880 minutes
+            {
+                query = $@"
+                    SELECT 
+                        toStartOfHour(timestamp) as timestamp,
+                        cluster_name,
+                        namespace,
+                        pod,
+                        container,
+                        avg(cpu_usage_cores) as cpu_usage_cores,
+                        avg(cpu_limit_cores) as cpu_limit_cores,
+                        avg(memory_usage_bytes) as memory_usage_bytes,
+                        any(node_name) as node_name
+                    FROM {_database}.{_tableName}
+                    WHERE {whereClause}
+                    GROUP BY timestamp, cluster_name, namespace, pod, container
+                    ORDER BY timestamp DESC
+                ";
+            }
+            else
+            {
+                query = $@"
+                    SELECT 
+                        timestamp,
+                        cluster_name,
+                        namespace,
+                        pod,
+                        container,
+                        cpu_usage_cores,
+                        cpu_limit_cores,
+                        memory_usage_bytes,
+                        node_name
+                    FROM {_database}.{_tableName}
+                    WHERE {whereClause}
+                    ORDER BY timestamp DESC
+                ";
+            }
 
             await using var command = connection.CreateCommand();
             command.CommandText = query;
@@ -550,7 +575,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
             await connection.OpenAsync();
 
             var effectiveClusterName = clusterName ?? _clusterName;
-            var whereClause = $"timestamp >= now() - INTERVAL {minutes ?? 1440} MINUTE";
+            var timeRangeMinutes = minutes ?? 1440;
+            var whereClause = $"timestamp >= now() - INTERVAL {timeRangeMinutes} MINUTE";
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
                 var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
@@ -562,30 +588,63 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 whereClause += $" AND node_name = '{escapedNodeName}'";
             }
 
-            var query = $@"
-                SELECT 
-                    timestamp,
-                    cluster_name,
-                    cluster_environment,
-                    node_name,
-                    cpu_usage_cores,
-                    cpu_capacity_cores,
-                    memory_usage_bytes,
-                    memory_capacity_bytes,
-                    kubernetes_version,
-                    cloud_provider,
-                    is_ready,
-                    has_memory_pressure,
-                    has_disk_pressure,
-                    has_pid_pressure,
-                    architecture,
-                    operating_system,
-                    region,
-                    instance_type
-                FROM {_database}.{_nodeTableName}
-                WHERE {whereClause}
-                ORDER BY timestamp DESC
-            ";
+            // If time range is > 48 hours, interpolate data using hourly buckets
+            string query;
+            if (timeRangeMinutes > 2880) // 48 hours = 2880 minutes
+            {
+                query = $@"
+                    SELECT 
+                        toStartOfHour(timestamp) as timestamp,
+                        cluster_name,
+                        any(cluster_environment) as cluster_environment,
+                        node_name,
+                        avg(cpu_usage_cores) as cpu_usage_cores,
+                        avg(cpu_capacity_cores) as cpu_capacity_cores,
+                        avg(memory_usage_bytes) as memory_usage_bytes,
+                        avg(memory_capacity_bytes) as memory_capacity_bytes,
+                        any(kubernetes_version) as kubernetes_version,
+                        any(cloud_provider) as cloud_provider,
+                        any(is_ready) as is_ready,
+                        any(has_memory_pressure) as has_memory_pressure,
+                        any(has_disk_pressure) as has_disk_pressure,
+                        any(has_pid_pressure) as has_pid_pressure,
+                        any(architecture) as architecture,
+                        any(operating_system) as operating_system,
+                        any(region) as region,
+                        any(instance_type) as instance_type
+                    FROM {_database}.{_nodeTableName}
+                    WHERE {whereClause}
+                    GROUP BY timestamp, cluster_name, node_name
+                    ORDER BY timestamp DESC
+                ";
+            }
+            else
+            {
+                query = $@"
+                    SELECT 
+                        timestamp,
+                        cluster_name,
+                        cluster_environment,
+                        node_name,
+                        cpu_usage_cores,
+                        cpu_capacity_cores,
+                        memory_usage_bytes,
+                        memory_capacity_bytes,
+                        kubernetes_version,
+                        cloud_provider,
+                        is_ready,
+                        has_memory_pressure,
+                        has_disk_pressure,
+                        has_pid_pressure,
+                        architecture,
+                        operating_system,
+                        region,
+                        instance_type
+                    FROM {_database}.{_nodeTableName}
+                    WHERE {whereClause}
+                    ORDER BY timestamp DESC
+                ";
+            }
 
             await using var command = connection.CreateCommand();
             command.CommandText = query;
