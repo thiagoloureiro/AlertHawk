@@ -7,11 +7,11 @@ namespace AlertHawk.Metrics.API.Controllers;
 
 [ApiController]
 [Route("api/clickhouse")]
-public class ClickhouseController : ControllerBase
+public class ClickHouseController : ControllerBase
 {
     private readonly IClickHouseService _clickHouseService;
 
-    public ClickhouseController(IClickHouseService clickHouseService)
+    public ClickHouseController(IClickHouseService clickHouseService)
     {
         _clickHouseService = clickHouseService;
     }
