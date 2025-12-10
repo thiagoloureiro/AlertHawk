@@ -59,5 +59,7 @@ public interface IClickHouseService
         string? clusterName = null);
 
     Task CleanupSystemLogsAsync();
+
+    Task<List<TableSizeDto>> GetTableSizesAsync();
 }
 

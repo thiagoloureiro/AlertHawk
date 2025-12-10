@@ -972,6 +972,52 @@ public class ClickHouseService : IClickHouseService, IDisposable
         }
     }
 
+    public async Task<List<TableSizeDto>> GetTableSizesAsync()
+    {
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var query = @"
+                SELECT
+                    database,
+                    table,
+                    formatReadableSize(sum(bytes_on_disk)) AS total_size,
+                    sum(bytes_on_disk) AS total_size_bytes
+                FROM system.parts
+                GROUP BY
+                    database,
+                    table
+                ORDER BY sum(bytes_on_disk) DESC
+            ";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = query;
+            
+            var results = new List<TableSizeDto>();
+            await using var reader = await command.ExecuteReaderAsync();
+            
+            while (await reader.ReadAsync())
+            {
+                results.Add(new TableSizeDto
+                {
+                    Database = reader.GetString(0),
+                    Table = reader.GetString(1),
+                    TotalSize = reader.GetString(2),
+                    TotalSizeBytes = reader.GetInt64(3)
+                });
+            }
+
+            return results;
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
     public void Dispose()
     {
         _connectionSemaphore?.Dispose();

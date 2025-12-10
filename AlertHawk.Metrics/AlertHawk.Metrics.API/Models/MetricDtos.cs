@@ -87,3 +87,11 @@ public class PodLogRequest
     public string LogContent { get; set; } = string.Empty;
 }
 
+public class TableSizeDto
+{
+    public string Database { get; set; } = string.Empty;
+    public string Table { get; set; } = string.Empty;
+    public string TotalSize { get; set; } = string.Empty;
+    public long TotalSizeBytes { get; set; }
+}
+
