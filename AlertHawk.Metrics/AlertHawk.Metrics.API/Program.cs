@@ -174,6 +174,7 @@ app.UseHttpsRedirection();
 // Schedule recurring log cleanup job if enabled
 if (bool.TryParse(enableLogCleanup, out var isEnabled) && isEnabled)
 {
+    var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
     var cleanupService = app.Services.GetRequiredService<LogCleanupService>();
     
     // Create cron expression for every N hours
@@ -195,7 +196,7 @@ if (bool.TryParse(enableLogCleanup, out var isEnabled) && isEnabled)
         cronExpression = $"0 0 */{days} * *";
     }
     
-    RecurringJob.AddOrUpdate(
+    recurringJobManager.AddOrUpdate(
         "log-cleanup-job",
         () => cleanupService.CleanupLogsAsync(),
         cronExpression,
