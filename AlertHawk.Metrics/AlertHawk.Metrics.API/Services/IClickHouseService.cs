@@ -57,5 +57,7 @@ public interface IClickHouseService
         int? minutes = 1440,
         int limit = 100,
         string? clusterName = null);
+
+    Task CleanupSystemLogsAsync();
 }
 

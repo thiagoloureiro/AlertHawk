@@ -2,8 +2,10 @@ using System.Reflection;
 using System.Text;
 using AlertHawk.Metrics.API.Services;
 using EasyMemoryCache.Configuration;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -83,6 +85,28 @@ builder.Services.AddSingleton<IClickHouseService>(sp =>
 // Register Azure Prices service
 builder.Services.AddHttpClient<IAzurePricesService, AzurePricesService>();
 
+// Configure Hangfire for background jobs
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseInMemoryStorage());
+
+builder.Services.AddHangfireServer();
+
+// Register Log Cleanup Service
+var enableLogCleanup = Environment.GetEnvironmentVariable("ENABLE_LOG_CLEANUP");
+var logCleanupIntervalHours = int.TryParse(
+    Environment.GetEnvironmentVariable("LOG_CLEANUP_INTERVAL_HOURS"), 
+    out var intervalHours) ? intervalHours : 24;
+
+builder.Services.AddSingleton<LogCleanupService>(sp =>
+{
+    var clickHouseService = sp.GetRequiredService<IClickHouseService>();
+    var logger = sp.GetRequiredService<ILogger<LogCleanupService>>();
+    return new LogCleanupService(clickHouseService, logger);
+});
+
 var issuers = configuration["Jwt:Issuers"] ??
               "issuer";
 
@@ -146,6 +170,52 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseHttpsRedirection();
+
+// Schedule recurring log cleanup job if enabled
+if (bool.TryParse(enableLogCleanup, out var isEnabled) && isEnabled)
+{
+    var cleanupService = app.Services.GetRequiredService<LogCleanupService>();
+    
+    // Create cron expression for every N hours
+    // For intervals <= 24 hours, use hourly pattern: "0 */N * * *"
+    // For intervals > 24 hours, use daily pattern: "0 0 */N * *" (every N days at midnight)
+    string cronExpression;
+    if (logCleanupIntervalHours <= 0)
+    {
+        cronExpression = "0 0 * * *"; // Default to daily at midnight if invalid
+    }
+    else if (logCleanupIntervalHours <= 24)
+    {
+        cronExpression = $"0 */{logCleanupIntervalHours} * * *";
+    }
+    else
+    {
+        // For intervals > 24 hours, convert to days (round up)
+        var days = (int)Math.Ceiling(logCleanupIntervalHours / 24.0);
+        cronExpression = $"0 0 */{days} * *";
+    }
+    
+    RecurringJob.AddOrUpdate(
+        "log-cleanup-job",
+        () => cleanupService.CleanupLogsAsync(),
+        cronExpression,
+        new RecurringJobOptions
+        {
+            TimeZone = TimeZoneInfo.Utc
+        });
+    
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogInformation(
+        "System log cleanup job scheduled. Interval: {IntervalHours} hours (truncates ClickHouse system log tables), Cron: {CronExpression}",
+        logCleanupIntervalHours,
+        cronExpression);
+}
+else
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogInformation("System log cleanup is disabled. Set ENABLE_LOG_CLEANUP=true to enable.");
+}
+
 app.MapControllers();
 
 app.Run();

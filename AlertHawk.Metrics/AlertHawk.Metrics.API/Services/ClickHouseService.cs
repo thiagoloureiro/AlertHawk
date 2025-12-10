@@ -927,6 +927,51 @@ public class ClickHouseService : IClickHouseService, IDisposable
         }
     }
 
+    public async Task CleanupSystemLogsAsync()
+    {
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            // List of system log tables to clean
+            var systemLogTables = new[]
+            {
+                "processors_profile_log",
+                "opentelemetry_span_log",
+                "query_log",
+                "part_log",
+                "asynchronous_metric_log",
+                "metric_log",
+                "query_metric_log",
+                "text_log",
+                "error_log",
+                "trace_log"
+            };
+
+            foreach (var tableName in systemLogTables)
+            {
+                try
+                {
+                    await using var truncateCommand = connection.CreateCommand();
+                    truncateCommand.CommandText = $"TRUNCATE TABLE IF EXISTS system.{tableName}";
+                    await truncateCommand.ExecuteNonQueryAsync();
+                    Console.WriteLine($"Truncated system.{tableName}");
+                }
+                catch (Exception ex)
+                {
+                    // Log but continue with other tables
+                    Console.WriteLine($"Warning: Could not truncate system.{tableName}: {ex.Message}");
+                }
+            }
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
     public void Dispose()
     {
         _connectionSemaphore?.Dispose();
