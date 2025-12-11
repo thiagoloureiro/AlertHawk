@@ -98,10 +98,6 @@ var enableLogCleanup = Environment.GetEnvironmentVariable("ENABLE_LOG_CLEANUP");
 
 var cronExpression = Environment.GetEnvironmentVariable("LOG_CLEANUP_INTERVAL_HOURS") ?? "0 0 * * *";
 
-var logCleanupIntervalHours = int.TryParse(
-    Environment.GetEnvironmentVariable("LOG_CLEANUP_INTERVAL_HOURS"),
-    out var intervalHours) ? intervalHours : 24;
-
 builder.Services.AddSingleton<LogCleanupService>(sp =>
 {
     var clickHouseService = sp.GetRequiredService<IClickHouseService>();
@@ -190,8 +186,7 @@ if (bool.TryParse(enableLogCleanup, out var isEnabled) && isEnabled)
 
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
     logger.LogInformation(
-        "System log cleanup job scheduled. Interval: {IntervalHours} hours (truncates ClickHouse system log tables), Cron: {CronExpression}",
-        logCleanupIntervalHours,
+        $"System log cleanup job scheduled. (truncates ClickHouse system log tables), Cron: {cronExpression}",
         cronExpression);
 }
 else
