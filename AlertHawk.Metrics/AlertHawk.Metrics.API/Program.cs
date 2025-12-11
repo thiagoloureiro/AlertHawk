@@ -1,14 +1,13 @@
-using System.Reflection;
-using System.Text;
 using AlertHawk.Metrics.API.Services;
 using EasyMemoryCache.Configuration;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Reflection;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,7 +78,7 @@ var clickHouseTableName = Environment.GetEnvironmentVariable("CLICKHOUSE_TABLE_N
 
 var clusterName = Environment.GetEnvironmentVariable("CLUSTER_NAME");
 
-builder.Services.AddSingleton<IClickHouseService>(sp => 
+builder.Services.AddSingleton<IClickHouseService>(sp =>
     new ClickHouseService(clickHouseConnectionString, clusterName, clickHouseTableName));
 
 // Register Azure Prices service
@@ -96,8 +95,11 @@ builder.Services.AddHangfireServer();
 
 // Register Log Cleanup Service
 var enableLogCleanup = Environment.GetEnvironmentVariable("ENABLE_LOG_CLEANUP");
+
+var cronExpression = Environment.GetEnvironmentVariable("LOG_CLEANUP_INTERVAL_HOURS") ?? "0 0 * * *";
+
 var logCleanupIntervalHours = int.TryParse(
-    Environment.GetEnvironmentVariable("LOG_CLEANUP_INTERVAL_HOURS"), 
+    Environment.GetEnvironmentVariable("LOG_CLEANUP_INTERVAL_HOURS"),
     out var intervalHours) ? intervalHours : 24;
 
 builder.Services.AddSingleton<LogCleanupService>(sp =>
@@ -176,26 +178,7 @@ if (bool.TryParse(enableLogCleanup, out var isEnabled) && isEnabled)
 {
     var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
     var cleanupService = app.Services.GetRequiredService<LogCleanupService>();
-    
-    // Create cron expression for every N hours
-    // For intervals <= 24 hours, use hourly pattern: "0 */N * * *"
-    // For intervals > 24 hours, use daily pattern: "0 0 */N * *" (every N days at midnight)
-    string cronExpression;
-    if (logCleanupIntervalHours <= 0)
-    {
-        cronExpression = "0 0 * * *"; // Default to daily at midnight if invalid
-    }
-    else if (logCleanupIntervalHours <= 24)
-    {
-        cronExpression = $"0 */{logCleanupIntervalHours} * * *";
-    }
-    else
-    {
-        // For intervals > 24 hours, convert to days (round up)
-        var days = (int)Math.Ceiling(logCleanupIntervalHours / 24.0);
-        cronExpression = $"0 0 */{days} * *";
-    }
-    
+
     recurringJobManager.AddOrUpdate(
         "log-cleanup-job",
         () => cleanupService.CleanupLogsAsync(),
@@ -204,7 +187,7 @@ if (bool.TryParse(enableLogCleanup, out var isEnabled) && isEnabled)
         {
             TimeZone = TimeZoneInfo.Utc
         });
-    
+
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
     logger.LogInformation(
         "System log cleanup job scheduled. Interval: {IntervalHours} hours (truncates ClickHouse system log tables), Cron: {CronExpression}",
