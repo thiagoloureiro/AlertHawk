@@ -113,6 +113,8 @@ public static class PodMetricsCollector
                     var jsonString = JsonSerializer.Serialize(response);
                     var podMetricsList = JsonSerializer.Deserialize<PodMetricsList>(jsonString, jsonOptions);
 
+                    // Build a set of pod names that have metrics from the metrics API
+                    var podsWithMetrics = new HashSet<string>();
                     if (podMetricsList != null)
                     {
                         Log.Debug("Found {Count} pod metrics", podMetricsList.Items.Length);
@@ -122,6 +124,7 @@ public static class PodMetricsCollector
                             if (item.Metadata.Namespace != ns)
                                 continue;
 
+                            podsWithMetrics.Add(item.Metadata.Name);
                             Log.Debug("Pod: {Namespace}/{PodName} - Timestamp: {Timestamp}", 
                                 item.Metadata.Namespace, item.Metadata.Name, item.Timestamp);
                             foreach (var container in item.Containers)
@@ -186,6 +189,77 @@ public static class PodMetricsCollector
                                 var formattedMemory = ResourceFormatter.FormatMemory(container.Usage.Memory);
                                 Log.Debug("Container: {Container} - CPU: {Cpu}, Memory: {Memory}", 
                                     container.Name, formattedCpu, formattedMemory);
+                            }
+                        }
+                    }
+
+                    // Process pods that don't have metrics from the metrics API (e.g., Pending, Failed, Succeeded)
+                    foreach (var pod in pods.Items)
+                    {
+                        // Skip if we already processed this pod from the metrics API
+                        if (podsWithMetrics.Contains(pod.Metadata.Name))
+                            continue;
+
+                        // Get pod state
+                        var podState = podStates.TryGetValue(pod.Metadata.Name, out var state)
+                            ? state
+                            : null;
+
+                        // Get restart count
+                        var restartCount = podRestarts.TryGetValue(pod.Metadata.Name, out var restarts)
+                            ? restarts
+                            : 0;
+
+                        // Get pod age in seconds
+                        var podAge = podAges.TryGetValue(pod.Metadata.Name, out var age)
+                            ? age
+                            : (long?)null;
+
+                        // Get node name for this pod
+                        var nodeName = podNodeNames.TryGetValue(pod.Metadata.Name, out var node)
+                            ? node
+                            : null;
+
+                        // Process each container in the pod
+                        if (pod.Spec?.Containers != null)
+                        {
+                            foreach (var container in pod.Spec.Containers)
+                            {
+                                // Get CPU limit for this container
+                                var cpuLimit = podCpuLimits.TryGetValue(pod.Metadata.Name, out var containerLimits) &&
+                                             containerLimits.TryGetValue(container.Name, out var limit)
+                                    ? limit
+                                    : null;
+
+                                double? cpuLimitCores = null;
+                                if (cpuLimit != null)
+                                {
+                                    cpuLimitCores = ResourceFormatter.ParseCpuToCores(cpuLimit);
+                                }
+
+                                try
+                                {
+                                    // Write metrics with 0 CPU and memory for non-running pods
+                                    await apiClient.WritePodMetricAsync(
+                                        pod.Metadata.NamespaceProperty,
+                                        pod.Metadata.Name,
+                                        container.Name,
+                                        0.0, // CPU usage
+                                        cpuLimitCores,
+                                        0.0, // Memory usage
+                                        nodeName,
+                                        podState,
+                                        restartCount,
+                                        podAge);
+                                    
+                                    Log.Debug("Stored metrics for non-running pod {Namespace}/{PodName}/{Container} - Phase: {Phase}", 
+                                        pod.Metadata.NamespaceProperty, pod.Metadata.Name, container.Name, podState);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Log.Error(ex, "Error sending pod metric to API for {Namespace}/{PodName}/{Container}", 
+                                        pod.Metadata.NamespaceProperty, pod.Metadata.Name, container.Name);
+                                }
                             }
                         }
                     }
