@@ -76,7 +76,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 cpu_usage_cores Float64,
                 cpu_limit_cores Nullable(Float64),
                 memory_usage_bytes Float64,
-                node_name Nullable(String)
+                node_name Nullable(String),
+                pod_state Nullable(String),
+                restart_count UInt32,
+                pod_age Nullable(Int64)
             )
             ENGINE = MergeTree()
             ORDER BY (timestamp, cluster_name, namespace, pod, container)
@@ -102,6 +105,37 @@ public class ClickHouseService : IClickHouseService, IDisposable
         catch (Exception ex)
         {
             Console.WriteLine($"Warning: Could not add node_name column (it may already exist): {ex.Message}");
+        }
+
+        // Add pod_state, restart_count, and pod_age columns if they don't exist (for existing tables)
+        try
+        {
+            await using var alterCommand1 = connection.CreateCommand();
+            alterCommand1.CommandText = $@"
+                ALTER TABLE {_database}.{_tableName}
+                ADD COLUMN IF NOT EXISTS pod_state Nullable(String)
+            ";
+            await alterCommand1.ExecuteNonQueryAsync();
+            
+            await using var alterCommand2 = connection.CreateCommand();
+            alterCommand2.CommandText = $@"
+                ALTER TABLE {_database}.{_tableName}
+                ADD COLUMN IF NOT EXISTS restart_count UInt32 DEFAULT 0
+            ";
+            await alterCommand2.ExecuteNonQueryAsync();
+            
+            await using var alterCommand3 = connection.CreateCommand();
+            alterCommand3.CommandText = $@"
+                ALTER TABLE {_database}.{_tableName}
+                ADD COLUMN IF NOT EXISTS pod_age Nullable(Int64)
+            ";
+            await alterCommand3.ExecuteNonQueryAsync();
+            
+            Console.WriteLine($"Columns 'pod_state', 'restart_count', and 'pod_age' ensured to exist in '{_database}.{_tableName}'");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not add pod_state/restart_count/pod_age columns (they may already exist): {ex.Message}");
         }
 
         // Create node metrics table
@@ -351,7 +385,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
         double? cpuLimitCores,
         double memoryUsageBytes,
         string? clusterName = null,
-        string? nodeName = null)
+        string? nodeName = null,
+        string? podState = null,
+        int restartCount = 0,
+        long? podAge = null)
     {
         var effectiveClusterName = clusterName ?? _clusterName;
         if (string.IsNullOrWhiteSpace(effectiveClusterName))
@@ -374,13 +411,17 @@ public class ClickHouseService : IClickHouseService, IDisposable
             var nodeNameValue = !string.IsNullOrWhiteSpace(nodeName)
                 ? $"'{nodeName.Replace("'", "''").Replace("\\", "\\\\")}'"
                 : "NULL";
+            var podStateValue = !string.IsNullOrWhiteSpace(podState)
+                ? $"'{podState.Replace("'", "''").Replace("\\", "\\\\")}'"
+                : "NULL";
+            var podAgeValue = podAge?.ToString() ?? "NULL";
 
             var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
             var insertSql = $@"
                 INSERT INTO {_database}.{_tableName}
-                (timestamp, cluster_name, namespace, pod, container, cpu_usage_cores, cpu_limit_cores, memory_usage_bytes, node_name)
+                (timestamp, cluster_name, namespace, pod, container, cpu_usage_cores, cpu_limit_cores, memory_usage_bytes, node_name, pod_state, restart_count, pod_age)
                 VALUES
-                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedPod}', '{escapedContainer}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuLimitValue}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {nodeNameValue})
+                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedPod}', '{escapedContainer}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuLimitValue}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {nodeNameValue}, {podStateValue}, {restartCount}, {podAgeValue})
             ";
 
             await using var command = connection.CreateCommand();
@@ -505,7 +546,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     cpu_usage_cores,
                     cpu_limit_cores,
                     memory_usage_bytes,
-                    node_name
+                    node_name,
+                    pod_state,
+                    restart_count,
+                    pod_age
                 FROM {_database}.{_tableName}
                 WHERE {whereClause}
                 ORDER BY timestamp DESC
@@ -529,7 +573,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     CpuUsageCores = reader.GetDouble(5),
                     CpuLimitCores = reader.IsDBNull(6) ? null : reader.GetDouble(6),
                     MemoryUsageBytes = reader.GetDouble(7),
-                    NodeName = reader.IsDBNull(8) ? null : reader.GetString(8)
+                    NodeName = reader.IsDBNull(8) ? null : reader.GetString(8),
+                    PodState = reader.IsDBNull(9) ? null : reader.GetString(9),
+                    RestartCount = reader.IsDBNull(10) ? 0 : (int)reader.GetUInt32(10),
+                    PodAge = reader.IsDBNull(11) ? null : reader.GetInt64(11)
                 });
             }
 

@@ -12,7 +12,10 @@ public interface IClickHouseService
         double? cpuLimitCores,
         double memoryUsageBytes,
         string? clusterName = null,
-        string? nodeName = null);
+        string? nodeName = null,
+        string? podState = null,
+        int restartCount = 0,
+        long? podAge = null);
 
     Task WriteNodeMetricsAsync(
         string nodeName,

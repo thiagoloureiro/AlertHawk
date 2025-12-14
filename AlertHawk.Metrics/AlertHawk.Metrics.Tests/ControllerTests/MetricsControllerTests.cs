@@ -409,7 +409,11 @@ public class MetricsControllerTests
                 request.CpuUsageCores,
                 request.CpuLimitCores,
                 request.MemoryUsageBytes,
-                request.ClusterName))
+                request.ClusterName,
+                request.NodeName,
+                request.PodState,
+                request.RestartCount,
+                request.PodAge))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -429,7 +433,11 @@ public class MetricsControllerTests
             request.CpuUsageCores,
             request.CpuLimitCores,
             request.MemoryUsageBytes,
-            request.ClusterName), Times.Once);
+            request.ClusterName,
+            request.NodeName,
+            request.PodState,
+            request.RestartCount,
+            request.PodAge), Times.Once);
     }
 
     [Fact]
@@ -455,7 +463,11 @@ public class MetricsControllerTests
                 request.CpuUsageCores,
                 request.CpuLimitCores,
                 request.MemoryUsageBytes,
-                null))
+                null,
+                request.NodeName,
+                request.PodState,
+                request.RestartCount,
+                request.PodAge))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -470,7 +482,11 @@ public class MetricsControllerTests
             request.CpuUsageCores,
             request.CpuLimitCores,
             request.MemoryUsageBytes,
-            null), Times.Once);
+            null,
+            request.NodeName,
+            request.PodState,
+            request.RestartCount,
+            request.PodAge), Times.Once);
     }
 
     [Fact]
@@ -496,7 +512,11 @@ public class MetricsControllerTests
                 request.CpuUsageCores,
                 request.CpuLimitCores,
                 request.MemoryUsageBytes,
-                null))
+                null,
+                request.NodeName,
+                request.PodState,
+                request.RestartCount,
+                request.PodAge))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -511,7 +531,11 @@ public class MetricsControllerTests
             request.CpuUsageCores,
             request.CpuLimitCores,
             request.MemoryUsageBytes,
-            null), Times.Once);
+            null,
+            request.NodeName,
+            request.PodState,
+            request.RestartCount,
+            request.PodAge), Times.Once);
     }
 
     [Fact]
@@ -537,7 +561,11 @@ public class MetricsControllerTests
                 request.CpuUsageCores,
                 null,
                 request.MemoryUsageBytes,
-                request.ClusterName))
+                request.ClusterName,
+                request.NodeName,
+                request.PodState,
+                request.RestartCount,
+                request.PodAge))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -552,7 +580,11 @@ public class MetricsControllerTests
             request.CpuUsageCores,
             null,
             request.MemoryUsageBytes,
-            request.ClusterName), Times.Once);
+            request.ClusterName,
+            request.NodeName,
+            request.PodState,
+            request.RestartCount,
+            request.PodAge), Times.Once);
     }
 
     [Fact]
@@ -578,7 +610,11 @@ public class MetricsControllerTests
                 It.IsAny<double>(),
                 It.IsAny<double?>(),
                 It.IsAny<double>(),
-                It.IsAny<string>()))
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<long?>()))
             .ThrowsAsync(new Exception("Write failed"));
 
         // Act

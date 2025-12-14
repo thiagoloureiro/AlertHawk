@@ -11,6 +11,9 @@ public class PodMetricDto
     public double? CpuLimitCores { get; set; }
     public double MemoryUsageBytes { get; set; }
     public string? NodeName { get; set; }
+    public string? PodState { get; set; }
+    public int RestartCount { get; set; }
+    public long? PodAge { get; set; }
 }
 
 public class NodeMetricDto
@@ -45,6 +48,9 @@ public class PodMetricRequest
     public double? CpuLimitCores { get; set; }
     public double MemoryUsageBytes { get; set; }
     public string? NodeName { get; set; }
+    public string? PodState { get; set; }
+    public int RestartCount { get; set; }
+    public long? PodAge { get; set; }
 }
 
 public class NodeMetricRequest

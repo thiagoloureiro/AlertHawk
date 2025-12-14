@@ -36,7 +36,7 @@ public class PodMetricsCollectorTests
             .ReturnsAsync(podMetrics);
 
         _mockApiClient
-            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>()))
+            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -50,7 +50,11 @@ public class PodMetricsCollectorTests
                 "test-container",
                 It.IsAny<double>(),
                 It.IsAny<double?>(),
-                It.IsAny<double>()),
+                It.IsAny<double>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<long?>()),
             Times.Once);
     }
 
@@ -76,7 +80,7 @@ public class PodMetricsCollectorTests
             .ReturnsAsync(podMetrics);
 
         _mockApiClient
-            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>()))
+            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -108,7 +112,7 @@ public class PodMetricsCollectorTests
             .ReturnsAsync(podMetrics);
 
         _mockApiClient
-            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>()))
+            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -122,7 +126,11 @@ public class PodMetricsCollectorTests
                 "test-container",
                 It.IsAny<double>(),
                 0.5, // CPU limit should be 0.5 cores
-                It.IsAny<double>()),
+                It.IsAny<double>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<long?>()),
             Times.Once);
     }
 
@@ -147,7 +155,7 @@ public class PodMetricsCollectorTests
 
         // Assert
         _mockApiClient.Verify(
-            a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>()),
+            a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()),
             Times.Never);
     }
 
@@ -168,7 +176,7 @@ public class PodMetricsCollectorTests
             .ReturnsAsync(podMetrics);
 
         _mockApiClient
-            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>()))
+            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
             .ThrowsAsync(new Exception("API error"));
 
         // Act & Assert - Should not throw
@@ -196,7 +204,7 @@ public class PodMetricsCollectorTests
             .ReturnsAsync(podMetrics);
 
         _mockApiClient
-            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>()))
+            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
             .Returns(Task.CompletedTask);
 
         // Act & Assert - Should not throw
@@ -204,7 +212,7 @@ public class PodMetricsCollectorTests
 
         // Should still process the default namespace
         _mockApiClient.Verify(
-            a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>()),
+            a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()),
             Times.Once);
     }
 
@@ -225,7 +233,7 @@ public class PodMetricsCollectorTests
             .ReturnsAsync(podMetrics);
 
         _mockApiClient
-            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>()))
+            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -233,7 +241,7 @@ public class PodMetricsCollectorTests
 
         // Assert - Should be called twice (once for each container)
         _mockApiClient.Verify(
-            a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>()),
+            a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()),
             Times.Exactly(2));
     }
 
@@ -248,7 +256,8 @@ public class PodMetricsCollectorTests
                     Metadata = new V1ObjectMeta
                     {
                         Name = podName,
-                        NamespaceProperty = @namespace
+                        NamespaceProperty = @namespace,
+                        CreationTimestamp = DateTime.UtcNow.AddHours(-1)
                     },
                     Spec = new V1PodSpec
                     {
@@ -262,7 +271,15 @@ public class PodMetricsCollectorTests
                     },
                     Status = new V1PodStatus
                     {
-                        Phase = "Running"
+                        Phase = "Running",
+                        ContainerStatuses = new List<V1ContainerStatus>
+                        {
+                            new V1ContainerStatus
+                            {
+                                Name = "test-container",
+                                RestartCount = 0
+                            }
+                        }
                     }
                 }
             }
@@ -280,7 +297,8 @@ public class PodMetricsCollectorTests
                     Metadata = new V1ObjectMeta
                     {
                         Name = podName,
-                        NamespaceProperty = @namespace
+                        NamespaceProperty = @namespace,
+                        CreationTimestamp = DateTime.UtcNow.AddHours(-1)
                     },
                     Spec = new V1PodSpec
                     {
@@ -301,7 +319,15 @@ public class PodMetricsCollectorTests
                     },
                     Status = new V1PodStatus
                     {
-                        Phase = "Running"
+                        Phase = "Running",
+                        ContainerStatuses = new List<V1ContainerStatus>
+                        {
+                            new V1ContainerStatus
+                            {
+                                Name = containerName,
+                                RestartCount = 0
+                            }
+                        }
                     }
                 }
             }

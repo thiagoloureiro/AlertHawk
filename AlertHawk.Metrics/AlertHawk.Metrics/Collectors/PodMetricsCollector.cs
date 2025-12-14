@@ -44,6 +44,13 @@ public static class PodMetricsCollector
                     var podCpuLimits = new Dictionary<string, Dictionary<string, string>>();
                     // Build a dictionary of pod name -> node name
                     var podNodeNames = new Dictionary<string, string>();
+                    // Build a dictionary of pod name -> pod state (Phase)
+                    var podStates = new Dictionary<string, string>();
+                    // Build a dictionary of pod name -> restart count
+                    var podRestarts = new Dictionary<string, int>();
+                    // Build a dictionary of pod name -> age in seconds
+                    var podAges = new Dictionary<string, long>();
+                    
                     foreach (var pod in pods.Items)
                     {
                         var containerLimits = new Dictionary<string, string>();
@@ -70,6 +77,23 @@ public static class PodMetricsCollector
                         if (!string.IsNullOrWhiteSpace(pod.Spec?.NodeName))
                         {
                             podNodeNames[pod.Metadata.Name] = pod.Spec.NodeName;
+                        }
+                        
+                        // Store pod state (Phase)
+                        if (!string.IsNullOrWhiteSpace(pod.Status?.Phase))
+                        {
+                            podStates[pod.Metadata.Name] = pod.Status.Phase;
+                        }
+                        
+                        // Calculate total restart count for all containers
+                        var restartCount = pod.Status?.ContainerStatuses?.Sum(cs => cs.RestartCount ?? 0) ?? 0;
+                        podRestarts[pod.Metadata.Name] = restartCount;
+                        
+                        // Calculate pod age in seconds
+                        if (pod.Metadata?.CreationTimestamp != null)
+                        {
+                            var age = (long)(DateTime.UtcNow - pod.Metadata.CreationTimestamp.Value).TotalSeconds;
+                            podAges[pod.Metadata.Name] = age;
                         }
                     }
 
@@ -111,6 +135,21 @@ public static class PodMetricsCollector
                                     ? node
                                     : null;
 
+                                // Get pod state
+                                var podState = podStates.TryGetValue(item.Metadata.Name, out var state)
+                                    ? state
+                                    : null;
+
+                                // Get restart count
+                                var restartCount = podRestarts.TryGetValue(item.Metadata.Name, out var restarts)
+                                    ? restarts
+                                    : 0;
+
+                                // Get pod age in seconds
+                                var podAge = podAges.TryGetValue(item.Metadata.Name, out var age)
+                                    ? age
+                                    : (long?)null;
+
                                 // Write metrics to ClickHouse
                                 var cpuCores = ResourceFormatter.ParseCpuToCores(container.Usage.Cpu);
                                 var memoryBytes = Utils.MemoryParser.ParseToBytes(container.Usage.Memory);
@@ -132,7 +171,10 @@ public static class PodMetricsCollector
                                             cpuCores,
                                             cpuLimitCores,
                                             memoryBytes,
-                                            nodeName);
+                                            nodeName,
+                                            podState,
+                                            restartCount,
+                                            podAge);
                                     }
                                     catch (Exception ex)
                                     {

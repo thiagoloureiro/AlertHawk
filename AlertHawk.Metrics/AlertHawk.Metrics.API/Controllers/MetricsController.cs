@@ -139,7 +139,10 @@ public class MetricsController : ControllerBase
                 request.CpuLimitCores,
                 request.MemoryUsageBytes,
                 clusterName,
-                request.NodeName);
+                request.NodeName,
+                request.PodState,
+                request.RestartCount,
+                request.PodAge);
             return Ok(new { success = true });
         }
         catch (Exception ex)

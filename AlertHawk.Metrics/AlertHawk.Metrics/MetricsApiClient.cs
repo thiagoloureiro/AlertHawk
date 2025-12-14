@@ -74,7 +74,10 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
         double cpuUsageCores,
         double? cpuLimitCores,
         double memoryUsageBytes,
-        string? nodeName = null)
+        string? nodeName = null,
+        string? podState = null,
+        int restartCount = 0,
+        long? podAge = null)
     {
         var request = new
         {
@@ -85,7 +88,10 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
             CpuUsageCores = cpuUsageCores,
             CpuLimitCores = cpuLimitCores,
             MemoryUsageBytes = memoryUsageBytes,
-            NodeName = nodeName
+            NodeName = nodeName,
+            PodState = podState,
+            RestartCount = restartCount,
+            PodAge = podAge
         };
 
         var json = JsonSerializer.Serialize(request);
