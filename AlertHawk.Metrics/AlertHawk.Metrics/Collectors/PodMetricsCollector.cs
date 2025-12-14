@@ -86,7 +86,9 @@ public static class PodMetricsCollector
                         }
                         
                         // Calculate total restart count for all containers
-                        var restartCount = pod.Status?.ContainerStatuses?.Sum(cs => cs.RestartCount ?? 0) ?? 0;
+                        var restartCount = pod.Status?.ContainerStatuses != null
+                            ? pod.Status.ContainerStatuses.Sum(cs => cs.RestartCount)
+                            : 0;
                         podRestarts[pod.Metadata.Name] = restartCount;
                         
                         // Calculate pod age in seconds

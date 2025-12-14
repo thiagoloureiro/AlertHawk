@@ -575,7 +575,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     MemoryUsageBytes = reader.GetDouble(7),
                     NodeName = reader.IsDBNull(8) ? null : reader.GetString(8),
                     PodState = reader.IsDBNull(9) ? null : reader.GetString(9),
-                    RestartCount = reader.IsDBNull(10) ? 0 : (int)reader.GetUInt32(10),
+                    RestartCount = reader.IsDBNull(10) ? 0 : Convert.ToInt32(reader.GetValue(10)),
                     PodAge = reader.IsDBNull(11) ? null : reader.GetInt64(11)
                 });
             }
