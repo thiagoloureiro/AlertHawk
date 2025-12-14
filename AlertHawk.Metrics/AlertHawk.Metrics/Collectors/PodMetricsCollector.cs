@@ -162,27 +162,24 @@ public static class PodMetricsCollector
                                     cpuLimitCores = ResourceFormatter.ParseCpuToCores(cpuLimit);
                                 }
 
-                                if (memoryBytes > 0)
+                                try
                                 {
-                                    try
-                                    {
-                                        await apiClient.WritePodMetricAsync(
-                                            item.Metadata.Namespace,
-                                            item.Metadata.Name,
-                                            container.Name,
-                                            cpuCores,
-                                            cpuLimitCores,
-                                            memoryBytes,
-                                            nodeName,
-                                            podState,
-                                            restartCount,
-                                            podAge);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        Log.Error(ex, "Error sending pod metric to API for {Namespace}/{PodName}/{Container}", 
-                                            item.Metadata.Namespace, item.Metadata.Name, container.Name);
-                                    }
+                                    await apiClient.WritePodMetricAsync(
+                                        item.Metadata.Namespace,
+                                        item.Metadata.Name,
+                                        container.Name,
+                                        cpuCores,
+                                        cpuLimitCores,
+                                        memoryBytes,
+                                        nodeName,
+                                        podState,
+                                        restartCount,
+                                        podAge);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Log.Error(ex, "Error sending pod metric to API for {Namespace}/{PodName}/{Container}", 
+                                        item.Metadata.Namespace, item.Metadata.Name, container.Name);
                                 }
 
                                 var formattedCpu = ResourceFormatter.FormatCpu(container.Usage.Cpu, cpuLimit);
