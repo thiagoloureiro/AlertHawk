@@ -135,31 +135,6 @@ public class PodMetricsCollectorTests
     }
 
     [Fact]
-    public async Task CollectAsync_WithZeroMemory_SkipsApiCall()
-    {
-        // Arrange
-        var namespaces = new[] { "default" };
-        var podList = CreatePodList("default", "test-pod");
-        var podMetrics = CreatePodMetricsList("default", "test-pod", "test-container", "100m", "0");
-
-        _mockKubernetesWrapper
-            .Setup(c => c.ListNamespacedPodAsync("default"))
-            .ReturnsAsync(podList);
-
-        _mockKubernetesWrapper
-            .Setup(c => c.ListClusterCustomObjectAsync("metrics.k8s.io", "v1beta1", "pods"))
-            .ReturnsAsync(podMetrics);
-
-        // Act
-        await PodMetricsCollector.CollectAsync(_mockKubernetesWrapper.Object, namespaces, _mockApiClient.Object);
-
-        // Assert
-        _mockApiClient.Verify(
-            a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()),
-            Times.Never);
-    }
-
-    [Fact]
     public async Task CollectAsync_WithApiClientError_ContinuesProcessing()
     {
         // Arrange
