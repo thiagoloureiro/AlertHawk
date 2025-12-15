@@ -74,45 +74,154 @@ namespace AlertHawk.Metrics.API.Controllers
                     IMessage? exportMetricsServiceRequest = null;
                     try
                     {
-                        // Find the OpenTelemetry.Proto assembly
-                        var protoAssembly = AppDomain.CurrentDomain.GetAssemblies()
-                            .FirstOrDefault(a => a.GetName().Name?.Contains("OpenTelemetry.Proto") == true ||
-                                                 a.GetTypes().Any(t => t.Namespace?.Contains("OpenTelemetry.Proto.Collector.Metrics") == true));
-
+                        Console.WriteLine("\nAttempting to find OpenTelemetry proto assembly...");
+                        
+                        // Try multiple ways to find the assembly
+                        Assembly? protoAssembly = null;
+                        
+                        // Method 1: Search by name
+                        var allAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+                        protoAssembly = allAssemblies.FirstOrDefault(a => 
+                            a.GetName().Name?.StartsWith("OpenTelemetry.Proto", StringComparison.OrdinalIgnoreCase) == true);
+                        
+                        // Method 2: Search by namespace in types
                         if (protoAssembly == null)
                         {
-                            // Try to load it explicitly
-                            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-                            protoAssembly = assemblies.FirstOrDefault(a => 
-                                a.GetTypes().Any(t => t.FullName?.Contains("OpenTelemetry.Proto.Collector.Metrics.V1.ExportMetricsServiceRequest") == true));
+                            foreach (var assembly in allAssemblies)
+                            {
+                                try
+                                {
+                                    var types = assembly.GetTypes();
+                                    if (types.Any(t => t.Namespace?.Contains("OpenTelemetry.Proto.Collector.Metrics.V1") == true))
+                                    {
+                                        protoAssembly = assembly;
+                                        Console.WriteLine($"Found assembly by namespace: {assembly.GetName().Name}");
+                                        break;
+                                    }
+                                }
+                                catch
+                                {
+                                    // Skip assemblies we can't inspect
+                                }
+                            }
+                        }
+                        
+                        // Method 3: Try to load explicitly
+                        if (protoAssembly == null)
+                        {
+                            try
+                            {
+                                var assemblyNames = new[] 
+                                { 
+                                    "OpenTelemetry.Proto.Collector.Metrics.V1",
+                                    "OpenTelemetry.Exporter.OpenTelemetryProtocol"
+                                };
+                                
+                                foreach (var assemblyName in assemblyNames)
+                                {
+                                    try
+                                    {
+                                        protoAssembly = Assembly.Load(assemblyName);
+                                        Console.WriteLine($"Loaded assembly: {assemblyName}");
+                                        break;
+                                    }
+                                    catch
+                                    {
+                                        // Try next name
+                                    }
+                                }
+                            }
+                            catch
+                            {
+                                // Continue
+                            }
                         }
 
                         if (protoAssembly != null)
                         {
+                            Console.WriteLine($"Using assembly: {protoAssembly.GetName().Name}");
+                            
                             // Get the ExportMetricsServiceRequest type
                             var requestType = protoAssembly.GetTypes()
-                                .FirstOrDefault(t => t.Name == "ExportMetricsServiceRequest" && 
-                                                     t.Namespace?.Contains("Collector.Metrics") == true);
+                                .FirstOrDefault(t => t.Name == "ExportMetricsServiceRequest");
+                            
+                            if (requestType == null)
+                            {
+                                // Try with full namespace
+                                requestType = protoAssembly.GetType("OpenTelemetry.Proto.Collector.Metrics.V1.ExportMetricsServiceRequest");
+                            }
 
                             if (requestType != null)
                             {
+                                Console.WriteLine($"Found type: {requestType.FullName}");
+                                
                                 // Get the Parser property
-                                var parserProperty = requestType.GetProperty("Parser", BindingFlags.Public | BindingFlags.Static);
+                                var parserProperty = requestType.GetProperty("Parser", BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic);
+                                if (parserProperty == null)
+                                {
+                                    parserProperty = requestType.GetProperty("Parser", BindingFlags.NonPublic | BindingFlags.Static);
+                                }
+                                
                                 if (parserProperty != null)
                                 {
                                     var parser = parserProperty.GetValue(null);
-                                    var parseMethod = parser?.GetType().GetMethod("ParseFrom", new[] { typeof(byte[]) });
-                                    if (parseMethod != null)
+                                    if (parser != null)
                                     {
-                                        exportMetricsServiceRequest = parseMethod.Invoke(parser, new object[] { decompressedBytes }) as IMessage;
+                                        var parseMethod = parser.GetType().GetMethod("ParseFrom", new[] { typeof(byte[]) });
+                                        if (parseMethod == null)
+                                        {
+                                            parseMethod = parser.GetType().GetMethod("ParseFrom", BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(byte[]) }, null);
+                                        }
+                                        
+                                        if (parseMethod != null)
+                                        {
+                                            exportMetricsServiceRequest = parseMethod.Invoke(parser, new object[] { decompressedBytes }) as IMessage;
+                                            Console.WriteLine("Successfully parsed protobuf message!");
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine("Could not find ParseFrom method");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Parser property returned null");
                                     }
                                 }
+                                else
+                                {
+                                    Console.WriteLine("Could not find Parser property");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine("Could not find ExportMetricsServiceRequest type");
+                                Console.WriteLine("Available types in assembly:");
+                                try
+                                {
+                                    var types = protoAssembly.GetTypes().Take(10);
+                                    foreach (var type in types)
+                                    {
+                                        Console.WriteLine($"  - {type.FullName}");
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Could not find OpenTelemetry proto assembly");
+                            Console.WriteLine("Loaded assemblies:");
+                            foreach (var assembly in allAssemblies.Take(20))
+                            {
+                                Console.WriteLine($"  - {assembly.GetName().Name}");
                             }
                         }
                     }
                     catch (Exception reflectionEx)
                     {
                         Console.WriteLine($"Error using reflection to parse: {reflectionEx.Message}");
+                        Console.WriteLine($"Stack trace: {reflectionEx.StackTrace}");
                     }
 
                     if (exportMetricsServiceRequest != null)
