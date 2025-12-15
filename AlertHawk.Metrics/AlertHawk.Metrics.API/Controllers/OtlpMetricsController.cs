@@ -5,6 +5,8 @@ using System.Linq;
 using System.IO.Compression;
 using System.Reflection;
 using Google.Protobuf;
+using AlertHawk.Metrics.API.Models;
+using AlertHawk.Metrics.API.Services;
 
 namespace AlertHawk.Metrics.API.Controllers
 {
@@ -13,10 +15,12 @@ namespace AlertHawk.Metrics.API.Controllers
     public class OtlpMetricsController : ControllerBase
     {
         private readonly ILogger<OtlpMetricsController> _logger;
+        private readonly OtlpMetricsMapper _mapper;
 
-        public OtlpMetricsController(ILogger<OtlpMetricsController> logger)
+        public OtlpMetricsController(ILogger<OtlpMetricsController> logger, OtlpMetricsMapper mapper)
         {
             _logger = logger;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -226,7 +230,35 @@ namespace AlertHawk.Metrics.API.Controllers
 
                     if (exportMetricsServiceRequest != null)
                     {
-                        // Use reflection to access properties and parse metrics
+                        // Map to structured objects
+                        var otlpMetricsData = _mapper.MapToOtlpMetricsData(exportMetricsServiceRequest);
+                        
+                        // Log the mapped data
+                        Console.WriteLine("\n--- Mapped OTLP Metrics Data ---");
+                        Console.WriteLine($"Received At: {otlpMetricsData.ReceivedAt:yyyy-MM-dd HH:mm:ss.fff}");
+                        Console.WriteLine($"Resource Metrics Count: {otlpMetricsData.ResourceMetrics.Count}");
+                        
+                        foreach (var resourceMetric in otlpMetricsData.ResourceMetrics)
+                        {
+                            Console.WriteLine($"\nResource: {resourceMetric.Resource.ServiceName ?? "Unknown"}");
+                            Console.WriteLine($"  Host: {resourceMetric.Resource.HostName}");
+                            Console.WriteLine($"  Namespace: {resourceMetric.Resource.Namespace}");
+                            Console.WriteLine($"  Pod: {resourceMetric.Resource.PodName}");
+                            Console.WriteLine($"  Scope Metrics Count: {resourceMetric.ScopeMetrics.Count}");
+                            
+                            foreach (var scopeMetric in resourceMetric.ScopeMetrics)
+                            {
+                                Console.WriteLine($"  Scope: {scopeMetric.Scope?.Name} (v{scopeMetric.Scope?.Version})");
+                                Console.WriteLine($"    Metrics Count: {scopeMetric.Metrics.Count}");
+                                
+                                foreach (var metric in scopeMetric.Metrics)
+                                {
+                                    Console.WriteLine($"      {metric.Name} ({metric.Type}) - {metric.DataPoints.Count} data points");
+                                }
+                            }
+                        }
+                        
+                        // Also parse using reflection for detailed console output
                         ParseMetricsUsingReflection(exportMetricsServiceRequest);
                     }
                     else

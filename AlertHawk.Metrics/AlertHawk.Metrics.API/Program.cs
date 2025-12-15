@@ -81,6 +81,9 @@ var clusterName = Environment.GetEnvironmentVariable("CLUSTER_NAME");
 builder.Services.AddSingleton<IClickHouseService>(sp =>
     new ClickHouseService(clickHouseConnectionString, clusterName, clickHouseTableName));
 
+// Register OTLP Metrics Mapper
+builder.Services.AddSingleton<OtlpMetricsMapper>();
+
 // Register Azure Prices service
 builder.Services.AddHttpClient<IAzurePricesService, AzurePricesService>();
 
