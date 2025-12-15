@@ -1,28 +1,44 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using OfficeOpenXml;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using AlertHawk.Monitoring.Infrastructure.Helpers;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 
 [ExcludeFromCodeCoverage]
 public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
 {
-    private readonly string _connstring;
-
     public MonitorAlertRepository(IConfiguration configuration) : base(configuration)
     {
-        _connstring = GetConnectionString();
     }
 
     public async Task<IEnumerable<MonitorAlert>> GetMonitorAlerts(int? monitorId, int? days,
         MonitorEnvironment? environment, List<int>? groupIds)
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var alertTable = Helpers.DatabaseProvider.FormatTableName("MonitorAlert", DatabaseProvider);
+        var monitorTable = Helpers.DatabaseProvider.FormatTableName("Monitor", DatabaseProvider);
+        var httpTable = Helpers.DatabaseProvider.FormatTableName("MonitorHttp", DatabaseProvider);
+        var groupItemsTable = Helpers.DatabaseProvider.FormatTableName("MonitorGroupItems", DatabaseProvider);
+        
+        var dateFilter = DatabaseProvider switch
+        {
+            DatabaseProviderType.SqlServer => "DATEADD(day, -@days, GETDATE())",
+            DatabaseProviderType.PostgreSQL => "CURRENT_TIMESTAMP - make_interval(days => @days)",
+            _ => throw new NotSupportedException($"Database provider '{DatabaseProvider}' is not supported.")
+        };
+        
+        var inClause = DatabaseProvider switch
+        {
+            DatabaseProviderType.SqlServer => "IN @groupIds",
+            DatabaseProviderType.PostgreSQL => "= ANY(@groupIds)",
+            _ => throw new NotSupportedException($"Database provider '{DatabaseProvider}' is not supported.")
+        };
+        
         string sql;
 
         if (monitorId > 0)
@@ -30,22 +46,22 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
             if (environment == MonitorEnvironment.All)
             {
                 sql =
-                    @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment,  MH.UrlToCheck
-                    FROM MonitorAlert MA
-                    INNER JOIN Monitor M on M.Id = MA.MonitorId
-                    LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
-                    WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE())
-                    ORDER BY MA.TimeStamp DESC";
+                    $"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment,  MH.UrlToCheck " +
+                    $"FROM {alertTable} MA " +
+                    $"INNER JOIN {monitorTable} M on M.Id = MA.MonitorId " +
+                    $"LEFT JOIN {httpTable} MH on MH.MonitorId = M.Id " +
+                    $"WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= {dateFilter} " +
+                    $"ORDER BY MA.TimeStamp DESC";
             }
             else
             {
                 sql =
-                    @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment,  MH.UrlToCheck
-                    FROM MonitorAlert MA
-                    INNER JOIN Monitor M on M.Id = MA.MonitorId
-                    LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
-                    WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.environment = @environment
-                    ORDER BY MA.TimeStamp DESC";
+                    $"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment,  MH.UrlToCheck " +
+                    $"FROM {alertTable} MA " +
+                    $"INNER JOIN {monitorTable} M on M.Id = MA.MonitorId " +
+                    $"LEFT JOIN {httpTable} MH on MH.MonitorId = M.Id " +
+                    $"WHERE MA.MonitorId = @monitorId AND MA.TimeStamp >= {dateFilter} AND MA.environment = @environment " +
+                    $"ORDER BY MA.TimeStamp DESC";
             }
 
             return await db.QueryAsync<MonitorAlert>(sql, new { monitorId, days, environment },
@@ -55,26 +71,26 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
         if (environment == MonitorEnvironment.All)
         {
             sql =
-                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment, MH.UrlToCheck
-                    FROM MonitorAlert MA
-                    INNER JOIN Monitor M on M.Id = MA.MonitorId
-                    INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id
-                    LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
-                WHERE MA.TimeStamp >= DATEADD(day, -@days, GETDATE())
-                AND MGI.MonitorGroupId in @groupIds
-                ORDER BY MA.TimeStamp DESC";
+                $"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment, MH.UrlToCheck " +
+                $"FROM {alertTable} MA " +
+                $"INNER JOIN {monitorTable} M on M.Id = MA.MonitorId " +
+                $"INNER JOIN {groupItemsTable} MGI on MGI.MonitorId = M.Id " +
+                $"LEFT JOIN {httpTable} MH on MH.MonitorId = M.Id " +
+                $"WHERE MA.TimeStamp >= {dateFilter} " +
+                $"AND MGI.MonitorGroupId {inClause} " +
+                $"ORDER BY MA.TimeStamp DESC";
         }
         else
         {
             sql =
-                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment, MH.UrlToCheck
-                FROM MonitorAlert MA
-                INNER JOIN Monitor M on M.Id = MA.MonitorId
-                INNER JOIN MonitorGroupItems MGI on MGI.MonitorId = M.Id
-                LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
-                WHERE MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.environment = @environment
-                AND MGI.MonitorGroupId in @groupIds
-                ORDER BY MA.TimeStamp DESC";
+                $"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment, MH.UrlToCheck " +
+                $"FROM {alertTable} MA " +
+                $"INNER JOIN {monitorTable} M on M.Id = MA.MonitorId " +
+                $"INNER JOIN {groupItemsTable} MGI on MGI.MonitorId = M.Id " +
+                $"LEFT JOIN {httpTable} MH on MH.MonitorId = M.Id " +
+                $"WHERE MA.TimeStamp >= {dateFilter} AND MA.environment = @environment " +
+                $"AND MGI.MonitorGroupId {inClause} " +
+                $"ORDER BY MA.TimeStamp DESC";
         }
 
         return await db.QueryAsync<MonitorAlert>(sql, new { days, groupIds, environment },
@@ -122,9 +138,10 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
 
     public async Task SaveMonitorAlert(MonitorHistory monitorHistory, MonitorEnvironment environment)
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("MonitorAlert", DatabaseProvider);
         string sql =
-            @"INSERT INTO [MonitorAlert] (MonitorId, TimeStamp, Status, Message, Environment) VALUES (@MonitorId, @TimeStamp, @Status, @Message, @Environment)";
+            $"INSERT INTO {tableName} (MonitorId, TimeStamp, Status, Message, Environment) VALUES (@MonitorId, @TimeStamp, @Status, @Message, @Environment)";
         await db.ExecuteAsync(sql,
             new
             {
@@ -139,29 +156,46 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
     public async Task<IEnumerable<MonitorAlert>> GetMonitorAlertsByMonitorGroup(List<int> monitorListIds, int? days,
         MonitorEnvironment? environment)
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var alertTable = Helpers.DatabaseProvider.FormatTableName("MonitorAlert", DatabaseProvider);
+        var monitorTable = Helpers.DatabaseProvider.FormatTableName("Monitor", DatabaseProvider);
+        var httpTable = Helpers.DatabaseProvider.FormatTableName("MonitorHttp", DatabaseProvider);
+        
+        var dateFilter = DatabaseProvider switch
+        {
+            DatabaseProviderType.SqlServer => "DATEADD(day, -@days, GETDATE())",
+            DatabaseProviderType.PostgreSQL => "CURRENT_TIMESTAMP - make_interval(days => @days)",
+            _ => throw new NotSupportedException($"Database provider '{DatabaseProvider}' is not supported.")
+        };
+        
+        var inClause = DatabaseProvider switch
+        {
+            DatabaseProviderType.SqlServer => "IN @monitorListIds",
+            DatabaseProviderType.PostgreSQL => "= ANY(@monitorListIds)",
+            _ => throw new NotSupportedException($"Database provider '{DatabaseProvider}' is not supported.")
+        };
+        
         string sql;
-
 
         if (environment == MonitorEnvironment.All)
         {
             sql =
-                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment,  MH.UrlToCheck
-                    FROM MonitorAlert MA
-                    INNER JOIN Monitor M on M.Id = MA.MonitorId
-                    LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
-                    WHERE MA.MonitorId IN @monitorListIds AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE())
-                    ORDER BY MA.TimeStamp DESC";
+                $"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment,  MH.UrlToCheck " +
+                $"FROM {alertTable} MA " +
+                $"INNER JOIN {monitorTable} M on M.Id = MA.MonitorId " +
+                $"LEFT JOIN {httpTable} MH on MH.MonitorId = M.Id " +
+                $"WHERE MA.MonitorId {inClause} AND MA.TimeStamp >= {dateFilter} " +
+                $"ORDER BY MA.TimeStamp DESC";
         }
         else
         {
             sql =
-                @$"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment,  MH.UrlToCheck
-                    FROM MonitorAlert MA
-                    INNER JOIN Monitor M on M.Id = MA.MonitorId
-                    LEFT JOIN MonitorHttp MH on MH.MonitorId = M.Id
-                    WHERE MA.MonitorId in @monitorListIds AND MA.TimeStamp >= DATEADD(day, -@days, GETDATE()) AND MA.environment = @environment
-                    ORDER BY MA.TimeStamp DESC";
+                $"SELECT M.Name as MonitorName, MA.Id, MA.MonitorId, MA.TimeStamp, MA.Status, MA.Message, MA.Environment,  MH.UrlToCheck " +
+                $"FROM {alertTable} MA " +
+                $"INNER JOIN {monitorTable} M on M.Id = MA.MonitorId " +
+                $"LEFT JOIN {httpTable} MH on MH.MonitorId = M.Id " +
+                $"WHERE MA.MonitorId {inClause} AND MA.TimeStamp >= {dateFilter} AND MA.environment = @environment " +
+                $"ORDER BY MA.TimeStamp DESC";
         }
 
         return await db.QueryAsync<MonitorAlert>(sql, new { monitorListIds, days, environment },

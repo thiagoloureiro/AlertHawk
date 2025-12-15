@@ -2,23 +2,21 @@ using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Infrastructure.Utils;
+using AlertHawk.Monitoring.Infrastructure.Helpers;
 using Dapper;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using Npgsql;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 
 [ExcludeFromCodeCoverage]
 public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
 {
-    private readonly string _connstring;
-
     public MonitorAgentRepository(IConfiguration configuration) : base(configuration)
     {
-        _connstring = GetConnectionString();
     }
 
     public async Task ManageMonitorStatus(MonitorAgent monitorAgent)
@@ -26,7 +24,7 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         var allMonitors = await GetAllMonitorAgents();
         monitorAgent.Version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString();
 
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
         await DeleteOutdatedMonitors(allMonitors, db);
 
         var disableMaster = VariableUtils.GetBoolEnvVariable("DISABLE_MASTER");
@@ -69,16 +67,19 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         }
     }
 
-    private static async Task DeleteOutdatedMonitors(List<MonitorAgent> allMonitors, SqlConnection db)
+    private async Task DeleteOutdatedMonitors(List<MonitorAgent> allMonitors, IDbConnection db)
     {
         var monitorAgents = allMonitors
             .Where(agent => agent.TimeStamp < DateTime.UtcNow.AddMinutes(-1))
             .ToList();
 
+        var agentTable = Helpers.DatabaseProvider.FormatTableName("MonitorAgent", DatabaseProvider);
+        var tasksTable = Helpers.DatabaseProvider.FormatTableName("MonitorAgentTasks", DatabaseProvider);
+
         foreach (var monitorAgent in monitorAgents)
         {
-            var sqlDelete = @"DELETE FROM [MonitorAgent] WHERE Id = @Id";
-            var sqlDeleteFromTasks = @"DELETE FROM [MonitorAgentTasks] WHERE MonitorAgentId = @Id";
+            var sqlDelete = $"DELETE FROM {agentTable} WHERE Id = @Id";
+            var sqlDeleteFromTasks = $"DELETE FROM {tasksTable} WHERE MonitorAgentId = @Id";
 
             await db.ExecuteAsync(sqlDelete, new { monitorAgent.Id }, commandType: CommandType.Text);
             await db.ExecuteAsync(sqlDeleteFromTasks, new { monitorAgent.Id }, commandType: CommandType.Text);
@@ -88,8 +89,9 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
 
     public async Task<List<MonitorAgent>> GetAllMonitorAgents()
     {
-        await using var db = new SqlConnection(_connstring);
-        string sqlAllMonitors = @"SELECT Id, Hostname, TimeStamp, IsMaster, MonitorRegion, Version FROM [MonitorAgent]";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("MonitorAgent", DatabaseProvider);
+        string sqlAllMonitors = $"SELECT Id, Hostname, TimeStamp, IsMaster, MonitorRegion, Version FROM {tableName}";
         var result = await db.QueryAsyncWithRetry<MonitorAgent>(sqlAllMonitors, commandType: CommandType.Text, commandTimeout: 120);
         return result.ToList();
     }
@@ -109,44 +111,75 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
         {
             await DeleteAllMonitorAgentTasks(lstMonitorAgentTasks.Select(x => x.MonitorId).ToList());
 
-            DataTable table = new DataTable();
-            table.Columns.Add("MonitorId", typeof(int));
-            table.Columns.Add("MonitorAgentId", typeof(int));
-
-            foreach (var item in lstMonitorAgentTasks)
+            var tasksTable = Helpers.DatabaseProvider.FormatTableName("MonitorAgentTasks", DatabaseProvider);
+            
+            if (DatabaseProvider == DatabaseProviderType.SqlServer)
             {
-                table.Rows.Add(item.MonitorId, item.MonitorAgentId);
+                DataTable table = new DataTable();
+                table.Columns.Add("MonitorId", typeof(int));
+                table.Columns.Add("MonitorAgentId", typeof(int));
+
+                foreach (var item in lstMonitorAgentTasks)
+                {
+                    table.Rows.Add(item.MonitorId, item.MonitorAgentId);
+                }
+
+                using var connection = new Microsoft.Data.SqlClient.SqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                // Create an instance of SqlBulkCopy for SQL Server
+                using var bulkCopy = new Microsoft.Data.SqlClient.SqlBulkCopy(connection);
+                bulkCopy.DestinationTableName = tasksTable;
+                bulkCopy.ColumnMappings.Add("MonitorId", "MonitorId");
+                bulkCopy.ColumnMappings.Add("MonitorAgentId", "MonitorAgentId");
+                await bulkCopy.WriteToServerAsync(table);
             }
-
-            await using var connection = new SqlConnection(_connstring);
-            await connection.OpenAsync();
-
-            // Create an instance of SqlBulkCopy
-            using var bulkCopy = new SqlBulkCopy(connection);
-            // Set the destination table name
-            bulkCopy.DestinationTableName = "MonitorAgentTasks";
-
-            // Optionally, map the DataTable columns to the database table's columns if they are not in the same order or have different names
-            bulkCopy.ColumnMappings.Add("MonitorId", "MonitorId");
-            bulkCopy.ColumnMappings.Add("MonitorAgentId", "MonitorAgentId");
-
-            // Perform the bulk copy
-            await bulkCopy.WriteToServerAsync(table);
+            else // PostgreSQL
+            {
+                // For PostgreSQL, use COPY command or batch inserts
+                using var connection = new NpgsqlConnection(ConnectionString);
+                await connection.OpenAsync();
+                
+                using var writer = await connection.BeginBinaryImportAsync($"COPY {tasksTable} (MonitorId, MonitorAgentId) FROM STDIN (FORMAT BINARY)");
+                foreach (var item in lstMonitorAgentTasks)
+                {
+                    await writer.StartRowAsync();
+                    await writer.WriteAsync(item.MonitorId);
+                    await writer.WriteAsync(item.MonitorAgentId);
+                }
+                await writer.CompleteAsync();
+            }
         }
     }
 
     private async Task DeleteAllMonitorAgentTasks(List<int> ids)
     {
-        await using var db = new SqlConnection(_connstring);
-        string sqlAllMonitors = @"DELETE FROM [MonitorAgentTasks] WHERE MonitorId IN @ids";
+        using var db = CreateConnection();
+        var tasksTable = Helpers.DatabaseProvider.FormatTableName("MonitorAgentTasks", DatabaseProvider);
+        string sqlAllMonitors = DatabaseProvider switch
+        {
+            DatabaseProviderType.SqlServer => $"DELETE FROM {tasksTable} WHERE MonitorId IN @ids",
+            DatabaseProviderType.PostgreSQL => $"DELETE FROM {tasksTable} WHERE MonitorId = ANY(@ids)",
+            _ => throw new NotSupportedException($"Database provider '{DatabaseProvider}' is not supported.")
+        };
         await db.ExecuteAsync(sqlAllMonitors, new { ids }, commandType: CommandType.Text);
     }
 
     public async Task<List<MonitorAgentTasks>> GetAllMonitorAgentTasks(List<int> monitorRegions)
     {
-        await using var db = new SqlConnection(_connstring);
-        string sqlAllMonitors = @"SELECT MonitorId, MonitorAgentId FROM [MonitorAgentTasks] MAT
-                                INNER JOIN Monitor M on M.Id = MAT.MonitorId WHERE M.MonitorRegion IN @monitorRegions";
+        using var db = CreateConnection();
+        var tasksTable = Helpers.DatabaseProvider.FormatTableName("MonitorAgentTasks", DatabaseProvider);
+        var monitorTable = Helpers.DatabaseProvider.FormatTableName("Monitor", DatabaseProvider);
+        string sqlAllMonitors = DatabaseProvider switch
+        {
+            DatabaseProviderType.SqlServer =>
+                $"SELECT MonitorId, MonitorAgentId FROM {tasksTable} MAT " +
+                $"INNER JOIN {monitorTable} M on M.Id = MAT.MonitorId WHERE M.MonitorRegion IN @monitorRegions",
+            DatabaseProviderType.PostgreSQL =>
+                $"SELECT MonitorId, MonitorAgentId FROM {tasksTable} MAT " +
+                $"INNER JOIN {monitorTable} M on M.Id = MAT.MonitorId WHERE M.MonitorRegion = ANY(@monitorRegions)",
+            _ => throw new NotSupportedException($"Database provider '{DatabaseProvider}' is not supported.")
+        };
         var result =
             await db.QueryAsync<MonitorAgentTasks>(sqlAllMonitors, new { monitorRegions },
                 commandType: CommandType.Text);
@@ -155,17 +188,19 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
 
     public async Task<List<MonitorAgentTasks>> GetAllMonitorAgentTasksByAgentId(int id)
     {
-        await using var db = new SqlConnection(_connstring);
-        string sqlAllMonitors = @"SELECT MonitorId, MonitorAgentId FROM [MonitorAgentTasks] WHERE MonitorAgentId = @id";
+        using var db = CreateConnection();
+        var tasksTable = Helpers.DatabaseProvider.FormatTableName("MonitorAgentTasks", DatabaseProvider);
+        string sqlAllMonitors = $"SELECT MonitorId, MonitorAgentId FROM {tasksTable} WHERE MonitorAgentId = @id";
         var result = await db.QueryAsync<MonitorAgentTasks>(sqlAllMonitors, new { id }, commandType: CommandType.Text);
         return result.ToList();
     }
 
-    private static async Task UpdateExistingMonitor(SqlConnection db,
+    private async Task UpdateExistingMonitor(IDbConnection db,
         MonitorAgent monitorToUpdate)
     {
+        var agentTable = Helpers.DatabaseProvider.FormatTableName("MonitorAgent", DatabaseProvider);
         string sqlInsertMaster =
-            @"UPDATE [MonitorAgent] SET TimeStamp = @TimeStamp, IsMaster = @IsMaster, MonitorRegion = @MonitorRegion, Version = @Version WHERE Id = @id";
+            $"UPDATE {agentTable} SET TimeStamp = @TimeStamp, IsMaster = @IsMaster, MonitorRegion = @MonitorRegion, Version = @Version WHERE Id = @id";
 
         await db.ExecuteAsync(sqlInsertMaster,
             new
@@ -178,17 +213,17 @@ public class MonitorAgentRepository : RepositoryBase, IMonitorAgentRepository
             }, commandType: CommandType.Text);
     }
 
-    private static async Task RegisterMonitor(MonitorAgent monitorAgent,
-        SqlConnection db, bool isMaster)
+    private async Task RegisterMonitor(MonitorAgent monitorAgent,
+        IDbConnection db, bool isMaster)
     {
         monitorAgent.IsMaster = isMaster;
-        // Insert
+        var agentTable = Helpers.DatabaseProvider.FormatTableName("MonitorAgent", DatabaseProvider);
         string sqlInsertMaster =
-            @"INSERT INTO [MonitorAgent] (Hostname, TimeStamp, IsMaster, MonitorRegion, Version) VALUES (@Hostname, @TimeStamp, @IsMaster, @MonitorRegion, @Version)";
+            $"INSERT INTO {agentTable} (Hostname, TimeStamp, IsMaster, MonitorRegion, Version) VALUES (@Hostname, @TimeStamp, @IsMaster, @MonitorRegion, @Version)";
         await db.ExecuteAsync(sqlInsertMaster,
             new
             {
-                HostName = monitorAgent.Hostname,
+                Hostname = monitorAgent.Hostname,
                 TimeStamp = monitorAgent.TimeStamp,
                 IsMaster = monitorAgent.IsMaster,
                 MonitorRegion = monitorAgent.MonitorRegion,

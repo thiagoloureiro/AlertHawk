@@ -3,6 +3,7 @@ using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Domain.Interfaces.Repositories;
 using AlertHawk.Notification.Domain.Interfaces.Services;
 using AlertHawk.Notification.Helpers;
+using AlertHawk.Notification.Infrastructure.Helpers;
 using AlertHawk.Notification.Infrastructure.Notifiers;
 using AlertHawk.Notification.Infrastructure.Repositories.Class;
 using EasyMemoryCache.Configuration;
@@ -156,6 +157,7 @@ builder.Services.AddTransient<INotificationTypeService, NotificationTypeService>
 builder.Services.AddTransient<INotificationTypeRepository, NotificationTypeRepository>();
 builder.Services.AddTransient<INotificationService, NotificationService>();
 builder.Services.AddTransient<INotificationRepository, NotificationRepository>();
+builder.Services.AddTransient<DatabaseInitializer>();
 
 builder.Services.AddTransient<IMailNotifier, MailNotifier>();
 builder.Services.AddTransient<ISlackNotifier, SlackNotifier>();
@@ -232,6 +234,13 @@ builder.Services.AddAuthorization(options =>
 });
 
 var app = builder.Build();
+
+// Initialize database tables
+using (var scope = app.Services.CreateScope())
+{
+    var databaseInitializer = scope.ServiceProvider.GetRequiredService<DatabaseInitializer>();
+    await databaseInitializer.EnsureAllTablesExistAsync();
+}
 
 app.UseHttpsRedirection();
 

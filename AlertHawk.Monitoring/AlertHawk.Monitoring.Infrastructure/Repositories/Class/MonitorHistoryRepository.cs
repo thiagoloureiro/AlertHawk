@@ -1,70 +1,90 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using AlertHawk.Monitoring.Infrastructure.Helpers;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 
 [ExcludeFromCodeCoverage]
 public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepository
 {
-    private readonly string _connstring;
-
     public MonitorHistoryRepository(IConfiguration configuration) : base(configuration)
     {
-        _connstring = GetConnectionString();
     }
 
     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndDays(int id, int days)
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("MonitorHistory", DatabaseProvider);
+        var dateFilter = DatabaseProvider switch
+        {
+            DatabaseProviderType.SqlServer => "DATEADD(day, -@days, GETUTCDATE())",
+            DatabaseProviderType.PostgreSQL => "CURRENT_TIMESTAMP - make_interval(days => @days)",
+            _ => throw new NotSupportedException($"Database provider '{DatabaseProvider}' is not supported.")
+        };
         string sql =
-            @$"SELECT MonitorId, Status, TimeStamp, ResponseTime FROM [MonitorHistory] WHERE MonitorId = @id AND TimeStamp >= DATEADD(day, -@days, GETUTCDATE()) ORDER BY TimeStamp DESC;";
+            $"SELECT MonitorId, Status, TimeStamp, ResponseTime FROM {tableName} WHERE MonitorId = @id AND TimeStamp >= {dateFilter} ORDER BY TimeStamp DESC;";
         return await db.QueryAsync<MonitorHistory>(sql, new { id, days }, commandType: CommandType.Text,
             commandTimeout: 120);
     }
 
     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistoryByIdAndHours(int id, int hours)
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("MonitorHistory", DatabaseProvider);
+        var dateFilter = DatabaseProvider switch
+        {
+            DatabaseProviderType.SqlServer => "DATEADD(hour, -@hours, GETUTCDATE())",
+            DatabaseProviderType.PostgreSQL => "CURRENT_TIMESTAMP - make_interval(hours => @hours)",
+            _ => throw new NotSupportedException($"Database provider '{DatabaseProvider}' is not supported.")
+        };
         string sql =
-            @$"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion FROM [MonitorHistory] WHERE MonitorId=@id AND TimeStamp >= DATEADD(hour, -@hours, GETUTCDATE())  ORDER BY TimeStamp DESC";
+            $"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion FROM {tableName} WHERE MonitorId=@id AND TimeStamp >= {dateFilter} ORDER BY TimeStamp DESC";
         return await db.QueryAsync<MonitorHistory>(sql, new { id, hours }, commandType: CommandType.Text);
     }
 
     public async Task<MonitorSettings?> GetMonitorHistoryRetention()
     {
-        await using var db = new SqlConnection(_connstring);
-        string sql = @"SELECT HistoryDaysRetention FROM MonitorSettings";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("MonitorSettings", DatabaseProvider);
+        string sql = $"SELECT HistoryDaysRetention FROM {tableName}";
         return await db.QueryFirstOrDefaultAsync<MonitorSettings>(sql, commandType: CommandType.Text);
     }
 
     public async Task SetMonitorHistoryRetention(int days)
     {
-        await using var db = new SqlConnection(_connstring);
-        string sql = "UPDATE MonitorSettings SET HistoryDaysRetention = @days WHERE 1=1";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("MonitorSettings", DatabaseProvider);
+        string sql = $"UPDATE {tableName} SET HistoryDaysRetention = @days";
         await db.ExecuteAsync(sql, new { days }, commandType: CommandType.Text);
     }
 
     public async Task<MonitorHttpHeaders> GetMonitorSecurityHeaders(int id)
     {
-        await using var db = new SqlConnection(_connstring);
-        string sql = @"SELECT TOP 1 MonitorId, CacheControl, StrictTransportSecurity, PermissionsPolicy, XFrameOptions, XContentTypeOptions, ReferrerPolicy, ContentSecurityPolicy FROM [MonitorHttpHeaders] WHERE MonitorId=@id";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("MonitorHttpHeaders", DatabaseProvider);
+        string sql = DatabaseProvider switch
+        {
+            DatabaseProviderType.SqlServer => $"SELECT TOP 1 MonitorId, CacheControl, StrictTransportSecurity, PermissionsPolicy, XFrameOptions, XContentTypeOptions, ReferrerPolicy, ContentSecurityPolicy FROM {tableName} WHERE MonitorId=@id",
+            DatabaseProviderType.PostgreSQL => $"SELECT MonitorId, CacheControl, StrictTransportSecurity, PermissionsPolicy, XFrameOptions, XContentTypeOptions, ReferrerPolicy, ContentSecurityPolicy FROM {tableName} WHERE MonitorId=@id LIMIT 1",
+            _ => throw new NotSupportedException($"Database provider '{DatabaseProvider}' is not supported.")
+        };
         return await db.QueryFirstOrDefaultAsync<MonitorHttpHeaders>(sql, new { id }, commandType: CommandType.Text);
     }
     
     public async Task<MonitorHttpHeaders> SaveMonitorSecurityHeaders(MonitorHttpHeaders monitorHttpHeaders)
     {
-        await using var db = new SqlConnection(_connstring);
-        string sqlCheck = @"SELECT COUNT(1) FROM [MonitorHttpHeaders] WHERE MonitorId=@MonitorId";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("MonitorHttpHeaders", DatabaseProvider);
+        string sqlCheck = $"SELECT COUNT(1) FROM {tableName} WHERE MonitorId=@MonitorId";
         int count = await db.ExecuteScalarAsync<int>(sqlCheck, new { monitorHttpHeaders.MonitorId }, commandType: CommandType.Text);
 
         if (count > 0)
         {
-            string sqlUpdate = @"UPDATE [MonitorHttpHeaders] SET CacheControl=@CacheControl, StrictTransportSecurity=@StrictTransportSecurity, PermissionsPolicy=@PermissionsPolicy, XFrameOptions=@XFrameOptions, XContentTypeOptions=@XContentTypeOptions, ReferrerPolicy=@ReferrerPolicy, ContentSecurityPolicy=@ContentSecurityPolicy WHERE MonitorId=@MonitorId";
+            string sqlUpdate = $"UPDATE {tableName} SET CacheControl=@CacheControl, StrictTransportSecurity=@StrictTransportSecurity, PermissionsPolicy=@PermissionsPolicy, XFrameOptions=@XFrameOptions, XContentTypeOptions=@XContentTypeOptions, ReferrerPolicy=@ReferrerPolicy, ContentSecurityPolicy=@ContentSecurityPolicy WHERE MonitorId=@MonitorId";
             await db.ExecuteAsync(sqlUpdate,
                 new
                 {
@@ -80,7 +100,7 @@ public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepositor
         }
         else
         {
-            string sqlInsert = @"INSERT INTO [MonitorHttpHeaders] (MonitorId, CacheControl, StrictTransportSecurity, PermissionsPolicy, XFrameOptions, XContentTypeOptions, ReferrerPolicy, ContentSecurityPolicy) VALUES (@MonitorId, @CacheControl, @StrictTransportSecurity, @PermissionsPolicy, @XFrameOptions, @XContentTypeOptions, @ReferrerPolicy, @ContentSecurityPolicy)";
+            string sqlInsert = $"INSERT INTO {tableName} (MonitorId, CacheControl, StrictTransportSecurity, PermissionsPolicy, XFrameOptions, XContentTypeOptions, ReferrerPolicy, ContentSecurityPolicy) VALUES (@MonitorId, @CacheControl, @StrictTransportSecurity, @PermissionsPolicy, @XFrameOptions, @XContentTypeOptions, @ReferrerPolicy, @ContentSecurityPolicy)";
             await db.ExecuteAsync(sqlInsert,
                 new
                 {
@@ -100,9 +120,10 @@ public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepositor
 
     public async Task SaveMonitorHistory(MonitorHistory monitorHistory)
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("MonitorHistory", DatabaseProvider);
         string sql =
-            @"INSERT INTO [MonitorHistory] (MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion, ResponseMessage) VALUES (@MonitorId, @Status, @TimeStamp, @StatusCode, @ResponseTime, @HttpVersion, @ResponseMessage)";
+            $"INSERT INTO {tableName} (MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion, ResponseMessage) VALUES (@MonitorId, @Status, @TimeStamp, @StatusCode, @ResponseTime, @HttpVersion, @ResponseMessage)";
         await db.ExecuteAsync(sql,
             new
             {
@@ -118,32 +139,47 @@ public class MonitorHistoryRepository : RepositoryBase, IMonitorHistoryRepositor
 
     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id)
     {
-        await using var db = new SqlConnection(_connstring);
-        string sql =
-            @"SELECT TOP 10000 MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion, ResponseMessage FROM [MonitorHistory] WHERE MonitorId=@id ORDER BY TimeStamp DESC";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("MonitorHistory", DatabaseProvider);
+        string sql = DatabaseProvider switch
+        {
+            DatabaseProviderType.SqlServer =>
+                $"SELECT TOP 10000 MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion, ResponseMessage FROM {tableName} WHERE MonitorId=@id ORDER BY TimeStamp DESC",
+            DatabaseProviderType.PostgreSQL =>
+                $"SELECT MonitorId, Status, TimeStamp, StatusCode, ResponseTime, HttpVersion, ResponseMessage FROM {tableName} WHERE MonitorId=@id ORDER BY TimeStamp DESC LIMIT 10000",
+            _ => throw new NotSupportedException($"Database provider '{DatabaseProvider}' is not supported.")
+        };
         return await db.QueryAsync<MonitorHistory>(sql, new { id }, commandType: CommandType.Text);
     }
 
     public async Task DeleteMonitorHistory(int days)
     {
         // if days == 0 we truncate
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("MonitorHistory", DatabaseProvider);
 
         if (days == 0)
         {
-            string sqlTruncate = "TRUNCATE TABLE [MonitorHistory]";
+            string sqlTruncate = $"TRUNCATE TABLE {tableName}";
             await db.ExecuteAsync(sqlTruncate, commandType: CommandType.Text);
             return;
         }
 
-        string sql = @"DELETE FROM [MonitorHistory] WHERE TimeStamp < DATEADD(DAY, -@days, GETDATE())";
+        var dateFilter = DatabaseProvider switch
+        {
+            DatabaseProviderType.SqlServer => "DATEADD(DAY, -@days, GETDATE())",
+            DatabaseProviderType.PostgreSQL => "CURRENT_TIMESTAMP - make_interval(days => @days)",
+            _ => throw new NotSupportedException($"Database provider '{DatabaseProvider}' is not supported.")
+        };
+        string sql = $"DELETE FROM {tableName} WHERE TimeStamp < {dateFilter}";
         await db.QueryAsync<MonitorHistory>(sql, new { days }, commandType: CommandType.Text, commandTimeout: 3600);
     }
 
     public async Task<long> GetMonitorHistoryCount()
     {
-        await using var db = new SqlConnection(_connstring);
-        string sql = "SELECT COUNT(Id) FROM [MonitorHistory]";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("MonitorHistory", DatabaseProvider);
+        string sql = $"SELECT COUNT(Id) FROM {tableName}";
         return await db.ExecuteScalarAsync<long>(sql, commandType: CommandType.Text, commandTimeout: 3600);
     }
 }

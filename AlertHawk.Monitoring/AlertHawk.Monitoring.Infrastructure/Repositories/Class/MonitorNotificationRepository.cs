@@ -1,44 +1,44 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using Dapper;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using AlertHawk.Monitoring.Infrastructure.Helpers;
 
 namespace AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 
 [ExcludeFromCodeCoverage]
 public class MonitorNotificationRepository : RepositoryBase, IMonitorNotificationRepository
 {
-    private readonly string _connstring;
-
     public MonitorNotificationRepository(IConfiguration configuration) : base(configuration)
     {
-        _connstring = GetConnectionString();
     }
 
     public async Task<IEnumerable<MonitorNotification>> GetMonitorNotifications(int id)
     {
-        await using var db = new SqlConnection(_connstring);
-        string sql = @"SELECT MonitorId, NotificationId FROM [MonitorNotification] WHERE MonitorId=@id";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("MonitorNotification", DatabaseProvider);
+        string sql = $"SELECT MonitorId, NotificationId FROM {tableName} WHERE MonitorId=@id";
         return await db.QueryAsync<MonitorNotification>(sql, new { id }, commandType: CommandType.Text);
     }
 
     public async Task AddMonitorNotification(MonitorNotification monitorNotification)
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("MonitorNotification", DatabaseProvider);
         string sql =
-            @"INSERT INTO [MonitorNotification] (MonitorId, NotificationId) VALUES (@MonitorId, @NotificationId)";
+            $"INSERT INTO {tableName} (MonitorId, NotificationId) VALUES (@MonitorId, @NotificationId)";
         await db.ExecuteAsync(sql, new { monitorNotification.MonitorId, monitorNotification.NotificationId },
             commandType: CommandType.Text);
     }
 
     public async Task RemoveMonitorNotification(MonitorNotification monitorNotification)
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("MonitorNotification", DatabaseProvider);
         string sql =
-            @"DELETE FROM [MonitorNotification] WHERE MonitorId=@MonitorId AND NotificationId=@NotificationId";
+            $"DELETE FROM {tableName} WHERE MonitorId=@MonitorId AND NotificationId=@NotificationId";
         await db.ExecuteAsync(sql, new { monitorNotification.MonitorId, monitorNotification.NotificationId },
             commandType: CommandType.Text);
     }

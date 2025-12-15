@@ -5,6 +5,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Helpers;
+using AlertHawk.Monitoring.Infrastructure.Helpers;
 using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 using AlertHawk.Monitoring.Infrastructure.Producers;
 using AlertHawk.Monitoring.Infrastructure.Utils;
@@ -160,6 +161,7 @@ builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<Cach
 
 builder.Services.AddCustomServices();
 builder.Services.AddCustomRepositories();
+builder.Services.AddTransient<DatabaseInitializer>();
 
 builder.Services.AddTransient<IHttpClientRunner, HttpClientRunner>();
 builder.Services.AddTransient<ITcpClientRunner, TcpClientRunner>();
@@ -214,6 +216,13 @@ builder.Services.AddSwaggerGen(c =>
 GlobalVariables.RandomString = StringUtils.RandomStringGenerator();
 
 var app = builder.Build();
+
+// Initialize database tables
+using (var scope = app.Services.CreateScope())
+{
+    var databaseInitializer = scope.ServiceProvider.GetRequiredService<DatabaseInitializer>();
+    await databaseInitializer.EnsureAllTablesExistAsync();
+}
 
 var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
 

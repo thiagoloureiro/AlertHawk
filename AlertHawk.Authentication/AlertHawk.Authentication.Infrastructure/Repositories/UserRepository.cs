@@ -6,6 +6,7 @@ using Dapper;
 using Microsoft.Extensions.Configuration;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Data;
 
 namespace AlertHawk.Authentication.Infrastructure.Repositories;
 
@@ -150,9 +151,10 @@ public class UserRepository : BaseRepository, IUserRepository
         var salt = PasswordHasher.GenerateSalt();
         var hashedPassword = PasswordHasher.HashPassword(userCreation.Password, salt);
 
-        const string insertUserSql = @"
+        var newGuidFunction = Helpers.DatabaseProvider.GetNewGuidFunction(DatabaseProvider);
+        var insertUserSql = $@"
             INSERT INTO Users (Id, Username, Email, Password, Salt, IsAdmin, CreatedAt)
-            VALUES (NEWID(), @Username, @Email, @Password, @Salt, @IsAdmin, @CreatedAt)";
+            VALUES ({newGuidFunction}, @Username, @Email, @Password, @Salt, @IsAdmin, @CreatedAt)";
 
         await ExecuteNonQueryAsync(insertUserSql, new
         {
@@ -167,9 +169,10 @@ public class UserRepository : BaseRepository, IUserRepository
 
     public async Task CreateFromAzure(UserCreationFromAzure userCreation)
     {
-        const string insertUserSql = @"
+        var newGuidFunction = Helpers.DatabaseProvider.GetNewGuidFunction(DatabaseProvider);
+        var insertUserSql = $@"
             INSERT INTO Users (Id, Username, Email, IsAdmin, CreatedAt)
-            VALUES (NEWID(), @Username, @Email, @IsAdmin, @CreatedAt)";
+            VALUES ({newGuidFunction}, @Username, @Email, @IsAdmin, @CreatedAt)";
 
         await ExecuteNonQueryAsync(insertUserSql, new
         {
@@ -255,8 +258,7 @@ public class UserRepository : BaseRepository, IUserRepository
         var salt = PasswordHasher.GenerateSalt();
         var hashedPassword = PasswordHasher.HashPassword(newPassword, salt);
 
-        const string insertUserSql =
-            @"UPDATE [Users] SET Password = @Password, Salt = @Salt, UpdatedAt = @UpdatedAt WHERE LOWER(email) = LOWER(@email) AND Password IS NOT NULL";
+        var insertUserSql = "UPDATE Users SET Password = @Password, Salt = @Salt, UpdatedAt = @UpdatedAt WHERE LOWER(email) = LOWER(@email) AND Password IS NOT NULL";
 
         var affectedRows = await Execute(insertUserSql, new
         {

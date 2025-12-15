@@ -5,24 +5,22 @@ using Dapper;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.Data.SqlClient;
+using AlertHawk.Notification.Infrastructure.Helpers;
 
 namespace AlertHawk.Notification.Infrastructure.Repositories.Class;
 
 [ExcludeFromCodeCoverage]
 public class NotificationRepository : RepositoryBase, INotificationRepository
 {
-    private readonly string _connstring;
-
     public NotificationRepository(IConfiguration configuration) : base(configuration)
     {
-        _connstring = GetConnectionString();
     }
 
     public async Task<IEnumerable<NotificationItem>> SelectNotificationItemList()
     {
-        await using var db = new SqlConnection(_connstring);
-        string sql = "SELECT Id, MonitorGroupId, Name, Description, NotificationTypeId FROM [NotificationItem]";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationItem", DatabaseProvider);
+        string sql = $"SELECT Id, MonitorGroupId, Name, Description, NotificationTypeId FROM {tableName}";
 
         var notificationItemList = await db.QueryAsync<NotificationItem>(sql, commandType: CommandType.Text);
 
@@ -84,9 +82,10 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
                 notificationItem.NotificationEmail.Password =
                     AesEncryption.EncryptString(notificationItem.NotificationEmail?.Password);
 
-                await using var db = new SqlConnection(_connstring);
+                using var db = CreateConnection();
+                var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationEmailSmtp", DatabaseProvider);
                 string sqlDetails =
-                    @"INSERT INTO [NotificationEmailSmtp] (NotificationId, FromEmail, ToEmail, HostName, Port, Username, Password, ToCCEmail, ToBCCEmail, EnableSSL, Subject, Body, IsHtmlBody)
+                    $@"INSERT INTO {tableName} (NotificationId, FromEmail, ToEmail, HostName, Port, Username, Password, ToCCEmail, ToBCCEmail, EnableSSL, Subject, Body, IsHtmlBody)
         VALUES (@notificationId, @FromEmail, @ToEmail, @HostName, @Port, @Username, @Password, @ToCCEmail, @ToBCCEmail, @EnableSSL, @Subject, @Body, @IsHtmlBody)";
 
                 await db.ExecuteAsync(sqlDetails, new
@@ -111,9 +110,10 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     public async Task UpdateNotificationItem(NotificationItem? notificationItem)
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationItem", DatabaseProvider);
         string sql =
-            @"UPDATE [NotificationItem] SET Name = @Name, NotificationTypeId = @NotificationTypeId, Description = @Description WHERE Id = @Id";
+            $@"UPDATE {tableName} SET Name = @Name, NotificationTypeId = @NotificationTypeId, Description = @Description WHERE Id = @Id";
 
         await db.ExecuteAsync(sql,
             new
@@ -130,9 +130,10 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     public async Task InsertNotificationItemMsTeams(NotificationItem? notificationItem)
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationTeams", DatabaseProvider);
         string sqlDetails =
-            @"INSERT INTO [NotificationTeams] (NotificationId, WebHookUrl) VALUES (@notificationId, @WebHookUrl)";
+            $@"INSERT INTO {tableName} (NotificationId, WebHookUrl) VALUES (@notificationId, @WebHookUrl)";
 
         await db.ExecuteAsync(sqlDetails, new
         {
@@ -143,9 +144,10 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     public async Task InsertNotificationItemTelegram(NotificationItem? notificationItem)
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationTelegram", DatabaseProvider);
         string sqlDetails =
-            @"INSERT INTO [NotificationTelegram] (NotificationId, ChatId, TelegramBotToken) VALUES (@notificationId, @ChatId, @TelegramBotToken)";
+            $@"INSERT INTO {tableName} (NotificationId, ChatId, TelegramBotToken) VALUES (@notificationId, @ChatId, @TelegramBotToken)";
 
         await db.ExecuteAsync(sqlDetails, new
         {
@@ -157,9 +159,10 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     public async Task InsertNotificationItemSlack(NotificationItem? notificationItem)
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationSlack", DatabaseProvider);
         string sqlDetails =
-            @"INSERT INTO [NotificationSlack] (NotificationId, WebHookUrl, Channel) VALUES (@notificationId, @WebHookUrl, @ChannelName)";
+            $@"INSERT INTO {tableName} (NotificationId, WebHookUrl, Channel) VALUES (@notificationId, @WebHookUrl, @ChannelName)";
 
         await db.ExecuteAsync(sqlDetails, new
         {
@@ -171,9 +174,10 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     public async Task InsertNotificationItemWebHook(NotificationItem? notificationItem)
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationWebHook", DatabaseProvider);
         string sqlDetails =
-            @"INSERT INTO [NotificationWebHook] (NotificationId, Message, WebHookUrl, Body, HeadersJson) VALUES (@notificationId, @Message, @WebHookUrl, @Body, @HeadersJson)";
+            $@"INSERT INTO {tableName} (NotificationId, Message, WebHookUrl, Body, HeadersJson) VALUES (@notificationId, @Message, @WebHookUrl, @Body, @HeadersJson)";
 
         await db.ExecuteAsync(sqlDetails, new
         {
@@ -187,8 +191,9 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     public async Task<NotificationItem?> SelectNotificationItemById(int id)
     {
-        await using var db = new SqlConnection(_connstring);
-        string sql = "SELECT Id, MonitorGroupId, Name, Description, NotificationTypeId FROM [NotificationItem]";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationItem", DatabaseProvider);
+        string sql = $"SELECT Id, MonitorGroupId, Name, Description, NotificationTypeId FROM {tableName}";
 
         var notificationItemList = await db.QueryAsync<NotificationItem>(sql, commandType: CommandType.Text);
         var notificationItem = notificationItemList.FirstOrDefault(x => x.Id == id);
@@ -238,9 +243,16 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     public async Task<IEnumerable<NotificationItem?>> SelectNotificationItemList(List<int> ids)
     {
-        await using var db = new SqlConnection(_connstring);
-        string sql =
-            "SELECT Id, MonitorGroupId, Name, Description, NotificationTypeId FROM [NotificationItem] WHERE id IN @ids";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationItem", DatabaseProvider);
+        string sql = DatabaseProvider switch
+        {
+            DatabaseProviderType.SqlServer =>
+                $"SELECT Id, MonitorGroupId, Name, Description, NotificationTypeId FROM {tableName} WHERE id IN @ids",
+            DatabaseProviderType.PostgreSQL =>
+                $"SELECT Id, MonitorGroupId, Name, Description, NotificationTypeId FROM {tableName} WHERE id = ANY(@ids)",
+            _ => throw new NotSupportedException($"Database provider '{DatabaseProvider}' is not supported.")
+        };
 
         IEnumerable<NotificationItem?> notificationItemList =
             await db.QueryAsync<NotificationItem>(sql, new { ids }, commandType: CommandType.Text);
@@ -288,8 +300,9 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     public async Task DeleteNotificationItem(int id)
     {
-        await using var db = new SqlConnection(_connstring);
-        string sql = @"DELETE FROM [NotificationItem] WHERE Id = @id";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationItem", DatabaseProvider);
+        string sql = $@"DELETE FROM {tableName} WHERE Id = @id";
 
         await db.ExecuteAsync(sql, new
         {
@@ -301,41 +314,53 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     public async Task<IEnumerable<NotificationItem?>> SelectNotificationItemByMonitorGroupId(int id)
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var notificationItemTable = Helpers.DatabaseProvider.FormatTableName("NotificationItem", DatabaseProvider);
+        var notificationMonitorGroupTable = Helpers.DatabaseProvider.FormatTableName("NotificationMonitorGroup", DatabaseProvider);
         string sql =
-            "SELECT NI.Id, NI.MonitorGroupId, NI.Name, NI.Description, NI.NotificationTypeId FROM [NotificationItem] NI " +
-            "INNER JOIN NotificationMonitorGroup NMG on NMG.NotificationId = NI.Id WHERE NMG.MonitorGroupId = @id";
+            $"SELECT NI.Id, NI.MonitorGroupId, NI.Name, NI.Description, NI.NotificationTypeId FROM {notificationItemTable} NI " +
+            $"INNER JOIN {notificationMonitorGroupTable} NMG on NMG.NotificationId = NI.Id WHERE NMG.MonitorGroupId = @id";
 
         return await db.QueryAsync<NotificationItem>(sql, new { id }, commandType: CommandType.Text);
     }
 
     public async Task InsertNotificationLog(NotificationLog notificationLog)
     {
-        await using var db = new SqlConnection(_connstring);
-        string sql = "INSERT INTO [NotificationLog] (TimeStamp, NotificationTypeId, Message) VALUES (@TimeStamp, @NotificationTypeId, @Message)";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationLog", DatabaseProvider);
+        string sql = $"INSERT INTO {tableName} (TimeStamp, NotificationTypeId, Message) VALUES (@TimeStamp, @NotificationTypeId, @Message)";
         await db.ExecuteAsync(sql, new { notificationLog.TimeStamp, notificationLog.NotificationTypeId, notificationLog.Message }, commandType: CommandType.Text);
     }
 
     public async Task<long> GetNotificationLogCount()
     {
-        await using var db = new SqlConnection(_connstring);
-        string sql = "SELECT COUNT(*) FROM [NotificationLog]";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationLog", DatabaseProvider);
+        string sql = $"SELECT COUNT(*) FROM {tableName}";
         var result = await db.ExecuteScalarAsync<long>(sql, commandType: CommandType.Text);
         return result;
     }
 
     public async Task ClearNotificationStatistics()
     {
-        await using var db = new SqlConnection(_connstring);
-        string sql = "DELETE FROM [NotificationLog] WHERE 1=1";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationLog", DatabaseProvider);
+        string sql = $"DELETE FROM {tableName}";
         await db.ExecuteAsync(sql, commandType: CommandType.Text);
     }
 
     public async Task<int> InsertNotificationItem(NotificationItem? notificationItem)
     {
-        await using var db = new SqlConnection(_connstring);
-        string sql =
-            @"INSERT INTO [NotificationItem] (Name, MonitorGroupId, NotificationTypeId, Description) VALUES (@Name, @MonitorGroupId, @NotificationTypeId, @Description); SELECT CAST(SCOPE_IDENTITY() as int)";
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationItem", DatabaseProvider);
+        string sql = DatabaseProvider switch
+        {
+            DatabaseProviderType.SqlServer =>
+                $@"INSERT INTO {tableName} (Name, MonitorGroupId, NotificationTypeId, Description) VALUES (@Name, @MonitorGroupId, @NotificationTypeId, @Description); SELECT CAST(SCOPE_IDENTITY() as int)",
+            DatabaseProviderType.PostgreSQL =>
+                $@"INSERT INTO {tableName} (Name, MonitorGroupId, NotificationTypeId, Description) VALUES (@Name, @MonitorGroupId, @NotificationTypeId, @Description) RETURNING Id",
+            _ => throw new NotSupportedException($"Database provider '{DatabaseProvider}' is not supported.")
+        };
 
         var notificationId = await db.QuerySingleAsync<int>(sql,
             new
@@ -351,12 +376,17 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     private async Task DeleteNotificationItemFromChilds(int id)
     {
-        await using var db = new SqlConnection(_connstring);
-        string sqlEmailSmtp = @"DELETE FROM [NotificationEmailSmtp] WHERE NotificationId = @Id";
-        string sqlTeams = @"DELETE FROM [NotificationTeams] WHERE NotificationId = @Id";
-        string sqlSlack = @"DELETE FROM [NotificationSlack] WHERE NotificationId = @Id";
-        string sqlTelegram = @"DELETE FROM [NotificationTelegram] WHERE NotificationId = @Id";
-        string sqlWebHook = @"DELETE FROM [NotificationWebHook] WHERE NotificationId = @Id";
+        using var db = CreateConnection();
+        var emailSmtpTable = Helpers.DatabaseProvider.FormatTableName("NotificationEmailSmtp", DatabaseProvider);
+        var teamsTable = Helpers.DatabaseProvider.FormatTableName("NotificationTeams", DatabaseProvider);
+        var slackTable = Helpers.DatabaseProvider.FormatTableName("NotificationSlack", DatabaseProvider);
+        var telegramTable = Helpers.DatabaseProvider.FormatTableName("NotificationTelegram", DatabaseProvider);
+        var webHookTable = Helpers.DatabaseProvider.FormatTableName("NotificationWebHook", DatabaseProvider);
+        string sqlEmailSmtp = $@"DELETE FROM {emailSmtpTable} WHERE NotificationId = @Id";
+        string sqlTeams = $@"DELETE FROM {teamsTable} WHERE NotificationId = @Id";
+        string sqlSlack = $@"DELETE FROM {slackTable} WHERE NotificationId = @Id";
+        string sqlTelegram = $@"DELETE FROM {telegramTable} WHERE NotificationId = @Id";
+        string sqlWebHook = $@"DELETE FROM {webHookTable} WHERE NotificationId = @Id";
 
         await db.ExecuteAsync(sqlEmailSmtp, new { Id = id }, commandType: CommandType.Text);
         await db.ExecuteAsync(sqlTeams, new { Id = id }, commandType: CommandType.Text);
@@ -367,9 +397,10 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     private async Task<List<NotificationEmail>> SelectNotificationEmailList()
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationEmailSmtp", DatabaseProvider);
         string sql =
-            @"SELECT NotificationId, FromEmail, ToEmail, HostName, Port, Username, Password, ToCCEmail, ToBCCEmail, EnableSSL, Subject, Body, IsHtmlBody FROM [NotificationEmailSmtp]";
+            $@"SELECT NotificationId, FromEmail, ToEmail, HostName, Port, Username, Password, ToCCEmail, ToBCCEmail, EnableSSL, Subject, Body, IsHtmlBody FROM {tableName}";
 
         var resultList = await db.QueryAsync<NotificationEmail>(sql, commandType: CommandType.Text);
         return resultList.ToList();
@@ -377,9 +408,10 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     private async Task<List<NotificationTeams>> SelectNotificationTeamsList()
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationTeams", DatabaseProvider);
         string sql =
-            @"SELECT NotificationId, WebHookUrl FROM [NotificationTeams]";
+            $@"SELECT NotificationId, WebHookUrl FROM {tableName}";
 
         var resultList = await db.QueryAsync<NotificationTeams>(sql, commandType: CommandType.Text);
         return resultList.ToList();
@@ -387,9 +419,10 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     private async Task<List<NotificationSlack>> SelectNotificationSlackList()
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationSlack", DatabaseProvider);
         string sql =
-            @"SELECT NotificationId, WebHookUrl, Channel FROM [NotificationSlack]";
+            $@"SELECT NotificationId, WebHookUrl, Channel FROM {tableName}";
 
         var resultList = await db.QueryAsync<NotificationSlack>(sql, commandType: CommandType.Text);
         return resultList.ToList();
@@ -397,9 +430,10 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     private async Task<List<NotificationTelegram>> SelectNotificationTelegramList()
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationTelegram", DatabaseProvider);
         string sql =
-            @"SELECT NotificationId, ChatId, TelegramBotToken FROM [NotificationTelegram]";
+            $@"SELECT NotificationId, ChatId, TelegramBotToken FROM {tableName}";
 
         var resultList = await db.QueryAsync<NotificationTelegram>(sql, commandType: CommandType.Text);
         return resultList.ToList();
@@ -407,9 +441,10 @@ public class NotificationRepository : RepositoryBase, INotificationRepository
 
     private async Task<List<NotificationWebHook>> SelectNotificationWebHookList()
     {
-        await using var db = new SqlConnection(_connstring);
+        using var db = CreateConnection();
+        var tableName = Helpers.DatabaseProvider.FormatTableName("NotificationWebHook", DatabaseProvider);
         string sql =
-            @"SELECT NotificationId, Message, WebHookUrl, Body, HeadersJson  FROM [NotificationWebHook]";
+            $@"SELECT NotificationId, Message, WebHookUrl, Body, HeadersJson  FROM {tableName}";
 
         var resultList = await db.QueryAsync<NotificationWebHook>(sql, commandType: CommandType.Text);
         return resultList.ToList();

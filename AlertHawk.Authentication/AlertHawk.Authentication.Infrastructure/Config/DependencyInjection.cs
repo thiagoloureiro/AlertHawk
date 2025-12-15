@@ -1,5 +1,6 @@
 using AlertHawk.Authentication.Infrastructure.Interfaces;
 using AlertHawk.Authentication.Infrastructure.Repositories;
+using AlertHawk.Authentication.Infrastructure.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics.CodeAnalysis;
 
@@ -14,6 +15,7 @@ public static class DependencyInjection
         services.AddTransient<IUsersMonitorGroupRepository, UsersMonitorGroupRepository>();
         services.AddTransient<IUserActionRepository, UserActionRepository>();
         services.AddTransient<IUserClustersRepository, UserClustersRepository>();
+        services.AddTransient<DatabaseInitializer>();
         return services;
     }
 }

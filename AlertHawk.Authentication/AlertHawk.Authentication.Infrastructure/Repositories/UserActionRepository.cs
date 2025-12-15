@@ -1,5 +1,6 @@
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Authentication.Infrastructure.Interfaces;
+using AlertHawk.Authentication.Infrastructure.Helpers;
 using Microsoft.Extensions.Configuration;
 using System.Diagnostics.CodeAnalysis;
 
@@ -14,13 +15,15 @@ public class UserActionRepository : BaseRepository, IUserActionRepository
 
     public async Task CreateAsync(UserAction userAction)
     {
-        const string sql = "INSERT INTO [dbo].[UserAction] ([UserId], [Action], [TimeStamp]) VALUES (@UserId, @Action, @TimeStamp)";
+        var tableName = Helpers.DatabaseProvider.FormatTableName("UserAction", DatabaseProvider);
+        var sql = $"INSERT INTO {tableName} (UserId, Action, TimeStamp) VALUES (@UserId, @Action, @TimeStamp)";
         await ExecuteNonQueryAsync(sql, new { userAction.UserId, userAction.Action, userAction.TimeStamp });
     }
 
     public async Task<IEnumerable<UserAction>> GetAsync()
     {
-        const string sql = "SELECT [UserId], [Action], [TimeStamp] FROM [dbo].[UserAction]";
+        var tableName = Helpers.DatabaseProvider.FormatTableName("UserAction", DatabaseProvider);
+        var sql = $"SELECT UserId, Action, TimeStamp FROM {tableName}";
         return await ExecuteQueryAsync<UserAction>(sql) ?? Array.Empty<UserAction>();
     }
 }
