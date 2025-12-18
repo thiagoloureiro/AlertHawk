@@ -146,7 +146,6 @@ public class HttpClientRunner : IHttpClientRunner
             }
             catch (Exception err)
             {
-                Console.WriteLine(err);
                 retryCount++;
 
                 // Avoid logging when it's a database connectivity issue
@@ -244,7 +243,6 @@ public class HttpClientRunner : IHttpClientRunner
 
             if (!string.IsNullOrEmpty(monitorHttp.Body))
             {
-                Console.WriteLine($"Body: {monitorHttp.Body}");
                 try
                 {
                     JsonDocument.Parse(monitorHttp.Body); // Throws if invalid
