@@ -8,11 +8,13 @@ Code: 181. DB::Exception: Storage MergeTree doesn't support FINAL. (ILLEGAL_FINA
 ```
 
 This error occurs because:
+
 1. The code uses `FINAL` clause in queries to get deduplicated results
 2. `FINAL` is only supported by ReplacingMergeTree, CollapsingMergeTree, and similar engines
 3. The existing `k8s_pod_logs` table was created with `MergeTree` engine instead of `ReplacingMergeTree`
 
 ## Solution
+
 Migrate the `k8s_pod_logs` table to use `ReplacingMergeTree(version)` engine.
 
 ## Migration Steps
@@ -129,6 +131,7 @@ TTL toDateTime(timestamp) + INTERVAL 90 DAY;
 ## Post-Migration
 
 After migration, the application will:
+
 - Successfully execute queries with the `FINAL` clause
 - Properly deduplicate log entries based on the version column
 - Continue to append logs as designed in the upsert logic
@@ -136,6 +139,7 @@ After migration, the application will:
 ## Troubleshooting
 
 If you still see the error after migration:
+
 1. Verify the table engine: `SHOW CREATE TABLE k8s_pod_logs;`
 2. Check you're using the correct database: `SELECT currentDatabase();`
 3. Restart the application to ensure it reconnects to the database

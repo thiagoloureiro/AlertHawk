@@ -19,6 +19,7 @@ docker-compose up -d
 ```
 
 This will start:
+
 - **InfluxDB** on port `8086` (database: `k6`)
 - **Grafana** on port `3000` (default credentials: admin/admin)
 
@@ -30,7 +31,7 @@ docker-compose down
 
 ### Access Grafana
 
-1. Open http://localhost:3000 in your browser
+1. Open <http://localhost:3000> in your browser
 2. Login with username: `admin`, password: `admin`
 3. Add InfluxDB as a data source:
    - URL: `http://influxdb:8086`
@@ -60,7 +61,7 @@ The xk6-dashboard provides a real-time web interface to monitor your tests. To u
 
 **Note:** The `--out dashboard` flag is required to enable the dashboard output.
 
-3. Open your browser and navigate to: **http://localhost:5665**
+3. Open your browser and navigate to: **<http://localhost:5665>**
 
 **Optional: Customize dashboard settings**
 You can customize the dashboard port and auto-open it in your browser:
@@ -69,11 +70,13 @@ You can customize the dashboard port and auto-open it in your browser:
 ```
 
 Available parameters:
+
 - `port`: TCP port for the dashboard (default: `5665`)
 - `open`: Set to `true` to automatically open in browser
 - `host`: Hostname or IP address (default: listens on all interfaces)
 
 The dashboard will show real-time metrics including:
+
 - Request rate
 - Response times (p50, p95, p99)
 - Error rates
@@ -172,6 +175,7 @@ K6_AUTH_USERNAME=test@test.com K6_AUTH_PASSWORD=your_password k6 run auth-test.j
 ```
 
 **What gets tested:**
+
 - Public endpoints: `/api/version` for all services
 - Authenticated endpoint: `/api/MonitorGroup/monitorDashboardGroupListByUser/6` (if credentials are provided)
 
@@ -184,7 +188,7 @@ You can combine multiple outputs. For example, use both dashboard and InfluxDB:
 ```
 
 This allows you to:
-- View real-time results in the dashboard (http://localhost:5665)
+- View real-time results in the dashboard (<http://localhost:5665>)
 - Store historical data in InfluxDB for later analysis in Grafana
 
 **Other output options:**
@@ -212,6 +216,7 @@ k6 cloud load-test.js
 ## Test Configuration
 
 The current test configuration includes:
+
 - **Ramp-up stages**: Gradually increases load from 0 to 20 virtual users
 - **Duration**: Approximately 4 minutes total
 - **Thresholds**:
@@ -221,12 +226,14 @@ The current test configuration includes:
 ## Services Tested
 
 ### Public Endpoints
+
 1. **Metrics Service**: `https://metrics.alerthawk.net/api/version`
 2. **Auth Service**: `https://auth.alerthawk.net/api/version`
 3. **Notification Service**: `https://notification.alerthawk.net/api/version`
 4. **Monitoring Service**: `https://monitoring.alerthawk.net/api/version`
 
 ### Authenticated Endpoints
+
 All authenticated endpoints require: `Authorization: Bearer <token>` header
 
 1. **Auth Login**: `POST https://auth.alerthawk.net/api/auth/login`
@@ -252,6 +259,7 @@ All authenticated endpoints require: `Authorization: Bearer <token>` header
 ## Customizing Tests
 
 You can modify the `options` object in `load-test.js` to adjust:
+
 - Load stages (number of users, duration)
 - Thresholds (response times, error rates)
 - Test scenarios

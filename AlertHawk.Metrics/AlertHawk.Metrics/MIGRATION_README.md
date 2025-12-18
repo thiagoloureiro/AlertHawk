@@ -22,6 +22,7 @@ The easiest way to migrate is using the provided shell script:
 ```
 
 ### Script Parameters:
+
 1. **Database name** (default: `default`)
 2. **Cluster name** (default: `default-cluster`) - **IMPORTANT**: Set this to your actual cluster name!
 3. **ClickHouse host** (default: `localhost`)
@@ -95,7 +96,7 @@ LIMIT 5;
    - Copy data from the old table
    - Drop the old table
    - Rename the new table
-   
+
    However, this is optional - the application will work fine with the current ORDER BY, and new tables created by the application will have the correct ORDER BY.
 
 4. **No Data Loss**: This migration only adds a column and updates existing rows. No data will be lost.
@@ -134,4 +135,5 @@ RENAME TABLE k8s_node_metrics_new TO k8s_node_metrics;
 ```
 
 **Warning**: This approach requires downtime and should be done during a maintenance window.
+
 
