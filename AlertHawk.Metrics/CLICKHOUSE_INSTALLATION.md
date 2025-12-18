@@ -285,6 +285,7 @@ kubectl port-forward svc/clickhouse 8123:8123
 ```
 
 Then access via:
+
 - HTTP: `http://localhost:8123`
 - ClickHouse client: `clickhouse-client --host localhost --port 8123`
 
