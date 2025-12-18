@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Text.Json;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
@@ -251,109 +252,110 @@ public class K8sClientRunner : IK8sClientRunner
         monitorK8s.MonitorK8sNodes = nodeStatuses;
 
         bool succeeded = true;
-        var responseMessage = "";
+        var responseMessage = new StringBuilder();
 
         foreach (var node in nodeStatuses)
         {
             if (node.Ready == false)
             {
                 _logger.LogInformation($"Node {node.NodeName} is not ready");
-                responseMessage += $"Node {node.NodeName} is not ready\n";
+                responseMessage.AppendLine($"Node {node.NodeName} is not ready");
                 succeeded = false;
             }
 
             if (node.DiskPressure)
             {
                 _logger.LogInformation($"Node {node.NodeName} has disk pressure");
-                responseMessage += $"Node {node.NodeName} has disk pressure\n";
+                responseMessage.AppendLine($"Node {node.NodeName} has disk pressure");
                 succeeded = false;
             }
 
             if (node.MemoryPressure)
             {
                 _logger.LogInformation($"Node {node.NodeName} has memory pressure");
-                responseMessage += $"Node {node.NodeName} has memory pressure\n";
+                responseMessage.AppendLine($"Node {node.NodeName} has memory pressure");
                 succeeded = false;
             }
 
             if (node.ContainerRuntimeProblem)
             {
                 _logger.LogInformation($"Node {node.NodeName} has container runtime problem");
-                responseMessage += $"Node {node.NodeName} has container runtime problem\n";
+                responseMessage.AppendLine($"Node {node.NodeName} has container runtime problem");
                 succeeded = false;
             }
 
             if (node.FilesystemCorruptionProblem)
             {
                 _logger.LogInformation($"Node {node.NodeName} has filesystem corruption problem");
-                responseMessage += $"Node {node.NodeName} has filesystem corruption problem\n";
+                responseMessage.AppendLine($"Node {node.NodeName} has filesystem corruption problem");
                 succeeded = false;
             }
 
             if (node.KubeletProblem)
             {
                 _logger.LogInformation($"Node {node.NodeName} has kubelet problem");
-                responseMessage += $"Node {node.NodeName} has kubelet problem\n";
+                responseMessage.AppendLine($"Node {node.NodeName} has kubelet problem");
                 succeeded = false;
             }
 
             if (node.KernelDeadlock)
             {
                 _logger.LogInformation($"Node {node.NodeName} has kernel deadlock");
-                responseMessage += $"Node {node.NodeName} has kernel deadlock\n";
+                responseMessage.AppendLine($"Node {node.NodeName} has kernel deadlock");
                 succeeded = false;
             }
 
             if (node.FrequentUnregisterNetDevice)
             {
                 _logger.LogInformation($"Node {node.NodeName} has frequent unregister net device");
-                responseMessage += $"Node {node.NodeName} has frequent unregister net device\n";
+                responseMessage.AppendLine($"Node {node.NodeName} has frequent unregister net device");
                 succeeded = false;
             }
 
             if (node.ReadonlyFilesystem)
             {
                 _logger.LogInformation($"Node {node.NodeName} has readonly filesystem");
-                responseMessage += $"Node {node.NodeName} has readonly filesystem\n";
+                responseMessage.AppendLine($"Node {node.NodeName} has readonly filesystem");
                 succeeded = false;
             }
 
             if (node.FrequentKubeletRestart)
             {
                 _logger.LogInformation($"Node {node.NodeName} has frequent kubelet restart");
-                responseMessage += $"Node {node.NodeName} has frequent kubelet restart\n";
+                responseMessage.AppendLine($"Node {node.NodeName} has frequent kubelet restart");
                 succeeded = false;
             }
                     
             if (node.FrequentDockerRestart)
             {
                 _logger.LogInformation($"Node {node.NodeName} has frequent docker restart");
-                responseMessage += $"Node {node.NodeName} has frequent docker restart\n";
+                responseMessage.AppendLine($"Node {node.NodeName} has frequent docker restart");
                 succeeded = false;
             }
 
             if (node.FrequentContainerdRestart)
             {
                 _logger.LogInformation($"Node {node.NodeName} has frequent containerd restart");
-                responseMessage += $"Node {node.NodeName} has frequent containerd restart\n";
+                responseMessage.AppendLine($"Node {node.NodeName} has frequent containerd restart");
                 succeeded = false;
             }
 
             if (node.PIDPressure)
             {
                 _logger.LogInformation($"Node {node.NodeName} has PID pressure");
-                responseMessage += $"Node {node.NodeName} has PID pressure\n";
+                responseMessage.AppendLine($"Node {node.NodeName} has PID pressure");
                 succeeded = false;
             }
         }
 
+        var responseMessageString = responseMessage.ToString();
         var monitorHistory = new MonitorHistory
         {
             MonitorId = monitorK8s.MonitorId,
             Status = succeeded,
             TimeStamp = DateTime.UtcNow,
-            ResponseMessage = responseMessage
+            ResponseMessage = responseMessageString
         };
-        return (succeeded, responseMessage, monitorHistory);
+        return (succeeded, responseMessageString, monitorHistory);
     }
 }
