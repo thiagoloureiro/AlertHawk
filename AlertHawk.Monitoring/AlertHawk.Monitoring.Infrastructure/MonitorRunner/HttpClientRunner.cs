@@ -293,7 +293,6 @@ public class HttpClientRunner : IHttpClientRunner
         catch (Exception err)
         {
             _logger.LogError("Error making HTTP call: {message}", err.Message);
-            SentrySdk.CaptureException(err);
             client?.Dispose();
         }
         finally
