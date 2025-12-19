@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -7,14 +8,16 @@ using Serilog;
 
 namespace AlertHawk.Metrics;
 
+[ExcludeFromCodeCoverage]
 public class MetricsApiClient : IMetricsApiClient, IDisposable
 {
     private readonly HttpClient _httpClient;
     private readonly string _apiBaseUrl;
     private readonly string _clusterName;
+    private readonly string _clusterEnvironment;
     private readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy;
 
-    public MetricsApiClient(string apiBaseUrl, string clusterName)
+    public MetricsApiClient(string apiBaseUrl, string clusterName, string? clusterEnvironment = null)
     {
         if (string.IsNullOrWhiteSpace(apiBaseUrl))
         {
@@ -27,6 +30,7 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
 
         _apiBaseUrl = apiBaseUrl.TrimEnd('/');
         _clusterName = clusterName;
+        _clusterEnvironment = clusterEnvironment ?? "PROD";
         _httpClient = new HttpClient
         {
             Timeout = TimeSpan.FromSeconds(30)
@@ -69,7 +73,11 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
         string container,
         double cpuUsageCores,
         double? cpuLimitCores,
-        double memoryUsageBytes)
+        double memoryUsageBytes,
+        string? nodeName = null,
+        string? podState = null,
+        int restartCount = 0,
+        long? podAge = null)
     {
         var request = new
         {
@@ -79,7 +87,11 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
             Container = container,
             CpuUsageCores = cpuUsageCores,
             CpuLimitCores = cpuLimitCores,
-            MemoryUsageBytes = memoryUsageBytes
+            MemoryUsageBytes = memoryUsageBytes,
+            NodeName = nodeName,
+            PodState = podState,
+            RestartCount = restartCount,
+            PodAge = podAge
         };
 
         var json = JsonSerializer.Serialize(request);
@@ -98,7 +110,17 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
         double cpuUsageCores,
         double cpuCapacityCores,
         double memoryUsageBytes,
-        double memoryCapacityBytes)
+        double memoryCapacityBytes,
+        string? kubernetesVersion = null,
+        string? cloudProvider = null,
+        bool? isReady = null,
+        bool? hasMemoryPressure = null,
+        bool? hasDiskPressure = null,
+        bool? hasPidPressure = null,
+        string? architecture = null,
+        string? operatingSystem = null,
+        string? region = null,
+        string? instanceType = null)
     {
         var request = new
         {
@@ -107,7 +129,18 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
             CpuUsageCores = cpuUsageCores,
             CpuCapacityCores = cpuCapacityCores,
             MemoryUsageBytes = memoryUsageBytes,
-            MemoryCapacityBytes = memoryCapacityBytes
+            MemoryCapacityBytes = memoryCapacityBytes,
+            KubernetesVersion = kubernetesVersion,
+            CloudProvider = cloudProvider,
+            IsReady = isReady,
+            HasMemoryPressure = hasMemoryPressure,
+            HasDiskPressure = hasDiskPressure,
+            HasPidPressure = hasPidPressure,
+            Architecture = architecture,
+            OperatingSystem = operatingSystem,
+            Region = region,
+            InstanceType = instanceType,
+            ClusterEnvironment = _clusterEnvironment
         };
 
         var json = JsonSerializer.Serialize(request);
@@ -115,6 +148,33 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
 
         var response = await _retryPolicy.ExecuteAsync(async () =>
             await _httpClient.PostAsync($"{_apiBaseUrl}/api/metrics/node", content));
+
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task WritePodLogAsync(
+        string @namespace,
+        string pod,
+        string container,
+        string logContent)
+    {
+        var request = new
+        {
+            ClusterName = _clusterName,
+            Namespace = @namespace,
+            Pod = pod,
+            Container = container,
+            LogContent = logContent
+        };
+
+        var json = JsonSerializer.Serialize(request);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        Log.Debug("Calling API: {ApiUrl}/api/metrics/pod/log with payload for {Namespace}/{Pod}/{Container}", 
+            _apiBaseUrl, @namespace, pod, container);
+        
+        var response = await _retryPolicy.ExecuteAsync(async () =>
+            await _httpClient.PostAsync($"{_apiBaseUrl}/api/metrics/pod/log", content));
 
         response.EnsureSuccessStatusCode();
     }

@@ -1,11 +1,13 @@
-using System.Reflection;
-using System.Text;
 using AlertHawk.Metrics.API.Services;
+using EasyMemoryCache.Configuration;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Reflection;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +45,8 @@ builder.WebHost.UseSentry(options =>
     }
 );
 
+builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.EnableAnnotations();
@@ -74,8 +78,32 @@ var clickHouseTableName = Environment.GetEnvironmentVariable("CLICKHOUSE_TABLE_N
 
 var clusterName = Environment.GetEnvironmentVariable("CLUSTER_NAME");
 
-builder.Services.AddSingleton<IClickHouseService>(sp => 
+builder.Services.AddSingleton<IClickHouseService>(sp =>
     new ClickHouseService(clickHouseConnectionString, clusterName, clickHouseTableName));
+
+// Register Azure Prices service
+builder.Services.AddHttpClient<IAzurePricesService, AzurePricesService>();
+
+// Configure Hangfire for background jobs
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseInMemoryStorage());
+
+builder.Services.AddHangfireServer();
+
+// Register Log Cleanup Service
+var enableLogCleanup = Environment.GetEnvironmentVariable("ENABLE_LOG_CLEANUP");
+
+var cronExpression = Environment.GetEnvironmentVariable("LOG_CLEANUP_INTERVAL_HOURS") ?? "0 0 * * *";
+
+builder.Services.AddSingleton<LogCleanupService>(sp =>
+{
+    var clickHouseService = sp.GetRequiredService<IClickHouseService>();
+    var logger = sp.GetRequiredService<ILogger<LogCleanupService>>();
+    return new LogCleanupService(clickHouseService, logger);
+});
 
 var issuers = configuration["Jwt:Issuers"] ??
               "issuer";
@@ -140,6 +168,33 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseHttpsRedirection();
+
+// Schedule recurring log cleanup job if enabled
+if (bool.TryParse(enableLogCleanup, out var isEnabled) && isEnabled)
+{
+    var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
+    var cleanupService = app.Services.GetRequiredService<LogCleanupService>();
+
+    recurringJobManager.AddOrUpdate(
+        "log-cleanup-job",
+        () => cleanupService.CleanupLogsAsync(),
+        cronExpression,
+        new RecurringJobOptions
+        {
+            TimeZone = TimeZoneInfo.Utc
+        });
+
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogInformation(
+        $"System log cleanup job scheduled. (truncates ClickHouse system log tables), Cron: {cronExpression}",
+        cronExpression);
+}
+else
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogInformation("System log cleanup is disabled. Set ENABLE_LOG_CLEANUP=true to enable.");
+}
+
 app.MapControllers();
 
 app.Run();

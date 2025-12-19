@@ -11,13 +11,33 @@ public interface IMetricsApiClient
         string container,
         double cpuUsageCores,
         double? cpuLimitCores,
-        double memoryUsageBytes);
+        double memoryUsageBytes,
+        string? nodeName = null,
+        string? podState = null,
+        int restartCount = 0,
+        long? podAge = null);
 
     Task WriteNodeMetricAsync(
         string nodeName,
         double cpuUsageCores,
         double cpuCapacityCores,
         double memoryUsageBytes,
-        double memoryCapacityBytes);
+        double memoryCapacityBytes,
+        string? kubernetesVersion = null,
+        string? cloudProvider = null,
+        bool? isReady = null,
+        bool? hasMemoryPressure = null,
+        bool? hasDiskPressure = null,
+        bool? hasPidPressure = null,
+        string? architecture = null,
+        string? operatingSystem = null,
+        string? region = null,
+        string? instanceType = null);
+
+    Task WritePodLogAsync(
+        string @namespace,
+        string pod,
+        string container,
+        string logContent);
 }
 

@@ -5,6 +5,7 @@ This document describes the ClickHouse integration for storing Kubernetes metric
 ## Tables
 
 The application automatically creates two tables:
+
 1. **k8s_metrics** - For pod/container metrics
 2. **k8s_node_metrics** - For node-level metrics
 
@@ -91,6 +92,7 @@ Host=<hostname>;Port=<port>;Database=<database>;Username=<username>;Password=<pa
 ### Default Values
 
 If not specified, the application uses:
+
 - Host: localhost
 - Port: 8123
 - Database: default

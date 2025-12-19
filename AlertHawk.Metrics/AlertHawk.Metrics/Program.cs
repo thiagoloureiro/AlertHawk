@@ -4,8 +4,13 @@ using k8s;
 using Serilog;
 
 // Configure Serilog
+var logLevelEnv = Environment.GetEnvironmentVariable("LOG_LEVEL") ?? "Information";
+var logLevel = Enum.TryParse<Serilog.Events.LogEventLevel>(logLevelEnv, ignoreCase: true, out var parsedLevel)
+    ? parsedLevel
+    : Serilog.Events.LogEventLevel.Information;
+
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
+    .MinimumLevel.Is(logLevel)
     .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
     .WriteTo.Console(
         outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] {Message:lj}{NewLine}{Exception}")
@@ -55,13 +60,21 @@ if (string.IsNullOrWhiteSpace(clusterName))
     Environment.Exit(1);
 }
 
+var clusterEnvironment = Environment.GetEnvironmentVariable("CLUSTER_ENVIRONMENT") ?? "PROD";
+
+var collectLogs = Environment.GetEnvironmentVariable("COLLECT_LOGS");
+var isLogCollectionEnabled = !string.IsNullOrWhiteSpace(collectLogs) && 
+                              collectLogs.Equals("true", StringComparison.OrdinalIgnoreCase);
+
 Log.Information("Starting metrics collection service (interval: {Interval} seconds)", collectionIntervalSeconds);
 Log.Information("Cluster name: {ClusterName}", clusterName);
+Log.Information("Cluster environment: {ClusterEnvironment}", clusterEnvironment);
 Log.Information("Metrics API URL: {ApiUrl}", apiBaseUrl);
+Log.Information("Log collection: {Status}", isLogCollectionEnabled ? "Enabled" : "Disabled (set COLLECT_LOGS=true to enable)");
 Log.Information("Press Ctrl+C to stop...");
 
 // Initialize API client
-using var apiClient = new MetricsApiClient(apiBaseUrl, clusterName);
+using var apiClient = new MetricsApiClient(apiBaseUrl, clusterName, clusterEnvironment);
 
 var config = KubernetesClientConfiguration.InClusterConfig();
 var client = new Kubernetes(config);

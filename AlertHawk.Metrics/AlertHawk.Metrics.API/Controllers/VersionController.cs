@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
-namespace AlertHawk.Authentication.Controllers
+namespace AlertHawk.Metrics.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

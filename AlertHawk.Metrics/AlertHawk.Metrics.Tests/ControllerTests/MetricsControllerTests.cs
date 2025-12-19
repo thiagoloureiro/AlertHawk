@@ -1,4 +1,4 @@
-﻿using AlertHawk.Metrics.API.Controllers;
+using AlertHawk.Metrics.API.Controllers;
 using AlertHawk.Metrics.API.Models;
 using AlertHawk.Metrics.API.Services;
 using Microsoft.AspNetCore.Http;
@@ -54,18 +54,18 @@ public class MetricsControllerTests
         };
 
         _mockClickHouseService
-            .Setup(s => s.GetMetricsByNamespaceAsync("default", 24, 100))
+            .Setup(s => s.GetMetricsByNamespaceAsync("default", 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
-        var result = await _controller.GetMetricsByNamespace("default", 24, 100);
+        var result = await _controller.GetMetricsByNamespace("default", 1440);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var metrics = Assert.IsAssignableFrom<List<PodMetricDto>>(okResult.Value);
         Assert.Single(metrics);
         Assert.Equal("default", metrics[0].Namespace);
-        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync("default", 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync("default", 1440), Times.Once);
     }
 
     [Fact]
@@ -88,17 +88,17 @@ public class MetricsControllerTests
         };
 
         _mockClickHouseService
-            .Setup(s => s.GetMetricsByNamespaceAsync(null, 24, 100))
+            .Setup(s => s.GetMetricsByNamespaceAsync(null, 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
-        var result = await _controller.GetMetricsByNamespace(null, 24, 100);
+        var result = await _controller.GetMetricsByNamespace(null, 1440);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var metrics = Assert.IsAssignableFrom<List<PodMetricDto>>(okResult.Value);
         Assert.Single(metrics);
-        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync(null, 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync(null, 1440), Times.Once);
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public class MetricsControllerTests
         var expectedMetrics = new List<PodMetricDto>();
 
         _mockClickHouseService
-            .Setup(s => s.GetMetricsByNamespaceAsync(null, 24, 100))
+            .Setup(s => s.GetMetricsByNamespaceAsync(null, 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
@@ -116,7 +116,7 @@ public class MetricsControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync(null, 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync(null, 1440), Times.Once);
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class MetricsControllerTests
     {
         // Arrange
         _mockClickHouseService
-            .Setup(s => s.GetMetricsByNamespaceAsync(null, 24, 100))
+            .Setup(s => s.GetMetricsByNamespaceAsync(null, 1440))
             .ThrowsAsync(new Exception("Database connection failed"));
 
         // Act
@@ -133,7 +133,7 @@ public class MetricsControllerTests
         // Assert
         var statusResult = Assert.IsType<ObjectResult>(result.Result);
         Assert.Equal(500, statusResult.StatusCode);
-        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync(null, 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync(null, 1440), Times.Once);
     }
 
     #endregion
@@ -160,18 +160,18 @@ public class MetricsControllerTests
         };
 
         _mockClickHouseService
-            .Setup(s => s.GetMetricsByNamespaceAsync("production", 24, 100))
+            .Setup(s => s.GetMetricsByNamespaceAsync("production", 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
-        var result = await _controller.GetMetricsByNamespaceName("production", 24, 100);
+        var result = await _controller.GetMetricsByNamespaceName("production", 1440);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var metrics = Assert.IsAssignableFrom<List<PodMetricDto>>(okResult.Value);
         Assert.Single(metrics);
         Assert.Equal("production", metrics[0].Namespace);
-        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync("production", 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync("production", 1440), Times.Once);
     }
 
     [Fact]
@@ -181,7 +181,7 @@ public class MetricsControllerTests
         var expectedMetrics = new List<PodMetricDto>();
 
         _mockClickHouseService
-            .Setup(s => s.GetMetricsByNamespaceAsync("default", 24, 100))
+            .Setup(s => s.GetMetricsByNamespaceAsync("default", 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
@@ -189,7 +189,7 @@ public class MetricsControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync("default", 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetMetricsByNamespaceAsync("default", 1440), Times.Once);
     }
 
     [Fact]
@@ -197,7 +197,7 @@ public class MetricsControllerTests
     {
         // Arrange
         _mockClickHouseService
-            .Setup(s => s.GetMetricsByNamespaceAsync("test", 24, 100))
+            .Setup(s => s.GetMetricsByNamespaceAsync("test", 1440))
             .ThrowsAsync(new Exception("Query failed"));
 
         // Act
@@ -231,18 +231,18 @@ public class MetricsControllerTests
         };
 
         _mockClickHouseService
-            .Setup(s => s.GetNodeMetricsAsync("node-1", 24, 100))
+            .Setup(s => s.GetNodeMetricsAsync("node-1", 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
-        var result = await _controller.GetNodeMetrics("node-1", 24, 100);
+        var result = await _controller.GetNodeMetrics("node-1", 1440);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var metrics = Assert.IsAssignableFrom<List<NodeMetricDto>>(okResult.Value);
         Assert.Single(metrics);
         Assert.Equal("node-1", metrics[0].NodeName);
-        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync("node-1", 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync("node-1", 1440), Times.Once);
     }
 
     [Fact]
@@ -264,17 +264,17 @@ public class MetricsControllerTests
         };
 
         _mockClickHouseService
-            .Setup(s => s.GetNodeMetricsAsync(null, 24, 100))
+            .Setup(s => s.GetNodeMetricsAsync(null, 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
-        var result = await _controller.GetNodeMetrics(null, 24, 100);
+        var result = await _controller.GetNodeMetrics(null, 1440);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var metrics = Assert.IsAssignableFrom<List<NodeMetricDto>>(okResult.Value);
         Assert.Single(metrics);
-        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync(null, 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync(null, 1440), Times.Once);
     }
 
     [Fact]
@@ -284,7 +284,7 @@ public class MetricsControllerTests
         var expectedMetrics = new List<NodeMetricDto>();
 
         _mockClickHouseService
-            .Setup(s => s.GetNodeMetricsAsync(null, 24, 100))
+            .Setup(s => s.GetNodeMetricsAsync(null, 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
@@ -292,7 +292,7 @@ public class MetricsControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync(null, 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync(null, 1440), Times.Once);
     }
 
     [Fact]
@@ -300,7 +300,7 @@ public class MetricsControllerTests
     {
         // Arrange
         _mockClickHouseService
-            .Setup(s => s.GetNodeMetricsAsync(null, 24, 100))
+            .Setup(s => s.GetNodeMetricsAsync(null, 1440))
             .ThrowsAsync(new Exception("Database error"));
 
         // Act
@@ -334,18 +334,18 @@ public class MetricsControllerTests
         };
 
         _mockClickHouseService
-            .Setup(s => s.GetNodeMetricsAsync("worker-node-1", 24, 100))
+            .Setup(s => s.GetNodeMetricsAsync("worker-node-1", 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
-        var result = await _controller.GetNodeMetricsByName("worker-node-1", 24, 100);
+        var result = await _controller.GetNodeMetricsByName("worker-node-1", 1440);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var metrics = Assert.IsAssignableFrom<List<NodeMetricDto>>(okResult.Value);
         Assert.Single(metrics);
         Assert.Equal("worker-node-1", metrics[0].NodeName);
-        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync("worker-node-1", 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync("worker-node-1", 1440), Times.Once);
     }
 
     [Fact]
@@ -355,7 +355,7 @@ public class MetricsControllerTests
         var expectedMetrics = new List<NodeMetricDto>();
 
         _mockClickHouseService
-            .Setup(s => s.GetNodeMetricsAsync("node-1", 24, 100))
+            .Setup(s => s.GetNodeMetricsAsync("node-1", 1440))
             .ReturnsAsync(expectedMetrics);
 
         // Act
@@ -363,7 +363,7 @@ public class MetricsControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync("node-1", 24, 100), Times.Once);
+        _mockClickHouseService.Verify(s => s.GetNodeMetricsAsync("node-1", 1440), Times.Once);
     }
 
     [Fact]
@@ -371,7 +371,7 @@ public class MetricsControllerTests
     {
         // Arrange
         _mockClickHouseService
-            .Setup(s => s.GetNodeMetricsAsync("node-1", 24, 100))
+            .Setup(s => s.GetNodeMetricsAsync("node-1", 1440))
             .ThrowsAsync(new Exception("Query execution failed"));
 
         // Act
@@ -409,7 +409,11 @@ public class MetricsControllerTests
                 request.CpuUsageCores,
                 request.CpuLimitCores,
                 request.MemoryUsageBytes,
-                request.ClusterName))
+                request.ClusterName,
+                request.NodeName,
+                request.PodState,
+                request.RestartCount,
+                request.PodAge))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -429,7 +433,11 @@ public class MetricsControllerTests
             request.CpuUsageCores,
             request.CpuLimitCores,
             request.MemoryUsageBytes,
-            request.ClusterName), Times.Once);
+            request.ClusterName,
+            request.NodeName,
+            request.PodState,
+            request.RestartCount,
+            request.PodAge), Times.Once);
     }
 
     [Fact]
@@ -455,7 +463,11 @@ public class MetricsControllerTests
                 request.CpuUsageCores,
                 request.CpuLimitCores,
                 request.MemoryUsageBytes,
-                null))
+                null,
+                request.NodeName,
+                request.PodState,
+                request.RestartCount,
+                request.PodAge))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -470,7 +482,11 @@ public class MetricsControllerTests
             request.CpuUsageCores,
             request.CpuLimitCores,
             request.MemoryUsageBytes,
-            null), Times.Once);
+            null,
+            request.NodeName,
+            request.PodState,
+            request.RestartCount,
+            request.PodAge), Times.Once);
     }
 
     [Fact]
@@ -496,7 +512,11 @@ public class MetricsControllerTests
                 request.CpuUsageCores,
                 request.CpuLimitCores,
                 request.MemoryUsageBytes,
-                null))
+                null,
+                request.NodeName,
+                request.PodState,
+                request.RestartCount,
+                request.PodAge))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -511,7 +531,11 @@ public class MetricsControllerTests
             request.CpuUsageCores,
             request.CpuLimitCores,
             request.MemoryUsageBytes,
-            null), Times.Once);
+            null,
+            request.NodeName,
+            request.PodState,
+            request.RestartCount,
+            request.PodAge), Times.Once);
     }
 
     [Fact]
@@ -537,7 +561,11 @@ public class MetricsControllerTests
                 request.CpuUsageCores,
                 null,
                 request.MemoryUsageBytes,
-                request.ClusterName))
+                request.ClusterName,
+                request.NodeName,
+                request.PodState,
+                request.RestartCount,
+                request.PodAge))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -552,7 +580,11 @@ public class MetricsControllerTests
             request.CpuUsageCores,
             null,
             request.MemoryUsageBytes,
-            request.ClusterName), Times.Once);
+            request.ClusterName,
+            request.NodeName,
+            request.PodState,
+            request.RestartCount,
+            request.PodAge), Times.Once);
     }
 
     [Fact]
@@ -578,7 +610,11 @@ public class MetricsControllerTests
                 It.IsAny<double>(),
                 It.IsAny<double?>(),
                 It.IsAny<double>(),
-                It.IsAny<string>()))
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<long?>()))
             .ThrowsAsync(new Exception("Write failed"));
 
         // Act
@@ -741,6 +777,670 @@ public class MetricsControllerTests
 
         // Assert
         var statusResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, statusResult.StatusCode);
+    }
+
+    #endregion
+
+    #region WritePodLog Tests
+
+    [Fact]
+    public async Task WritePodLog_WithValidRequest_ReturnsOk()
+    {
+        // Arrange
+        var request = new PodLogRequest
+        {
+            ClusterName = "test-cluster",
+            Namespace = "default",
+            Pod = "test-pod",
+            Container = "test-container",
+            LogContent = "2024-01-01 10:00:00 INFO: Application started"
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.WritePodLogAsync(
+                request.Namespace,
+                request.Pod,
+                request.Container,
+                request.LogContent,
+                request.ClusterName))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.WritePodLog(request);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.NotNull(okResult.Value);
+        var responseType = okResult.Value.GetType();
+        var successProperty = responseType.GetProperty("success");
+        Assert.NotNull(successProperty);
+        Assert.True((bool)successProperty.GetValue(okResult.Value)!);
+        _mockClickHouseService.Verify(s => s.WritePodLogAsync(
+            request.Namespace,
+            request.Pod,
+            request.Container,
+            request.LogContent,
+            request.ClusterName), Times.Once);
+    }
+
+    [Fact]
+    public async Task WritePodLog_WithEmptyClusterName_UsesNull()
+    {
+        // Arrange
+        var request = new PodLogRequest
+        {
+            ClusterName = "",
+            Namespace = "default",
+            Pod = "test-pod",
+            Container = "test-container",
+            LogContent = "Log message"
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.WritePodLogAsync(
+                request.Namespace,
+                request.Pod,
+                request.Container,
+                request.LogContent,
+                null))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.WritePodLog(request);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        _mockClickHouseService.Verify(s => s.WritePodLogAsync(
+            request.Namespace,
+            request.Pod,
+            request.Container,
+            request.LogContent,
+            null), Times.Once);
+    }
+
+    [Fact]
+    public async Task WritePodLog_WithWhitespaceClusterName_UsesNull()
+    {
+        // Arrange
+        var request = new PodLogRequest
+        {
+            ClusterName = "   ",
+            Namespace = "default",
+            Pod = "test-pod",
+            Container = "test-container",
+            LogContent = "Log message"
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.WritePodLogAsync(
+                request.Namespace,
+                request.Pod,
+                request.Container,
+                request.LogContent,
+                null))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.WritePodLog(request);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        _mockClickHouseService.Verify(s => s.WritePodLogAsync(
+            request.Namespace,
+            request.Pod,
+            request.Container,
+            request.LogContent,
+            null), Times.Once);
+    }
+
+    [Fact]
+    public async Task WritePodLog_WithLongLogContent_HandlesCorrectly()
+    {
+        // Arrange
+        var longLogContent = string.Join("\n", Enumerable.Range(1, 1000).Select(i => $"Line {i}: Log message content"));
+        var request = new PodLogRequest
+        {
+            ClusterName = "test-cluster",
+            Namespace = "default",
+            Pod = "test-pod",
+            Container = "test-container",
+            LogContent = longLogContent
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.WritePodLogAsync(
+                request.Namespace,
+                request.Pod,
+                request.Container,
+                request.LogContent,
+                request.ClusterName))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.WritePodLog(request);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        _mockClickHouseService.Verify(s => s.WritePodLogAsync(
+            request.Namespace,
+            request.Pod,
+            request.Container,
+            request.LogContent,
+            request.ClusterName), Times.Once);
+    }
+
+    [Fact]
+    public async Task WritePodLog_ServiceThrowsException_ReturnsInternalServerError()
+    {
+        // Arrange
+        var request = new PodLogRequest
+        {
+            ClusterName = "test-cluster",
+            Namespace = "default",
+            Pod = "test-pod",
+            Container = "test-container",
+            LogContent = "Log message"
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.WritePodLogAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()))
+            .ThrowsAsync(new Exception("Write failed"));
+
+        // Act
+        var result = await _controller.WritePodLog(request);
+
+        // Assert
+        var statusResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, statusResult.StatusCode);
+    }
+
+    #endregion
+
+    #region GetPodLogs Tests
+
+    [Fact]
+    public async Task GetPodLogs_WithAllFilters_ReturnsOkWithLogs()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>
+        {
+            new PodLogDto
+            {
+                Timestamp = DateTime.UtcNow,
+                ClusterName = "test-cluster",
+                Namespace = "default",
+                Pod = "test-pod",
+                Container = "test-container",
+                LogContent = "2024-01-01 10:00:00 INFO: Application started"
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync("default", "test-pod", "test-container", 1440, 100, "test-cluster"))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogs("default", "test-pod", "test-container", 1440, 100, "test-cluster");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var logs = Assert.IsAssignableFrom<List<PodLogDto>>(okResult.Value);
+        Assert.Single(logs);
+        Assert.Equal("default", logs[0].Namespace);
+        Assert.Equal("test-pod", logs[0].Pod);
+        Assert.Equal("test-container", logs[0].Container);
+        _mockClickHouseService.Verify(s => s.GetPodLogsAsync("default", "test-pod", "test-container", 1440, 100, "test-cluster"), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPodLogs_WithDefaultParameters_UsesDefaults()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>();
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync(null, null, null, 1440, 100, null))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogs();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        _mockClickHouseService.Verify(s => s.GetPodLogsAsync(null, null, null, 1440, 100, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPodLogs_WithNamespaceFilter_ReturnsOkWithLogs()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>
+        {
+            new PodLogDto
+            {
+                Timestamp = DateTime.UtcNow,
+                ClusterName = "test-cluster",
+                Namespace = "production",
+                Pod = "app-pod",
+                Container = "app-container",
+                LogContent = "Log message"
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync("production", null, null, 1440, 100, null))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogs("production");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var logs = Assert.IsAssignableFrom<List<PodLogDto>>(okResult.Value);
+        Assert.Single(logs);
+        Assert.Equal("production", logs[0].Namespace);
+        _mockClickHouseService.Verify(s => s.GetPodLogsAsync("production", null, null, 1440, 100, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPodLogs_WithCustomLimit_RespectsLimit()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>();
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync(null, null, null, 1440, 50, null))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogs(null, null, null, 1440, 50);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        _mockClickHouseService.Verify(s => s.GetPodLogsAsync(null, null, null, 1440, 50, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPodLogs_WithCustomMinutes_RespectsTimeWindow()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>();
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync(null, null, null, 60, 100, null))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogs(null, null, null, 60);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        _mockClickHouseService.Verify(s => s.GetPodLogsAsync(null, null, null, 60, 100, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPodLogs_ServiceThrowsException_ReturnsInternalServerError()
+    {
+        // Arrange
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync(null, null, null, 1440, 100, null))
+            .ThrowsAsync(new Exception("Database connection failed"));
+
+        // Act
+        var result = await _controller.GetPodLogs();
+
+        // Assert
+        var statusResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(500, statusResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetPodLogs_WithMultipleLogs_ReturnsAllLogs()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>
+        {
+            new PodLogDto
+            {
+                Timestamp = DateTime.UtcNow.AddMinutes(-10),
+                ClusterName = "test-cluster",
+                Namespace = "default",
+                Pod = "pod-1",
+                Container = "container-1",
+                LogContent = "First log message"
+            },
+            new PodLogDto
+            {
+                Timestamp = DateTime.UtcNow.AddMinutes(-5),
+                ClusterName = "test-cluster",
+                Namespace = "default",
+                Pod = "pod-2",
+                Container = "container-2",
+                LogContent = "Second log message"
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync("default", null, null, 1440, 100, null))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogs("default");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var logs = Assert.IsAssignableFrom<List<PodLogDto>>(okResult.Value);
+        Assert.Equal(2, logs.Count);
+    }
+
+    #endregion
+
+    #region GetPodLogsByNamespace Tests
+
+    [Fact]
+    public async Task GetPodLogsByNamespace_WithValidNamespace_ReturnsOkWithLogs()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>
+        {
+            new PodLogDto
+            {
+                Timestamp = DateTime.UtcNow,
+                ClusterName = "test-cluster",
+                Namespace = "production",
+                Pod = "app-pod",
+                Container = "app-container",
+                LogContent = "Log message"
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync("production", null, null, 1440, 100, null))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogsByNamespace("production");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var logs = Assert.IsAssignableFrom<List<PodLogDto>>(okResult.Value);
+        Assert.Single(logs);
+        Assert.Equal("production", logs[0].Namespace);
+        _mockClickHouseService.Verify(s => s.GetPodLogsAsync("production", null, null, 1440, 100, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPodLogsByNamespace_WithPodFilter_ReturnsFilteredLogs()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>
+        {
+            new PodLogDto
+            {
+                Timestamp = DateTime.UtcNow,
+                ClusterName = "test-cluster",
+                Namespace = "default",
+                Pod = "specific-pod",
+                Container = "container",
+                LogContent = "Log message"
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync("default", "specific-pod", null, 1440, 100, null))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogsByNamespace("default", "specific-pod");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var logs = Assert.IsAssignableFrom<List<PodLogDto>>(okResult.Value);
+        Assert.Single(logs);
+        Assert.Equal("specific-pod", logs[0].Pod);
+        _mockClickHouseService.Verify(s => s.GetPodLogsAsync("default", "specific-pod", null, 1440, 100, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPodLogsByNamespace_WithContainerFilter_ReturnsFilteredLogs()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>
+        {
+            new PodLogDto
+            {
+                Timestamp = DateTime.UtcNow,
+                ClusterName = "test-cluster",
+                Namespace = "default",
+                Pod = "pod",
+                Container = "specific-container",
+                LogContent = "Log message"
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync("default", null, "specific-container", 1440, 100, null))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogsByNamespace("default", null, "specific-container");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var logs = Assert.IsAssignableFrom<List<PodLogDto>>(okResult.Value);
+        Assert.Single(logs);
+        Assert.Equal("specific-container", logs[0].Container);
+        _mockClickHouseService.Verify(s => s.GetPodLogsAsync("default", null, "specific-container", 1440, 100, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPodLogsByNamespace_WithDefaultParameters_UsesDefaults()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>();
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync("default", null, null, 1440, 100, null))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogsByNamespace("default");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        _mockClickHouseService.Verify(s => s.GetPodLogsAsync("default", null, null, 1440, 100, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPodLogsByNamespace_ServiceThrowsException_ReturnsInternalServerError()
+    {
+        // Arrange
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync("test", null, null, 1440, 100, null))
+            .ThrowsAsync(new Exception("Query failed"));
+
+        // Act
+        var result = await _controller.GetPodLogsByNamespace("test");
+
+        // Assert
+        var statusResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(500, statusResult.StatusCode);
+    }
+
+    #endregion
+
+    #region GetPodLogsByPod Tests
+
+    [Fact]
+    public async Task GetPodLogsByPod_WithValidNamespaceAndPod_ReturnsOkWithLogs()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>
+        {
+            new PodLogDto
+            {
+                Timestamp = DateTime.UtcNow,
+                ClusterName = "test-cluster",
+                Namespace = "default",
+                Pod = "app-pod",
+                Container = "app-container",
+                LogContent = "Log message"
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync("default", "app-pod", null, 1440, 100, null))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogsByPod("default", "app-pod");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var logs = Assert.IsAssignableFrom<List<PodLogDto>>(okResult.Value);
+        Assert.Single(logs);
+        Assert.Equal("default", logs[0].Namespace);
+        Assert.Equal("app-pod", logs[0].Pod);
+        _mockClickHouseService.Verify(s => s.GetPodLogsAsync("default", "app-pod", null, 1440, 100, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPodLogsByPod_WithContainerFilter_ReturnsFilteredLogs()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>
+        {
+            new PodLogDto
+            {
+                Timestamp = DateTime.UtcNow,
+                ClusterName = "test-cluster",
+                Namespace = "default",
+                Pod = "app-pod",
+                Container = "specific-container",
+                LogContent = "Log message"
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync("default", "app-pod", "specific-container", 1440, 100, null))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogsByPod("default", "app-pod", "specific-container");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var logs = Assert.IsAssignableFrom<List<PodLogDto>>(okResult.Value);
+        Assert.Single(logs);
+        Assert.Equal("specific-container", logs[0].Container);
+        _mockClickHouseService.Verify(s => s.GetPodLogsAsync("default", "app-pod", "specific-container", 1440, 100, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPodLogsByPod_WithCustomMinutes_RespectsTimeWindow()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>();
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync("default", "app-pod", null, 60, 100, null))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogsByPod("default", "app-pod", null, 60);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        _mockClickHouseService.Verify(s => s.GetPodLogsAsync("default", "app-pod", null, 60, 100, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPodLogsByPod_WithCustomLimit_RespectsLimit()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>();
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync("default", "app-pod", null, 1440, 50, null))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogsByPod("default", "app-pod", null, 1440, 50);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        _mockClickHouseService.Verify(s => s.GetPodLogsAsync("default", "app-pod", null, 1440, 50, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPodLogsByPod_WithClusterName_ReturnsFilteredLogs()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>
+        {
+            new PodLogDto
+            {
+                Timestamp = DateTime.UtcNow,
+                ClusterName = "production-cluster",
+                Namespace = "default",
+                Pod = "app-pod",
+                Container = "app-container",
+                LogContent = "Log message"
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync("default", "app-pod", null, 1440, 100, "production-cluster"))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogsByPod("default", "app-pod", null, 1440, 100, "production-cluster");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var logs = Assert.IsAssignableFrom<List<PodLogDto>>(okResult.Value);
+        Assert.Single(logs);
+        Assert.Equal("production-cluster", logs[0].ClusterName);
+        _mockClickHouseService.Verify(s => s.GetPodLogsAsync("default", "app-pod", null, 1440, 100, "production-cluster"), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPodLogsByPod_WithDefaultParameters_UsesDefaults()
+    {
+        // Arrange
+        var expectedLogs = new List<PodLogDto>();
+
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync("default", "app-pod", null, 1440, 100, null))
+            .ReturnsAsync(expectedLogs);
+
+        // Act
+        var result = await _controller.GetPodLogsByPod("default", "app-pod");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        _mockClickHouseService.Verify(s => s.GetPodLogsAsync("default", "app-pod", null, 1440, 100, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPodLogsByPod_ServiceThrowsException_ReturnsInternalServerError()
+    {
+        // Arrange
+        _mockClickHouseService
+            .Setup(s => s.GetPodLogsAsync("default", "app-pod", null, 1440, 100, null))
+            .ThrowsAsync(new Exception("Query execution failed"));
+
+        // Act
+        var result = await _controller.GetPodLogsByPod("default", "app-pod");
+
+        // Assert
+        var statusResult = Assert.IsType<ObjectResult>(result.Result);
         Assert.Equal(500, statusResult.StatusCode);
     }
 
