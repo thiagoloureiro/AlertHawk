@@ -281,7 +281,9 @@ public static class PodMetricsCollector
                                                 pod.Metadata.Name,
                                                 pod.Metadata.NamespaceProperty,
                                                 container.Name);
-                                             //   tailLines: 100);
+                                            //   tailLines: 100);
+
+                                            Log.Information($"Collected {logContent.Length} rows from  {container.Name }");
 
                                             if (!string.IsNullOrWhiteSpace(logContent))
                                             {
