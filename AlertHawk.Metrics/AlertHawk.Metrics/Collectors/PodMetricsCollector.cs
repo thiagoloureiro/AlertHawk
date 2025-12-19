@@ -277,12 +277,11 @@ public static class PodMetricsCollector
                                     {
                                         try
                                         {
-                                            // Fetch logs for this container (last 100 lines)
                                             var logContent = await clientWrapper.ReadNamespacedPodLogAsync(
                                                 pod.Metadata.Name,
                                                 pod.Metadata.NamespaceProperty,
-                                                container.Name,
-                                                tailLines: 100);
+                                                container.Name);
+                                             //   tailLines: 100);
 
                                             if (!string.IsNullOrWhiteSpace(logContent))
                                             {
