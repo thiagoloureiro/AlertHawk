@@ -267,6 +267,7 @@ public static class PodMetricsCollector
                     // Fetch and store pod logs (only if COLLECT_LOGS is enabled)
                     if (isLogCollectionEnabled)
                     {
+                        var tailLines = Environment.GetEnvironmentVariable("LOG_TAIL_LINES") ?? "100";
                         foreach (var pod in pods.Items)
                         {
                             try
@@ -280,10 +281,8 @@ public static class PodMetricsCollector
                                             var logContent = await clientWrapper.ReadNamespacedPodLogAsync(
                                                 pod.Metadata.Name,
                                                 pod.Metadata.NamespaceProperty,
-                                                container.Name);
-                                            //   tailLines: 100);
-
-                                            Log.Information($"Collected {logContent.Length} rows from  {container.Name }");
+                                                container.Name,
+                                                tailLines: Convert.ToInt32(tailLines));
 
                                             if (!string.IsNullOrWhiteSpace(logContent))
                                             {
