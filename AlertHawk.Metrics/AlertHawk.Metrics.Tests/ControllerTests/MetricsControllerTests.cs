@@ -4,6 +4,7 @@ using AlertHawk.Metrics.API.Producers;
 using AlertHawk.Metrics.API.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System.Security.Claims;
 
@@ -14,6 +15,7 @@ public class MetricsControllerTests
     private readonly Mock<IClickHouseService> _mockClickHouseService;
     private readonly NodeStatusTracker _nodeStatusTracker;
     private readonly Mock<INotificationProducer> _mockNotificationProducer;
+    private readonly Mock<ILogger<MetricsController>> _mockLogger;
     private readonly MetricsController _controller;
 
     public MetricsControllerTests()
@@ -21,11 +23,13 @@ public class MetricsControllerTests
         _mockClickHouseService = new Mock<IClickHouseService>();
         _nodeStatusTracker = new NodeStatusTracker();
         _mockNotificationProducer = new Mock<INotificationProducer>();
+        _mockLogger = new Mock<ILogger<MetricsController>>();
         
         _controller = new MetricsController(
             _mockClickHouseService.Object,
             _nodeStatusTracker,
-            _mockNotificationProducer.Object);
+            _mockNotificationProducer.Object,
+            _mockLogger.Object);
         
         // Setup controller context for authorization
         var claims = new List<Claim> { new Claim(ClaimTypes.Name, "testuser") };

@@ -13,15 +13,17 @@ public class MetricsController : ControllerBase
     private readonly IClickHouseService _clickHouseService;
     private readonly NodeStatusTracker _nodeStatusTracker;
     private readonly INotificationProducer _notificationProducer;
-
+    private readonly ILogger<MetricsController> _logger;
+    
     public MetricsController(
         IClickHouseService clickHouseService,
         NodeStatusTracker nodeStatusTracker,
-        INotificationProducer notificationProducer)
+        INotificationProducer notificationProducer, ILogger<MetricsController> logger)
     {
         _clickHouseService = clickHouseService;
         _nodeStatusTracker = nodeStatusTracker;
         _notificationProducer = notificationProducer;
+        _logger = logger;
     }
 
     /// <summary>
@@ -205,6 +207,13 @@ public class MetricsController : ControllerBase
 
             if (hasStatusChanged)
             {
+                _logger.LogWarning(
+                    $"Node status changed for {request.NodeName} in cluster {clusterName}. Previous status: " +
+                    $"IsReady={previousStatus.IsReady}, HasMemoryPressure={previousStatus.HasMemoryPressure}, " +
+                    $"HasDiskPressure={previousStatus.HasDiskPressure}, HasPidPressure={previousStatus.HasPidPressure}. " +
+                    $"New status: IsReady={request.IsReady}, HasMemoryPressure={request.HasMemoryPressure}, " +
+                    $"HasDiskPressure={request.HasDiskPressure}, HasPidPressure={request.HasPidPressure}.");
+                
                 // Determine if the node is healthy (all conditions are OK)
                 var isHealthy = (request.IsReady == true || request.IsReady == null) &&
                                (request.HasMemoryPressure == false || request.HasMemoryPressure == null) &&
