@@ -1,5 +1,6 @@
 using AlertHawk.Metrics.API.Controllers;
 using AlertHawk.Metrics.API.Models;
+using AlertHawk.Metrics.API.Producers;
 using AlertHawk.Metrics.API.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,12 +12,20 @@ namespace AlertHawk.Metrics.Tests;
 public class MetricsControllerTests
 {
     private readonly Mock<IClickHouseService> _mockClickHouseService;
+    private readonly NodeStatusTracker _nodeStatusTracker;
+    private readonly Mock<INotificationProducer> _mockNotificationProducer;
     private readonly MetricsController _controller;
 
     public MetricsControllerTests()
     {
         _mockClickHouseService = new Mock<IClickHouseService>();
-        _controller = new MetricsController(_mockClickHouseService.Object);
+        _nodeStatusTracker = new NodeStatusTracker();
+        _mockNotificationProducer = new Mock<INotificationProducer>();
+        
+        _controller = new MetricsController(
+            _mockClickHouseService.Object,
+            _nodeStatusTracker,
+            _mockNotificationProducer.Object);
         
         // Setup controller context for authorization
         var claims = new List<Claim> { new Claim(ClaimTypes.Name, "testuser") };
@@ -640,7 +649,11 @@ public class MetricsControllerTests
             CpuUsageCores = 4.0,
             CpuCapacityCores = 8.0,
             MemoryUsageBytes = 4096,
-            MemoryCapacityBytes = 8192
+            MemoryCapacityBytes = 8192,
+            IsReady = true,
+            HasMemoryPressure = false,
+            HasDiskPressure = false,
+            HasPidPressure = false
         };
 
         _mockClickHouseService
@@ -650,7 +663,18 @@ public class MetricsControllerTests
                 request.CpuCapacityCores,
                 request.MemoryUsageBytes,
                 request.MemoryCapacityBytes,
-                request.ClusterName))
+                request.ClusterName,
+                request.ClusterEnvironment,
+                request.KubernetesVersion,
+                request.CloudProvider,
+                request.IsReady,
+                request.HasMemoryPressure,
+                request.HasDiskPressure,
+                request.HasPidPressure,
+                request.Architecture,
+                request.OperatingSystem,
+                request.Region,
+                request.InstanceType))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -669,7 +693,18 @@ public class MetricsControllerTests
             request.CpuCapacityCores,
             request.MemoryUsageBytes,
             request.MemoryCapacityBytes,
-            request.ClusterName), Times.Once);
+            request.ClusterName,
+            request.ClusterEnvironment,
+            request.KubernetesVersion,
+            request.CloudProvider,
+            request.IsReady,
+            request.HasMemoryPressure,
+            request.HasDiskPressure,
+            request.HasPidPressure,
+            request.Architecture,
+            request.OperatingSystem,
+            request.Region,
+            request.InstanceType), Times.Once);
     }
 
     [Fact]
@@ -693,7 +728,18 @@ public class MetricsControllerTests
                 request.CpuCapacityCores,
                 request.MemoryUsageBytes,
                 request.MemoryCapacityBytes,
-                null))
+                null,
+                request.ClusterEnvironment,
+                request.KubernetesVersion,
+                request.CloudProvider,
+                request.IsReady,
+                request.HasMemoryPressure,
+                request.HasDiskPressure,
+                request.HasPidPressure,
+                request.Architecture,
+                request.OperatingSystem,
+                request.Region,
+                request.InstanceType))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -707,7 +753,18 @@ public class MetricsControllerTests
             request.CpuCapacityCores,
             request.MemoryUsageBytes,
             request.MemoryCapacityBytes,
-            null), Times.Once);
+            null,
+            request.ClusterEnvironment,
+            request.KubernetesVersion,
+            request.CloudProvider,
+            request.IsReady,
+            request.HasMemoryPressure,
+            request.HasDiskPressure,
+            request.HasPidPressure,
+            request.Architecture,
+            request.OperatingSystem,
+            request.Region,
+            request.InstanceType), Times.Once);
     }
 
     [Fact]
@@ -731,7 +788,18 @@ public class MetricsControllerTests
                 request.CpuCapacityCores,
                 request.MemoryUsageBytes,
                 request.MemoryCapacityBytes,
-                null))
+                null,
+                request.ClusterEnvironment,
+                request.KubernetesVersion,
+                request.CloudProvider,
+                request.IsReady,
+                request.HasMemoryPressure,
+                request.HasDiskPressure,
+                request.HasPidPressure,
+                request.Architecture,
+                request.OperatingSystem,
+                request.Region,
+                request.InstanceType))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -745,7 +813,18 @@ public class MetricsControllerTests
             request.CpuCapacityCores,
             request.MemoryUsageBytes,
             request.MemoryCapacityBytes,
-            null), Times.Once);
+            null,
+            request.ClusterEnvironment,
+            request.KubernetesVersion,
+            request.CloudProvider,
+            request.IsReady,
+            request.HasMemoryPressure,
+            request.HasDiskPressure,
+            request.HasPidPressure,
+            request.Architecture,
+            request.OperatingSystem,
+            request.Region,
+            request.InstanceType), Times.Once);
     }
 
     [Fact]
@@ -769,7 +848,18 @@ public class MetricsControllerTests
                 It.IsAny<double>(),
                 It.IsAny<double>(),
                 It.IsAny<double>(),
-                It.IsAny<string>()))
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<bool?>(),
+                It.IsAny<bool?>(),
+                It.IsAny<bool?>(),
+                It.IsAny<bool?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>()))
             .ThrowsAsync(new Exception("Write operation failed"));
 
         // Act
@@ -1442,6 +1532,138 @@ public class MetricsControllerTests
         // Assert
         var statusResult = Assert.IsType<ObjectResult>(result.Result);
         Assert.Equal(500, statusResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task WriteNodeMetric_WithStatusChange_SendsNotification()
+    {
+        // Arrange
+        var request = new NodeMetricRequest
+        {
+            ClusterName = "test-cluster",
+            NodeName = "node-1",
+            CpuUsageCores = 4.0,
+            CpuCapacityCores = 8.0,
+            MemoryUsageBytes = 4096,
+            MemoryCapacityBytes = 8192,
+            IsReady = true,
+            HasMemoryPressure = false,
+            HasDiskPressure = false,
+            HasPidPressure = false
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.WriteNodeMetricsAsync(
+                request.NodeName,
+                request.CpuUsageCores,
+                request.CpuCapacityCores,
+                request.MemoryUsageBytes,
+                request.MemoryCapacityBytes,
+                request.ClusterName,
+                request.ClusterEnvironment,
+                request.KubernetesVersion,
+                request.CloudProvider,
+                request.IsReady,
+                request.HasMemoryPressure,
+                request.HasDiskPressure,
+                request.HasPidPressure,
+                request.Architecture,
+                request.OperatingSystem,
+                request.Region,
+                request.InstanceType))
+            .Returns(Task.CompletedTask);
+
+        // First call - no status change (first time seeing this node)
+        var result1 = await _controller.WriteNodeMetric(request);
+        var okResult1 = Assert.IsType<OkObjectResult>(result1);
+        _mockNotificationProducer.Verify(
+            p => p.SendNodeStatusNotification(
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<bool?>(),
+                It.IsAny<bool?>(),
+                It.IsAny<bool?>(),
+                It.IsAny<bool?>(),
+                It.IsAny<bool>()),
+            Times.Never);
+
+        // Second call with different status - should trigger notification
+        request.HasMemoryPressure = true;
+        var result2 = await _controller.WriteNodeMetric(request);
+        var okResult2 = Assert.IsType<OkObjectResult>(result2);
+        _mockNotificationProducer.Verify(
+            p => p.SendNodeStatusNotification(
+                request.NodeName,
+                request.ClusterName,
+                request.ClusterEnvironment,
+                request.IsReady,
+                request.HasMemoryPressure,
+                request.HasDiskPressure,
+                request.HasPidPressure,
+                false), // Not healthy due to memory pressure
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task WriteNodeMetric_WithStatusChangeToHealthy_SendsNotification()
+    {
+        // Arrange
+        var request = new NodeMetricRequest
+        {
+            ClusterName = "test-cluster",
+            NodeName = "node-2",
+            CpuUsageCores = 4.0,
+            CpuCapacityCores = 8.0,
+            MemoryUsageBytes = 4096,
+            MemoryCapacityBytes = 8192,
+            IsReady = false,
+            HasMemoryPressure = true,
+            HasDiskPressure = false,
+            HasPidPressure = false
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.WriteNodeMetricsAsync(
+                request.NodeName,
+                request.CpuUsageCores,
+                request.CpuCapacityCores,
+                request.MemoryUsageBytes,
+                request.MemoryCapacityBytes,
+                request.ClusterName,
+                request.ClusterEnvironment,
+                request.KubernetesVersion,
+                request.CloudProvider,
+                request.IsReady,
+                request.HasMemoryPressure,
+                request.HasDiskPressure,
+                request.HasPidPressure,
+                request.Architecture,
+                request.OperatingSystem,
+                request.Region,
+                request.InstanceType))
+            .Returns(Task.CompletedTask);
+
+        // First call - unhealthy status
+        await _controller.WriteNodeMetric(request);
+
+        // Second call - status changed to healthy
+        request.IsReady = true;
+        request.HasMemoryPressure = false;
+        await _controller.WriteNodeMetric(request);
+
+        // Verify notification was sent for the status change to healthy
+        _mockNotificationProducer.Verify(
+            p => p.SendNodeStatusNotification(
+                request.NodeName,
+                request.ClusterName,
+                request.ClusterEnvironment,
+                request.IsReady,
+                request.HasMemoryPressure,
+                request.HasDiskPressure,
+                request.HasPidPressure,
+                true), // Healthy
+            Times.Once);
     }
 
     #endregion
