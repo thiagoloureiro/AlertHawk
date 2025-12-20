@@ -1,3 +1,4 @@
+using AlertHawk.Metrics.API.Entities;
 using AlertHawk.Metrics.API.Repositories;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -11,15 +12,18 @@ public class NotificationProducer : INotificationProducer
 {
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IMetricsNotificationRepository _metricsNotificationRepository;
+    private readonly IMetricsAlertRepository _metricsAlertRepository;
     private readonly ILogger<NotificationProducer> _logger;
 
     public NotificationProducer(
         IPublishEndpoint publishEndpoint,
         IMetricsNotificationRepository metricsNotificationRepository,
+        IMetricsAlertRepository metricsAlertRepository,
         ILogger<NotificationProducer> logger)
     {
         _publishEndpoint = publishEndpoint;
         _metricsNotificationRepository = metricsNotificationRepository;
+        _metricsAlertRepository = metricsAlertRepository;
         _logger = logger;
     }
 
@@ -99,6 +103,27 @@ public class NotificationProducer : INotificationProducer
                 });
 
                 _logger.LogInformation("Node status notification sent successfully");
+            }
+
+            // Save alert to database
+            try
+            {
+                var metricsAlert = new MetricsAlert
+                {
+                    NodeName = nodeName,
+                    ClusterName = normalizedClusterName,
+                    TimeStamp = DateTime.UtcNow,
+                    Status = success,
+                    Message = message
+                };
+
+                await _metricsAlertRepository.SaveMetricsAlert(metricsAlert);
+                _logger.LogInformation("Metrics alert saved to database successfully");
+            }
+            catch (Exception alertEx)
+            {
+                _logger.LogError($"Error saving metrics alert to database: {alertEx.Message}");
+                SentrySdk.CaptureException(alertEx);
             }
         }
         catch (Exception ex)

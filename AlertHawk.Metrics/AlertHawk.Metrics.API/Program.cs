@@ -98,6 +98,8 @@ builder.Services.AddMassTransit(x =>
 builder.Services.AddSingleton<NodeStatusTracker>();
 builder.Services.AddScoped<IMetricsNotificationRepository, MetricsNotificationRepository>();
 builder.Services.AddScoped<IMetricsNotificationService, MetricsNotificationService>();
+builder.Services.AddScoped<IMetricsAlertRepository, MetricsAlertRepository>();
+builder.Services.AddScoped<IMetricsAlertService, MetricsAlertService>();
 builder.Services.AddScoped<INotificationProducer, NotificationProducer>();
 
 builder.Services.AddSwaggerGen(c =>
