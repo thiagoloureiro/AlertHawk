@@ -13,8 +13,19 @@ public class PushNotifier: IPushNotifier
         using var client = new HttpClient();
         client.BaseAddress = new Uri("https://api.pushy.me");
         
-        notificationPush.PushNotificationBody.data.message = notificationPush.PushNotificationBody.data.message.Contains("Success") ? "\u2705 " + message : "\u274c " + message;
-        notificationPush.PushNotificationBody.notification.body = notificationPush.PushNotificationBody.notification.body.Contains("Success") ? "\u2705 " + message : "\u274c " + message;
+        // Check if message indicates healthy or has issues
+        // For node metrics: "is healthy" or "has issues"
+        // For monitor notifications: "Success" or "Error"
+        var isHealthy = message.Contains("healthy", StringComparison.OrdinalIgnoreCase) || 
+                       message.Contains("Success", StringComparison.OrdinalIgnoreCase);
+        var hasIssues = message.Contains("has issues", StringComparison.OrdinalIgnoreCase) ||
+                       message.Contains("Error", StringComparison.OrdinalIgnoreCase);
+        
+        // Determine emoji based on message content
+        var emoji = isHealthy ? "\u2705 " : (hasIssues ? "\u274c " : "");
+        
+        notificationPush.PushNotificationBody.data.message = emoji + message;
+        notificationPush.PushNotificationBody.notification.body = emoji + message;
 
         var body = JsonSerializer.Serialize(notificationPush.PushNotificationBody);
         
