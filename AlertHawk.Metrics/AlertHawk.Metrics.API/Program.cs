@@ -1,11 +1,15 @@
+using AlertHawk.Metrics.API.Producers;
+using AlertHawk.Metrics.API.Repositories;
 using AlertHawk.Metrics.API.Services;
 using EasyMemoryCache.Configuration;
 using Hangfire;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using SharedModels;
 using System.Reflection;
 using System.Text;
 
@@ -46,6 +50,57 @@ builder.WebHost.UseSentry(options =>
 );
 
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
+
+// Configure MassTransit
+var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
+var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
+var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
+var queueType = configuration.GetValue<string>("QueueType") ?? "RABBITMQ";
+var serviceBusConnectionString = configuration.GetValue<string>("ServiceBus:ConnectionString");
+var serviceBusQueueName = configuration.GetValue<string>("ServiceBus:QueueName");
+
+Console.WriteLine("Starting MassTransit Configuration");
+
+builder.Services.AddMassTransit(x =>
+{
+    x.DisableUsageTelemetry();
+
+    switch (queueType.ToUpper())
+    {
+        case "RABBITMQ":
+            x.UsingRabbitMq((_, cfg) =>
+            {
+                Console.WriteLine($"Connecting to RabbitMQ at {rabbitMqHost}");
+                cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
+                {
+                    if (rabbitMqUser != null) h.Username(rabbitMqUser);
+                    if (rabbitMqPass != null) h.Password(rabbitMqPass);
+                });
+            });
+            break;
+
+        case "SERVICEBUS":
+            x.UsingAzureServiceBus((context, cfg) =>
+            {
+                Console.WriteLine($"Connecting to Azure Service Bus");
+                cfg.Host(serviceBusConnectionString);
+                cfg.Message<NotificationAlert>(config =>
+                {
+                    config.SetEntityName(serviceBusQueueName);
+                });
+                cfg.Message<NotificationAlert>(c => c.SetEntityName("notificationsTopic"));
+            });
+            break;
+    }
+});
+
+// Register NodeStatusTracker and NotificationProducer
+builder.Services.AddSingleton<NodeStatusTracker>();
+builder.Services.AddScoped<IMetricsNotificationRepository, MetricsNotificationRepository>();
+builder.Services.AddScoped<IMetricsNotificationService, MetricsNotificationService>();
+builder.Services.AddScoped<IMetricsAlertRepository, MetricsAlertRepository>();
+builder.Services.AddScoped<IMetricsAlertService, MetricsAlertService>();
+builder.Services.AddScoped<INotificationProducer, NotificationProducer>();
 
 builder.Services.AddSwaggerGen(c =>
 {

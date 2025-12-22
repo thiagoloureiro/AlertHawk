@@ -1,4 +1,4 @@
-﻿using AlertHawk.Notification.Domain.Interfaces.Notifiers;
+using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using System.Text;
 using System.Text.Json;
 
@@ -10,7 +10,17 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
         {
             using HttpClient httpClient = new HttpClient();
 
-            message = message.Contains("Success") ? "\\n\u2705 " + message : "\\n\u274c " + message;
+            // Check if message indicates healthy or has issues
+            // For node metrics: "is healthy" or "has issues"
+            // For monitor notifications: "Success" or "Error"
+            var isHealthy = message.Contains("healthy", StringComparison.OrdinalIgnoreCase) || 
+                           message.Contains("Success", StringComparison.OrdinalIgnoreCase);
+            var hasIssues = message.Contains("has issues", StringComparison.OrdinalIgnoreCase) ||
+                           message.Contains("Error", StringComparison.OrdinalIgnoreCase);
+            
+            message = isHealthy 
+                ? "\\n\u2705 " + message
+                : (hasIssues ? "\\n\u274c " + message : message);
 
             var payloadObj = new { text = message };
 

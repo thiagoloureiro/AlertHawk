@@ -16,5 +16,11 @@ namespace SharedModels
         public string ReasonPhrase { get; set; }
         public int StatusCode { get; set; }
         public string ClusterName { get; set; }
+        public string NodeName { get; set; }
+        public string ClusterEnvironment { get; set; }
+        public bool? IsReady { get; set; }
+        public bool? HasMemoryPressure { get; set; }
+        public bool? HasDiskPressure { get; set; }
+        public bool? HasPidPressure { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 using AlertHawk.Metrics.API.Models;
+using AlertHawk.Metrics.API.Producers;
 using AlertHawk.Metrics.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,10 +11,19 @@ namespace AlertHawk.Metrics.API.Controllers;
 public class MetricsController : ControllerBase
 {
     private readonly IClickHouseService _clickHouseService;
-
-    public MetricsController(IClickHouseService clickHouseService)
+    private readonly NodeStatusTracker _nodeStatusTracker;
+    private readonly INotificationProducer _notificationProducer;
+    private readonly ILogger<MetricsController> _logger;
+    
+    public MetricsController(
+        IClickHouseService clickHouseService,
+        NodeStatusTracker nodeStatusTracker,
+        INotificationProducer notificationProducer, ILogger<MetricsController> logger)
     {
         _clickHouseService = clickHouseService;
+        _nodeStatusTracker = nodeStatusTracker;
+        _notificationProducer = notificationProducer;
+        _logger = logger;
     }
 
     /// <summary>
@@ -184,6 +194,44 @@ public class MetricsController : ControllerBase
                 request.OperatingSystem,
                 request.Region,
                 request.InstanceType);
+
+            // Check for status changes and send notifications
+            var nodeKey = _nodeStatusTracker.GetNodeKey(request.NodeName, clusterName);
+            var hasStatusChanged = _nodeStatusTracker.HasStatusChanged(
+                nodeKey,
+                request.IsReady,
+                request.HasMemoryPressure,
+                request.HasDiskPressure,
+                request.HasPidPressure,
+                out var previousStatus);
+
+            if (hasStatusChanged)
+            {
+                _logger.LogWarning(
+                    $"Node status changed for {request.NodeName} in cluster {clusterName}. Previous status: " +
+                    $"IsReady={previousStatus.IsReady}, HasMemoryPressure={previousStatus.HasMemoryPressure}, " +
+                    $"HasDiskPressure={previousStatus.HasDiskPressure}, HasPidPressure={previousStatus.HasPidPressure}. " +
+                    $"New status: IsReady={request.IsReady}, HasMemoryPressure={request.HasMemoryPressure}, " +
+                    $"HasDiskPressure={request.HasDiskPressure}, HasPidPressure={request.HasPidPressure}.");
+                
+                // Determine if the node is healthy (all conditions are OK)
+                var isHealthy = (request.IsReady == true || request.IsReady == null) &&
+                               (request.HasMemoryPressure == false || request.HasMemoryPressure == null) &&
+                               (request.HasDiskPressure == false || request.HasDiskPressure == null) &&
+                               (request.HasPidPressure == false || request.HasPidPressure == null);
+
+                // Send notification for both OK and not OK status changes
+                await _notificationProducer.SendNodeStatusNotification(
+                    request.NodeName,
+                    clusterName,
+                    request.ClusterEnvironment,
+                    request.IsReady,
+                    request.HasMemoryPressure,
+                    request.HasDiskPressure,
+                    request.HasPidPressure,
+                    isHealthy);
+            }
+
             return Ok(new { success = true });
         }
         catch (Exception ex)

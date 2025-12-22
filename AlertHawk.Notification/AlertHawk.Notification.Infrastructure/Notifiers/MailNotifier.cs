@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using AlertHawk.Notification.Domain.Entities;
 using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using System.Net;
@@ -19,9 +19,19 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
 
             if (emailNotification.Subject != null)
             {
-                emailNotification.Subject = emailNotification.Body != null && emailNotification.Body.Contains("Success")
+                // Check if message indicates healthy or has issues
+                // For node metrics: "is healthy" or "has issues"
+                // For monitor notifications: "Success" or "Error"
+                var isHealthy = emailNotification.Body != null && 
+                               (emailNotification.Body.Contains("healthy", StringComparison.OrdinalIgnoreCase) || 
+                                emailNotification.Body.Contains("Success", StringComparison.OrdinalIgnoreCase));
+                var hasIssues = emailNotification.Body != null && 
+                               (emailNotification.Body.Contains("has issues", StringComparison.OrdinalIgnoreCase) ||
+                                emailNotification.Body.Contains("Error", StringComparison.OrdinalIgnoreCase));
+                
+                emailNotification.Subject = isHealthy 
                     ? "\u2705 " + emailNotification.Subject
-                    : "\u274C " + emailNotification.Subject;
+                    : (hasIssues ? "\u274C " + emailNotification.Subject : emailNotification.Subject);
             }
 
             // Create and send email to multiple recipients
