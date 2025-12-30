@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using ClickHouse.Client.ADO;
+using ClickHouse.Client.ADO.Parameters;
 using AlertHawk.Metrics.API.Models;
 
 namespace AlertHawk.Metrics.API.Services;
@@ -597,7 +598,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
             await connection.OpenAsync();
 
             var effectiveClusterName = clusterName ?? _clusterName;
-            var whereClause = $"timestamp >= now() - INTERVAL {minutes ?? 1440} MINUTE";
+            var minutesValue = minutes ?? 1440;
+            var whereClause = $"timestamp >= now() - INTERVAL {minutesValue} MINUTE";
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
                 var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
@@ -609,30 +611,86 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 whereClause += $" AND node_name = '{escapedNodeName}'";
             }
 
-            var query = $@"
-                SELECT 
-                    timestamp,
-                    cluster_name,
-                    cluster_environment,
-                    node_name,
-                    cpu_usage_cores,
-                    cpu_capacity_cores,
-                    memory_usage_bytes,
-                    memory_capacity_bytes,
-                    kubernetes_version,
-                    cloud_provider,
-                    is_ready,
-                    has_memory_pressure,
-                    has_disk_pressure,
-                    has_pid_pressure,
-                    architecture,
-                    operating_system,
-                    region,
-                    instance_type
-                FROM {_database}.{_nodeTableName}
-                WHERE {whereClause}
-                ORDER BY timestamp DESC
-            ";
+            string query;
+            
+            // If more than 6 hours (360 minutes), interpolate data using time intervals
+            if (minutesValue > 360)
+            {
+                // Calculate interval based on time range:
+                // - 6-24 hours: 5 minute intervals
+                // - 1-7 days: 15 minute intervals
+                // - 7+ days: 30 minute intervals
+                int intervalMinutes;
+                if (minutesValue <= 1440) // Up to 24 hours
+                {
+                    intervalMinutes = 5;
+                }
+                else if (minutesValue <= 10080) // Up to 7 days
+                {
+                    intervalMinutes = 15;
+                }
+                else // More than 7 days
+                {
+                    intervalMinutes = 30;
+                }
+
+                query = $@"
+                    SELECT 
+                        toStartOfInterval(timestamp, INTERVAL {intervalMinutes} MINUTE) AS timestamp,
+                        cluster_name,
+                        any(cluster_environment) AS cluster_environment,
+                        node_name,
+                        avg(cpu_usage_cores) AS cpu_usage_cores,
+                        avg(cpu_capacity_cores) AS cpu_capacity_cores,
+                        avg(memory_usage_bytes) AS memory_usage_bytes,
+                        avg(memory_capacity_bytes) AS memory_capacity_bytes,
+                        any(kubernetes_version) AS kubernetes_version,
+                        any(cloud_provider) AS cloud_provider,
+                        any(is_ready) AS is_ready,
+                        any(has_memory_pressure) AS has_memory_pressure,
+                        any(has_disk_pressure) AS has_disk_pressure,
+                        any(has_pid_pressure) AS has_pid_pressure,
+                        any(architecture) AS architecture,
+                        any(operating_system) AS operating_system,
+                        any(region) AS region,
+                        any(instance_type) AS instance_type
+                    FROM {_database}.{_nodeTableName}
+                    WHERE {whereClause}
+                    GROUP BY 
+                        timestamp,
+                        cluster_name,
+                        node_name
+                    ORDER BY timestamp DESC
+                ";
+            }
+            else
+            {
+                // Return all data without interpolation for <= 6 hours
+                query = $@"
+                    SELECT 
+                        timestamp,
+                        cluster_name,
+                        cluster_environment,
+                        node_name,
+                        cpu_usage_cores,
+                        cpu_capacity_cores,
+                        memory_usage_bytes,
+                        memory_capacity_bytes,
+                        kubernetes_version,
+                        cloud_provider,
+                        is_ready,
+                        has_memory_pressure,
+                        has_disk_pressure,
+                        has_pid_pressure,
+                        architecture,
+                        operating_system,
+                        region,
+                        instance_type
+                    FROM {_database}.{_nodeTableName}
+                    WHERE {whereClause}
+                    ORDER BY timestamp DESC
+                ";
+            }
 
             await using var command = connection.CreateCommand();
             command.CommandText = query;
@@ -887,38 +945,54 @@ public class ClickHouseService : IClickHouseService, IDisposable
             await connection.OpenAsync();
 
             var effectiveClusterName = clusterName ?? _clusterName;
-            var whereClause = $"timestamp >= now() - INTERVAL {minutes ?? 1440} MINUTE";
+            
+            // Build WHERE clause with parameter placeholders
+            var whereConditions = new List<string> { "timestamp >= now() - INTERVAL {minutes:Int32} MINUTE" };
+            
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
-                var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
-                whereClause += $" AND cluster_name = '{escapedClusterName}'";
+                whereConditions.Add("cluster_name = {cluster_name:String}");
             }
             if (!string.IsNullOrWhiteSpace(namespaceFilter))
             {
-                var escapedNamespace = namespaceFilter.Replace("'", "''").Replace("\\", "\\\\");
-                whereClause += $" AND namespace = '{escapedNamespace}'";
+                whereConditions.Add("namespace = {namespace:String}");
             }
             if (!string.IsNullOrWhiteSpace(podFilter))
             {
-                var escapedPod = podFilter.Replace("'", "''").Replace("\\", "\\\\");
-                whereClause += $" AND pod = '{escapedPod}'";
+                whereConditions.Add("pod = {pod:String}");
             }
             if (!string.IsNullOrWhiteSpace(containerFilter))
             {
-                var escapedContainer = containerFilter.Replace("'", "''").Replace("\\", "\\\\");
-                whereClause += $" AND container = '{escapedContainer}'";
+                whereConditions.Add("container = {container:String}");
             }
+            
+            var whereClause = string.Join(" AND ", whereConditions);
 
             // Check table engine to determine if we can use FINAL
             string? tableEngine = null;
             try
             {
                 await using var checkEngineCommand = connection.CreateCommand();
-                checkEngineCommand.CommandText = $@"
+                checkEngineCommand.CommandText = @"
                     SELECT engine 
                     FROM system.tables 
-                    WHERE database = '{_database}' AND name = '{_podLogsTableName}'
+                    WHERE database = {database:String} AND name = {table_name:String}
                 ";
+                
+                checkEngineCommand.Parameters.Add(new ClickHouseDbParameter
+                {
+                    ParameterName = "database",
+                    DbType = System.Data.DbType.String,
+                    Value = _database
+                });
+                
+                checkEngineCommand.Parameters.Add(new ClickHouseDbParameter
+                {
+                    ParameterName = "table_name",
+                    DbType = System.Data.DbType.String,
+                    Value = _podLogsTableName
+                });
+                
                 await using var engineReader = await checkEngineCommand.ExecuteReaderAsync();
                 if (await engineReader.ReadAsync())
                 {
@@ -933,6 +1007,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
             // Use FINAL only if table is using ReplacingMergeTree, otherwise query without FINAL
             var finalClause = (tableEngine != null && tableEngine.Contains("ReplacingMergeTree")) ? " FINAL" : "";
             
+            // Build query with parameter placeholders (using string concatenation for table names which are safe)
             var query = $@"
                 SELECT 
                     timestamp,
@@ -944,11 +1019,65 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 FROM {_database}.{_podLogsTableName}{finalClause}
                 WHERE {whereClause}
                 ORDER BY timestamp DESC
-                LIMIT {limit}
-            ";
+                LIMIT " + "{limit:Int32}";
 
             await using var command = connection.CreateCommand();
             command.CommandText = query;
+            
+            // Add parameters
+            command.Parameters.Add(new ClickHouseDbParameter
+            {
+                ParameterName = "minutes",
+                DbType = System.Data.DbType.Int32,
+                Value = minutes ?? 1440
+            });
+            
+            command.Parameters.Add(new ClickHouseDbParameter
+            {
+                ParameterName = "limit",
+                DbType = System.Data.DbType.Int32,
+                Value = limit
+            });
+            
+            if (!string.IsNullOrWhiteSpace(effectiveClusterName))
+            {
+                command.Parameters.Add(new ClickHouseDbParameter
+                {
+                    ParameterName = "cluster_name",
+                    DbType = System.Data.DbType.String,
+                    Value = effectiveClusterName
+                });
+            }
+            
+            if (!string.IsNullOrWhiteSpace(namespaceFilter))
+            {
+                command.Parameters.Add(new ClickHouseDbParameter
+                {
+                    ParameterName = "namespace",
+                    DbType = System.Data.DbType.String,
+                    Value = namespaceFilter
+                });
+            }
+            
+            if (!string.IsNullOrWhiteSpace(podFilter))
+            {
+                command.Parameters.Add(new ClickHouseDbParameter
+                {
+                    ParameterName = "pod",
+                    DbType = System.Data.DbType.String,
+                    Value = podFilter
+                });
+            }
+            
+            if (!string.IsNullOrWhiteSpace(containerFilter))
+            {
+                command.Parameters.Add(new ClickHouseDbParameter
+                {
+                    ParameterName = "container",
+                    DbType = System.Data.DbType.String,
+                    Value = containerFilter
+                });
+            }
             
             var results = new List<PodLogDto>();
             await using var reader = await command.ExecuteReaderAsync();
