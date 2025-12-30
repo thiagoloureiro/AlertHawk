@@ -525,7 +525,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
             await connection.OpenAsync();
 
             var effectiveClusterName = clusterName ?? _clusterName;
-            var whereClause = $"timestamp >= now() - INTERVAL {minutes ?? 1440} MINUTE";
+            var minutesValue = minutes ?? 1440;
+            var whereClause = $"timestamp >= now() - INTERVAL {minutesValue} MINUTE";
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
                 var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
@@ -537,24 +538,76 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 whereClause += $" AND namespace = '{escapedNamespace}'";
             }
 
-            var query = $@"
-                SELECT 
-                    timestamp,
-                    cluster_name,
-                    namespace,
-                    pod,
-                    container,
-                    cpu_usage_cores,
-                    cpu_limit_cores,
-                    memory_usage_bytes,
-                    node_name,
-                    pod_state,
-                    restart_count,
-                    pod_age
-                FROM {_database}.{_tableName}
-                WHERE {whereClause}
-                ORDER BY timestamp DESC
-            ";
+            string query;
+            
+            // If more than 6 hours (360 minutes), interpolate data using time intervals
+            if (minutesValue > 360)
+            {
+                // Calculate interval based on time range:
+                // - 6-24 hours: 5 minute intervals
+                // - 1-7 days: 15 minute intervals
+                // - 7+ days: 30 minute intervals
+                int intervalMinutes;
+                if (minutesValue <= 1440) // Up to 24 hours
+                {
+                    intervalMinutes = 5;
+                }
+                else if (minutesValue <= 10080) // Up to 7 days
+                {
+                    intervalMinutes = 15;
+                }
+                else // More than 7 days
+                {
+                    intervalMinutes = 30;
+                }
+
+                query = $@"
+                    SELECT 
+                        toStartOfInterval(timestamp, INTERVAL {intervalMinutes} MINUTE) AS timestamp,
+                        cluster_name,
+                        namespace,
+                        pod,
+                        container,
+                        avg(cpu_usage_cores) AS cpu_usage_cores,
+                        avg(cpu_limit_cores) AS cpu_limit_cores,
+                        avg(memory_usage_bytes) AS memory_usage_bytes,
+                        any(node_name) AS node_name,
+                        any(pod_state) AS pod_state,
+                        max(restart_count) AS restart_count,
+                        max(pod_age) AS pod_age
+                    FROM {_database}.{_tableName}
+                    WHERE {whereClause}
+                    GROUP BY 
+                        timestamp,
+                        cluster_name,
+                        namespace,
+                        pod,
+                        container
+                    ORDER BY timestamp DESC
+                ";
+            }
+            else
+            {
+                // Return all data without interpolation for <= 6 hours
+                query = $@"
+                    SELECT 
+                        timestamp,
+                        cluster_name,
+                        namespace,
+                        pod,
+                        container,
+                        cpu_usage_cores,
+                        cpu_limit_cores,
+                        memory_usage_bytes,
+                        node_name,
+                        pod_state,
+                        restart_count,
+                        pod_age
+                    FROM {_database}.{_tableName}
+                    WHERE {whereClause}
+                    ORDER BY timestamp DESC
+                ";
+            }
 
             await using var command = connection.CreateCommand();
             command.CommandText = query;
