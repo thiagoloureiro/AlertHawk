@@ -123,5 +123,10 @@ public class KubernetesClientWrapper : IKubernetesClientWrapper
             return string.Empty;
         }
     }
+
+    public async Task<Corev1EventList> ListNamespacedEventAsync(string namespaceParameter)
+    {
+        return await _kubernetes.CoreV1.ListNamespacedEventAsync(namespaceParameter);
+    }
 }
 

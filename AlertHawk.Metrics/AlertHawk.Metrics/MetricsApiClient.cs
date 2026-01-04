@@ -179,6 +179,51 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task WriteKubernetesEventAsync(
+        string @namespace,
+        string eventName,
+        string eventUid,
+        string involvedObjectKind,
+        string involvedObjectName,
+        string involvedObjectNamespace,
+        string eventType,
+        string reason,
+        string message,
+        string sourceComponent,
+        int count,
+        DateTime? firstTimestamp,
+        DateTime? lastTimestamp)
+    {
+        var request = new
+        {
+            ClusterName = _clusterName,
+            Namespace = @namespace,
+            EventName = eventName,
+            EventUid = eventUid,
+            InvolvedObjectKind = involvedObjectKind,
+            InvolvedObjectName = involvedObjectName,
+            InvolvedObjectNamespace = involvedObjectNamespace,
+            EventType = eventType,
+            Reason = reason,
+            Message = message,
+            SourceComponent = sourceComponent,
+            Count = count,
+            FirstTimestamp = firstTimestamp,
+            LastTimestamp = lastTimestamp
+        };
+
+        var json = JsonSerializer.Serialize(request);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        Log.Debug("Calling API: {ApiUrl}/api/events with payload for {Namespace}/{EventName}", 
+            _apiBaseUrl, @namespace, eventName);
+        
+        var response = await _retryPolicy.ExecuteAsync(async () =>
+            await _httpClient.PostAsync($"{_apiBaseUrl}/api/events", content));
+
+        response.EnsureSuccessStatusCode();
+    }
+
     public void Dispose()
     {
         _httpClient?.Dispose();

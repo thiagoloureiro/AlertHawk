@@ -64,5 +64,30 @@ public interface IClickHouseService
     Task CleanupSystemLogsAsync();
 
     Task<List<TableSizeDto>> GetTableSizesAsync();
+
+    Task WriteKubernetesEventAsync(
+        string @namespace,
+        string eventName,
+        string eventUid,
+        string involvedObjectKind,
+        string involvedObjectName,
+        string involvedObjectNamespace,
+        string eventType,
+        string reason,
+        string message,
+        string sourceComponent,
+        int count,
+        DateTime? firstTimestamp,
+        DateTime? lastTimestamp,
+        string? clusterName = null);
+
+    Task<List<KubernetesEventDto>> GetKubernetesEventsAsync(
+        string? namespaceFilter = null,
+        string? involvedObjectKindFilter = null,
+        string? involvedObjectNameFilter = null,
+        string? eventTypeFilter = null,
+        int? minutes = 1440,
+        int limit = 1000,
+        string? clusterName = null);
 }
 

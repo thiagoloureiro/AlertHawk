@@ -39,5 +39,20 @@ public interface IMetricsApiClient
         string pod,
         string container,
         string logContent);
+
+    Task WriteKubernetesEventAsync(
+        string @namespace,
+        string eventName,
+        string eventUid,
+        string involvedObjectKind,
+        string involvedObjectName,
+        string involvedObjectNamespace,
+        string eventType,
+        string reason,
+        string message,
+        string sourceComponent,
+        int count,
+        DateTime? firstTimestamp,
+        DateTime? lastTimestamp);
 }
 

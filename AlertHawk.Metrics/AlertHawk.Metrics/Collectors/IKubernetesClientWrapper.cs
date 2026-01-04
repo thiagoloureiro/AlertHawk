@@ -13,5 +13,6 @@ public interface IKubernetesClientWrapper
     Task<VersionInfo> GetVersionAsync();
     Task<string> DetectCloudProviderAsync();
     Task<string> ReadNamespacedPodLogAsync(string name, string namespaceParameter, string? container = null, int? tailLines = null);
+    Task<Corev1EventList> ListNamespacedEventAsync(string namespaceParameter);
 }
 
