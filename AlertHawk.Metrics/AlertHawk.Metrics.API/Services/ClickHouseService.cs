@@ -379,7 +379,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
             Console.WriteLine($"Warning: Could not verify or migrate table engine: {ex.Message}");
         }
 
-        // Create Kubernetes events table
+        // Create Kubernetes events table with ReplacingMergeTree to keep only latest event per unique combination
         var createEventsTableSql = $@"
             CREATE TABLE IF NOT EXISTS {_database}.{_eventsTableName}
             (
@@ -397,9 +397,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 source_component String,
                 count UInt32,
                 first_timestamp Nullable(DateTime64(3)),
-                last_timestamp Nullable(DateTime64(3))
+                last_timestamp Nullable(DateTime64(3)),
+                version DateTime64(3) DEFAULT now64()
             )
-            ENGINE = ReplacingMergeTree(last_timestamp)
+            ENGINE = ReplacingMergeTree(version)
             ORDER BY (cluster_name, namespace, event_uid, involved_object_kind, involved_object_name)
             TTL toDateTime(timestamp) + INTERVAL 90 DAY
         ";
@@ -408,6 +409,51 @@ public class ClickHouseService : IClickHouseService, IDisposable
         eventsCommand.CommandText = createEventsTableSql;
         await eventsCommand.ExecuteNonQueryAsync();
         Console.WriteLine($"Table '{_database}.{_eventsTableName}' ensured to exist");
+
+        // Add version column if it doesn't exist (for existing tables)
+        try
+        {
+            await using var alterCommand = connection.CreateCommand();
+            alterCommand.CommandText = $@"
+                ALTER TABLE {_database}.{_eventsTableName}
+                ADD COLUMN IF NOT EXISTS version DateTime64(3) DEFAULT now64()
+            ";
+            await alterCommand.ExecuteNonQueryAsync();
+            Console.WriteLine($"Column 'version' ensured to exist in '{_database}.{_eventsTableName}'");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not add version column (it may already exist): {ex.Message}");
+        }
+
+        // Check if table needs to be recreated with ReplacingMergeTree using version column
+        try
+        {
+            await using var checkEngineCommand = connection.CreateCommand();
+            checkEngineCommand.CommandText = $@"
+                SELECT engine 
+                FROM system.tables 
+                WHERE database = '{_database}' AND name = '{_eventsTableName}'
+            ";
+            await using var reader = await checkEngineCommand.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                var engine = reader.GetString(0);
+                if (!engine.Contains("ReplacingMergeTree"))
+                {
+                    Console.WriteLine($"WARNING: Table '{_database}.{_eventsTableName}' is using '{engine}' engine instead of 'ReplacingMergeTree'.");
+                    Console.WriteLine($"Please manually recreate the table with ReplacingMergeTree engine if needed.");
+                }
+                else
+                {
+                    Console.WriteLine($"Table '{_database}.{_eventsTableName}' is correctly using '{engine}' engine");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not verify table engine: {ex.Message}");
+        }
     }
 
     public async Task WriteMetricsAsync(
@@ -1320,6 +1366,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
             // Use ClickHouse format with proper escaping
             var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            var version = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
             var escapedNamespace = @namespace.Replace("'", "''").Replace("\\", "\\\\");
             var escapedEventName = eventName.Replace("'", "''").Replace("\\", "\\\\");
             var escapedEventUid = eventUid.Replace("'", "''").Replace("\\", "\\\\");
@@ -1340,12 +1387,12 @@ public class ClickHouseService : IClickHouseService, IDisposable
             var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
             
             // ReplacingMergeTree will automatically replace old rows with the same ORDER BY key
-            // when last_timestamp is higher, keeping only the latest event per unique combination
+            // when version is higher, keeping only the latest event per unique combination
             var insertSql = $@"
                 INSERT INTO {_database}.{_eventsTableName}
-                (timestamp, cluster_name, namespace, event_name, event_uid, involved_object_kind, involved_object_name, involved_object_namespace, event_type, reason, message, source_component, count, first_timestamp, last_timestamp)
+                (timestamp, cluster_name, namespace, event_name, event_uid, involved_object_kind, involved_object_name, involved_object_namespace, event_type, reason, message, source_component, count, first_timestamp, last_timestamp, version)
                 VALUES
-                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedEventName}', '{escapedEventUid}', '{escapedInvolvedObjectKind}', '{escapedInvolvedObjectName}', '{escapedInvolvedObjectNamespace}', '{escapedEventType}', '{escapedReason}', '{escapedMessage}', '{escapedSourceComponent}', {count}, {firstTimestampValue}, {lastTimestampValue})
+                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedEventName}', '{escapedEventUid}', '{escapedInvolvedObjectKind}', '{escapedInvolvedObjectName}', '{escapedInvolvedObjectNamespace}', '{escapedEventType}', '{escapedReason}', '{escapedMessage}', '{escapedSourceComponent}', {count}, {firstTimestampValue}, {lastTimestampValue}, '{version}')
             ";
 
             await using var command = connection.CreateCommand();
