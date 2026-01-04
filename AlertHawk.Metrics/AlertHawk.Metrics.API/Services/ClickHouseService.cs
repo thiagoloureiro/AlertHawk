@@ -13,10 +13,11 @@ public class ClickHouseService : IClickHouseService, IDisposable
     private readonly string _tableName;
     private readonly string _nodeTableName;
     private readonly string _podLogsTableName;
+    private readonly string _eventsTableName;
     private readonly string _clusterName;
     private readonly SemaphoreSlim _connectionSemaphore = new(1, 1);
 
-    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string podLogsTableName = "k8s_pod_logs")
+    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string podLogsTableName = "k8s_pod_logs", string eventsTableName = "k8s_events")
     {
         _connectionString = connectionString;
         _database = ExtractDatabaseFromConnectionString(connectionString);
@@ -24,6 +25,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         _tableName = tableName;
         _nodeTableName = nodeTableName;
         _podLogsTableName = podLogsTableName;
+        _eventsTableName = eventsTableName;
         EnsureTablesExistAsync().GetAwaiter().GetResult();
     }
 
@@ -376,6 +378,36 @@ public class ClickHouseService : IClickHouseService, IDisposable
         {
             Console.WriteLine($"Warning: Could not verify or migrate table engine: {ex.Message}");
         }
+
+        // Create Kubernetes events table
+        var createEventsTableSql = $@"
+            CREATE TABLE IF NOT EXISTS {_database}.{_eventsTableName}
+            (
+                timestamp DateTime64(3) DEFAULT now64(),
+                cluster_name String,
+                namespace String,
+                event_name String,
+                event_uid String,
+                involved_object_kind String,
+                involved_object_name String,
+                involved_object_namespace String,
+                event_type String,
+                reason String,
+                message String,
+                source_component String,
+                count UInt32,
+                first_timestamp Nullable(DateTime64(3)),
+                last_timestamp Nullable(DateTime64(3))
+            )
+            ENGINE = ReplacingMergeTree(last_timestamp)
+            ORDER BY (cluster_name, namespace, event_uid, involved_object_kind, involved_object_name)
+            TTL toDateTime(timestamp) + INTERVAL 90 DAY
+        ";
+
+        await using var eventsCommand = connection.CreateCommand();
+        eventsCommand.CommandText = createEventsTableSql;
+        await eventsCommand.ExecuteNonQueryAsync();
+        Console.WriteLine($"Table '{_database}.{_eventsTableName}' ensured to exist");
     }
 
     public async Task WriteMetricsAsync(
@@ -888,7 +920,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
             if (days == 0)
             {
-                // Truncate all three tables
+                // Truncate all four tables
                 await using var truncateMetricsCommand = connection.CreateCommand();
                 truncateMetricsCommand.CommandText = $"TRUNCATE TABLE IF EXISTS {_database}.{_tableName}";
                 await truncateMetricsCommand.ExecuteNonQueryAsync();
@@ -900,6 +932,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 await using var truncatePodLogsCommand = connection.CreateCommand();
                 truncatePodLogsCommand.CommandText = $"TRUNCATE TABLE IF EXISTS {_database}.{_podLogsTableName}";
                 await truncatePodLogsCommand.ExecuteNonQueryAsync();
+
+                await using var truncateEventsCommand = connection.CreateCommand();
+                truncateEventsCommand.CommandText = $"TRUNCATE TABLE IF EXISTS {_database}.{_eventsTableName}";
+                await truncateEventsCommand.ExecuteNonQueryAsync();
             }
             else
             {
@@ -927,6 +963,13 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     DELETE WHERE timestamp < '{cutoffDateString}'
                 ";
                 await deletePodLogsCommand.ExecuteNonQueryAsync();
+
+                await using var deleteEventsCommand = connection.CreateCommand();
+                deleteEventsCommand.CommandText = $@"
+                    ALTER TABLE {_database}.{_eventsTableName}
+                    DELETE WHERE timestamp < '{cutoffDateString}'
+                ";
+                await deleteEventsCommand.ExecuteNonQueryAsync();
             }
         }
         finally
@@ -1236,6 +1279,241 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     Table = reader.GetString(1),
                     TotalSize = reader.GetString(2),
                     TotalSizeBytes = reader.GetInt64(3)
+                });
+            }
+
+            return results;
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
+    public async Task WriteKubernetesEventAsync(
+        string @namespace,
+        string eventName,
+        string eventUid,
+        string involvedObjectKind,
+        string involvedObjectName,
+        string involvedObjectNamespace,
+        string eventType,
+        string reason,
+        string message,
+        string sourceComponent,
+        int count,
+        DateTime? firstTimestamp,
+        DateTime? lastTimestamp,
+        string? clusterName = null)
+    {
+        var effectiveClusterName = clusterName ?? _clusterName;
+        if (string.IsNullOrWhiteSpace(effectiveClusterName))
+        {
+            throw new InvalidOperationException("Cluster name is required for writing events. Provide it as a parameter or set CLUSTER_NAME environment variable.");
+        }
+
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            // Use ClickHouse format with proper escaping
+            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            var escapedNamespace = @namespace.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedEventName = eventName.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedEventUid = eventUid.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedInvolvedObjectKind = involvedObjectKind.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedInvolvedObjectName = involvedObjectName.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedInvolvedObjectNamespace = involvedObjectNamespace.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedEventType = eventType.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedReason = reason.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedMessage = message.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedSourceComponent = sourceComponent.Replace("'", "''").Replace("\\", "\\\\");
+            var firstTimestampValue = firstTimestamp.HasValue
+                ? $"'{firstTimestamp.Value:yyyy-MM-dd HH:mm:ss.fff}'"
+                : "NULL";
+            var lastTimestampValue = lastTimestamp.HasValue
+                ? $"'{lastTimestamp.Value:yyyy-MM-dd HH:mm:ss.fff}'"
+                : "NULL";
+
+            var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
+            
+            // ReplacingMergeTree will automatically replace old rows with the same ORDER BY key
+            // when last_timestamp is higher, keeping only the latest event per unique combination
+            var insertSql = $@"
+                INSERT INTO {_database}.{_eventsTableName}
+                (timestamp, cluster_name, namespace, event_name, event_uid, involved_object_kind, involved_object_name, involved_object_namespace, event_type, reason, message, source_component, count, first_timestamp, last_timestamp)
+                VALUES
+                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedEventName}', '{escapedEventUid}', '{escapedInvolvedObjectKind}', '{escapedInvolvedObjectName}', '{escapedInvolvedObjectNamespace}', '{escapedEventType}', '{escapedReason}', '{escapedMessage}', '{escapedSourceComponent}', {count}, {firstTimestampValue}, {lastTimestampValue})
+            ";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = insertSql;
+            await command.ExecuteNonQueryAsync();
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
+    public async Task<List<KubernetesEventDto>> GetKubernetesEventsAsync(
+        string? namespaceFilter = null,
+        string? involvedObjectKindFilter = null,
+        string? involvedObjectNameFilter = null,
+        string? eventTypeFilter = null,
+        int? minutes = 1440,
+        int limit = 1000,
+        string? clusterName = null)
+    {
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var effectiveClusterName = clusterName ?? _clusterName;
+            
+            // Build WHERE clause
+            var whereConditions = new List<string> { "timestamp >= now() - INTERVAL {minutes:Int32} MINUTE" };
+            
+            if (!string.IsNullOrWhiteSpace(effectiveClusterName))
+            {
+                whereConditions.Add("cluster_name = {cluster_name:String}");
+            }
+            if (!string.IsNullOrWhiteSpace(namespaceFilter))
+            {
+                whereConditions.Add("namespace = {namespace:String}");
+            }
+            if (!string.IsNullOrWhiteSpace(involvedObjectKindFilter))
+            {
+                whereConditions.Add("involved_object_kind = {involved_object_kind:String}");
+            }
+            if (!string.IsNullOrWhiteSpace(involvedObjectNameFilter))
+            {
+                whereConditions.Add("involved_object_name = {involved_object_name:String}");
+            }
+            if (!string.IsNullOrWhiteSpace(eventTypeFilter))
+            {
+                whereConditions.Add("event_type = {event_type:String}");
+            }
+            
+            var whereClause = string.Join(" AND ", whereConditions);
+
+            // Use FINAL to get the latest version of each event (ReplacingMergeTree deduplication)
+            var query = $@"
+                SELECT 
+                    timestamp,
+                    cluster_name,
+                    namespace,
+                    event_name,
+                    event_uid,
+                    involved_object_kind,
+                    involved_object_name,
+                    involved_object_namespace,
+                    event_type,
+                    reason,
+                    message,
+                    source_component,
+                    count,
+                    first_timestamp,
+                    last_timestamp
+                FROM {_database}.{_eventsTableName} FINAL
+                WHERE {whereClause}
+                ORDER BY timestamp DESC
+                LIMIT " + "{limit:Int32}";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = query;
+            
+            // Add parameters
+            command.Parameters.Add(new ClickHouseDbParameter
+            {
+                ParameterName = "minutes",
+                DbType = System.Data.DbType.Int32,
+                Value = minutes ?? 1440
+            });
+            
+            command.Parameters.Add(new ClickHouseDbParameter
+            {
+                ParameterName = "limit",
+                DbType = System.Data.DbType.Int32,
+                Value = limit
+            });
+            
+            if (!string.IsNullOrWhiteSpace(effectiveClusterName))
+            {
+                command.Parameters.Add(new ClickHouseDbParameter
+                {
+                    ParameterName = "cluster_name",
+                    DbType = System.Data.DbType.String,
+                    Value = effectiveClusterName
+                });
+            }
+            
+            if (!string.IsNullOrWhiteSpace(namespaceFilter))
+            {
+                command.Parameters.Add(new ClickHouseDbParameter
+                {
+                    ParameterName = "namespace",
+                    DbType = System.Data.DbType.String,
+                    Value = namespaceFilter
+                });
+            }
+            
+            if (!string.IsNullOrWhiteSpace(involvedObjectKindFilter))
+            {
+                command.Parameters.Add(new ClickHouseDbParameter
+                {
+                    ParameterName = "involved_object_kind",
+                    DbType = System.Data.DbType.String,
+                    Value = involvedObjectKindFilter
+                });
+            }
+            
+            if (!string.IsNullOrWhiteSpace(involvedObjectNameFilter))
+            {
+                command.Parameters.Add(new ClickHouseDbParameter
+                {
+                    ParameterName = "involved_object_name",
+                    DbType = System.Data.DbType.String,
+                    Value = involvedObjectNameFilter
+                });
+            }
+            
+            if (!string.IsNullOrWhiteSpace(eventTypeFilter))
+            {
+                command.Parameters.Add(new ClickHouseDbParameter
+                {
+                    ParameterName = "event_type",
+                    DbType = System.Data.DbType.String,
+                    Value = eventTypeFilter
+                });
+            }
+            
+            var results = new List<KubernetesEventDto>();
+            await using var reader = await command.ExecuteReaderAsync();
+            
+            while (await reader.ReadAsync())
+            {
+                results.Add(new KubernetesEventDto
+                {
+                    Timestamp = reader.GetDateTime(0),
+                    ClusterName = reader.GetString(1),
+                    Namespace = reader.GetString(2),
+                    EventName = reader.GetString(3),
+                    EventUid = reader.GetString(4),
+                    InvolvedObjectKind = reader.GetString(5),
+                    InvolvedObjectName = reader.GetString(6),
+                    InvolvedObjectNamespace = reader.GetString(7),
+                    EventType = reader.GetString(8),
+                    Reason = reader.GetString(9),
+                    Message = reader.GetString(10),
+                    SourceComponent = reader.GetString(11),
+                    Count = Convert.ToInt32(reader.GetValue(12)),
+                    FirstTimestamp = reader.IsDBNull(13) ? null : reader.GetDateTime(13),
+                    LastTimestamp = reader.IsDBNull(14) ? null : reader.GetDateTime(14)
                 });
             }
 

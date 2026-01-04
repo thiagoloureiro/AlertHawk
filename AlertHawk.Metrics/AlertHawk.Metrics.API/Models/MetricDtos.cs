@@ -101,3 +101,40 @@ public class TableSizeDto
     public long TotalSizeBytes { get; set; }
 }
 
+public class KubernetesEventDto
+{
+    public DateTime Timestamp { get; set; }
+    public string ClusterName { get; set; } = string.Empty;
+    public string Namespace { get; set; } = string.Empty;
+    public string EventName { get; set; } = string.Empty;
+    public string EventUid { get; set; } = string.Empty;
+    public string InvolvedObjectKind { get; set; } = string.Empty;
+    public string InvolvedObjectName { get; set; } = string.Empty;
+    public string InvolvedObjectNamespace { get; set; } = string.Empty;
+    public string EventType { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public string SourceComponent { get; set; } = string.Empty;
+    public int Count { get; set; }
+    public DateTime? FirstTimestamp { get; set; }
+    public DateTime? LastTimestamp { get; set; }
+}
+
+public class KubernetesEventRequest
+{
+    public string ClusterName { get; set; } = string.Empty;
+    public string Namespace { get; set; } = string.Empty;
+    public string EventName { get; set; } = string.Empty;
+    public string EventUid { get; set; } = string.Empty;
+    public string InvolvedObjectKind { get; set; } = string.Empty;
+    public string InvolvedObjectName { get; set; } = string.Empty;
+    public string InvolvedObjectNamespace { get; set; } = string.Empty;
+    public string EventType { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public string SourceComponent { get; set; } = string.Empty;
+    public int Count { get; set; }
+    public DateTime? FirstTimestamp { get; set; }
+    public DateTime? LastTimestamp { get; set; }
+}
+
