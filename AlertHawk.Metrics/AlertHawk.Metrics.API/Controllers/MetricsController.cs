@@ -241,9 +241,12 @@ public class MetricsController : ControllerBase
             _logger.LogDebug("Checking price fetch conditions for node {NodeName} in cluster {ClusterName}: CloudProvider={CloudProvider}, Region={Region}, InstanceType={InstanceType}",
                 request.NodeName, clusterName, request.CloudProvider ?? "null", request.Region ?? "null", request.InstanceType ?? "null");
 
+            var isAzure = !string.IsNullOrWhiteSpace(request.CloudProvider) && 
+                          (request.CloudProvider.Equals("Azure", StringComparison.OrdinalIgnoreCase) ||
+                           request.CloudProvider.Equals("AKS", StringComparison.OrdinalIgnoreCase));
+
             if (!string.IsNullOrWhiteSpace(clusterName) && 
-                !string.IsNullOrWhiteSpace(request.CloudProvider) && 
-                request.CloudProvider.Equals("Azure", StringComparison.OrdinalIgnoreCase) &&
+                isAzure &&
                 !string.IsNullOrWhiteSpace(request.Region) &&
                 !string.IsNullOrWhiteSpace(request.InstanceType))
             {
@@ -273,7 +276,7 @@ public class MetricsController : ControllerBase
                 var missingFields = new List<string>();
                 if (string.IsNullOrWhiteSpace(clusterName)) missingFields.Add("ClusterName");
                 if (string.IsNullOrWhiteSpace(request.CloudProvider)) missingFields.Add("CloudProvider");
-                else if (!request.CloudProvider.Equals("Azure", StringComparison.OrdinalIgnoreCase)) missingFields.Add("CloudProvider (not Azure)");
+                else if (!isAzure) missingFields.Add($"CloudProvider (not Azure/AKS, got: {request.CloudProvider})");
                 if (string.IsNullOrWhiteSpace(request.Region)) missingFields.Add("Region");
                 if (string.IsNullOrWhiteSpace(request.InstanceType)) missingFields.Add("InstanceType");
                 
