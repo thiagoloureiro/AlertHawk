@@ -479,7 +479,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 effective_start_date DateTime64(3)
             )
             ENGINE = MergeTree()
-            ORDER BY (timestamp, cluster_name, node_name, region, instance_type)
+            ORDER BY (timestamp, cluster_name, node_name)
             TTL toDateTime(timestamp) + INTERVAL 90 DAY
         ";
 
