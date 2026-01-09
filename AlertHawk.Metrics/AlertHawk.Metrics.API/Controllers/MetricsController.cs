@@ -238,12 +238,18 @@ public class MetricsController : ControllerBase
             }
 
             // Fetch and store Azure prices if we have the necessary information
+            _logger.LogDebug("Checking price fetch conditions for node {NodeName} in cluster {ClusterName}: CloudProvider={CloudProvider}, Region={Region}, InstanceType={InstanceType}",
+                request.NodeName, clusterName, request.CloudProvider ?? "null", request.Region ?? "null", request.InstanceType ?? "null");
+
             if (!string.IsNullOrWhiteSpace(clusterName) && 
                 !string.IsNullOrWhiteSpace(request.CloudProvider) && 
                 request.CloudProvider.Equals("Azure", StringComparison.OrdinalIgnoreCase) &&
                 !string.IsNullOrWhiteSpace(request.Region) &&
                 !string.IsNullOrWhiteSpace(request.InstanceType))
             {
+                _logger.LogInformation("Price fetch conditions met. Fetching Azure prices for node {NodeName} in cluster {ClusterName}, Region={Region}, InstanceType={InstanceType}, OS={OperatingSystem}",
+                    request.NodeName, clusterName, request.Region, request.InstanceType, request.OperatingSystem ?? "null");
+                
                 try
                 {
                     await FetchAndStoreClusterPriceAsync(
@@ -261,6 +267,18 @@ public class MetricsController : ControllerBase
                         request.NodeName, clusterName);
                     SentrySdk.CaptureException(ex);
                 }
+            }
+            else
+            {
+                var missingFields = new List<string>();
+                if (string.IsNullOrWhiteSpace(clusterName)) missingFields.Add("ClusterName");
+                if (string.IsNullOrWhiteSpace(request.CloudProvider)) missingFields.Add("CloudProvider");
+                else if (!request.CloudProvider.Equals("Azure", StringComparison.OrdinalIgnoreCase)) missingFields.Add("CloudProvider (not Azure)");
+                if (string.IsNullOrWhiteSpace(request.Region)) missingFields.Add("Region");
+                if (string.IsNullOrWhiteSpace(request.InstanceType)) missingFields.Add("InstanceType");
+                
+                _logger.LogDebug("Skipping price fetch for node {NodeName} in cluster {ClusterName}. Missing or invalid fields: {MissingFields}",
+                    request.NodeName, clusterName, string.Join(", ", missingFields));
             }
 
             return Ok(new { success = true });
@@ -495,9 +513,15 @@ public class MetricsController : ControllerBase
             priceRequest.ArmSkuName = instanceType;
         }
 
+        _logger.LogDebug("Fetching Azure prices with request: ServiceName={ServiceName}, ArmRegionName={ArmRegionName}, ArmSkuName={ArmSkuName}, OperatingSystem={OperatingSystem}, Type={Type}",
+            priceRequest.ServiceName, priceRequest.ArmRegionName, priceRequest.ArmSkuName ?? "null", priceRequest.OperatingSystem, priceRequest.Type);
+
         try
         {
             var priceResponse = await _azurePricesService.GetPricesAsync(priceRequest);
+            
+            _logger.LogDebug("Azure prices API returned {Count} items for node {NodeName} in cluster {ClusterName}",
+                priceResponse?.Items?.Count ?? 0, nodeName, clusterName);
             
             if (priceResponse?.Items != null && priceResponse.Items.Any())
             {
@@ -506,6 +530,9 @@ public class MetricsController : ControllerBase
                 
                 if (priceItem != null)
                 {
+                    _logger.LogInformation("Storing cluster price for node {NodeName} in cluster {ClusterName}: UnitPrice={UnitPrice} {CurrencyCode}/hour, ProductName={ProductName}, SkuName={SkuName}",
+                        nodeName, clusterName, priceItem.UnitPrice, priceItem.CurrencyCode, priceItem.ProductName, priceItem.SkuName);
+                    
                     await _clickHouseService.WriteClusterPriceAsync(
                         clusterName,
                         nodeName,
@@ -523,15 +550,25 @@ public class MetricsController : ControllerBase
                         priceItem.ArmRegionName,
                         priceItem.EffectiveStartDate);
                     
-                    _logger.LogDebug("Stored cluster price for node {NodeName} in cluster {ClusterName}: {UnitPrice} {CurrencyCode}/hour", 
+                    _logger.LogInformation("Successfully stored cluster price for node {NodeName} in cluster {ClusterName}: {UnitPrice} {CurrencyCode}/hour", 
                         nodeName, clusterName, priceItem.UnitPrice, priceItem.CurrencyCode);
                 }
+                else
+                {
+                    _logger.LogWarning("Price response has items but FirstOrDefault returned null for node {NodeName} in cluster {ClusterName}",
+                        nodeName, clusterName);
+                }
+            }
+            else
+            {
+                _logger.LogWarning("No price items found in Azure API response for node {NodeName} in cluster {ClusterName}, Region={Region}, InstanceType={InstanceType}",
+                    nodeName, clusterName, region, instanceType);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error fetching Azure prices for node {NodeName} in cluster {ClusterName}", 
-                nodeName, clusterName);
+            _logger.LogError(ex, "Error fetching Azure prices for node {NodeName} in cluster {ClusterName}, Region={Region}, InstanceType={InstanceType}", 
+                nodeName, clusterName, region, instanceType);
             throw;
         }
     }
