@@ -62,8 +62,13 @@ public class NodeStatusTracker
 
     public string GetNodeKey(string nodeName, string? clusterName)
     {
-        return string.IsNullOrWhiteSpace(clusterName) 
+        // Normalize cluster name to lowercase for case-insensitive matching
+        var normalizedClusterName = !string.IsNullOrWhiteSpace(clusterName) 
+            ? clusterName.ToLowerInvariant() 
+            : null;
+        
+        return string.IsNullOrWhiteSpace(normalizedClusterName) 
             ? nodeName 
-            : $"{clusterName}:{nodeName}";
+            : $"{normalizedClusterName}:{nodeName}";
     }
 }

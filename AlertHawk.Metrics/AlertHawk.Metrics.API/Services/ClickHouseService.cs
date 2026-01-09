@@ -508,6 +508,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
             throw new InvalidOperationException("Cluster name is required for writing metrics. Provide it as a parameter or set CLUSTER_NAME environment variable.");
         }
 
+        // Normalize cluster name to lowercase for case-insensitive storage
+        effectiveClusterName = effectiveClusterName.ToLowerInvariant();
+
         await _connectionSemaphore.WaitAsync();
         try
         {
@@ -570,6 +573,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
         {
             throw new InvalidOperationException("Cluster name is required for writing metrics. Provide it as a parameter or set CLUSTER_NAME environment variable.");
         }
+        // Normalize cluster name to lowercase for case-insensitive storage
+        effectiveClusterName = effectiveClusterName.ToLowerInvariant();
+        
         var effectiveClusterEnvironment = !string.IsNullOrWhiteSpace(clusterEnvironment) 
             ? clusterEnvironment 
             : "PROD";
@@ -640,8 +646,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
             var whereClause = $"timestamp >= now() - INTERVAL {minutesValue} MINUTE";
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
-                var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
-                whereClause += $" AND cluster_name = '{escapedClusterName}'";
+                // Normalize to lowercase for case-insensitive comparison
+                var normalizedClusterName = effectiveClusterName.ToLowerInvariant();
+                var escapedClusterName = normalizedClusterName.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND lowerUTF8(cluster_name) = lowerUTF8('{escapedClusterName}')";
             }
             if (!string.IsNullOrWhiteSpace(namespaceFilter))
             {
@@ -766,8 +774,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
             var whereClause = $"timestamp >= now() - INTERVAL {minutesValue} MINUTE";
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
-                var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
-                whereClause += $" AND cluster_name = '{escapedClusterName}'";
+                // Normalize to lowercase for case-insensitive comparison
+                var normalizedClusterName = effectiveClusterName.ToLowerInvariant();
+                var escapedClusterName = normalizedClusterName.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND lowerUTF8(cluster_name) = lowerUTF8('{escapedClusterName}')";
             }
             if (!string.IsNullOrWhiteSpace(nodeNameFilter))
             {
@@ -903,9 +913,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
             await using var connection = new ClickHouseConnection(_connectionString);
             await connection.OpenAsync();
 
-            // Get distinct cluster names from both tables using UNION
+            // Get distinct cluster names from both tables using UNION (case-insensitive)
             var query = $@"
-                SELECT DISTINCT cluster_name
+                SELECT DISTINCT lowerUTF8(cluster_name) AS cluster_name
                 FROM (
                     SELECT cluster_name FROM {_database}.{_tableName}
                     UNION ALL
@@ -950,8 +960,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
             var whereClause = "namespace != ''";
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
-                var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
-                whereClause += $" AND cluster_name = '{escapedClusterName}'";
+                // Normalize to lowercase for case-insensitive comparison
+                var normalizedClusterName = effectiveClusterName.ToLowerInvariant();
+                var escapedClusterName = normalizedClusterName.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND lowerUTF8(cluster_name) = lowerUTF8('{escapedClusterName}')";
             }
 
             // Get distinct namespace names from the metrics table
@@ -1070,6 +1082,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
             throw new InvalidOperationException("Cluster name is required for writing pod logs. Provide it as a parameter or set CLUSTER_NAME environment variable.");
         }
 
+        // Normalize cluster name to lowercase for case-insensitive storage
+        effectiveClusterName = effectiveClusterName.ToLowerInvariant();
+
         await _connectionSemaphore.WaitAsync();
         try
         {
@@ -1126,7 +1141,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
             
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
-                whereConditions.Add("cluster_name = {cluster_name:String}");
+                // Use case-insensitive comparison
+                whereConditions.Add("lowerUTF8(cluster_name) = lowerUTF8({cluster_name:String})");
             }
             if (!string.IsNullOrWhiteSpace(namespaceFilter))
             {
@@ -1216,11 +1232,13 @@ public class ClickHouseService : IClickHouseService, IDisposable
             
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
+                // Normalize to lowercase for case-insensitive comparison
+                var normalizedClusterName = effectiveClusterName.ToLowerInvariant();
                 command.Parameters.Add(new ClickHouseDbParameter
                 {
                     ParameterName = "cluster_name",
                     DbType = System.Data.DbType.String,
-                    Value = effectiveClusterName
+                    Value = normalizedClusterName
                 });
             }
             
@@ -1391,6 +1409,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
             throw new InvalidOperationException("Cluster name is required for writing events. Provide it as a parameter or set CLUSTER_NAME environment variable.");
         }
 
+        // Normalize cluster name to lowercase for case-insensitive storage
+        effectiveClusterName = effectiveClusterName.ToLowerInvariant();
+
         await _connectionSemaphore.WaitAsync();
         try
         {
@@ -1460,7 +1481,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
             
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
-                whereConditions.Add("cluster_name = {cluster_name:String}");
+                // Use case-insensitive comparison
+                whereConditions.Add("lowerUTF8(cluster_name) = lowerUTF8({cluster_name:String})");
             }
             if (!string.IsNullOrWhiteSpace(namespaceFilter))
             {
@@ -1524,11 +1546,13 @@ public class ClickHouseService : IClickHouseService, IDisposable
             
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
+                // Normalize to lowercase for case-insensitive comparison
+                var normalizedClusterName = effectiveClusterName.ToLowerInvariant();
                 command.Parameters.Add(new ClickHouseDbParameter
                 {
                     ParameterName = "cluster_name",
                     DbType = System.Data.DbType.String,
-                    Value = effectiveClusterName
+                    Value = normalizedClusterName
                 });
             }
             
@@ -1627,6 +1651,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
             throw new InvalidOperationException("Cluster name is required for writing cluster prices.");
         }
 
+        // Normalize cluster name to lowercase for case-insensitive storage
+        var normalizedClusterName = clusterName.ToLowerInvariant();
+
         await _connectionSemaphore.WaitAsync();
         try
         {
@@ -1635,7 +1662,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
             var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
             var effectiveStartDateStr = effectiveStartDate.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            var escapedClusterName = clusterName.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedClusterName = normalizedClusterName.Replace("'", "''").Replace("\\", "\\\\");
             var escapedNodeName = nodeName.Replace("'", "''").Replace("\\", "\\\\");
             var regionValue = !string.IsNullOrWhiteSpace(region)
                 ? $"'{region.Replace("'", "''").Replace("\\", "\\\\")}'"
@@ -1689,8 +1716,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
             var whereConditions = new List<string>();
             if (!string.IsNullOrWhiteSpace(clusterName))
             {
-                var escapedClusterName = clusterName.Replace("'", "''").Replace("\\", "\\\\");
-                whereConditions.Add($"cluster_name = '{escapedClusterName}'");
+                // Normalize to lowercase for case-insensitive comparison
+                var normalizedClusterName = clusterName.ToLowerInvariant();
+                var escapedClusterName = normalizedClusterName.Replace("'", "''").Replace("\\", "\\\\");
+                whereConditions.Add($"lowerUTF8(cluster_name) = lowerUTF8('{escapedClusterName}')");
             }
             if (!string.IsNullOrWhiteSpace(nodeName))
             {
@@ -1708,37 +1737,92 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 whereConditions.Add($"instance_type = '{escapedInstanceType}'");
             }
 
-            if (minutes.HasValue && minutes.Value > 0)
+            var minutesValue = minutes ?? 1440;
+            if (minutesValue > 0)
             {
-                whereConditions.Add($"timestamp >= now() - INTERVAL {minutes.Value} MINUTE");
+                whereConditions.Add($"timestamp >= now() - INTERVAL {minutesValue} MINUTE");
             }
 
             var whereClause = whereConditions.Any()
                 ? "WHERE " + string.Join(" AND ", whereConditions)
                 : "";
 
-            var querySql = $@"
-                SELECT 
-                    timestamp,
-                    cluster_name,
-                    node_name,
-                    region,
-                    instance_type,
-                    operating_system,
-                    cloud_provider,
-                    currency_code,
-                    unit_price,
-                    retail_price,
-                    meter_name,
-                    product_name,
-                    sku_name,
-                    service_name,
-                    arm_region_name,
-                    effective_start_date
-                FROM {_database}.{_clusterPricesTableName}
-                {whereClause}
-                ORDER BY timestamp DESC
-            ";
+            string querySql;
+            
+            // If more than 6 hours (360 minutes), interpolate data using time intervals
+            if (minutesValue > 360)
+            {
+                // Calculate interval based on time range:
+                // - 6-24 hours: 5 minute intervals
+                // - 1-7 days: 15 minute intervals
+                // - 7+ days: 30 minute intervals
+                int intervalMinutes;
+                if (minutesValue <= 1440) // Up to 24 hours
+                {
+                    intervalMinutes = 5;
+                }
+                else if (minutesValue <= 10080) // Up to 7 days
+                {
+                    intervalMinutes = 15;
+                }
+                else // More than 7 days
+                {
+                    intervalMinutes = 30;
+                }
+
+                querySql = $@"
+                    SELECT 
+                        toStartOfInterval(timestamp, INTERVAL {intervalMinutes} MINUTE) AS timestamp,
+                        cluster_name,
+                        node_name,
+                        any(region) AS region,
+                        any(instance_type) AS instance_type,
+                        any(operating_system) AS operating_system,
+                        any(cloud_provider) AS cloud_provider,
+                        any(currency_code) AS currency_code,
+                        avg(unit_price) AS unit_price,
+                        avg(retail_price) AS retail_price,
+                        any(meter_name) AS meter_name,
+                        any(product_name) AS product_name,
+                        any(sku_name) AS sku_name,
+                        any(service_name) AS service_name,
+                        any(arm_region_name) AS arm_region_name,
+                        any(effective_start_date) AS effective_start_date
+                    FROM {_database}.{_clusterPricesTableName}
+                    {whereClause}
+                    GROUP BY 
+                        timestamp,
+                        cluster_name,
+                        node_name
+                    ORDER BY timestamp DESC
+                ";
+            }
+            else
+            {
+                // Return all data without interpolation for <= 6 hours
+                querySql = $@"
+                    SELECT 
+                        timestamp,
+                        cluster_name,
+                        node_name,
+                        region,
+                        instance_type,
+                        operating_system,
+                        cloud_provider,
+                        currency_code,
+                        unit_price,
+                        retail_price,
+                        meter_name,
+                        product_name,
+                        sku_name,
+                        service_name,
+                        arm_region_name,
+                        effective_start_date
+                    FROM {_database}.{_clusterPricesTableName}
+                    {whereClause}
+                    ORDER BY timestamp DESC
+                ";
+            }
 
             await using var command = connection.CreateCommand();
             command.CommandText = querySql;
