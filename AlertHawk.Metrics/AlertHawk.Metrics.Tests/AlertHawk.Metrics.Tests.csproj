@@ -18,6 +18,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Compile Remove="ServiceTests\**" />
+      <EmbeddedResource Remove="ServiceTests\**" />
+      <None Remove="ServiceTests\**" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="coverlet.collector" Version="6.0.4">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -37,16 +43,15 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest"/>
+        <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
     <ItemGroup>
-        <Using Include="Xunit"/>
+        <Using Include="Xunit" />
     </ItemGroup>
 
     <ItemGroup>
       <Folder Include="Collectors\" />
-      <Folder Include="ServiceTests\" />
     </ItemGroup>
 
     <ItemGroup>

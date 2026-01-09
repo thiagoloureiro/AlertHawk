@@ -14,10 +14,11 @@ public class ClickHouseService : IClickHouseService, IDisposable
     private readonly string _nodeTableName;
     private readonly string _podLogsTableName;
     private readonly string _eventsTableName;
+    private readonly string _clusterPricesTableName;
     private readonly string _clusterName;
     private readonly SemaphoreSlim _connectionSemaphore = new(1, 1);
 
-    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string podLogsTableName = "k8s_pod_logs", string eventsTableName = "k8s_events")
+    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string podLogsTableName = "k8s_pod_logs", string eventsTableName = "k8s_events", string clusterPricesTableName = "k8s_cluster_prices")
     {
         _connectionString = connectionString;
         _database = ExtractDatabaseFromConnectionString(connectionString);
@@ -26,6 +27,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         _nodeTableName = nodeTableName;
         _podLogsTableName = podLogsTableName;
         _eventsTableName = eventsTableName;
+        _clusterPricesTableName = clusterPricesTableName;
         EnsureTablesExistAsync().GetAwaiter().GetResult();
     }
 
@@ -454,6 +456,37 @@ public class ClickHouseService : IClickHouseService, IDisposable
         {
             Console.WriteLine($"Warning: Could not verify table engine: {ex.Message}");
         }
+
+        // Create cluster prices table
+        var createClusterPricesTableSql = $@"
+            CREATE TABLE IF NOT EXISTS {_database}.{_clusterPricesTableName}
+            (
+                timestamp DateTime64(3) DEFAULT now64(),
+                cluster_name String,
+                node_name String,
+                region Nullable(String),
+                instance_type Nullable(String),
+                operating_system Nullable(String),
+                cloud_provider Nullable(String),
+                currency_code String DEFAULT 'USD',
+                unit_price Float64,
+                retail_price Float64,
+                meter_name String,
+                product_name String,
+                sku_name String,
+                service_name String,
+                arm_region_name String,
+                effective_start_date DateTime64(3)
+            )
+            ENGINE = MergeTree()
+            ORDER BY (timestamp, cluster_name, node_name, region, instance_type)
+            TTL toDateTime(timestamp) + INTERVAL 90 DAY
+        ";
+
+        await using var clusterPricesCommand = connection.CreateCommand();
+        clusterPricesCommand.CommandText = createClusterPricesTableSql;
+        await clusterPricesCommand.ExecuteNonQueryAsync();
+        Console.WriteLine($"Table '{_database}.{_clusterPricesTableName}' ensured to exist");
     }
 
     public async Task WriteMetricsAsync(
@@ -1561,6 +1594,177 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     Count = Convert.ToInt32(reader.GetValue(12)),
                     FirstTimestamp = reader.IsDBNull(13) ? null : reader.GetDateTime(13),
                     LastTimestamp = reader.IsDBNull(14) ? null : reader.GetDateTime(14)
+                });
+            }
+
+            return results;
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
+    public async Task WriteClusterPriceAsync(
+        string clusterName,
+        string nodeName,
+        string? region,
+        string? instanceType,
+        string? operatingSystem,
+        string? cloudProvider,
+        string currencyCode,
+        double unitPrice,
+        double retailPrice,
+        string meterName,
+        string productName,
+        string skuName,
+        string serviceName,
+        string armRegionName,
+        DateTime effectiveStartDate)
+    {
+        if (string.IsNullOrWhiteSpace(clusterName))
+        {
+            throw new InvalidOperationException("Cluster name is required for writing cluster prices.");
+        }
+
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            var effectiveStartDateStr = effectiveStartDate.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            var escapedClusterName = clusterName.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedNodeName = nodeName.Replace("'", "''").Replace("\\", "\\\\");
+            var regionValue = !string.IsNullOrWhiteSpace(region)
+                ? $"'{region.Replace("'", "''").Replace("\\", "\\\\")}'"
+                : "NULL";
+            var instanceTypeValue = !string.IsNullOrWhiteSpace(instanceType)
+                ? $"'{instanceType.Replace("'", "''").Replace("\\", "\\\\")}'"
+                : "NULL";
+            var operatingSystemValue = !string.IsNullOrWhiteSpace(operatingSystem)
+                ? $"'{operatingSystem.Replace("'", "''").Replace("\\", "\\\\")}'"
+                : "NULL";
+            var cloudProviderValue = !string.IsNullOrWhiteSpace(cloudProvider)
+                ? $"'{cloudProvider.Replace("'", "''").Replace("\\", "\\\\")}'"
+                : "NULL";
+            var escapedCurrencyCode = currencyCode.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedMeterName = meterName.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedProductName = productName.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedSkuName = skuName.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedServiceName = serviceName.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedArmRegionName = armRegionName.Replace("'", "''").Replace("\\", "\\\\");
+
+            var insertSql = $@"
+                INSERT INTO {_database}.{_clusterPricesTableName}
+                (timestamp, cluster_name, node_name, region, instance_type, operating_system, cloud_provider, currency_code, unit_price, retail_price, meter_name, product_name, sku_name, service_name, arm_region_name, effective_start_date)
+                VALUES
+                ('{timestamp}', '{escapedClusterName}', '{escapedNodeName}', {regionValue}, {instanceTypeValue}, {operatingSystemValue}, {cloudProviderValue}, '{escapedCurrencyCode}', {unitPrice.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {retailPrice.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, '{escapedMeterName}', '{escapedProductName}', '{escapedSkuName}', '{escapedServiceName}', '{escapedArmRegionName}', '{effectiveStartDateStr}')
+            ";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = insertSql;
+            await command.ExecuteNonQueryAsync();
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
+    public async Task<List<ClusterPriceDto>> GetClusterPricesAsync(
+        string? clusterName = null,
+        string? nodeName = null,
+        string? region = null,
+        string? instanceType = null,
+        int? minutes = 1440)
+    {
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var whereConditions = new List<string>();
+            if (!string.IsNullOrWhiteSpace(clusterName))
+            {
+                var escapedClusterName = clusterName.Replace("'", "''").Replace("\\", "\\\\");
+                whereConditions.Add($"cluster_name = '{escapedClusterName}'");
+            }
+            if (!string.IsNullOrWhiteSpace(nodeName))
+            {
+                var escapedNodeName = nodeName.Replace("'", "''").Replace("\\", "\\\\");
+                whereConditions.Add($"node_name = '{escapedNodeName}'");
+            }
+            if (!string.IsNullOrWhiteSpace(region))
+            {
+                var escapedRegion = region.Replace("'", "''").Replace("\\", "\\\\");
+                whereConditions.Add($"region = '{escapedRegion}'");
+            }
+            if (!string.IsNullOrWhiteSpace(instanceType))
+            {
+                var escapedInstanceType = instanceType.Replace("'", "''").Replace("\\", "\\\\");
+                whereConditions.Add($"instance_type = '{escapedInstanceType}'");
+            }
+
+            if (minutes.HasValue && minutes.Value > 0)
+            {
+                whereConditions.Add($"timestamp >= now() - INTERVAL {minutes.Value} MINUTE");
+            }
+
+            var whereClause = whereConditions.Any()
+                ? "WHERE " + string.Join(" AND ", whereConditions)
+                : "";
+
+            var querySql = $@"
+                SELECT 
+                    timestamp,
+                    cluster_name,
+                    node_name,
+                    region,
+                    instance_type,
+                    operating_system,
+                    cloud_provider,
+                    currency_code,
+                    unit_price,
+                    retail_price,
+                    meter_name,
+                    product_name,
+                    sku_name,
+                    service_name,
+                    arm_region_name,
+                    effective_start_date
+                FROM {_database}.{_clusterPricesTableName}
+                {whereClause}
+                ORDER BY timestamp DESC
+            ";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = querySql;
+            await using var reader = await command.ExecuteReaderAsync();
+
+            var results = new List<ClusterPriceDto>();
+            while (await reader.ReadAsync())
+            {
+                results.Add(new ClusterPriceDto
+                {
+                    Timestamp = reader.GetDateTime(0),
+                    ClusterName = reader.GetString(1),
+                    NodeName = reader.GetString(2),
+                    Region = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    InstanceType = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    OperatingSystem = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    CloudProvider = reader.IsDBNull(6) ? null : reader.GetString(6),
+                    CurrencyCode = reader.GetString(7),
+                    UnitPrice = reader.GetDouble(8),
+                    RetailPrice = reader.GetDouble(9),
+                    MeterName = reader.GetString(10),
+                    ProductName = reader.GetString(11),
+                    SkuName = reader.GetString(12),
+                    ServiceName = reader.GetString(13),
+                    ArmRegionName = reader.GetString(14),
+                    EffectiveStartDate = reader.GetDateTime(15)
                 });
             }
 

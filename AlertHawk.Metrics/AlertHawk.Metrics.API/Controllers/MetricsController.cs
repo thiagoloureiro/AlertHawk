@@ -3,6 +3,7 @@ using AlertHawk.Metrics.API.Producers;
 using AlertHawk.Metrics.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sentry;
 
 namespace AlertHawk.Metrics.API.Controllers;
 
@@ -13,16 +14,20 @@ public class MetricsController : ControllerBase
     private readonly IClickHouseService _clickHouseService;
     private readonly NodeStatusTracker _nodeStatusTracker;
     private readonly INotificationProducer _notificationProducer;
+    private readonly IAzurePricesService _azurePricesService;
     private readonly ILogger<MetricsController> _logger;
     
     public MetricsController(
         IClickHouseService clickHouseService,
         NodeStatusTracker nodeStatusTracker,
-        INotificationProducer notificationProducer, ILogger<MetricsController> logger)
+        INotificationProducer notificationProducer,
+        IAzurePricesService azurePricesService,
+        ILogger<MetricsController> logger)
     {
         _clickHouseService = clickHouseService;
         _nodeStatusTracker = nodeStatusTracker;
         _notificationProducer = notificationProducer;
+        _azurePricesService = azurePricesService;
         _logger = logger;
     }
 
@@ -232,6 +237,32 @@ public class MetricsController : ControllerBase
                     isHealthy);
             }
 
+            // Fetch and store Azure prices if we have the necessary information
+            if (!string.IsNullOrWhiteSpace(clusterName) && 
+                !string.IsNullOrWhiteSpace(request.CloudProvider) && 
+                request.CloudProvider.Equals("Azure", StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(request.Region) &&
+                !string.IsNullOrWhiteSpace(request.InstanceType))
+            {
+                try
+                {
+                    await FetchAndStoreClusterPriceAsync(
+                        clusterName,
+                        request.NodeName,
+                        request.Region,
+                        request.InstanceType,
+                        request.OperatingSystem,
+                        request.CloudProvider);
+                }
+                catch (Exception ex)
+                {
+                    // Log but don't fail the request if price fetching fails
+                    _logger.LogWarning(ex, "Failed to fetch and store cluster price for node {NodeName} in cluster {ClusterName}", 
+                        request.NodeName, clusterName);
+                    SentrySdk.CaptureException(ex);
+                }
+            }
+
             return Ok(new { success = true });
         }
         catch (Exception ex)
@@ -435,6 +466,73 @@ public class MetricsController : ControllerBase
         {
             SentrySdk.CaptureException(ex);
             return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    private async Task FetchAndStoreClusterPriceAsync(
+        string clusterName,
+        string nodeName,
+        string region,
+        string instanceType,
+        string? operatingSystem,
+        string? cloudProvider)
+    {
+        // Build Azure price request
+        var priceRequest = new AzurePriceRequest
+        {
+            CurrencyCode = "USD",
+            ServiceName = "Virtual Machines",
+            ArmRegionName = region,
+            OperatingSystem = operatingSystem ?? "Linux",
+            Type = "Consumption"
+        };
+
+        // Try to match instance type - Azure uses formats like "Standard_D2s_v3"
+        // The instance type from Kubernetes might be different, so we'll try to match it
+        if (!string.IsNullOrWhiteSpace(instanceType))
+        {
+            // Try using the instance type as ArmSkuName first
+            priceRequest.ArmSkuName = instanceType;
+        }
+
+        try
+        {
+            var priceResponse = await _azurePricesService.GetPricesAsync(priceRequest);
+            
+            if (priceResponse?.Items != null && priceResponse.Items.Any())
+            {
+                // Store the first matching price (you might want to filter more specifically)
+                var priceItem = priceResponse.Items.FirstOrDefault();
+                
+                if (priceItem != null)
+                {
+                    await _clickHouseService.WriteClusterPriceAsync(
+                        clusterName,
+                        nodeName,
+                        region,
+                        instanceType,
+                        operatingSystem,
+                        cloudProvider,
+                        priceItem.CurrencyCode,
+                        priceItem.UnitPrice,
+                        priceItem.RetailPrice,
+                        priceItem.MeterName,
+                        priceItem.ProductName,
+                        priceItem.SkuName,
+                        priceItem.ServiceName,
+                        priceItem.ArmRegionName,
+                        priceItem.EffectiveStartDate);
+                    
+                    _logger.LogDebug("Stored cluster price for node {NodeName} in cluster {ClusterName}: {UnitPrice} {CurrencyCode}/hour", 
+                        nodeName, clusterName, priceItem.UnitPrice, priceItem.CurrencyCode);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error fetching Azure prices for node {NodeName} in cluster {ClusterName}", 
+                nodeName, clusterName);
+            throw;
         }
     }
 }

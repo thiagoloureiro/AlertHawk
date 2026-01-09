@@ -1,8 +1,6 @@
 using AlertHawk.Metrics.API.Controllers;
 using AlertHawk.Metrics.API.Models;
 using AlertHawk.Metrics.API.Services;
-using EasyMemoryCache;
-using EasyMemoryCache.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
@@ -11,14 +9,12 @@ namespace AlertHawk.Metrics.Tests;
 public class AzurePricesControllerTests
 {
     private readonly Mock<IAzurePricesService> _mockAzurePricesService;
-    private readonly Mock<ICaching> _mockCaching;
     private readonly AzurePricesController _controller;
 
     public AzurePricesControllerTests()
     {
         _mockAzurePricesService = new Mock<IAzurePricesService>();
-        _mockCaching = new Mock<ICaching>();
-        _controller = new AzurePricesController(_mockAzurePricesService.Object, _mockCaching.Object);
+        _controller = new AzurePricesController(_mockAzurePricesService.Object);
     }
 
     #region GetAzurePrices Tests
@@ -52,13 +48,8 @@ public class AzurePricesControllerTests
             }
         };
 
-        _mockCaching
-            .Setup(c => c.GetOrSetObjectFromCacheAsync(
-                It.IsAny<string>(),
-                It.IsAny<int>(),
-                It.IsAny<Func<Task<AzurePriceResponse>>>(),
-                It.IsAny<bool>(),
-                It.IsAny<CacheTimeInterval>()))
+        _mockAzurePricesService
+            .Setup(s => s.GetPricesAsync(request))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -70,12 +61,7 @@ public class AzurePricesControllerTests
         Assert.Equal(expectedResponse.BillingCurrency, response.BillingCurrency);
         Assert.Equal(expectedResponse.Count, response.Count);
         Assert.Single(response.Items);
-        _mockCaching.Verify(c => c.GetOrSetObjectFromCacheAsync(
-            It.IsAny<string>(),
-            It.Is<int>(t => t == 60),
-            It.IsAny<Func<Task<AzurePriceResponse>>>(),
-            It.IsAny<bool>(),
-            It.IsAny<CacheTimeInterval>()), Times.Once);
+        _mockAzurePricesService.Verify(s => s.GetPricesAsync(request), Times.Once);
     }
 
     [Fact]
@@ -91,12 +77,11 @@ public class AzurePricesControllerTests
         var errorProperty = responseType.GetProperty("error");
         Assert.NotNull(errorProperty);
         Assert.Equal("Request body is required", errorProperty.GetValue(badRequestResult.Value)?.ToString());
-        _mockCaching.VerifyNoOtherCalls();
         _mockAzurePricesService.VerifyNoOtherCalls();
     }
 
     [Fact]
-    public async Task GetAzurePrices_UsesCachingWithCorrectKey()
+    public async Task GetAzurePrices_CallsService()
     {
         // Arrange
         var request = new AzurePriceRequest
@@ -112,65 +97,6 @@ public class AzurePricesControllerTests
             Items = new List<AzurePriceItem>()
         };
 
-        string? capturedCacheKey = null;
-        _mockCaching
-            .Setup(c => c.GetOrSetObjectFromCacheAsync(
-                It.IsAny<string>(),
-                It.IsAny<int>(),
-                It.IsAny<Func<Task<AzurePriceResponse>>>(),
-                It.IsAny<bool>(),
-                It.IsAny<CacheTimeInterval>()))
-            .Callback<string, int, Func<Task<AzurePriceResponse>>, bool, CacheTimeInterval>((key, time, func, useSlidingExpiration, cacheTimeInterval) =>
-            {
-                capturedCacheKey = key;
-            })
-            .ReturnsAsync(expectedResponse);
-
-        // Act
-        await _controller.GetAzurePrices(request);
-
-        // Assert
-        Assert.NotNull(capturedCacheKey);
-        Assert.StartsWith("azure_prices_", capturedCacheKey);
-        _mockCaching.Verify(c => c.GetOrSetObjectFromCacheAsync(
-            It.IsAny<string>(),
-            It.Is<int>(t => t == 60),
-            It.IsAny<Func<Task<AzurePriceResponse>>>(),
-            It.IsAny<bool>(),
-            It.IsAny<CacheTimeInterval>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task GetAzurePrices_CallsServiceWhenCacheMiss()
-    {
-        // Arrange
-        var request = new AzurePriceRequest
-        {
-            CurrencyCode = "USD",
-            ServiceName = "Virtual Machines"
-        };
-
-        var expectedResponse = new AzurePriceResponse
-        {
-            BillingCurrency = "USD",
-            Count = 1,
-            Items = new List<AzurePriceItem>()
-        };
-
-        Func<Task<AzurePriceResponse>>? capturedFactory = null;
-        _mockCaching
-            .Setup(c => c.GetOrSetObjectFromCacheAsync(
-                It.IsAny<string>(),
-                It.IsAny<int>(),
-                It.IsAny<Func<Task<AzurePriceResponse>>>(),
-                It.IsAny<bool>(),
-                It.IsAny<CacheTimeInterval>()))
-            .Callback<string, int, Func<Task<AzurePriceResponse>>, bool, CacheTimeInterval>((key, time, func, useSlidingExpiration, cacheTimeInterval) =>
-            {
-                capturedFactory = func;
-            })
-            .ReturnsAsync(expectedResponse);
-
         _mockAzurePricesService
             .Setup(s => s.GetPricesAsync(request))
             .ReturnsAsync(expectedResponse);
@@ -179,10 +105,6 @@ public class AzurePricesControllerTests
         await _controller.GetAzurePrices(request);
 
         // Assert
-        Assert.NotNull(capturedFactory);
-        // Verify the factory function calls the service
-        var result = await capturedFactory();
-        Assert.Equal(expectedResponse, result);
         _mockAzurePricesService.Verify(s => s.GetPricesAsync(request), Times.Once);
     }
 
@@ -209,25 +131,15 @@ public class AzurePricesControllerTests
             Items = new List<AzurePriceItem>()
         };
 
-        _mockCaching
-            .Setup(c => c.GetOrSetObjectFromCacheAsync(
-                It.IsAny<string>(),
-                It.IsAny<int>(),
-                It.IsAny<Func<Task<AzurePriceResponse>>>(),
-                It.IsAny<bool>(),
-                It.IsAny<CacheTimeInterval>()))
+        _mockAzurePricesService
+            .Setup(s => s.GetPricesAsync(request))
             .ReturnsAsync(expectedResponse);
 
         // Act
         await _controller.GetAzurePrices(request);
 
         // Assert
-        _mockCaching.Verify(c => c.GetOrSetObjectFromCacheAsync(
-            It.Is<string>(k => k.StartsWith("azure_prices_")),
-            It.Is<int>(t => t == 60),
-            It.IsAny<Func<Task<AzurePriceResponse>>>(),
-            It.IsAny<bool>(),
-            It.IsAny<CacheTimeInterval>()), Times.Once);
+        _mockAzurePricesService.Verify(s => s.GetPricesAsync(request), Times.Once);
     }
 
     [Fact]
@@ -241,13 +153,8 @@ public class AzurePricesControllerTests
         };
 
         var exceptionMessage = "Service unavailable";
-        _mockCaching
-            .Setup(c => c.GetOrSetObjectFromCacheAsync(
-                It.IsAny<string>(),
-                It.IsAny<int>(),
-                It.IsAny<Func<Task<AzurePriceResponse>>>(),
-                It.IsAny<bool>(),
-                It.IsAny<CacheTimeInterval>()))
+        _mockAzurePricesService
+            .Setup(s => s.GetPricesAsync(request))
             .ThrowsAsync(new Exception(exceptionMessage));
 
         // Act
@@ -279,13 +186,8 @@ public class AzurePricesControllerTests
             Items = new List<AzurePriceItem>()
         };
 
-        _mockCaching
-            .Setup(c => c.GetOrSetObjectFromCacheAsync(
-                It.IsAny<string>(),
-                It.IsAny<int>(),
-                It.IsAny<Func<Task<AzurePriceResponse>>>(),
-                It.IsAny<bool>(),
-                It.IsAny<CacheTimeInterval>()))
+        _mockAzurePricesService
+            .Setup(s => s.GetPricesAsync(request))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -314,13 +216,8 @@ public class AzurePricesControllerTests
             Items = new List<AzurePriceItem>()
         };
 
-        _mockCaching
-            .Setup(c => c.GetOrSetObjectFromCacheAsync(
-                It.IsAny<string>(),
-                It.IsAny<int>(),
-                It.IsAny<Func<Task<AzurePriceResponse>>>(),
-                It.IsAny<bool>(),
-                It.IsAny<CacheTimeInterval>()))
+        _mockAzurePricesService
+            .Setup(s => s.GetPricesAsync(request))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -357,18 +254,8 @@ public class AzurePricesControllerTests
             Items = new List<AzurePriceItem>()
         };
 
-        var cacheKeys = new List<string>();
-        _mockCaching
-            .Setup(c => c.GetOrSetObjectFromCacheAsync(
-                It.IsAny<string>(),
-                It.IsAny<int>(),
-                It.IsAny<Func<Task<AzurePriceResponse>>>(),
-                It.IsAny<bool>(),
-                It.IsAny<CacheTimeInterval>()))
-            .Callback<string, int, Func<Task<AzurePriceResponse>>, bool, CacheTimeInterval>((key, time, func, useSlidingExpiration, cacheTimeInterval) =>
-            {
-                cacheKeys.Add(key);
-            })
+        _mockAzurePricesService
+            .Setup(s => s.GetPricesAsync(It.IsAny<AzurePriceRequest>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -376,8 +263,8 @@ public class AzurePricesControllerTests
         await _controller.GetAzurePrices(request2);
 
         // Assert
-        Assert.Equal(2, cacheKeys.Count);
-        Assert.Equal(cacheKeys[0], cacheKeys[1]); // Same request should generate same cache key
+        // Service handles caching internally, so we just verify service is called
+        _mockAzurePricesService.Verify(s => s.GetPricesAsync(It.IsAny<AzurePriceRequest>()), Times.Exactly(2));
     }
 
     [Fact]
@@ -403,18 +290,8 @@ public class AzurePricesControllerTests
             Items = new List<AzurePriceItem>()
         };
 
-        var cacheKeys = new List<string>();
-        _mockCaching
-            .Setup(c => c.GetOrSetObjectFromCacheAsync(
-                It.IsAny<string>(),
-                It.IsAny<int>(),
-                It.IsAny<Func<Task<AzurePriceResponse>>>(),
-                It.IsAny<bool>(),
-                It.IsAny<CacheTimeInterval>()))
-            .Callback<string, int, Func<Task<AzurePriceResponse>>, bool, CacheTimeInterval>((key, time, func, useSlidingExpiration, cacheTimeInterval) =>
-            {
-                cacheKeys.Add(key);
-            })
+        _mockAzurePricesService
+            .Setup(s => s.GetPricesAsync(It.IsAny<AzurePriceRequest>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -422,8 +299,9 @@ public class AzurePricesControllerTests
         await _controller.GetAzurePrices(request2);
 
         // Assert
-        Assert.Equal(2, cacheKeys.Count);
-        Assert.NotEqual(cacheKeys[0], cacheKeys[1]); // Different requests should generate different cache keys
+        // Service handles caching internally, so we just verify service is called for different requests
+        _mockAzurePricesService.Verify(s => s.GetPricesAsync(It.Is<AzurePriceRequest>(r => r.CurrencyCode == "USD")), Times.Once);
+        _mockAzurePricesService.Verify(s => s.GetPricesAsync(It.Is<AzurePriceRequest>(r => r.CurrencyCode == "EUR")), Times.Once);
     }
 
     #endregion

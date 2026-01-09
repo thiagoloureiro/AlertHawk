@@ -15,6 +15,7 @@ public class MetricsControllerTests
     private readonly Mock<IClickHouseService> _mockClickHouseService;
     private readonly NodeStatusTracker _nodeStatusTracker;
     private readonly Mock<INotificationProducer> _mockNotificationProducer;
+    private readonly Mock<IAzurePricesService> _mockAzurePricesService;
     private readonly Mock<ILogger<MetricsController>> _mockLogger;
     private readonly MetricsController _controller;
 
@@ -23,12 +24,14 @@ public class MetricsControllerTests
         _mockClickHouseService = new Mock<IClickHouseService>();
         _nodeStatusTracker = new NodeStatusTracker();
         _mockNotificationProducer = new Mock<INotificationProducer>();
+        _mockAzurePricesService = new Mock<IAzurePricesService>();
         _mockLogger = new Mock<ILogger<MetricsController>>();
         
         _controller = new MetricsController(
             _mockClickHouseService.Object,
             _nodeStatusTracker,
             _mockNotificationProducer.Object,
+            _mockAzurePricesService.Object,
             _mockLogger.Object);
         
         // Setup controller context for authorization

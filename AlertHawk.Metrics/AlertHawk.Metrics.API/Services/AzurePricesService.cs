@@ -1,7 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using AlertHawk.Metrics.API.Models;
+using EasyMemoryCache;
 
 namespace AlertHawk.Metrics.API.Services;
 
@@ -9,17 +11,30 @@ namespace AlertHawk.Metrics.API.Services;
 public class AzurePricesService : IAzurePricesService
 {
     private readonly HttpClient _httpClient;
+    private readonly ICaching _caching;
     private const string AzurePricesApiBaseUrl = "https://prices.azure.com/api/retail/prices";
+    private const int CacheExpirationMinutes = 60;
 
-    public AzurePricesService(HttpClient httpClient)
+    public AzurePricesService(HttpClient httpClient, ICaching caching)
     {
         _httpClient = httpClient;
+        _caching = caching;
         _httpClient.Timeout = TimeSpan.FromSeconds(30);
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
         _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
     }
 
     public async Task<AzurePriceResponse> GetPricesAsync(AzurePriceRequest request)
+    {
+        // Generate cache key from request
+        var cacheKey = GenerateCacheKey(request);
+        
+        // If not in cache, fetch from API
+        return await _caching.GetOrSetObjectFromCacheAsync(cacheKey, CacheExpirationMinutes,
+            () => GetPricesFromApiAsync(request));
+    }
+
+    private async Task<AzurePriceResponse> GetPricesFromApiAsync(AzurePriceRequest request)
     {
         try
         {
@@ -121,6 +136,22 @@ public class AzurePricesService : IAzurePricesService
         {
             throw new InvalidOperationException($"Error calling Azure Prices API: {ex.Message}", ex);
         }
+    }
+
+    private string GenerateCacheKey(AzurePriceRequest request)
+    {
+        // Serialize request to JSON to create a unique key
+        var json = JsonSerializer.Serialize(request, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
+        
+        // Create a hash of the JSON to use as cache key
+        var bytes = Encoding.UTF8.GetBytes(json);
+        var hash = SHA256.HashData(bytes);
+        var hashString = Convert.ToHexString(hash);
+        
+        return $"azure_prices_{hashString}";
     }
 }
 

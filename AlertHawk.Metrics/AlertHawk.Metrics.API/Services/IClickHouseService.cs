@@ -89,5 +89,29 @@ public interface IClickHouseService
         int? minutes = 1440,
         int limit = 1000,
         string? clusterName = null);
+
+    Task WriteClusterPriceAsync(
+        string clusterName,
+        string nodeName,
+        string? region,
+        string? instanceType,
+        string? operatingSystem,
+        string? cloudProvider,
+        string currencyCode,
+        double unitPrice,
+        double retailPrice,
+        string meterName,
+        string productName,
+        string skuName,
+        string serviceName,
+        string armRegionName,
+        DateTime effectiveStartDate);
+
+    Task<List<ClusterPriceDto>> GetClusterPricesAsync(
+        string? clusterName = null,
+        string? nodeName = null,
+        string? region = null,
+        string? instanceType = null,
+        int? minutes = 1440);
 }
 

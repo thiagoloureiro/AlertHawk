@@ -138,3 +138,22 @@ public class KubernetesEventRequest
     public DateTime? LastTimestamp { get; set; }
 }
 
+public class ClusterPriceDto
+{
+    public DateTime Timestamp { get; set; }
+    public string ClusterName { get; set; } = string.Empty;
+    public string NodeName { get; set; } = string.Empty;
+    public string? Region { get; set; }
+    public string? InstanceType { get; set; }
+    public string? OperatingSystem { get; set; }
+    public string? CloudProvider { get; set; }
+    public string CurrencyCode { get; set; } = string.Empty;
+    public double UnitPrice { get; set; }
+    public double RetailPrice { get; set; }
+    public string MeterName { get; set; } = string.Empty;
+    public string ProductName { get; set; } = string.Empty;
+    public string SkuName { get; set; } = string.Empty;
+    public string ServiceName { get; set; } = string.Empty;
+    public string ArmRegionName { get; set; } = string.Empty;
+    public DateTime EffectiveStartDate { get; set; }
+}
