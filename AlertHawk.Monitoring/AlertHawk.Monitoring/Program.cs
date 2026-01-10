@@ -236,6 +236,13 @@ using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>(
 {
     var monitorService = serviceScope.ServiceProvider.GetService<IMonitorService>();
     monitorService?.SetMonitorDashboardDataCacheList();
+    
+    // Initialize SystemConfiguration table if it doesn't exist
+    var systemConfigurationRepository = serviceScope.ServiceProvider.GetService<ISystemConfigurationRepository>();
+    if (systemConfigurationRepository != null)
+    {
+        await systemConfigurationRepository.InitializeTableIfNotExists();
+    }
 }
 
 // Configure the HTTP request pipeline.

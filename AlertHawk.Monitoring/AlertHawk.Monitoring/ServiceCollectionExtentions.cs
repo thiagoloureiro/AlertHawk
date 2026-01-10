@@ -37,6 +37,7 @@ namespace AlertHawk.Monitoring
             services.AddTransient<IMonitorReportRepository, MonitorReportRepository>();
             services.AddTransient<IMonitorNotificationRepository, MonitorNotificationRepository>();
             services.AddTransient<IMonitorHistoryRepository, MonitorHistoryRepository>();
+            services.AddTransient<ISystemConfigurationRepository, SystemConfigurationRepository>();
 
             return services;
         }

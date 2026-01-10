@@ -17,18 +17,20 @@ public class HttpClientRunner : IHttpClientRunner
     private readonly INotificationProducer _notificationProducer;
     private readonly IMonitorAlertRepository _monitorAlertRepository;
     private readonly IMonitorHistoryRepository _monitorHistoryRepository;
+    private readonly ISystemConfigurationRepository _systemConfigurationRepository;
     private int _daysToExpireCert;
     private readonly int _retryIntervalMilliseconds = 6000;
     private readonly ILogger<HttpClientRunner> _logger;
 
     public HttpClientRunner(IMonitorRepository monitorRepository,
         INotificationProducer notificationProducer, IMonitorAlertRepository monitorAlertRepository,
-        IMonitorHistoryRepository monitorHistoryRepository)
+        IMonitorHistoryRepository monitorHistoryRepository, ISystemConfigurationRepository systemConfigurationRepository)
     {
         _monitorRepository = monitorRepository;
         _notificationProducer = notificationProducer;
         _monitorAlertRepository = monitorAlertRepository;
         _monitorHistoryRepository = monitorHistoryRepository;
+        _systemConfigurationRepository = systemConfigurationRepository;
         _retryIntervalMilliseconds = Environment.GetEnvironmentVariable("HTTP_RETRY_INTERVAL_MS") != null
             ? int.Parse(Environment.GetEnvironmentVariable("HTTP_RETRY_INTERVAL_MS"))
             : 6000;
@@ -37,6 +39,12 @@ public class HttpClientRunner : IHttpClientRunner
 
     public async Task CheckUrlsAsync(MonitorHttp monitorHttp)
     {
+        // Check if monitor execution is disabled (system maintenance mode)
+        if (await _systemConfigurationRepository.IsMonitorExecutionDisabled())
+        {
+            _logger.LogInformation("Monitor execution is disabled. Skipping HTTP monitor check for MonitorId: {MonitorId}", monitorHttp.MonitorId);
+            return;
+        }
         int maxRetries = monitorHttp.Retries + 1;
         int retryCount = 0;
 

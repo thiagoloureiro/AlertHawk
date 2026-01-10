@@ -1,9 +1,9 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
+using ClosedXML.Excel;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using OfficeOpenXml;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
 
@@ -83,37 +83,42 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
 
     public async Task<MemoryStream> CreateExcelFileAsync(IEnumerable<MonitorAlert> alerts)
     {
-        ExcelPackage.LicenseContext = LicenseContext.NonCommercial; // Set license context
         var stream = new MemoryStream();
 
-        using (var package = new ExcelPackage(stream))
+        using (var workbook = new XLWorkbook())
         {
             // Add a new worksheet to the empty workbook
-            var worksheet = package.Workbook.Worksheets.Add("Alerts");
+            var worksheet = workbook.Worksheets.Add("Alerts");
+            
             // Add column headers
-            var col = 1;
+            worksheet.Cell(1, 1).Value = "Timestamp (UTC)";
+            worksheet.Cell(1, 2).Value = "Monitor Name";
+            worksheet.Cell(1, 3).Value = "Environment";
+            worksheet.Cell(1, 4).Value = "Message";
+            worksheet.Cell(1, 5).Value = "URL";
+            worksheet.Cell(1, 6).Value = "Period Offline";
 
-            worksheet.Cells[1, col++].Value = "Timestamp (UTC)";
-            worksheet.Cells[1, col++].Value = "Monitor Name";
-            worksheet.Cells[1, col++].Value = "Environment";
-            worksheet.Cells[1, col++].Value = "Message";
-            worksheet.Cells[1, col++].Value = "URL";
-            worksheet.Cells[1, col].Value = "Period Offline";
+            // Style the header row
+            var headerRange = worksheet.Range(1, 1, 1, 6);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
 
             var row = 2;
             foreach (var alert in alerts)
             {
-                col = 1;
-                worksheet.Cells[row, col++].Value = alert.TimeStamp.ToString("dd/MM/yyyy HH:mm:ss");
-                worksheet.Cells[row, col++].Value = alert.MonitorName;
-                worksheet.Cells[row, col++].Value = alert.Environment.ToString();
-                worksheet.Cells[row, col++].Value = alert.Message;
-                worksheet.Cells[row, col++].Value = alert.UrlToCheck;
-                worksheet.Cells[row, col].Value = alert.PeriodOffline;
+                worksheet.Cell(row, 1).Value = alert.TimeStamp.ToString("dd/MM/yyyy HH:mm:ss");
+                worksheet.Cell(row, 2).Value = alert.MonitorName;
+                worksheet.Cell(row, 3).Value = alert.Environment.ToString();
+                worksheet.Cell(row, 4).Value = alert.Message;
+                worksheet.Cell(row, 5).Value = alert.UrlToCheck;
+                worksheet.Cell(row, 6).Value = alert.PeriodOffline;
                 row++;
             }
 
-            await package.SaveAsync();
+            // Auto-fit columns
+            worksheet.Columns().AdjustToContents();
+
+            workbook.SaveAs(stream);
         }
 
         stream.Position = 0;

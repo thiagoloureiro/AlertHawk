@@ -12,18 +12,26 @@ public class TcpClientRunner : ITcpClientRunner
     private readonly INotificationProducer _notificationProducer;
     private readonly IMonitorRepository _monitorRepository;
     private readonly IMonitorHistoryRepository _monitorHistoryRepository;
+    private readonly ISystemConfigurationRepository _systemConfigurationRepository;
     private readonly ILogger<TcpClientRunner> _logger;
 
-    public TcpClientRunner(IMonitorRepository monitorRepository, INotificationProducer notificationProducer, IMonitorHistoryRepository monitorHistoryRepository, ILogger<TcpClientRunner> logger)
+    public TcpClientRunner(IMonitorRepository monitorRepository, INotificationProducer notificationProducer, IMonitorHistoryRepository monitorHistoryRepository, ISystemConfigurationRepository systemConfigurationRepository, ILogger<TcpClientRunner> logger)
     {
         _monitorRepository = monitorRepository;
         _notificationProducer = notificationProducer;
         _monitorHistoryRepository = monitorHistoryRepository;
+        _systemConfigurationRepository = systemConfigurationRepository;
         _logger = logger;
     }
 
     public async Task<bool> CheckTcpAsync(MonitorTcp monitorTcp)
     {
+        // Check if monitor execution is disabled (system maintenance mode)
+        if (await _systemConfigurationRepository.IsMonitorExecutionDisabled())
+        {
+            _logger.LogInformation("Monitor execution is disabled. Skipping TCP monitor check for MonitorId: {MonitorId}", monitorTcp.MonitorId);
+            return false;
+        }
         bool isConnected = false;
         int retries = 0;
         int retryIntervalMilliseconds = 3000;

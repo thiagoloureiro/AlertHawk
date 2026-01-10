@@ -16,6 +16,7 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
         private readonly INotificationProducer _notificationProducer;
         private readonly IMonitorAlertRepository _monitorAlertRepository;
         private readonly IMonitorHistoryRepository _monitorHistoryRepository;
+        private readonly ISystemConfigurationRepository _systemConfigurationRepository;
 
         public HttpClientRunnerTests()
         {
@@ -23,8 +24,12 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
             _notificationProducer = Substitute.For<INotificationProducer>();
             _monitorAlertRepository = Substitute.For<IMonitorAlertRepository>();
             _monitorHistoryRepository = Substitute.For<IMonitorHistoryRepository>();
+            _systemConfigurationRepository = Substitute.For<ISystemConfigurationRepository>();
+            
+            // Setup default behavior: monitors are enabled
+            _systemConfigurationRepository.IsMonitorExecutionDisabled().Returns(Task.FromResult(false));
 
-            _httpClientRunner = new HttpClientRunner(_monitorRepository, _notificationProducer, _monitorAlertRepository, _monitorHistoryRepository);
+            _httpClientRunner = new HttpClientRunner(_monitorRepository, _notificationProducer, _monitorAlertRepository, _monitorHistoryRepository, _systemConfigurationRepository);
         }
 
         [Theory]

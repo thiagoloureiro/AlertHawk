@@ -2,6 +2,7 @@ using AlertHawk.Authentication.Domain.Dto;
 using AlertHawk.Monitoring.Controllers;
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
+using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -32,8 +33,9 @@ public class MonitorControllerTests
             .Returns(Task.FromResult(expectedDashboardData));
 
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock)
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock)
         {
             ControllerContext = new ControllerContext
             {
@@ -61,8 +63,9 @@ public class MonitorControllerTests
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         controller.ControllerContext = new ControllerContext
         {
@@ -92,8 +95,9 @@ public class MonitorControllerTests
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         // Act
         var result = controller.GetMonitorAgentStatus();
@@ -118,8 +122,9 @@ public class MonitorControllerTests
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         // Act
         var result = await controller.GetMonitorList();
@@ -141,8 +146,9 @@ public class MonitorControllerTests
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         // Act
         var result = await controller.GetMonitorListByTag("tag");
@@ -164,8 +170,9 @@ public class MonitorControllerTests
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         // Act
         var result = await controller.GetMonitorTagList();
@@ -187,8 +194,9 @@ public class MonitorControllerTests
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         // Act
         var result = await controller.GetAllMonitorAgents();
@@ -212,8 +220,9 @@ public class MonitorControllerTests
             .Returns(expectedList);
 
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         controller.ControllerContext = new ControllerContext
         {
@@ -250,8 +259,9 @@ public class MonitorControllerTests
         monitorServiceMock.CreateMonitorHttp(monitorHttp).Returns(Task.FromResult(1));
 
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         // Act
         var result = await controller.CreateMonitorHttp(monitorHttp);
@@ -301,8 +311,9 @@ public class MonitorControllerTests
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
 
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         controller.ControllerContext = new ControllerContext
         {
@@ -361,9 +372,10 @@ public class MonitorControllerTests
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
         monitorServiceMock.CreateMonitorTcp(monitorTcp).Returns(Task.FromResult(1));
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         controller.ControllerContext = new ControllerContext
         {
@@ -422,8 +434,9 @@ public class MonitorControllerTests
         };
 
         var monitorId = 1;
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         controller.ControllerContext = new ControllerContext
         {
@@ -470,8 +483,9 @@ public class MonitorControllerTests
         };
 
         var monitorId = 1;
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         controller.ControllerContext = new ControllerContext
         {
@@ -519,8 +533,9 @@ public class MonitorControllerTests
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
 
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         controller.ControllerContext = new ControllerContext
         {
@@ -567,8 +582,9 @@ public class MonitorControllerTests
         };
 
         var monitorId = 1;
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         controller.ControllerContext = new ControllerContext
         {
@@ -597,8 +613,9 @@ public class MonitorControllerTests
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
 
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         // Act
         var result = await controller.GetMonitorFailureCount(7);
@@ -626,8 +643,9 @@ public class MonitorControllerTests
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
 
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         // Act
         var result = await controller.GetMonitorHttpByMonitorId(1);
@@ -657,8 +675,9 @@ public class MonitorControllerTests
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
 
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         // Act
         var result = await controller.GetMonitorTcpByMonitorId(1);
@@ -694,8 +713,9 @@ public class MonitorControllerTests
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
 
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         // Act
         var result = await controller.GetMonitorCount();
@@ -715,8 +735,9 @@ public class MonitorControllerTests
         var monitorServiceMock = Substitute.For<IMonitorService>();
 
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext()
@@ -746,8 +767,9 @@ public class MonitorControllerTests
 
         var monitorAgentServiceMock = new Mock<IMonitorAgentService>();
         var monitorGroupServiceMock = new Mock<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = new Mock<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object, monitorGroupServiceMock.Object)
+        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object, monitorGroupServiceMock.Object, systemConfigurationRepositoryMock.Object)
         {
             ControllerContext = new ControllerContext
             {
@@ -780,8 +802,9 @@ public class MonitorControllerTests
 
         var monitorAgentServiceMock = new Mock<IMonitorAgentService>();
         var monitorGroupServiceMock = new Mock<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = new Mock<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object, monitorGroupServiceMock.Object)
+        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object, monitorGroupServiceMock.Object, systemConfigurationRepositoryMock.Object)
         {
             ControllerContext = new ControllerContext
             {
@@ -811,8 +834,9 @@ public class MonitorControllerTests
         var user = new UserDto(Id: Guid.NewGuid(), Username: "testuser", Email: "user@user.com", IsAdmin: true);
 
         monitorServiceMock.Setup(x => x.GetUserDetailsByToken(It.IsAny<string>())).ReturnsAsync(user);
+        var systemConfigurationRepositoryMock = new Mock<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object, monitorGroupServiceMock.Object)
+        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object, monitorGroupServiceMock.Object, systemConfigurationRepositoryMock.Object)
         {
             ControllerContext = new ControllerContext
             {
@@ -847,8 +871,9 @@ public class MonitorControllerTests
         IFormFile mockFile = CreateMockIFormFile("test.txt", contentJson);
 
         monitorServiceMock.Setup(x => x.GetUserDetailsByToken(It.IsAny<string>())).ReturnsAsync(user);
+        var systemConfigurationRepositoryMock = new Mock<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object, monitorGroupServiceMock.Object)
+        var controller = new MonitorController(monitorServiceMock.Object, monitorAgentServiceMock.Object, monitorGroupServiceMock.Object, systemConfigurationRepositoryMock.Object)
         {
             ControllerContext = new ControllerContext
             {
@@ -899,8 +924,9 @@ public class MonitorControllerTests
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
 
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         // Act
         var result = await controller.getMonitorK8sByMonitorId(1);
@@ -928,8 +954,9 @@ public class MonitorControllerTests
         monitorServiceMock.CreateMonitorK8s(monitorK8s).Returns(Task.FromResult(1));
 
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
 
-        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock);
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
 
         // Act
         var result = await controller.CreateMonitorK8s(monitorK8s);

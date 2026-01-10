@@ -19,22 +19,30 @@ public class K8sClientRunner : IK8sClientRunner
     private readonly IMonitorRepository _monitorRepository;
     private readonly INotificationProducer _notificationProducer;
     private readonly IMonitorAlertRepository _monitorAlertRepository;
+    private readonly ISystemConfigurationRepository _systemConfigurationRepository;
     private readonly int _retryIntervalMilliseconds = 6000;
 
     public K8sClientRunner(ILogger<K8sClientRunner> logger, IMonitorHistoryRepository monitorHistoryRepository,
         IMonitorRepository monitorRepository, INotificationProducer notificationProducer,
-        IMonitorAlertRepository monitorAlertRepository)
+        IMonitorAlertRepository monitorAlertRepository, ISystemConfigurationRepository systemConfigurationRepository)
     {
         _logger = logger;
         _monitorHistoryRepository = monitorHistoryRepository;
         _monitorRepository = monitorRepository;
         _notificationProducer = notificationProducer;
         _monitorAlertRepository = monitorAlertRepository;
+        _systemConfigurationRepository = systemConfigurationRepository;
     }
 
     [ExcludeFromCodeCoverage]
     public async Task CheckK8sAsync(MonitorK8s monitorK8s)
     {
+        // Check if monitor execution is disabled (system maintenance mode)
+        if (await _systemConfigurationRepository.IsMonitorExecutionDisabled())
+        {
+            _logger.LogInformation("Monitor execution is disabled. Skipping K8s monitor check for MonitorId: {MonitorId}", monitorK8s.MonitorId);
+            return;
+        }
         _logger.LogInformation("Checking K8s");
         int maxRetries = monitorK8s.Retries + 1;
         int retryCount = 0;

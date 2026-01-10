@@ -16,6 +16,7 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
     private readonly Mock<IMonitorRepository> _mockMonitorRepository;
     private readonly Mock<INotificationProducer> _mockNotificationProducer;
     private readonly Mock<IMonitorHistoryRepository> _mockMonitorHistoryRepository;
+    private readonly Mock<ISystemConfigurationRepository> _mockSystemConfigurationRepository;
     private readonly Mock<ILogger<TcpClientRunner>> _logger;
 
     public TcpClientRunnerTests(ITcpClientRunner tcpClientRunner)
@@ -24,9 +25,14 @@ public class TcpClientRunnerTests : IClassFixture<HttpClientRunner>
         _mockMonitorRepository = new Mock<IMonitorRepository>();
         _mockNotificationProducer = new Mock<INotificationProducer>();
         _mockMonitorHistoryRepository = new Mock<IMonitorHistoryRepository>();
+        _mockSystemConfigurationRepository = new Mock<ISystemConfigurationRepository>();
         _tcpClientRunnerMock = new Mock<ITcpClientRunner>();
         _logger = new Mock<ILogger<TcpClientRunner>>();
-        _tcpClientRunner2 = new TcpClientRunner(_mockMonitorRepository.Object, _mockNotificationProducer.Object, _mockMonitorHistoryRepository.Object, _logger.Object);
+        
+        // Setup default behavior: monitors are enabled
+        _mockSystemConfigurationRepository.Setup(x => x.IsMonitorExecutionDisabled()).ReturnsAsync(false);
+        
+        _tcpClientRunner2 = new TcpClientRunner(_mockMonitorRepository.Object, _mockNotificationProducer.Object, _mockMonitorHistoryRepository.Object, _mockSystemConfigurationRepository.Object, _logger.Object);
     }
 
     [Theory]

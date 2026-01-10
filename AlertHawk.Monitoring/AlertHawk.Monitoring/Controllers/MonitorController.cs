@@ -21,13 +21,15 @@ namespace AlertHawk.Monitoring.Controllers
         private readonly IMonitorService _monitorService;
         private readonly IMonitorAgentService _monitorAgentService;
         private readonly IMonitorGroupService _monitorGroupService;
+        private readonly Domain.Interfaces.Repositories.ISystemConfigurationRepository _systemConfigurationRepository;
 
         public MonitorController(IMonitorService monitorService, IMonitorAgentService monitorAgentService,
-            IMonitorGroupService monitorGroupService)
+            IMonitorGroupService monitorGroupService, Domain.Interfaces.Repositories.ISystemConfigurationRepository systemConfigurationRepository)
         {
             _monitorService = monitorService;
             _monitorAgentService = monitorAgentService;
             _monitorGroupService = monitorGroupService;
+            _systemConfigurationRepository = systemConfigurationRepository;
         }
 
         [SwaggerOperation(Summary = "Get MonitorById")]
@@ -442,6 +444,47 @@ namespace AlertHawk.Monitoring.Controllers
             var user = await _monitorService.GetUserDetailsByToken(jwtToken);
 
             return user != null && user.IsAdmin;
+        }
+
+        [SwaggerOperation(Summary = "Enable or disable monitor execution (system maintenance mode) - Admin only")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [HttpPut("setMonitorExecutionDisabled/{disabled}")]
+        public async Task<IActionResult> SetMonitorExecutionDisabled(bool disabled)
+        {
+            var isAdmin = await IsUserAdmin();
+
+            if (!isAdmin)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation. Admin access required."));
+            }
+
+            await _systemConfigurationRepository.UpsertSystemConfiguration(
+                "MonitorExecutionDisabled", 
+                disabled.ToString().ToLower(),
+                "When enabled, all monitor runners (HTTP, TCP, K8s) will be disabled. Used for system maintenance."
+            );
+
+            return Ok(new { message = $"Monitor execution has been {(disabled ? "disabled" : "enabled")}" });
+        }
+
+        [SwaggerOperation(Summary = "Get monitor execution status - Admin only")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [HttpGet("getMonitorExecutionStatus")]
+        public async Task<IActionResult> GetMonitorExecutionStatus()
+        {
+            var isAdmin = await IsUserAdmin();
+
+            if (!isAdmin)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation. Admin access required."));
+            }
+
+            var isDisabled = await _systemConfigurationRepository.IsMonitorExecutionDisabled();
+            return Ok(new { isDisabled, message = isDisabled ? "Monitor execution is disabled" : "Monitor execution is enabled" });
         }
     }
 }
