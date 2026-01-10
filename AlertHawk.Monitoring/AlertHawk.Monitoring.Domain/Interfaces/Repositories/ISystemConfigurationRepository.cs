@@ -8,4 +8,7 @@ public interface ISystemConfigurationRepository
     Task<bool> IsMonitorExecutionDisabled();
     Task UpsertSystemConfiguration(string key, string value, string? description = null);
     Task InitializeTableIfNotExists();
+    Task SetMaintenanceWindow(DateTime? startUtc, DateTime? endUtc);
+    Task<(DateTime? StartUtc, DateTime? EndUtc)> GetMaintenanceWindow();
+    Task<bool> IsWithinMaintenanceWindow();
 }

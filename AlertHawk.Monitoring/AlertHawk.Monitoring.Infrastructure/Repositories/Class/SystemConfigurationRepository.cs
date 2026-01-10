@@ -29,13 +29,86 @@ public class SystemConfigurationRepository : RepositoryBase, ISystemConfiguratio
 
     public async Task<bool> IsMonitorExecutionDisabled()
     {
+        // Check manual disable flag
         var config = await GetSystemConfigurationByKey("MonitorExecutionDisabled");
-        if (config == null)
+        if (config != null && bool.TryParse(config.Value, out var isDisabled) && isDisabled)
         {
-            return false; // Default to enabled if configuration doesn't exist
+            return true; // Manually disabled
         }
         
-        return bool.TryParse(config.Value, out var isDisabled) && isDisabled;
+        // Check if we're within a maintenance window
+        return await IsWithinMaintenanceWindow();
+    }
+
+    public async Task<bool> IsWithinMaintenanceWindow()
+    {
+        var (startUtc, endUtc) = await GetMaintenanceWindow();
+        
+        if (!startUtc.HasValue || !endUtc.HasValue)
+        {
+            return false; // No maintenance window set
+        }
+        
+        var now = DateTime.UtcNow;
+        return now >= startUtc.Value && now <= endUtc.Value;
+    }
+
+    public async Task SetMaintenanceWindow(DateTime? startUtc, DateTime? endUtc)
+    {
+        // If both are null, clear the maintenance window
+        if (!startUtc.HasValue && !endUtc.HasValue)
+        {
+            await using var db = new SqlConnection(_connstring);
+            string deleteSql = @"DELETE FROM [SystemConfiguration] WHERE [Key] IN ('MaintenanceWindowStartUtc', 'MaintenanceWindowEndUtc')";
+            await db.ExecuteAsync(deleteSql, commandType: CommandType.Text);
+            return;
+        }
+        
+        // If setting a window, both start and end must be provided
+        if (!startUtc.HasValue || !endUtc.HasValue)
+        {
+            throw new ArgumentException("Both start and end times must be provided when setting a maintenance window.");
+        }
+        
+        // Validate that start is before end
+        if (startUtc.Value >= endUtc.Value)
+        {
+            throw new ArgumentException("Maintenance window start time must be before end time.");
+        }
+        
+        // Set both values
+        await UpsertSystemConfiguration(
+            "MaintenanceWindowStartUtc",
+            startUtc.Value.ToString("O"), // ISO 8601 format
+            "Maintenance window start time in UTC. When set, monitors will be disabled during this window."
+        );
+        
+        await UpsertSystemConfiguration(
+            "MaintenanceWindowEndUtc",
+            endUtc.Value.ToString("O"), // ISO 8601 format
+            "Maintenance window end time in UTC. When set, monitors will be disabled during this window."
+        );
+    }
+
+    public async Task<(DateTime? StartUtc, DateTime? EndUtc)> GetMaintenanceWindow()
+    {
+        var startConfig = await GetSystemConfigurationByKey("MaintenanceWindowStartUtc");
+        var endConfig = await GetSystemConfigurationByKey("MaintenanceWindowEndUtc");
+        
+        DateTime? startUtc = null;
+        DateTime? endUtc = null;
+        
+        if (startConfig != null && DateTime.TryParse(startConfig.Value, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsedStart))
+        {
+            startUtc = parsedStart.ToUniversalTime();
+        }
+        
+        if (endConfig != null && DateTime.TryParse(endConfig.Value, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsedEnd))
+        {
+            endUtc = parsedEnd.ToUniversalTime();
+        }
+        
+        return (startUtc, endUtc);
     }
 
     public async Task UpsertSystemConfiguration(string key, string value, string? description = null)

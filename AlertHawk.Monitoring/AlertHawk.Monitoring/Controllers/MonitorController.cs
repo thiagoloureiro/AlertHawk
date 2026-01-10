@@ -484,7 +484,98 @@ namespace AlertHawk.Monitoring.Controllers
             }
 
             var isDisabled = await _systemConfigurationRepository.IsMonitorExecutionDisabled();
-            return Ok(new { isDisabled, message = isDisabled ? "Monitor execution is disabled" : "Monitor execution is enabled" });
+            var (startUtc, endUtc) = await _systemConfigurationRepository.GetMaintenanceWindow();
+            var isInMaintenanceWindow = await _systemConfigurationRepository.IsWithinMaintenanceWindow();
+            
+            return Ok(new 
+            { 
+                isDisabled, 
+                isInMaintenanceWindow,
+                maintenanceWindow = new { startUtc, endUtc },
+                message = isDisabled ? "Monitor execution is disabled" : "Monitor execution is enabled" 
+            });
         }
+
+        [SwaggerOperation(Summary = "Set maintenance window (start and end datetime in UTC) - Admin only")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [HttpPut("setMaintenanceWindow")]
+        public async Task<IActionResult> SetMaintenanceWindow([FromBody] MaintenanceWindowRequest request)
+        {
+            var isAdmin = await IsUserAdmin();
+
+            if (!isAdmin)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation. Admin access required."));
+            }
+
+            try
+            {
+                // Convert to UTC if timezone info is provided, otherwise assume UTC
+                DateTime? startUtc = request.StartUtc.HasValue 
+                    ? request.StartUtc.Value.ToUniversalTime() 
+                    : null;
+                DateTime? endUtc = request.EndUtc.HasValue 
+                    ? request.EndUtc.Value.ToUniversalTime() 
+                    : null;
+
+                await _systemConfigurationRepository.SetMaintenanceWindow(startUtc, endUtc);
+                
+                if (startUtc.HasValue && endUtc.HasValue)
+                {
+                    return Ok(new { 
+                        message = $"Maintenance window set from {startUtc:yyyy-MM-dd HH:mm:ss} UTC to {endUtc:yyyy-MM-dd HH:mm:ss} UTC",
+                        startUtc,
+                        endUtc
+                    });
+                }
+                else
+                {
+                    return Ok(new { message = "Maintenance window cleared" });
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new Message(ex.Message));
+            }
+        }
+
+        [SwaggerOperation(Summary = "Get maintenance window - Admin only")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [HttpGet("getMaintenanceWindow")]
+        public async Task<IActionResult> GetMaintenanceWindow()
+        {
+            var isAdmin = await IsUserAdmin();
+
+            if (!isAdmin)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new Message("This user is not authorized to do this operation. Admin access required."));
+            }
+
+            var (startUtc, endUtc) = await _systemConfigurationRepository.GetMaintenanceWindow();
+            var isInMaintenanceWindow = await _systemConfigurationRepository.IsWithinMaintenanceWindow();
+            
+            return Ok(new 
+            { 
+                startUtc, 
+                endUtc,
+                isInMaintenanceWindow,
+                message = isInMaintenanceWindow 
+                    ? $"Currently in maintenance window (until {endUtc:yyyy-MM-dd HH:mm:ss} UTC)"
+                    : startUtc.HasValue && endUtc.HasValue
+                        ? $"Maintenance window scheduled: {startUtc:yyyy-MM-dd HH:mm:ss} UTC to {endUtc:yyyy-MM-dd HH:mm:ss} UTC"
+                        : "No maintenance window set"
+            });
+        }
+    }
+
+    public class MaintenanceWindowRequest
+    {
+        public DateTime? StartUtc { get; set; }
+        public DateTime? EndUtc { get; set; }
     }
 }
