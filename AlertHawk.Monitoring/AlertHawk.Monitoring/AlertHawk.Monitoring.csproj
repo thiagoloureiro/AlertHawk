@@ -23,7 +23,7 @@
     <PackageReference Include="MassTransit.Azure.ServiceBus.Core" Version="8.5.7" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.7" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.1" />
-    <PackageReference Include="Microsoft.Identity.Web" Version="4.2.0" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="4.3.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="OpenTelemetry" Version="1.14.0" />
