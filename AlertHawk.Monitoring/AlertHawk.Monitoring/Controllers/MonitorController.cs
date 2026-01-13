@@ -475,14 +475,6 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpGet("getMonitorExecutionStatus")]
         public async Task<IActionResult> GetMonitorExecutionStatus()
         {
-            var isAdmin = await IsUserAdmin();
-
-            if (!isAdmin)
-            {
-                return StatusCode(StatusCodes.Status403Forbidden,
-                    new Message("This user is not authorized to do this operation. Admin access required."));
-            }
-
             var isDisabled = await _systemConfigurationRepository.IsMonitorExecutionDisabled();
             var (startUtc, endUtc) = await _systemConfigurationRepository.GetMaintenanceWindow();
             var isInMaintenanceWindow = await _systemConfigurationRepository.IsWithinMaintenanceWindow();
