@@ -1,4 +1,5 @@
 using AlertHawk.Application.Config;
+using AlertHawk.Authentication;
 using AlertHawk.Authentication.Filters;
 using AlertHawk.Authentication.Helpers;
 using AlertHawk.Authentication.Infrastructure.Config;
@@ -9,12 +10,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
-using System.Text;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using System.Reflection;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,7 @@ var configuration = new ConfigurationBuilder()
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<BlockedDomainsFilter>();
+    options.Conventions.Insert(0, new GlobalRoutePrefixConvention("auth"));
 });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

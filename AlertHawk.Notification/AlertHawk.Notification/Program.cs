@@ -19,6 +19,7 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using AlertHawk.Notification;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,7 +37,11 @@ var queueType = configuration.GetValue<string>("QueueType") ?? "RABBITMQ";
 var serviceBusConnectionString = configuration.GetValue<string>("ServiceBus:ConnectionString");
 var serviceBusQueueName = configuration.GetValue<string>("ServiceBus:QueueName");
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Conventions.Insert(0, new GlobalRoutePrefixConvention("notification"));
+});
+
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>

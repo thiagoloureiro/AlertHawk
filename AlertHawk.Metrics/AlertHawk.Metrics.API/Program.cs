@@ -1,3 +1,4 @@
+using AlertHawk.Metrics.API;
 using AlertHawk.Metrics.API.Producers;
 using AlertHawk.Metrics.API.Repositories;
 using AlertHawk.Metrics.API.Services;
@@ -22,7 +23,10 @@ var configuration = new ConfigurationBuilder()
     .Build();
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Conventions.Insert(0, new GlobalRoutePrefixConvention("metrics"));
+});
 builder.Services.AddSwaggerGen();
 
 builder.WebHost.UseSentry(options =>
