@@ -1,5 +1,12 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS base
 RUN apk update && apk upgrade
+# Install dependencies
+RUN apk add --no-cache curl ca-certificates
+
+# Install Trivy
+RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+    | sh -s -- -b /usr/local/bin
+
 USER $APP_UID
 WORKDIR /app
 
