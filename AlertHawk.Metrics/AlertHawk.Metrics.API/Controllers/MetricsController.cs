@@ -498,6 +498,13 @@ public class MetricsController : ControllerBase
         string? operatingSystem,
         string? cloudProvider)
     {
+
+        // capitalize first character of the OS
+        if (!string.IsNullOrWhiteSpace(operatingSystem))
+        {
+            operatingSystem = char.ToUpper(operatingSystem[0]) + operatingSystem.Substring(1).ToLower();
+        }
+
         // Build Azure price request
         var priceRequest = new AzurePriceRequest
         {
