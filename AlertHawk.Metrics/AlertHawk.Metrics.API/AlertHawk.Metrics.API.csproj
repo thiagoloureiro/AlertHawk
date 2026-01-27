@@ -12,7 +12,7 @@
 		<PackageReference Include="AlertHawk.Notification.Domain" Version="1.0.8" />
 		<PackageReference Include="ClickHouse.Client" Version="7.14.0" />
 		<PackageReference Include="Azure.Identity" Version="1.17.1" />
-		<PackageReference Include="EasyMemoryCache" Version="3.0.5" />
+		<PackageReference Include="EasyMemoryCache" Version="3.0.6" />
 		<PackageReference Include="Hangfire.InMemory" Version="1.0.0" />
 		<PackageReference Include="MassTransit" Version="8.5.7" />
 		<PackageReference Include="MassTransit.AspNetCore" Version="7.3.1" />
