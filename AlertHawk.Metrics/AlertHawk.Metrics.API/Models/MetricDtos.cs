@@ -10,6 +10,11 @@ public class PodMetricDto
     public double CpuUsageCores { get; set; }
     public double? CpuLimitCores { get; set; }
     public double MemoryUsageBytes { get; set; }
+    public double DiskReadBytes { get; set; }
+    public double DiskWriteBytes { get; set; }
+    public double DiskReadOps { get; set; }
+    public double DiskWriteOps { get; set; }
+    public double NetworkUsageBytes { get; set; }
     public string? NodeName { get; set; }
     public string? PodState { get; set; }
     public int RestartCount { get; set; }
@@ -26,6 +31,11 @@ public class NodeMetricDto
     public double CpuCapacityCores { get; set; }
     public double MemoryUsageBytes { get; set; }
     public double MemoryCapacityBytes { get; set; }
+    public double DiskReadBytes { get; set; }
+    public double DiskWriteBytes { get; set; }
+    public double DiskReadOps { get; set; }
+    public double DiskWriteOps { get; set; }
+    public double NetworkUsageBytes { get; set; }
     public string? KubernetesVersion { get; set; }
     public string? CloudProvider { get; set; }
     public bool? IsReady { get; set; }
@@ -47,6 +57,11 @@ public class PodMetricRequest
     public double CpuUsageCores { get; set; }
     public double? CpuLimitCores { get; set; }
     public double MemoryUsageBytes { get; set; }
+    public double DiskReadBytes { get; set; }
+    public double DiskWriteBytes { get; set; }
+    public double DiskReadOps { get; set; }
+    public double DiskWriteOps { get; set; }
+    public double NetworkUsageBytes { get; set; }
     public string? NodeName { get; set; }
     public string? PodState { get; set; }
     public int RestartCount { get; set; }
@@ -62,6 +77,11 @@ public class NodeMetricRequest
     public double CpuCapacityCores { get; set; }
     public double MemoryUsageBytes { get; set; }
     public double MemoryCapacityBytes { get; set; }
+    public double DiskReadBytes { get; set; }
+    public double DiskWriteBytes { get; set; }
+    public double DiskReadOps { get; set; }
+    public double DiskWriteOps { get; set; }
+    public double NetworkUsageBytes { get; set; }
     public string? KubernetesVersion { get; set; }
     public string? CloudProvider { get; set; }
     public bool? IsReady { get; set; }

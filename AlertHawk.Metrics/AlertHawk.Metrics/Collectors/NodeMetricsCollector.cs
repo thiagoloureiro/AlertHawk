@@ -168,6 +168,35 @@ public static class NodeMetricsCollector
                     var nodeName = nodeMetric.Metadata.Name;
                     var cpuUsageCores = ResourceFormatter.ParseCpuToCores(nodeMetric.Usage.Cpu);
                     var memoryUsageBytes = Utils.MemoryParser.ParseToBytes(nodeMetric.Usage.Memory);
+                    
+                    // Extract network usage (bytes transferred)
+                    var networkUsageBytes = Utils.MemoryParser.ParseToBytes(nodeMetric.Usage.Network);
+                    
+                    // Get disk I/O metrics from kubelet stats/summary
+                    var diskReadBytes = 0.0;
+                    var diskWriteBytes = 0.0;
+                    var diskReadOps = 0.0;
+                    var diskWriteOps = 0.0;
+                    
+                    try
+                    {
+                        var statsSummaryJson = await clientWrapper.GetNodeStatsSummaryAsync(nodeName);
+                        if (!string.IsNullOrWhiteSpace(statsSummaryJson) && statsSummaryJson != "{}")
+                        {
+                            var statsSummary = JsonSerializer.Deserialize<KubeletStatsSummary>(statsSummaryJson, jsonOptions);
+                            if (statsSummary?.Node?.Fs?.IoStats != null)
+                            {
+                                diskReadBytes = statsSummary.Node.Fs.IoStats.ReadBytes ?? 0;
+                                diskWriteBytes = statsSummary.Node.Fs.IoStats.WriteBytes ?? 0;
+                                diskReadOps = statsSummary.Node.Fs.IoStats.ReadOps ?? 0;
+                                diskWriteOps = statsSummary.Node.Fs.IoStats.WriteOps ?? 0;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "Could not fetch disk I/O stats for node {NodeName}", nodeName);
+                    }
 
                     // Get capacity for this node
                     var (cpuCapacityCores, memoryCapacityBytes) = nodeCapacities.TryGetValue(nodeName, out var capacity)
@@ -199,6 +228,11 @@ public static class NodeMetricsCollector
                                 cpuCapacityCores,
                                 memoryUsageBytes,
                                 memoryCapacityBytes,
+                                diskReadBytes,
+                                diskWriteBytes,
+                                diskReadOps,
+                                diskWriteOps,
+                                networkUsageBytes,
                                 kubernetesVersion,
                                 cloudProvider,
                                 isReady,

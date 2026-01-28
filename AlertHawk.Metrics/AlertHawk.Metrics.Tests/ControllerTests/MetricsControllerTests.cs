@@ -65,7 +65,12 @@ public class MetricsControllerTests
                 Container = "test-container",
                 CpuUsageCores = 0.5,
                 CpuLimitCores = 1.0,
-                MemoryUsageBytes = 1024
+                MemoryUsageBytes = 1024,
+                DiskReadBytes = 1073741824,
+                DiskWriteBytes = 536870912,
+                DiskReadOps = 100,
+                DiskWriteOps = 50,
+                NetworkUsageBytes = 4096
             }
         };
 
@@ -99,7 +104,12 @@ public class MetricsControllerTests
                 Container = "test-container",
                 CpuUsageCores = 0.3,
                 CpuLimitCores = 0.5,
-                MemoryUsageBytes = 512
+                MemoryUsageBytes = 512,
+                DiskReadBytes = 536870912,
+                DiskWriteBytes = 268435456,
+                DiskReadOps = 50,
+                DiskWriteOps = 25,
+                NetworkUsageBytes = 2048
             }
         };
 
@@ -171,7 +181,12 @@ public class MetricsControllerTests
                 Container = "app-container",
                 CpuUsageCores = 1.5,
                 CpuLimitCores = 2.0,
-                MemoryUsageBytes = 2048
+                MemoryUsageBytes = 2048,
+                DiskReadBytes = 2147483648,
+                DiskWriteBytes = 1073741824,
+                DiskReadOps = 200,
+                DiskWriteOps = 100,
+                NetworkUsageBytes = 8192
             }
         };
 
@@ -242,7 +257,12 @@ public class MetricsControllerTests
                 CpuUsageCores = 4.0,
                 CpuCapacityCores = 8.0,
                 MemoryUsageBytes = 4096,
-                MemoryCapacityBytes = 8192
+                MemoryCapacityBytes = 8192,
+                DiskReadBytes = 10737418240,
+                DiskWriteBytes = 5368709120,
+                DiskReadOps = 1000,
+                DiskWriteOps = 500,
+                NetworkUsageBytes = 16384
             }
         };
 
@@ -275,7 +295,12 @@ public class MetricsControllerTests
                 CpuUsageCores = 2.0,
                 CpuCapacityCores = 4.0,
                 MemoryUsageBytes = 2048,
-                MemoryCapacityBytes = 4096
+                MemoryCapacityBytes = 4096,
+                DiskReadBytes = 5368709120,
+                DiskWriteBytes = 2684354560,
+                DiskReadOps = 500,
+                DiskWriteOps = 250,
+                NetworkUsageBytes = 8192
             }
         };
 
@@ -345,7 +370,12 @@ public class MetricsControllerTests
                 CpuUsageCores = 6.0,
                 CpuCapacityCores = 16.0,
                 MemoryUsageBytes = 8192,
-                MemoryCapacityBytes = 16384
+                MemoryCapacityBytes = 16384,
+                DiskReadBytes = 21474836480,
+                DiskWriteBytes = 10737418240,
+                DiskReadOps = 2000,
+                DiskWriteOps = 1000,
+                NetworkUsageBytes = 32768
             }
         };
 
@@ -425,6 +455,11 @@ public class MetricsControllerTests
                 request.CpuUsageCores,
                 request.CpuLimitCores,
                 request.MemoryUsageBytes,
+                request.DiskReadBytes,
+                request.DiskWriteBytes,
+                request.DiskReadOps,
+                request.DiskWriteOps,
+                request.NetworkUsageBytes,
                 request.ClusterName,
                 request.NodeName,
                 request.PodState,
@@ -449,6 +484,11 @@ public class MetricsControllerTests
             request.CpuUsageCores,
             request.CpuLimitCores,
             request.MemoryUsageBytes,
+            request.DiskReadBytes,
+            request.DiskWriteBytes,
+            request.DiskReadOps,
+            request.DiskWriteOps,
+            request.NetworkUsageBytes,
             request.ClusterName,
             request.NodeName,
             request.PodState,
@@ -479,6 +519,11 @@ public class MetricsControllerTests
                 request.CpuUsageCores,
                 request.CpuLimitCores,
                 request.MemoryUsageBytes,
+                request.DiskReadBytes,
+                request.DiskWriteBytes,
+                request.DiskReadOps,
+                request.DiskWriteOps,
+                request.NetworkUsageBytes,
                 null,
                 request.NodeName,
                 request.PodState,
@@ -498,6 +543,11 @@ public class MetricsControllerTests
             request.CpuUsageCores,
             request.CpuLimitCores,
             request.MemoryUsageBytes,
+            request.DiskReadBytes,
+            request.DiskWriteBytes,
+            request.DiskReadOps,
+            request.DiskWriteOps,
+            request.NetworkUsageBytes,
             null,
             request.NodeName,
             request.PodState,
@@ -528,6 +578,11 @@ public class MetricsControllerTests
                 request.CpuUsageCores,
                 request.CpuLimitCores,
                 request.MemoryUsageBytes,
+                request.DiskReadBytes,
+                request.DiskWriteBytes,
+                request.DiskReadOps,
+                request.DiskWriteOps,
+                request.NetworkUsageBytes,
                 null,
                 request.NodeName,
                 request.PodState,
@@ -547,6 +602,11 @@ public class MetricsControllerTests
             request.CpuUsageCores,
             request.CpuLimitCores,
             request.MemoryUsageBytes,
+            request.DiskReadBytes,
+            request.DiskWriteBytes,
+            request.DiskReadOps,
+            request.DiskWriteOps,
+            request.NetworkUsageBytes,
             null,
             request.NodeName,
             request.PodState,
@@ -577,6 +637,11 @@ public class MetricsControllerTests
                 request.CpuUsageCores,
                 null,
                 request.MemoryUsageBytes,
+                request.DiskReadBytes,
+                request.DiskWriteBytes,
+                request.DiskReadOps,
+                request.DiskWriteOps,
+                request.NetworkUsageBytes,
                 request.ClusterName,
                 request.NodeName,
                 request.PodState,
@@ -596,6 +661,11 @@ public class MetricsControllerTests
             request.CpuUsageCores,
             null,
             request.MemoryUsageBytes,
+            request.DiskReadBytes,
+            request.DiskWriteBytes,
+            request.DiskReadOps,
+            request.DiskWriteOps,
+            request.NetworkUsageBytes,
             request.ClusterName,
             request.NodeName,
             request.PodState,
@@ -625,6 +695,11 @@ public class MetricsControllerTests
                 It.IsAny<string>(),
                 It.IsAny<double>(),
                 It.IsAny<double?>(),
+                It.IsAny<double>(),
+                It.IsAny<double>(),
+                It.IsAny<double>(),
+                It.IsAny<double>(),
+                It.IsAny<double>(),
                 It.IsAny<double>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
@@ -670,6 +745,11 @@ public class MetricsControllerTests
                 request.CpuCapacityCores,
                 request.MemoryUsageBytes,
                 request.MemoryCapacityBytes,
+                request.DiskReadBytes,
+                request.DiskWriteBytes,
+                request.DiskReadOps,
+                request.DiskWriteOps,
+                request.NetworkUsageBytes,
                 request.ClusterName,
                 request.ClusterEnvironment,
                 request.KubernetesVersion,
@@ -700,6 +780,11 @@ public class MetricsControllerTests
             request.CpuCapacityCores,
             request.MemoryUsageBytes,
             request.MemoryCapacityBytes,
+            request.DiskReadBytes,
+            request.DiskWriteBytes,
+            request.DiskReadOps,
+            request.DiskWriteOps,
+            request.NetworkUsageBytes,
             request.ClusterName,
             request.ClusterEnvironment,
             request.KubernetesVersion,
@@ -735,6 +820,11 @@ public class MetricsControllerTests
                 request.CpuCapacityCores,
                 request.MemoryUsageBytes,
                 request.MemoryCapacityBytes,
+                request.DiskReadBytes,
+                request.DiskWriteBytes,
+                request.DiskReadOps,
+                request.DiskWriteOps,
+                request.NetworkUsageBytes,
                 null,
                 request.ClusterEnvironment,
                 request.KubernetesVersion,
@@ -760,6 +850,11 @@ public class MetricsControllerTests
             request.CpuCapacityCores,
             request.MemoryUsageBytes,
             request.MemoryCapacityBytes,
+            request.DiskReadBytes,
+            request.DiskWriteBytes,
+            request.DiskReadOps,
+            request.DiskWriteOps,
+            request.NetworkUsageBytes,
             null,
             request.ClusterEnvironment,
             request.KubernetesVersion,
@@ -795,6 +890,11 @@ public class MetricsControllerTests
                 request.CpuCapacityCores,
                 request.MemoryUsageBytes,
                 request.MemoryCapacityBytes,
+                request.DiskReadBytes,
+                request.DiskWriteBytes,
+                request.DiskReadOps,
+                request.DiskWriteOps,
+                request.NetworkUsageBytes,
                 null,
                 request.ClusterEnvironment,
                 request.KubernetesVersion,
@@ -820,6 +920,11 @@ public class MetricsControllerTests
             request.CpuCapacityCores,
             request.MemoryUsageBytes,
             request.MemoryCapacityBytes,
+            request.DiskReadBytes,
+            request.DiskWriteBytes,
+            request.DiskReadOps,
+            request.DiskWriteOps,
+            request.NetworkUsageBytes,
             null,
             request.ClusterEnvironment,
             request.KubernetesVersion,
@@ -851,6 +956,11 @@ public class MetricsControllerTests
         _mockClickHouseService
             .Setup(s => s.WriteNodeMetricsAsync(
                 It.IsAny<string>(),
+                It.IsAny<double>(),
+                It.IsAny<double>(),
+                It.IsAny<double>(),
+                It.IsAny<double>(),
+                It.IsAny<double>(),
                 It.IsAny<double>(),
                 It.IsAny<double>(),
                 It.IsAny<double>(),
@@ -1566,6 +1676,11 @@ public class MetricsControllerTests
                 request.CpuCapacityCores,
                 request.MemoryUsageBytes,
                 request.MemoryCapacityBytes,
+                request.DiskReadBytes,
+                request.DiskWriteBytes,
+                request.DiskReadOps,
+                request.DiskWriteOps,
+                request.NetworkUsageBytes,
                 request.ClusterName,
                 request.ClusterEnvironment,
                 request.KubernetesVersion,
@@ -1637,6 +1752,11 @@ public class MetricsControllerTests
                 request.CpuCapacityCores,
                 request.MemoryUsageBytes,
                 request.MemoryCapacityBytes,
+                request.DiskReadBytes,
+                request.DiskWriteBytes,
+                request.DiskReadOps,
+                request.DiskWriteOps,
+                request.NetworkUsageBytes,
                 request.ClusterName,
                 request.ClusterEnvironment,
                 request.KubernetesVersion,
@@ -1671,6 +1791,232 @@ public class MetricsControllerTests
                 request.HasPidPressure,
                 true), // Healthy
             Times.Once);
+    }
+
+    #endregion
+
+    #region Disk and Network Metrics Tests
+
+    [Fact]
+    public async Task WritePodMetric_WithDiskAndNetworkMetrics_StoresCorrectly()
+    {
+        // Arrange
+        var request = new PodMetricRequest
+        {
+            ClusterName = "test-cluster",
+            Namespace = "default",
+            Pod = "test-pod",
+            Container = "test-container",
+            CpuUsageCores = 0.5,
+            CpuLimitCores = 1.0,
+            MemoryUsageBytes = 1024,
+            DiskReadBytes = 1073741824, // 1Gi
+            DiskWriteBytes = 536870912, // 512Mi
+            DiskReadOps = 100,
+            DiskWriteOps = 50,
+            NetworkUsageBytes = 536870912 // 512Mi
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.WriteMetricsAsync(
+                request.Namespace,
+                request.Pod,
+                request.Container,
+                request.CpuUsageCores,
+                request.CpuLimitCores,
+                request.MemoryUsageBytes,
+                request.DiskReadBytes,
+                request.DiskWriteBytes,
+                request.DiskReadOps,
+                request.DiskWriteOps,
+                request.NetworkUsageBytes,
+                request.ClusterName,
+                request.NodeName,
+                request.PodState,
+                request.RestartCount,
+                request.PodAge))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.WritePodMetric(request);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        _mockClickHouseService.Verify(s => s.WriteMetricsAsync(
+            request.Namespace,
+            request.Pod,
+            request.Container,
+            request.CpuUsageCores,
+            request.CpuLimitCores,
+            request.MemoryUsageBytes,
+            1073741824.0, // Disk read bytes
+            536870912.0, // Disk write bytes
+            100.0, // Disk read ops
+            50.0, // Disk write ops
+            536870912.0, // Network usage
+            request.ClusterName,
+            request.NodeName,
+            request.PodState,
+            request.RestartCount,
+            request.PodAge), Times.Once);
+    }
+
+    [Fact]
+    public async Task WriteNodeMetric_WithDiskAndNetworkMetrics_StoresCorrectly()
+    {
+        // Arrange
+        var request = new NodeMetricRequest
+        {
+            ClusterName = "test-cluster",
+            NodeName = "node-1",
+            CpuUsageCores = 4.0,
+            CpuCapacityCores = 8.0,
+            MemoryUsageBytes = 4096,
+            MemoryCapacityBytes = 8192,
+            DiskReadBytes = 10737418240, // 10Gi
+            DiskWriteBytes = 5368709120, // 5Gi
+            DiskReadOps = 1000,
+            DiskWriteOps = 500,
+            NetworkUsageBytes = 5368709120 // 5Gi
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.WriteNodeMetricsAsync(
+                request.NodeName,
+                request.CpuUsageCores,
+                request.CpuCapacityCores,
+                request.MemoryUsageBytes,
+                request.MemoryCapacityBytes,
+                request.DiskReadBytes,
+                request.DiskWriteBytes,
+                request.DiskReadOps,
+                request.DiskWriteOps,
+                request.NetworkUsageBytes,
+                request.ClusterName,
+                request.ClusterEnvironment,
+                request.KubernetesVersion,
+                request.CloudProvider,
+                request.IsReady,
+                request.HasMemoryPressure,
+                request.HasDiskPressure,
+                request.HasPidPressure,
+                request.Architecture,
+                request.OperatingSystem,
+                request.Region,
+                request.InstanceType))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.WriteNodeMetric(request);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        _mockClickHouseService.Verify(s => s.WriteNodeMetricsAsync(
+            request.NodeName,
+            request.CpuUsageCores,
+            request.CpuCapacityCores,
+            request.MemoryUsageBytes,
+            request.MemoryCapacityBytes,
+            10737418240.0, // Disk read bytes
+            5368709120.0, // Disk write bytes
+            1000.0, // Disk read ops
+            500.0, // Disk write ops
+            5368709120.0, // Network usage
+            request.ClusterName,
+            request.ClusterEnvironment,
+            request.KubernetesVersion,
+            request.CloudProvider,
+            request.IsReady,
+            request.HasMemoryPressure,
+            request.HasDiskPressure,
+            request.HasPidPressure,
+            request.Architecture,
+            request.OperatingSystem,
+            request.Region,
+            request.InstanceType), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetMetricsByNamespace_ReturnsDiskIOAndNetworkMetrics()
+    {
+        // Arrange
+        var expectedMetrics = new List<PodMetricDto>
+        {
+            new PodMetricDto
+            {
+                Timestamp = DateTime.UtcNow,
+                ClusterName = "test-cluster",
+                Namespace = "default",
+                Pod = "test-pod",
+                Container = "test-container",
+                CpuUsageCores = 0.5,
+                CpuLimitCores = 1.0,
+                MemoryUsageBytes = 1024,
+                DiskReadBytes = 1073741824, // 1Gi
+                DiskWriteBytes = 536870912, // 512Mi
+                DiskReadOps = 100,
+                DiskWriteOps = 50,
+                NetworkUsageBytes = 536870912 // 512Mi
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.GetMetricsByNamespaceAsync("default", 1440, null))
+            .ReturnsAsync(expectedMetrics);
+
+        // Act
+        var result = await _controller.GetMetricsByNamespace("default", 1440);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var metrics = Assert.IsAssignableFrom<List<PodMetricDto>>(okResult.Value);
+        Assert.Single(metrics);
+        Assert.Equal(1073741824.0, metrics[0].DiskReadBytes);
+        Assert.Equal(536870912.0, metrics[0].DiskWriteBytes);
+        Assert.Equal(100.0, metrics[0].DiskReadOps);
+        Assert.Equal(50.0, metrics[0].DiskWriteOps);
+        Assert.Equal(536870912.0, metrics[0].NetworkUsageBytes);
+    }
+
+    [Fact]
+    public async Task GetNodeMetrics_ReturnsDiskIOAndNetworkMetrics()
+    {
+        // Arrange
+        var expectedMetrics = new List<NodeMetricDto>
+        {
+            new NodeMetricDto
+            {
+                Timestamp = DateTime.UtcNow,
+                ClusterName = "test-cluster",
+                NodeName = "node-1",
+                CpuUsageCores = 4.0,
+                CpuCapacityCores = 8.0,
+                MemoryUsageBytes = 4096,
+                MemoryCapacityBytes = 8192,
+                DiskReadBytes = 10737418240, // 10Gi
+                DiskWriteBytes = 5368709120, // 5Gi
+                DiskReadOps = 1000,
+                DiskWriteOps = 500,
+                NetworkUsageBytes = 5368709120 // 5Gi
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.GetNodeMetricsAsync("node-1", 1440, null))
+            .ReturnsAsync(expectedMetrics);
+
+        // Act
+        var result = await _controller.GetNodeMetrics("node-1", 1440);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var metrics = Assert.IsAssignableFrom<List<NodeMetricDto>>(okResult.Value);
+        Assert.Single(metrics);
+        Assert.Equal(10737418240.0, metrics[0].DiskReadBytes);
+        Assert.Equal(5368709120.0, metrics[0].DiskWriteBytes);
+        Assert.Equal(1000.0, metrics[0].DiskReadOps);
+        Assert.Equal(500.0, metrics[0].DiskWriteOps);
+        Assert.Equal(5368709120.0, metrics[0].NetworkUsageBytes);
     }
 
     #endregion

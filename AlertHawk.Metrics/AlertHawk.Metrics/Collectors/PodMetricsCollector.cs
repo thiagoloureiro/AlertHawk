@@ -158,6 +158,56 @@ public static class PodMetricsCollector
                                 // Write metrics to ClickHouse
                                 var cpuCores = ResourceFormatter.ParseCpuToCores(container.Usage.Cpu);
                                 var memoryBytes = Utils.MemoryParser.ParseToBytes(container.Usage.Memory);
+                                
+                                // Extract network usage (bytes transferred)
+                                var networkUsageBytes = Utils.MemoryParser.ParseToBytes(container.Usage.Network);
+                                
+                                // Get disk I/O metrics from kubelet stats/summary
+                                var diskReadBytes = 0.0;
+                                var diskWriteBytes = 0.0;
+                                var diskReadOps = 0.0;
+                                var diskWriteOps = 0.0;
+                                
+                                if (!string.IsNullOrWhiteSpace(nodeName))
+                                {
+                                    try
+                                    {
+                                        var statsSummaryJson = await clientWrapper.GetNodeStatsSummaryAsync(nodeName);
+                                        if (!string.IsNullOrWhiteSpace(statsSummaryJson) && statsSummaryJson != "{}")
+                                        {
+                                            var statsSummary = JsonSerializer.Deserialize<KubeletStatsSummary>(statsSummaryJson, jsonOptions);
+                                            if (statsSummary?.Pods != null)
+                                            {
+                                                var podStats = statsSummary.Pods.FirstOrDefault(p => 
+                                                    p.PodRef?.Name == item.Metadata.Name && 
+                                                    p.PodRef?.Namespace == item.Metadata.Namespace);
+                                                
+                                                if (podStats != null)
+                                                {
+                                                    var containerStats = podStats.Containers.FirstOrDefault(c => c.Name == container.Name);
+                                                    if (containerStats != null)
+                                                    {
+                                                        // Prefer rootfs, fallback to logs
+                                                        var ioStats = containerStats.Rootfs?.IoStats ?? containerStats.Logs?.IoStats;
+                                                        if (ioStats != null)
+                                                        {
+                                                            diskReadBytes = ioStats.ReadBytes ?? 0;
+                                                            diskWriteBytes = ioStats.WriteBytes ?? 0;
+                                                            diskReadOps = ioStats.ReadOps ?? 0;
+                                                            diskWriteOps = ioStats.WriteOps ?? 0;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Log.Warning(ex, "Could not fetch disk I/O stats for pod {Namespace}/{PodName}/{Container}", 
+                                            item.Metadata.Namespace, item.Metadata.Name, container.Name);
+                                    }
+                                }
+                                
                                 double? cpuLimitCores = null;
 
                                 if (cpuLimit != null)
@@ -174,6 +224,11 @@ public static class PodMetricsCollector
                                         cpuCores,
                                         cpuLimitCores,
                                         memoryBytes,
+                                        diskReadBytes,
+                                        diskWriteBytes,
+                                        diskReadOps,
+                                        diskWriteOps,
+                                        networkUsageBytes,
                                         nodeName,
                                         podState,
                                         restartCount,
@@ -239,7 +294,7 @@ public static class PodMetricsCollector
 
                                 try
                                 {
-                                    // Write metrics with 0 CPU and memory for non-running pods
+                                    // Write metrics with 0 CPU, memory, disk I/O, and network for non-running pods
                                     await apiClient.WritePodMetricAsync(
                                         pod.Metadata.NamespaceProperty,
                                         pod.Metadata.Name,
@@ -247,6 +302,11 @@ public static class PodMetricsCollector
                                         0.0, // CPU usage
                                         cpuLimitCores,
                                         0.0, // Memory usage
+                                        0.0, // Disk read bytes
+                                        0.0, // Disk write bytes
+                                        0.0, // Disk read ops
+                                        0.0, // Disk write ops
+                                        0.0, // Network usage
                                         nodeName,
                                         podState,
                                         restartCount,

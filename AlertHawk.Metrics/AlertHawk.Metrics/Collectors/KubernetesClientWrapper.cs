@@ -1,7 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Http;
 using System.Text;
 using k8s;
 using k8s.Models;
+using System.Net;
 
 namespace AlertHawk.Metrics.Collectors;
 
@@ -127,6 +129,29 @@ public class KubernetesClientWrapper : IKubernetesClientWrapper
     public async Task<Corev1EventList> ListNamespacedEventAsync(string namespaceParameter)
     {
         return await _kubernetes.CoreV1.ListNamespacedEventAsync(namespaceParameter);
+    }
+
+    public async Task<string> GetNodeStatsSummaryAsync(string nodeName)
+    {
+        try
+        {
+            // Access kubelet stats/summary endpoint through the API server proxy
+            // The path is: /api/v1/nodes/{nodeName}/proxy/stats/summary
+            // We'll use a raw HTTP call with the Kubernetes client's base URI
+            using var httpClient = new HttpClient();
+            httpClient.BaseAddress = _kubernetes.BaseUri;
+            
+            // Make the request to the proxy endpoint
+            var response = await httpClient.GetAsync($"/api/v1/nodes/{nodeName}/proxy/stats/summary");
+            response.EnsureSuccessStatusCode();
+            
+            return await response.Content.ReadAsStringAsync();
+        }
+        catch (Exception)
+        {
+            // Return empty JSON if stats cannot be read (may require authentication or proxy may not be available)
+            return "{}";
+        }
     }
 }
 

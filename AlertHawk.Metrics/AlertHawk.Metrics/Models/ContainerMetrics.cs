@@ -18,5 +18,14 @@ public class ResourceUsage
 
     [JsonPropertyName("memory")]
     public string? Memory { get; set; }
+
+    [JsonPropertyName("storage")]
+    public string? Storage { get; set; }
+
+    [JsonPropertyName("ephemeral-storage")]
+    public string? EphemeralStorage { get; set; }
+
+    [JsonPropertyName("network")]
+    public string? Network { get; set; }
 }
 

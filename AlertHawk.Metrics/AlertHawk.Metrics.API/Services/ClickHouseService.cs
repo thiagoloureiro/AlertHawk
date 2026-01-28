@@ -81,6 +81,11 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 cpu_usage_cores Float64,
                 cpu_limit_cores Nullable(Float64),
                 memory_usage_bytes Float64,
+                disk_read_bytes Float64,
+                disk_write_bytes Float64,
+                disk_read_ops Float64,
+                disk_write_ops Float64,
+                network_usage_bytes Float64,
                 node_name Nullable(String),
                 pod_state Nullable(String),
                 restart_count UInt32,
@@ -143,6 +148,51 @@ public class ClickHouseService : IClickHouseService, IDisposable
             Console.WriteLine($"Warning: Could not add pod_state/restart_count/pod_age columns (they may already exist): {ex.Message}");
         }
 
+        // Add disk I/O and network columns if they don't exist (for existing tables)
+        try
+        {
+            await using var alterCommand1 = connection.CreateCommand();
+            alterCommand1.CommandText = $@"
+                ALTER TABLE {_database}.{_tableName}
+                ADD COLUMN IF NOT EXISTS disk_read_bytes Float64 DEFAULT 0
+            ";
+            await alterCommand1.ExecuteNonQueryAsync();
+            
+            await using var alterCommand2 = connection.CreateCommand();
+            alterCommand2.CommandText = $@"
+                ALTER TABLE {_database}.{_tableName}
+                ADD COLUMN IF NOT EXISTS disk_write_bytes Float64 DEFAULT 0
+            ";
+            await alterCommand2.ExecuteNonQueryAsync();
+            
+            await using var alterCommand3 = connection.CreateCommand();
+            alterCommand3.CommandText = $@"
+                ALTER TABLE {_database}.{_tableName}
+                ADD COLUMN IF NOT EXISTS disk_read_ops Float64 DEFAULT 0
+            ";
+            await alterCommand3.ExecuteNonQueryAsync();
+            
+            await using var alterCommand4 = connection.CreateCommand();
+            alterCommand4.CommandText = $@"
+                ALTER TABLE {_database}.{_tableName}
+                ADD COLUMN IF NOT EXISTS disk_write_ops Float64 DEFAULT 0
+            ";
+            await alterCommand4.ExecuteNonQueryAsync();
+            
+            await using var alterCommand5 = connection.CreateCommand();
+            alterCommand5.CommandText = $@"
+                ALTER TABLE {_database}.{_tableName}
+                ADD COLUMN IF NOT EXISTS network_usage_bytes Float64 DEFAULT 0
+            ";
+            await alterCommand5.ExecuteNonQueryAsync();
+            
+            Console.WriteLine($"Columns 'disk_read_bytes', 'disk_write_bytes', 'disk_read_ops', 'disk_write_ops', and 'network_usage_bytes' ensured to exist in '{_database}.{_tableName}'");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not add disk I/O/network columns (they may already exist): {ex.Message}");
+        }
+
         // Create node metrics table
         var createNodeTableSql = $@"
             CREATE TABLE IF NOT EXISTS {_database}.{_nodeTableName}
@@ -155,6 +205,11 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 cpu_capacity_cores Float64,
                 memory_usage_bytes Float64,
                 memory_capacity_bytes Float64,
+                disk_read_bytes Float64,
+                disk_write_bytes Float64,
+                disk_read_ops Float64,
+                disk_write_ops Float64,
+                network_usage_bytes Float64,
                 kubernetes_version Nullable(String),
                 cloud_provider Nullable(String),
                 is_ready Nullable(UInt8),
@@ -284,6 +339,51 @@ public class ClickHouseService : IClickHouseService, IDisposable
         catch (Exception ex)
         {
             Console.WriteLine($"Warning: Could not add region/instance_type columns (they may already exist): {ex.Message}");
+        }
+
+        // Add disk I/O and network columns if they don't exist (for existing tables)
+        try
+        {
+            await using var alterCommand1 = connection.CreateCommand();
+            alterCommand1.CommandText = $@"
+                ALTER TABLE {_database}.{_nodeTableName}
+                ADD COLUMN IF NOT EXISTS disk_read_bytes Float64 DEFAULT 0
+            ";
+            await alterCommand1.ExecuteNonQueryAsync();
+            
+            await using var alterCommand2 = connection.CreateCommand();
+            alterCommand2.CommandText = $@"
+                ALTER TABLE {_database}.{_nodeTableName}
+                ADD COLUMN IF NOT EXISTS disk_write_bytes Float64 DEFAULT 0
+            ";
+            await alterCommand2.ExecuteNonQueryAsync();
+            
+            await using var alterCommand3 = connection.CreateCommand();
+            alterCommand3.CommandText = $@"
+                ALTER TABLE {_database}.{_nodeTableName}
+                ADD COLUMN IF NOT EXISTS disk_read_ops Float64 DEFAULT 0
+            ";
+            await alterCommand3.ExecuteNonQueryAsync();
+            
+            await using var alterCommand4 = connection.CreateCommand();
+            alterCommand4.CommandText = $@"
+                ALTER TABLE {_database}.{_nodeTableName}
+                ADD COLUMN IF NOT EXISTS disk_write_ops Float64 DEFAULT 0
+            ";
+            await alterCommand4.ExecuteNonQueryAsync();
+            
+            await using var alterCommand5 = connection.CreateCommand();
+            alterCommand5.CommandText = $@"
+                ALTER TABLE {_database}.{_nodeTableName}
+                ADD COLUMN IF NOT EXISTS network_usage_bytes Float64 DEFAULT 0
+            ";
+            await alterCommand5.ExecuteNonQueryAsync();
+            
+            Console.WriteLine($"Columns 'disk_read_bytes', 'disk_write_bytes', 'disk_read_ops', 'disk_write_ops', and 'network_usage_bytes' ensured to exist in '{_database}.{_nodeTableName}'");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not add disk I/O/network columns (they may already exist): {ex.Message}");
         }
 
         // Add cluster_environment column if it doesn't exist (for existing tables)
@@ -496,6 +596,11 @@ public class ClickHouseService : IClickHouseService, IDisposable
         double cpuUsageCores,
         double? cpuLimitCores,
         double memoryUsageBytes,
+        double diskReadBytes,
+        double diskWriteBytes,
+        double diskReadOps,
+        double diskWriteOps,
+        double networkUsageBytes,
         string? clusterName = null,
         string? nodeName = null,
         string? podState = null,
@@ -534,9 +639,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
             var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
             var insertSql = $@"
                 INSERT INTO {_database}.{_tableName}
-                (timestamp, cluster_name, namespace, pod, container, cpu_usage_cores, cpu_limit_cores, memory_usage_bytes, node_name, pod_state, restart_count, pod_age)
+                (timestamp, cluster_name, namespace, pod, container, cpu_usage_cores, cpu_limit_cores, memory_usage_bytes, disk_read_bytes, disk_write_bytes, disk_read_ops, disk_write_ops, network_usage_bytes, node_name, pod_state, restart_count, pod_age)
                 VALUES
-                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedPod}', '{escapedContainer}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuLimitValue}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {nodeNameValue}, {podStateValue}, {restartCount}, {podAgeValue})
+                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedPod}', '{escapedContainer}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuLimitValue}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {diskReadBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {diskWriteBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {diskReadOps.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {diskWriteOps.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {networkUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {nodeNameValue}, {podStateValue}, {restartCount}, {podAgeValue})
             ";
 
             await using var command = connection.CreateCommand();
@@ -555,6 +660,11 @@ public class ClickHouseService : IClickHouseService, IDisposable
         double cpuCapacityCores,
         double memoryUsageBytes,
         double memoryCapacityBytes,
+        double diskReadBytes,
+        double diskWriteBytes,
+        double diskReadOps,
+        double diskWriteOps,
+        double networkUsageBytes,
         string? clusterName = null,
         string? clusterEnvironment = null,
         string? kubernetesVersion = null,
@@ -618,9 +728,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
             var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
             var insertSql = $@"
                 INSERT INTO {_database}.{_nodeTableName}
-                (timestamp, cluster_name, cluster_environment, node_name, cpu_usage_cores, cpu_capacity_cores, memory_usage_bytes, memory_capacity_bytes, kubernetes_version, cloud_provider, is_ready, has_memory_pressure, has_disk_pressure, has_pid_pressure, architecture, operating_system, region, instance_type)
+                (timestamp, cluster_name, cluster_environment, node_name, cpu_usage_cores, cpu_capacity_cores, memory_usage_bytes, memory_capacity_bytes, disk_read_bytes, disk_write_bytes, disk_read_ops, disk_write_ops, network_usage_bytes, kubernetes_version, cloud_provider, is_ready, has_memory_pressure, has_disk_pressure, has_pid_pressure, architecture, operating_system, region, instance_type)
                 VALUES
-                ('{timestamp}', '{escapedClusterName}', {clusterEnvironmentValue}, '{escapedNodeName}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuCapacityCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {memoryCapacityBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {kubernetesVersionValue}, {cloudProviderValue}, {isReadyValue}, {hasMemoryPressureValue}, {hasDiskPressureValue}, {hasPidPressureValue}, {architectureValue}, {operatingSystemValue}, {regionValue}, {instanceTypeValue})
+                ('{timestamp}', '{escapedClusterName}', {clusterEnvironmentValue}, '{escapedNodeName}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuCapacityCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {memoryCapacityBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {diskReadBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {diskWriteBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {diskReadOps.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {diskWriteOps.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {networkUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {kubernetesVersionValue}, {cloudProviderValue}, {isReadyValue}, {hasMemoryPressureValue}, {hasDiskPressureValue}, {hasPidPressureValue}, {architectureValue}, {operatingSystemValue}, {regionValue}, {instanceTypeValue})
             ";
 
             await using var command = connection.CreateCommand();
@@ -690,6 +800,11 @@ public class ClickHouseService : IClickHouseService, IDisposable
                         avg(cpu_usage_cores) AS cpu_usage_cores,
                         avg(cpu_limit_cores) AS cpu_limit_cores,
                         avg(memory_usage_bytes) AS memory_usage_bytes,
+                        avg(disk_read_bytes) AS disk_read_bytes,
+                        avg(disk_write_bytes) AS disk_write_bytes,
+                        avg(disk_read_ops) AS disk_read_ops,
+                        avg(disk_write_ops) AS disk_write_ops,
+                        avg(network_usage_bytes) AS network_usage_bytes,
                         any(node_name) AS node_name,
                         any(pod_state) AS pod_state,
                         max(restart_count) AS restart_count,
@@ -718,6 +833,11 @@ public class ClickHouseService : IClickHouseService, IDisposable
                         cpu_usage_cores,
                         cpu_limit_cores,
                         memory_usage_bytes,
+                        disk_read_bytes,
+                        disk_write_bytes,
+                        disk_read_ops,
+                        disk_write_ops,
+                        network_usage_bytes,
                         node_name,
                         pod_state,
                         restart_count,
@@ -746,10 +866,15 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     CpuUsageCores = reader.GetDouble(5),
                     CpuLimitCores = reader.IsDBNull(6) ? null : reader.GetDouble(6),
                     MemoryUsageBytes = reader.GetDouble(7),
-                    NodeName = reader.IsDBNull(8) ? null : reader.GetString(8),
-                    PodState = reader.IsDBNull(9) ? null : reader.GetString(9),
-                    RestartCount = reader.IsDBNull(10) ? 0 : Convert.ToInt32(reader.GetValue(10)),
-                    PodAge = reader.IsDBNull(11) ? null : reader.GetInt64(11)
+                    DiskReadBytes = reader.GetDouble(8),
+                    DiskWriteBytes = reader.GetDouble(9),
+                    DiskReadOps = reader.GetDouble(10),
+                    DiskWriteOps = reader.GetDouble(11),
+                    NetworkUsageBytes = reader.GetDouble(12),
+                    NodeName = reader.IsDBNull(13) ? null : reader.GetString(13),
+                    PodState = reader.IsDBNull(14) ? null : reader.GetString(14),
+                    RestartCount = reader.IsDBNull(15) ? 0 : Convert.ToInt32(reader.GetValue(15)),
+                    PodAge = reader.IsDBNull(16) ? null : reader.GetInt64(16)
                 });
             }
 
@@ -818,6 +943,11 @@ public class ClickHouseService : IClickHouseService, IDisposable
                         avg(cpu_capacity_cores) AS cpu_capacity_cores,
                         avg(memory_usage_bytes) AS memory_usage_bytes,
                         avg(memory_capacity_bytes) AS memory_capacity_bytes,
+                        avg(disk_read_bytes) AS disk_read_bytes,
+                        avg(disk_write_bytes) AS disk_write_bytes,
+                        avg(disk_read_ops) AS disk_read_ops,
+                        avg(disk_write_ops) AS disk_write_ops,
+                        avg(network_usage_bytes) AS network_usage_bytes,
                         any(kubernetes_version) AS kubernetes_version,
                         any(cloud_provider) AS cloud_provider,
                         any(is_ready) AS is_ready,
@@ -850,6 +980,11 @@ public class ClickHouseService : IClickHouseService, IDisposable
                         cpu_capacity_cores,
                         memory_usage_bytes,
                         memory_capacity_bytes,
+                        disk_read_bytes,
+                        disk_write_bytes,
+                        disk_read_ops,
+                        disk_write_ops,
+                        network_usage_bytes,
                         kubernetes_version,
                         cloud_provider,
                         is_ready,
@@ -884,16 +1019,21 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     CpuCapacityCores = reader.GetDouble(5),
                     MemoryUsageBytes = reader.GetDouble(6),
                     MemoryCapacityBytes = reader.GetDouble(7),
-                    KubernetesVersion = reader.IsDBNull(8) ? null : reader.GetString(8),
-                    CloudProvider = reader.IsDBNull(9) ? null : reader.GetString(9),
-                    IsReady = reader.IsDBNull(10) ? null : (reader.GetByte(10) == 1),
-                    HasMemoryPressure = reader.IsDBNull(11) ? null : (reader.GetByte(11) == 1),
-                    HasDiskPressure = reader.IsDBNull(12) ? null : (reader.GetByte(12) == 1),
-                    HasPidPressure = reader.IsDBNull(13) ? null : (reader.GetByte(13) == 1),
-                    Architecture = reader.IsDBNull(14) ? null : reader.GetString(14),
-                    OperatingSystem = reader.IsDBNull(15) ? null : reader.GetString(15),
-                    Region = reader.IsDBNull(16) ? null : reader.GetString(16),
-                    InstanceType = reader.IsDBNull(17) ? null : reader.GetString(17)
+                    DiskReadBytes = reader.GetDouble(8),
+                    DiskWriteBytes = reader.GetDouble(9),
+                    DiskReadOps = reader.GetDouble(10),
+                    DiskWriteOps = reader.GetDouble(11),
+                    NetworkUsageBytes = reader.GetDouble(12),
+                    KubernetesVersion = reader.IsDBNull(13) ? null : reader.GetString(13),
+                    CloudProvider = reader.IsDBNull(14) ? null : reader.GetString(14),
+                    IsReady = reader.IsDBNull(15) ? null : (reader.GetByte(15) == 1),
+                    HasMemoryPressure = reader.IsDBNull(16) ? null : (reader.GetByte(16) == 1),
+                    HasDiskPressure = reader.IsDBNull(17) ? null : (reader.GetByte(17) == 1),
+                    HasPidPressure = reader.IsDBNull(18) ? null : (reader.GetByte(18) == 1),
+                    Architecture = reader.IsDBNull(19) ? null : reader.GetString(19),
+                    OperatingSystem = reader.IsDBNull(20) ? null : reader.GetString(20),
+                    Region = reader.IsDBNull(21) ? null : reader.GetString(21),
+                    InstanceType = reader.IsDBNull(22) ? null : reader.GetString(22)
                 });
             }
 
