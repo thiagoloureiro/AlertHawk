@@ -15,10 +15,11 @@ public class ClickHouseService : IClickHouseService, IDisposable
     private readonly string _podLogsTableName;
     private readonly string _eventsTableName;
     private readonly string _clusterPricesTableName;
+    private readonly string _pvcTableName;
     private readonly string _clusterName;
     private readonly SemaphoreSlim _connectionSemaphore = new(1, 1);
 
-    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string podLogsTableName = "k8s_pod_logs", string eventsTableName = "k8s_events", string clusterPricesTableName = "k8s_cluster_prices")
+    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string podLogsTableName = "k8s_pod_logs", string eventsTableName = "k8s_events", string clusterPricesTableName = "k8s_cluster_prices", string pvcTableName = "k8s_pvc_metrics")
     {
         _connectionString = connectionString;
         _database = ExtractDatabaseFromConnectionString(connectionString);
@@ -28,6 +29,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         _podLogsTableName = podLogsTableName;
         _eventsTableName = eventsTableName;
         _clusterPricesTableName = clusterPricesTableName;
+        _pvcTableName = pvcTableName;
         EnsureTablesExistAsync().GetAwaiter().GetResult();
     }
 
@@ -487,6 +489,31 @@ public class ClickHouseService : IClickHouseService, IDisposable
         clusterPricesCommand.CommandText = createClusterPricesTableSql;
         await clusterPricesCommand.ExecuteNonQueryAsync();
         Console.WriteLine($"Table '{_database}.{_clusterPricesTableName}' ensured to exist");
+
+        // Create PVC metrics table
+        var createPvcTableSql = $@"
+            CREATE TABLE IF NOT EXISTS {_database}.{_pvcTableName}
+            (
+                timestamp DateTime64(3) DEFAULT now64(),
+                cluster_name String,
+                namespace String,
+                pod String,
+                pvc_namespace String,
+                pvc_name String,
+                volume_name Nullable(String),
+                used_bytes UInt64,
+                available_bytes UInt64,
+                capacity_bytes UInt64
+            )
+            ENGINE = MergeTree()
+            ORDER BY (timestamp, cluster_name, namespace, pvc_namespace, pvc_name)
+            TTL toDateTime(timestamp) + INTERVAL 90 DAY
+        ";
+
+        await using var pvcCommand = connection.CreateCommand();
+        pvcCommand.CommandText = createPvcTableSql;
+        await pvcCommand.ExecuteNonQueryAsync();
+        Console.WriteLine($"Table '{_database}.{_pvcTableName}' ensured to exist");
     }
 
     public async Task WriteMetricsAsync(
@@ -621,6 +648,57 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 (timestamp, cluster_name, cluster_environment, node_name, cpu_usage_cores, cpu_capacity_cores, memory_usage_bytes, memory_capacity_bytes, kubernetes_version, cloud_provider, is_ready, has_memory_pressure, has_disk_pressure, has_pid_pressure, architecture, operating_system, region, instance_type)
                 VALUES
                 ('{timestamp}', '{escapedClusterName}', {clusterEnvironmentValue}, '{escapedNodeName}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuCapacityCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {memoryCapacityBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {kubernetesVersionValue}, {cloudProviderValue}, {isReadyValue}, {hasMemoryPressureValue}, {hasDiskPressureValue}, {hasPidPressureValue}, {architectureValue}, {operatingSystemValue}, {regionValue}, {instanceTypeValue})
+            ";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = insertSql;
+            await command.ExecuteNonQueryAsync();
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
+    public async Task WritePvcMetricsAsync(
+        string @namespace,
+        string pod,
+        string pvcNamespace,
+        string pvcName,
+        string? volumeName,
+        ulong usedBytes,
+        ulong availableBytes,
+        ulong capacityBytes,
+        string? clusterName = null)
+    {
+        var effectiveClusterName = clusterName ?? _clusterName;
+        if (string.IsNullOrWhiteSpace(effectiveClusterName))
+        {
+            throw new InvalidOperationException("Cluster name is required for writing PVC metrics. Provide it as a parameter or set CLUSTER_NAME environment variable.");
+        }
+        effectiveClusterName = effectiveClusterName.ToLowerInvariant();
+
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            var escapedNamespace = @namespace.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedPod = pod.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedPvcNamespace = pvcNamespace.Replace("'", "''").Replace("\\", "\\\\");
+            var escapedPvcName = pvcName.Replace("'", "''").Replace("\\", "\\\\");
+            var volumeNameValue = !string.IsNullOrWhiteSpace(volumeName)
+                ? $"'{volumeName.Replace("'", "''").Replace("\\", "\\\\")}'"
+                : "NULL";
+            var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
+
+            var insertSql = $@"
+                INSERT INTO {_database}.{_pvcTableName}
+                (timestamp, cluster_name, namespace, pod, pvc_namespace, pvc_name, volume_name, used_bytes, available_bytes, capacity_bytes)
+                VALUES
+                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedPod}', '{escapedPvcNamespace}', '{escapedPvcName}', {volumeNameValue}, {usedBytes}, {availableBytes}, {capacityBytes})
             ";
 
             await using var command = connection.CreateCommand();
@@ -905,6 +983,77 @@ public class ClickHouseService : IClickHouseService, IDisposable
         }
     }
 
+    public async Task<List<PvcMetricDto>> GetPvcMetricsAsync(string? namespaceFilter = null, int? minutes = 1440, string? clusterName = null)
+    {
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var effectiveClusterName = clusterName ?? _clusterName;
+            var minutesValue = minutes ?? 1440;
+            var whereClause = $"timestamp >= now() - INTERVAL {minutesValue} MINUTE";
+            if (!string.IsNullOrWhiteSpace(effectiveClusterName))
+            {
+                var normalizedClusterName = effectiveClusterName.ToLowerInvariant();
+                var escapedClusterName = normalizedClusterName.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND lowerUTF8(cluster_name) = lowerUTF8('{escapedClusterName}')";
+            }
+            if (!string.IsNullOrWhiteSpace(namespaceFilter))
+            {
+                var escapedNamespace = namespaceFilter.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND namespace = '{escapedNamespace}'";
+            }
+
+            var query = $@"
+                SELECT 
+                    timestamp,
+                    cluster_name,
+                    namespace,
+                    pod,
+                    pvc_namespace,
+                    pvc_name,
+                    volume_name,
+                    used_bytes,
+                    available_bytes,
+                    capacity_bytes
+                FROM {_database}.{_pvcTableName}
+                WHERE {whereClause}
+                ORDER BY timestamp DESC
+            ";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = query;
+
+            var results = new List<PvcMetricDto>();
+            await using var reader = await command.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                results.Add(new PvcMetricDto
+                {
+                    Timestamp = reader.GetDateTime(0),
+                    ClusterName = reader.GetString(1),
+                    Namespace = reader.GetString(2),
+                    Pod = reader.GetString(3),
+                    PvcNamespace = reader.GetString(4),
+                    PvcName = reader.GetString(5),
+                    VolumeName = reader.IsDBNull(6) ? null : reader.GetString(6),
+                    UsedBytes = Convert.ToUInt64(reader.GetValue(7)),
+                    AvailableBytes = Convert.ToUInt64(reader.GetValue(8)),
+                    CapacityBytes = Convert.ToUInt64(reader.GetValue(9))
+                });
+            }
+
+            return results;
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
     public async Task<List<string>> GetUniqueClusterNamesAsync()
     {
         await _connectionSemaphore.WaitAsync();
@@ -913,13 +1062,15 @@ public class ClickHouseService : IClickHouseService, IDisposable
             await using var connection = new ClickHouseConnection(_connectionString);
             await connection.OpenAsync();
 
-            // Get distinct cluster names from both tables using UNION (case-insensitive)
+            // Get distinct cluster names from metrics, node, and PVC tables using UNION (case-insensitive)
             var query = $@"
                 SELECT DISTINCT lowerUTF8(cluster_name) AS cluster_name
                 FROM (
                     SELECT cluster_name FROM {_database}.{_tableName}
                     UNION ALL
                     SELECT cluster_name FROM {_database}.{_nodeTableName}
+                    UNION ALL
+                    SELECT cluster_name FROM {_database}.{_pvcTableName}
                 )
                 WHERE cluster_name != ''
                 ORDER BY cluster_name
@@ -1027,6 +1178,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 await using var truncateEventsCommand = connection.CreateCommand();
                 truncateEventsCommand.CommandText = $"TRUNCATE TABLE IF EXISTS {_database}.{_eventsTableName}";
                 await truncateEventsCommand.ExecuteNonQueryAsync();
+
+                await using var truncatePvcCommand = connection.CreateCommand();
+                truncatePvcCommand.CommandText = $"TRUNCATE TABLE IF EXISTS {_database}.{_pvcTableName}";
+                await truncatePvcCommand.ExecuteNonQueryAsync();
             }
             else
             {
@@ -1061,6 +1216,13 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     DELETE WHERE timestamp < '{cutoffDateString}'
                 ";
                 await deleteEventsCommand.ExecuteNonQueryAsync();
+
+                await using var deletePvcCommand = connection.CreateCommand();
+                deletePvcCommand.CommandText = $@"
+                    ALTER TABLE {_database}.{_pvcTableName}
+                    DELETE WHERE timestamp < '{cutoffDateString}'
+                ";
+                await deletePvcCommand.ExecuteNonQueryAsync();
             }
         }
         finally

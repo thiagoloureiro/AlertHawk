@@ -128,5 +128,21 @@ public class KubernetesClientWrapper : IKubernetesClientWrapper
     {
         return await _kubernetes.CoreV1.ListNamespacedEventAsync(namespaceParameter);
     }
+
+    public async Task<string> GetNodeStatsSummaryAsync(string nodeName, CancellationToken cancellationToken = default)
+    {
+        // Use ConnectGetNodeProxy (path = kubelet path) to match: GET /api/v1/nodes/{name}/proxy/stats/summary
+        var response = await _kubernetes.CoreV1.ConnectGetNodeProxyWithHttpMessagesAsync(
+            name: nodeName,
+            path: "stats/summary",
+            customHeaders: null,
+            cancellationToken);
+
+        if (response?.Body == null)
+            return string.Empty;
+
+        using var reader = new StreamReader(response.Body, Encoding.UTF8);
+        return await reader.ReadToEndAsync(cancellationToken);
+    }
 }
 

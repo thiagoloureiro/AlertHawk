@@ -138,6 +138,33 @@ public class KubernetesEventRequest
     public DateTime? LastTimestamp { get; set; }
 }
 
+public class PvcMetricDto
+{
+    public DateTime Timestamp { get; set; }
+    public string ClusterName { get; set; } = string.Empty;
+    public string Namespace { get; set; } = string.Empty;
+    public string Pod { get; set; } = string.Empty;
+    public string PvcNamespace { get; set; } = string.Empty;
+    public string PvcName { get; set; } = string.Empty;
+    public string? VolumeName { get; set; }
+    public ulong UsedBytes { get; set; }
+    public ulong AvailableBytes { get; set; }
+    public ulong CapacityBytes { get; set; }
+}
+
+public class PvcMetricRequest
+{
+    public string ClusterName { get; set; } = string.Empty;
+    public string Namespace { get; set; } = string.Empty;
+    public string Pod { get; set; } = string.Empty;
+    public string PvcNamespace { get; set; } = string.Empty;
+    public string PvcName { get; set; } = string.Empty;
+    public string? VolumeName { get; set; }
+    public ulong UsedBytes { get; set; }
+    public ulong AvailableBytes { get; set; }
+    public ulong CapacityBytes { get; set; }
+}
+
 public class ClusterPriceDto
 {
     public DateTime Timestamp { get; set; }
