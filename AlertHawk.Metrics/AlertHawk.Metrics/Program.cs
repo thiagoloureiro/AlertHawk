@@ -99,7 +99,7 @@ try
     {
         await PodMetricsCollector.CollectAsync(client, namespacesToWatch, apiClient);
         await NodeMetricsCollector.CollectAsync(client, apiClient);
-        await PvcUsageCollector.CollectAsync(client, config, apiClient);
+        await PvcUsageCollector.CollectAsync(client, config, apiClient, namespacesToWatch);
         await EventsCollector.CollectAsync(client, namespacesToWatch, apiClient);
         await Task.Delay(TimeSpan.FromSeconds(collectionIntervalSeconds), cancellationTokenSource.Token);
     }

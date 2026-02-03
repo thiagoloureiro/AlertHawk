@@ -7,18 +7,19 @@ namespace AlertHawk.Metrics.Collectors;
 
 public static class PvcUsageCollector
 {
-    public static async Task CollectAsync(Kubernetes client)
+    public static async Task CollectAsync(Kubernetes client, string[]? namespacesToWatch = null)
     {
-        await CollectAsync(new KubernetesClientWrapper(client));
+        await CollectAsync(new KubernetesClientWrapper(client), null, null, namespacesToWatch);
     }
 
     /// <summary>
     /// Use config for node proxy (same auth as curl: Bearer token + CA). Use when client's Connect* returns 401.
     /// When apiClient is provided, PVC metrics are also sent to the API and stored in ClickHouse.
+    /// Only pods in namespacesToWatch are reported (when namespacesToWatch is null or empty, all namespaces are included).
     /// </summary>
-    public static async Task CollectAsync(Kubernetes client, KubernetesClientConfiguration config, IMetricsApiClient? apiClient = null)
+    public static async Task CollectAsync(Kubernetes client, KubernetesClientConfiguration config, IMetricsApiClient? apiClient = null, string[]? namespacesToWatch = null)
     {
-        await CollectAsync(new KubernetesClientWrapper(client), config, apiClient);
+        await CollectAsync(new KubernetesClientWrapper(client), config, apiClient, namespacesToWatch);
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -27,11 +28,16 @@ public static class PvcUsageCollector
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public static async Task CollectAsync(IKubernetesClientWrapper clientWrapper, KubernetesClientConfiguration? config = null, IMetricsApiClient? apiClient = null)
+    public static async Task CollectAsync(IKubernetesClientWrapper clientWrapper, KubernetesClientConfiguration? config = null, IMetricsApiClient? apiClient = null, string[]? namespacesToWatch = null)
     {
         try
         {
-            Log.Information("Collecting PVC/volume usage from nodes...");
+            var watchSet = namespacesToWatch != null && namespacesToWatch.Length > 0
+                ? new HashSet<string>(namespacesToWatch, StringComparer.OrdinalIgnoreCase)
+                : null;
+
+            Log.Information("Collecting PVC/volume usage from nodes (namespaces: {Namespaces})...",
+                watchSet != null ? string.Join(", ", watchSet) : "all");
             Console.WriteLine("Namespace\tPod\tPVC/Volume\tVolumeName\tUsedBytes\tAvailableBytes\tCapacityBytes");
 
             var nodes = await clientWrapper.ListNodeAsync();
@@ -66,6 +72,10 @@ public static class PvcUsageCollector
                     {
                         var ns = pod.PodRef?.Namespace ?? "";
                         var podName = pod.PodRef?.Name ?? "";
+
+                        // Only report PVCs for pods in watched namespaces
+                        if (watchSet != null && !watchSet.Contains(ns))
+                            continue;
 
                         foreach (var vol in pod.Volume)
                         {
