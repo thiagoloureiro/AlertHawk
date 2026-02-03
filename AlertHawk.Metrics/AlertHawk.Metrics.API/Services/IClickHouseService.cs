@@ -113,5 +113,21 @@ public interface IClickHouseService
         string? region = null,
         string? instanceType = null,
         int? minutes = 1440);
+
+    Task WritePvcMetricsAsync(
+        string @namespace,
+        string pod,
+        string pvcNamespace,
+        string pvcName,
+        string? volumeName,
+        ulong usedBytes,
+        ulong availableBytes,
+        ulong capacityBytes,
+        string? clusterName = null);
+
+    Task<List<PvcMetricDto>> GetPvcMetricsAsync(
+        string? namespaceFilter = null,
+        int? minutes = 1440,
+        string? clusterName = null);
 }
 

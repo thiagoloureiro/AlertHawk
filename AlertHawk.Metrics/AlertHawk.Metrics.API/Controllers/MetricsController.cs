@@ -294,6 +294,89 @@ public class MetricsController : ControllerBase
     }
 
     /// <summary>
+    /// Write PVC/volume usage metrics
+    /// </summary>
+    /// <param name="request">PVC metric data</param>
+    /// <returns>Success status</returns>
+    [HttpPost("pvc")]
+    [AllowAnonymous]
+    public async Task<ActionResult> WritePvcMetric([FromBody] PvcMetricRequest request)
+    {
+        try
+        {
+            var clusterName = !string.IsNullOrWhiteSpace(request.ClusterName)
+                ? request.ClusterName
+                : null;
+
+            await _clickHouseService.WritePvcMetricsAsync(
+                request.Namespace,
+                request.Pod,
+                request.PvcNamespace,
+                request.PvcName,
+                request.VolumeName,
+                request.UsedBytes,
+                request.AvailableBytes,
+                request.CapacityBytes,
+                clusterName);
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get PVC/volume usage metrics
+    /// </summary>
+    /// <param name="namespace">Optional namespace filter</param>
+    /// <param name="minutes">Number of minutes to look back (default: 1440 = 24 hours)</param>
+    /// <param name="clusterName">Optional cluster name filter</param>
+    /// <returns>List of PVC metrics</returns>
+    [HttpGet("pvc")]
+    [Authorize]
+    public async Task<ActionResult<List<PvcMetricDto>>> GetPvcMetrics(
+        [FromQuery] string? @namespace = null,
+        [FromQuery] int? minutes = 1440,
+        [FromQuery] string? clusterName = null)
+    {
+        try
+        {
+            var metrics = await _clickHouseService.GetPvcMetricsAsync(@namespace, minutes, clusterName);
+            return Ok(metrics);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get PVC metrics for a specific namespace
+    /// </summary>
+    /// <param name="namespace">Namespace name</param>
+    /// <param name="minutes">Number of minutes to look back (default: 1440 = 24 hours)</param>
+    /// <param name="clusterName">Optional cluster name filter</param>
+    /// <returns>List of PVC metrics for the namespace</returns>
+    [HttpGet("pvc/namespace/{namespace}")]
+    [Authorize]
+    public async Task<ActionResult<List<PvcMetricDto>>> GetPvcMetricsByNamespace(
+        string @namespace,
+        [FromQuery] int? minutes = 1440,
+        [FromQuery] string? clusterName = null)
+    {
+        try
+        {
+            var metrics = await _clickHouseService.GetPvcMetricsAsync(@namespace, minutes, clusterName);
+            return Ok(metrics);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Get unique cluster names from both node and namespace tables
     /// </summary>
     /// <returns>List of unique cluster names</returns>
@@ -353,8 +436,8 @@ public class MetricsController : ControllerBase
         {
             await _clickHouseService.CleanupMetricsAsync(days);
             var message = days == 0
-                ? "All four tables (k8s_metrics, k8s_node_metrics, k8s_pod_logs, and k8s_events) have been truncated."
-                : $"Records older than {days} days have been deleted from all four tables (k8s_metrics, k8s_node_metrics, k8s_pod_logs, and k8s_events).";
+                ? "All five tables (k8s_metrics, k8s_node_metrics, k8s_pod_logs, k8s_events, k8s_pvc_metrics) have been truncated."
+                : $"Records older than {days} days have been deleted from all five tables (k8s_metrics, k8s_node_metrics, k8s_pod_logs, k8s_events, k8s_pvc_metrics).";
             return Ok(new { success = true, message });
         }
         catch (Exception ex)

@@ -54,5 +54,15 @@ public interface IMetricsApiClient
         int count,
         DateTime? firstTimestamp,
         DateTime? lastTimestamp);
+
+    Task WritePvcMetricAsync(
+        string @namespace,
+        string pod,
+        string pvcNamespace,
+        string pvcName,
+        string? volumeName,
+        ulong usedBytes,
+        ulong availableBytes,
+        ulong capacityBytes);
 }
 

@@ -14,10 +14,11 @@ public static class PvcUsageCollector
 
     /// <summary>
     /// Use config for node proxy (same auth as curl: Bearer token + CA). Use when client's Connect* returns 401.
+    /// When apiClient is provided, PVC metrics are also sent to the API and stored in ClickHouse.
     /// </summary>
-    public static async Task CollectAsync(Kubernetes client, KubernetesClientConfiguration config)
+    public static async Task CollectAsync(Kubernetes client, KubernetesClientConfiguration config, IMetricsApiClient? apiClient = null)
     {
-        await CollectAsync(new KubernetesClientWrapper(client), config);
+        await CollectAsync(new KubernetesClientWrapper(client), config, apiClient);
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -26,7 +27,7 @@ public static class PvcUsageCollector
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public static async Task CollectAsync(IKubernetesClientWrapper clientWrapper, KubernetesClientConfiguration? config = null)
+    public static async Task CollectAsync(IKubernetesClientWrapper clientWrapper, KubernetesClientConfiguration? config = null, IMetricsApiClient? apiClient = null)
     {
         try
         {
@@ -79,6 +80,26 @@ public static class PvcUsageCollector
 
                             Console.WriteLine(
                                 $"{ns}\t{podName}\t{pvcRef}\t{vol.Name}\t{used}\t{available}\t{capacity}");
+
+                            if (apiClient != null)
+                            {
+                                try
+                                {
+                                    await apiClient.WritePvcMetricAsync(
+                                        ns,
+                                        podName,
+                                        vol.PvcRef.Namespace ?? "",
+                                        vol.PvcRef.Name ?? "",
+                                        vol.Name,
+                                        used,
+                                        available,
+                                        capacity);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Log.Warning(ex, "Failed to send PVC metric to API for {Namespace}/{Pod} {PvcRef}", ns, podName, pvcRef);
+                                }
+                            }
                         }
                     }
                 }

@@ -224,6 +224,38 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
         response.EnsureSuccessStatusCode();
     }
 
+    public async Task WritePvcMetricAsync(
+        string @namespace,
+        string pod,
+        string pvcNamespace,
+        string pvcName,
+        string? volumeName,
+        ulong usedBytes,
+        ulong availableBytes,
+        ulong capacityBytes)
+    {
+        var request = new
+        {
+            ClusterName = _clusterName,
+            Namespace = @namespace,
+            Pod = pod,
+            PvcNamespace = pvcNamespace,
+            PvcName = pvcName,
+            VolumeName = volumeName,
+            UsedBytes = usedBytes,
+            AvailableBytes = availableBytes,
+            CapacityBytes = capacityBytes
+        };
+
+        var json = JsonSerializer.Serialize(request);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await _retryPolicy.ExecuteAsync(async () =>
+            await _httpClient.PostAsync($"{_apiBaseUrl}/api/metrics/pvc", content));
+
+        response.EnsureSuccessStatusCode();
+    }
+
     public void Dispose()
     {
         _httpClient?.Dispose();
