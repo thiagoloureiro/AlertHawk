@@ -131,10 +131,10 @@ public class KubernetesClientWrapper : IKubernetesClientWrapper
 
     public async Task<string> GetNodeStatsSummaryAsync(string nodeName, CancellationToken cancellationToken = default)
     {
-        var response = await _kubernetes.CoreV1.ConnectGetNodeProxyWithPathWithHttpMessagesAsync(
+        // Use ConnectGetNodeProxy (path = kubelet path) to match: GET /api/v1/nodes/{name}/proxy/stats/summary
+        var response = await _kubernetes.CoreV1.ConnectGetNodeProxyWithHttpMessagesAsync(
             name: nodeName,
-            path: "proxy",
-            path1: "stats/summary",
+            path: "stats/summary",
             customHeaders: null,
             cancellationToken);
 
