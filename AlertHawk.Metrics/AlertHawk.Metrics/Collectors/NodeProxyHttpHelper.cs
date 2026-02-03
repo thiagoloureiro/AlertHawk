@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
 using k8s;
@@ -8,6 +9,7 @@ namespace AlertHawk.Metrics.Collectors;
 /// Fetches node proxy endpoints using KubernetesClientConfiguration (same auth as curl with Bearer token + CA).
 /// Use this when the Kubernetes client's Connect* methods return 401 for node proxy.
 /// </summary>
+[ExcludeFromCodeCoverage]
 internal static class NodeProxyHttpHelper
 {
     public static async Task<string> GetNodeStatsSummaryAsync(

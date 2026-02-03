@@ -2,13 +2,16 @@
 {
     using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
+    [ExcludeFromDescription]
     public class GlobalRoutePrefixConvention : IApplicationModelConvention
     {
         private readonly AttributeRouteModel _routePrefix;
+
         public GlobalRoutePrefixConvention(string routePrefix)
         {
             _routePrefix = new AttributeRouteModel(new Microsoft.AspNetCore.Mvc.RouteAttribute(routePrefix));
         }
+
         public void Apply(ApplicationModel application)
         {
             foreach (var controller in application.Controllers)
