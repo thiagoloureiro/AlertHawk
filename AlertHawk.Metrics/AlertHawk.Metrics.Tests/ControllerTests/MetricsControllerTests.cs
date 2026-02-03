@@ -1674,4 +1674,310 @@ public class MetricsControllerTests
     }
 
     #endregion
+
+    #region WritePvcMetric Tests
+
+    [Fact]
+    public async Task WritePvcMetric_WithValidRequest_ReturnsOk()
+    {
+        // Arrange
+        var request = new PvcMetricRequest
+        {
+            ClusterName = "test-cluster",
+            Namespace = "clickhouse",
+            Pod = "clickhouse-0",
+            PvcNamespace = "clickhouse",
+            PvcName = "clickhouse-data",
+            VolumeName = "clickhouse-data",
+            UsedBytes = 1024,
+            AvailableBytes = 2048,
+            CapacityBytes = 3072
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.WritePvcMetricsAsync(
+                request.Namespace,
+                request.Pod,
+                request.PvcNamespace,
+                request.PvcName,
+                request.VolumeName,
+                request.UsedBytes,
+                request.AvailableBytes,
+                request.CapacityBytes,
+                request.ClusterName))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.WritePvcMetric(request);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.NotNull(okResult.Value);
+        var responseType = okResult.Value.GetType();
+        var successProperty = responseType.GetProperty("success");
+        Assert.NotNull(successProperty);
+        Assert.True((bool)successProperty.GetValue(okResult.Value)!);
+        _mockClickHouseService.Verify(s => s.WritePvcMetricsAsync(
+            request.Namespace,
+            request.Pod,
+            request.PvcNamespace,
+            request.PvcName,
+            request.VolumeName,
+            request.UsedBytes,
+            request.AvailableBytes,
+            request.CapacityBytes,
+            request.ClusterName), Times.Once);
+    }
+
+    [Fact]
+    public async Task WritePvcMetric_WithEmptyClusterName_UsesNull()
+    {
+        // Arrange
+        var request = new PvcMetricRequest
+        {
+            ClusterName = "",
+            Namespace = "clickhouse",
+            Pod = "clickhouse-0",
+            PvcNamespace = "clickhouse",
+            PvcName = "clickhouse-data",
+            VolumeName = "data",
+            UsedBytes = 100,
+            AvailableBytes = 200,
+            CapacityBytes = 300
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.WritePvcMetricsAsync(
+                request.Namespace,
+                request.Pod,
+                request.PvcNamespace,
+                request.PvcName,
+                request.VolumeName,
+                request.UsedBytes,
+                request.AvailableBytes,
+                request.CapacityBytes,
+                null))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.WritePvcMetric(request);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        _mockClickHouseService.Verify(s => s.WritePvcMetricsAsync(
+            request.Namespace,
+            request.Pod,
+            request.PvcNamespace,
+            request.PvcName,
+            request.VolumeName,
+            request.UsedBytes,
+            request.AvailableBytes,
+            request.CapacityBytes,
+            null), Times.Once);
+    }
+
+    [Fact]
+    public async Task WritePvcMetric_ServiceThrowsException_ReturnsInternalServerError()
+    {
+        // Arrange
+        var request = new PvcMetricRequest
+        {
+            ClusterName = "test-cluster",
+            Namespace = "clickhouse",
+            Pod = "clickhouse-0",
+            PvcNamespace = "clickhouse",
+            PvcName = "clickhouse-data",
+            UsedBytes = 100,
+            AvailableBytes = 200,
+            CapacityBytes = 300
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.WritePvcMetricsAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                It.IsAny<ulong>(),
+                It.IsAny<ulong>(),
+                It.IsAny<ulong>(),
+                It.IsAny<string?>()))
+            .ThrowsAsync(new Exception("Database error"));
+
+        // Act
+        var result = await _controller.WritePvcMetric(request);
+
+        // Assert
+        var statusResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, statusResult.StatusCode);
+    }
+
+    #endregion
+
+    #region GetPvcMetrics Tests
+
+    [Fact]
+    public async Task GetPvcMetrics_WithNamespaceFilter_ReturnsOkWithMetrics()
+    {
+        // Arrange
+        var expectedMetrics = new List<PvcMetricDto>
+        {
+            new PvcMetricDto
+            {
+                Timestamp = DateTime.UtcNow,
+                ClusterName = "test-cluster",
+                Namespace = "clickhouse",
+                Pod = "clickhouse-0",
+                PvcNamespace = "clickhouse",
+                PvcName = "clickhouse-data",
+                VolumeName = "data",
+                UsedBytes = 1024,
+                AvailableBytes = 2048,
+                CapacityBytes = 3072
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.GetPvcMetricsAsync("clickhouse", 1440, null))
+            .ReturnsAsync(expectedMetrics);
+
+        // Act
+        var result = await _controller.GetPvcMetrics("clickhouse", 1440);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var metrics = Assert.IsAssignableFrom<List<PvcMetricDto>>(okResult.Value);
+        Assert.Single(metrics);
+        Assert.Equal("clickhouse", metrics[0].Namespace);
+        Assert.Equal("clickhouse-data", metrics[0].PvcName);
+        _mockClickHouseService.Verify(s => s.GetPvcMetricsAsync("clickhouse", 1440, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPvcMetrics_WithClusterNameFilter_ReturnsOkWithMetrics()
+    {
+        // Arrange
+        var expectedMetrics = new List<PvcMetricDto>();
+
+        _mockClickHouseService
+            .Setup(s => s.GetPvcMetricsAsync(null, 1440, "my-cluster"))
+            .ReturnsAsync(expectedMetrics);
+
+        // Act
+        var result = await _controller.GetPvcMetrics(clusterName: "my-cluster");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        _mockClickHouseService.Verify(s => s.GetPvcMetricsAsync(null, 1440, "my-cluster"), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPvcMetrics_WithDefaultParameters_UsesDefaults()
+    {
+        // Arrange
+        var expectedMetrics = new List<PvcMetricDto>();
+
+        _mockClickHouseService
+            .Setup(s => s.GetPvcMetricsAsync(null, 1440, null))
+            .ReturnsAsync(expectedMetrics);
+
+        // Act
+        var result = await _controller.GetPvcMetrics();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        _mockClickHouseService.Verify(s => s.GetPvcMetricsAsync(null, 1440, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPvcMetrics_ServiceThrowsException_ReturnsInternalServerError()
+    {
+        // Arrange
+        _mockClickHouseService
+            .Setup(s => s.GetPvcMetricsAsync(null, 1440, null))
+            .ThrowsAsync(new Exception("Database error"));
+
+        // Act
+        var result = await _controller.GetPvcMetrics();
+
+        // Assert
+        var statusResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(500, statusResult.StatusCode);
+    }
+
+    #endregion
+
+    #region GetPvcMetricsByNamespace Tests
+
+    [Fact]
+    public async Task GetPvcMetricsByNamespace_WithValidNamespace_ReturnsOkWithMetrics()
+    {
+        // Arrange
+        var expectedMetrics = new List<PvcMetricDto>
+        {
+            new PvcMetricDto
+            {
+                Timestamp = DateTime.UtcNow,
+                ClusterName = "test-cluster",
+                Namespace = "clickhouse",
+                Pod = "clickhouse-0",
+                PvcNamespace = "clickhouse",
+                PvcName = "clickhouse-data",
+                UsedBytes = 100,
+                AvailableBytes = 200,
+                CapacityBytes = 300
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.GetPvcMetricsAsync("clickhouse", 1440, null))
+            .ReturnsAsync(expectedMetrics);
+
+        // Act
+        var result = await _controller.GetPvcMetricsByNamespace("clickhouse", 1440);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var metrics = Assert.IsAssignableFrom<List<PvcMetricDto>>(okResult.Value);
+        Assert.Single(metrics);
+        Assert.Equal("clickhouse", metrics[0].Namespace);
+        _mockClickHouseService.Verify(s => s.GetPvcMetricsAsync("clickhouse", 1440, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPvcMetricsByNamespace_WithClusterName_UsesClusterFilter()
+    {
+        // Arrange
+        var expectedMetrics = new List<PvcMetricDto>();
+
+        _mockClickHouseService
+            .Setup(s => s.GetPvcMetricsAsync("clickhouse", 60, "prod-cluster"))
+            .ReturnsAsync(expectedMetrics);
+
+        // Act
+        var result = await _controller.GetPvcMetricsByNamespace("clickhouse", 60, "prod-cluster");
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        _mockClickHouseService.Verify(s => s.GetPvcMetricsAsync("clickhouse", 60, "prod-cluster"), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetPvcMetricsByNamespace_ServiceThrowsException_ReturnsInternalServerError()
+    {
+        // Arrange
+        _mockClickHouseService
+            .Setup(s => s.GetPvcMetricsAsync("clickhouse", 1440, null))
+            .ThrowsAsync(new Exception("Query failed"));
+
+        // Act
+        var result = await _controller.GetPvcMetricsByNamespace("clickhouse");
+
+        // Assert
+        var statusResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(500, statusResult.StatusCode);
+    }
+
+    #endregion
 }
