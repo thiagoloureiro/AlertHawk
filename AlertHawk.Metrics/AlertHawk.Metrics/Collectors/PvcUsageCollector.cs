@@ -68,12 +68,14 @@ public static class PvcUsageCollector
 
                         foreach (var vol in pod.Volume)
                         {
+                            // Only report volumes backed by a PersistentVolumeClaim (actual PVC usage)
+                            if (vol.PvcRef == null)
+                                continue;
+
                             var used = vol.UsedBytes ?? 0;
                             var available = vol.AvailableBytes ?? 0;
                             var capacity = vol.CapacityBytes ?? 0;
-                            var pvcRef = vol.PvcRef != null
-                                ? $"{vol.PvcRef.Namespace}/{vol.PvcRef.Name}"
-                                : (vol.Name ?? "unknown");
+                            var pvcRef = $"{vol.PvcRef.Namespace}/{vol.PvcRef.Name}";
 
                             Console.WriteLine(
                                 $"{ns}\t{podName}\t{pvcRef}\t{vol.Name}\t{used}\t{available}\t{capacity}");
