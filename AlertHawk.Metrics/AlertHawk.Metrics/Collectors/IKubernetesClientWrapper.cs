@@ -14,5 +14,6 @@ public interface IKubernetesClientWrapper
     Task<string> DetectCloudProviderAsync();
     Task<string> ReadNamespacedPodLogAsync(string name, string namespaceParameter, string? container = null, int? tailLines = null);
     Task<Corev1EventList> ListNamespacedEventAsync(string namespaceParameter);
+    Task<string> GetNodeStatsSummaryAsync(string nodeName, CancellationToken cancellationToken = default);
 }
 

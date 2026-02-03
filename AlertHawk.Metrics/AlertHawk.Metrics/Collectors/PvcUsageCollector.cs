@@ -1,0 +1,84 @@
+using System.Text.Json;
+using AlertHawk.Metrics.Models;
+using k8s;
+using Serilog;
+
+namespace AlertHawk.Metrics.Collectors;
+
+public static class PvcUsageCollector
+{
+    public static async Task CollectAsync(Kubernetes client)
+    {
+        await CollectAsync(new KubernetesClientWrapper(client));
+    }
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    public static async Task CollectAsync(IKubernetesClientWrapper clientWrapper)
+    {
+        try
+        {
+            Log.Information("Collecting PVC/volume usage from nodes...");
+            Console.WriteLine("Namespace\tPod\tPVC/Volume\tVolumeName\tUsedBytes\tAvailableBytes\tCapacityBytes");
+
+            var nodes = await clientWrapper.ListNodeAsync();
+            if (nodes?.Items == null || nodes.Items.Count == 0)
+            {
+                Log.Information("No nodes found.");
+                return;
+            }
+
+            foreach (var node in nodes.Items)
+            {
+                var nodeName = node.Metadata?.Name;
+                if (string.IsNullOrEmpty(nodeName))
+                    continue;
+
+                try
+                {
+                    var json = await clientWrapper.GetNodeStatsSummaryAsync(nodeName);
+                    if (string.IsNullOrWhiteSpace(json))
+                    {
+                        Log.Debug("Empty stats/summary for node {NodeName}", nodeName);
+                        continue;
+                    }
+
+                    var summary = JsonSerializer.Deserialize<StatsSummary>(json, JsonOptions);
+                    if (summary?.Pods == null)
+                        continue;
+
+                    foreach (var pod in summary.Pods)
+                    {
+                        var ns = pod.PodRef?.Namespace ?? "";
+                        var podName = pod.PodRef?.Name ?? "";
+
+                        foreach (var vol in pod.Volume)
+                        {
+                            var used = vol.UsedBytes ?? 0;
+                            var available = vol.AvailableBytes ?? 0;
+                            var capacity = vol.CapacityBytes ?? 0;
+                            var pvcRef = vol.PvcRef != null
+                                ? $"{vol.PvcRef.Namespace}/{vol.PvcRef.Name}"
+                                : (vol.Name ?? "unknown");
+
+                            Console.WriteLine(
+                                $"{ns}\t{podName}\t{pvcRef}\t{vol.Name}\t{used}\t{available}\t{capacity}");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Failed to get stats/summary for node {NodeName}", nodeName);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Error during PVC usage collection");
+        }
+    }
+}

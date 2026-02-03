@@ -1,4 +1,4 @@
-﻿using AlertHawk.Metrics;
+using AlertHawk.Metrics;
 using AlertHawk.Metrics.Collectors;
 using k8s;
 using Serilog;
@@ -99,6 +99,7 @@ try
     {
         await PodMetricsCollector.CollectAsync(client, namespacesToWatch, apiClient);
         await NodeMetricsCollector.CollectAsync(client, apiClient);
+        await PvcUsageCollector.CollectAsync(client);
         await EventsCollector.CollectAsync(client, namespacesToWatch, apiClient);
         await Task.Delay(TimeSpan.FromSeconds(collectionIntervalSeconds), cancellationTokenSource.Token);
     }
