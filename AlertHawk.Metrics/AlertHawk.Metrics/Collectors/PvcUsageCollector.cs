@@ -12,13 +12,21 @@ public static class PvcUsageCollector
         await CollectAsync(new KubernetesClientWrapper(client));
     }
 
+    /// <summary>
+    /// Use config for node proxy (same auth as curl: Bearer token + CA). Use when client's Connect* returns 401.
+    /// </summary>
+    public static async Task CollectAsync(Kubernetes client, KubernetesClientConfiguration config)
+    {
+        await CollectAsync(new KubernetesClientWrapper(client), config);
+    }
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public static async Task CollectAsync(IKubernetesClientWrapper clientWrapper)
+    public static async Task CollectAsync(IKubernetesClientWrapper clientWrapper, KubernetesClientConfiguration? config = null)
     {
         try
         {
@@ -40,7 +48,9 @@ public static class PvcUsageCollector
 
                 try
                 {
-                    var json = await clientWrapper.GetNodeStatsSummaryAsync(nodeName);
+                    var json = config != null
+                        ? await NodeProxyHttpHelper.GetNodeStatsSummaryAsync(config, nodeName)
+                        : await clientWrapper.GetNodeStatsSummaryAsync(nodeName);
                     if (string.IsNullOrWhiteSpace(json))
                     {
                         Log.Debug("Empty stats/summary for node {NodeName}", nodeName);
