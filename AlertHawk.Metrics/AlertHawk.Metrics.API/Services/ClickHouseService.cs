@@ -1006,22 +1006,55 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 whereClause += $" AND namespace = '{escapedNamespace}'";
             }
 
-            var query = $@"
-                SELECT 
-                    timestamp,
-                    cluster_name,
-                    namespace,
-                    pod,
-                    pvc_namespace,
-                    pvc_name,
-                    volume_name,
-                    used_bytes,
-                    available_bytes,
-                    capacity_bytes
-                FROM {_database}.{_pvcTableName}
-                WHERE {whereClause}
-                ORDER BY timestamp DESC
-            ";
+            string query;
+            // If 48 hours or more, interpolate data using time intervals to reduce volume
+            if (minutesValue >= 2880) // 48 hours
+            {
+                // 48h–7 days: 30 min intervals; 7+ days: 60 min intervals
+                int intervalMinutes = minutesValue <= 10080 ? 30 : 60;
+                query = $@"
+                    SELECT 
+                        toStartOfInterval(timestamp, INTERVAL {intervalMinutes} MINUTE) AS timestamp,
+                        cluster_name,
+                        namespace,
+                        pod,
+                        pvc_namespace,
+                        pvc_name,
+                        any(volume_name) AS volume_name,
+                        toUInt64(round(avg(used_bytes))) AS used_bytes,
+                        toUInt64(round(avg(available_bytes))) AS available_bytes,
+                        toUInt64(round(avg(capacity_bytes))) AS capacity_bytes
+                    FROM {_database}.{_pvcTableName}
+                    WHERE {whereClause}
+                    GROUP BY 
+                        timestamp,
+                        cluster_name,
+                        namespace,
+                        pod,
+                        pvc_namespace,
+                        pvc_name
+                    ORDER BY timestamp DESC
+                ";
+            }
+            else
+            {
+                query = $@"
+                    SELECT 
+                        timestamp,
+                        cluster_name,
+                        namespace,
+                        pod,
+                        pvc_namespace,
+                        pvc_name,
+                        volume_name,
+                        used_bytes,
+                        available_bytes,
+                        capacity_bytes
+                    FROM {_database}.{_pvcTableName}
+                    WHERE {whereClause}
+                    ORDER BY timestamp DESC
+                ";
+            }
 
             await using var command = connection.CreateCommand();
             command.CommandText = query;
