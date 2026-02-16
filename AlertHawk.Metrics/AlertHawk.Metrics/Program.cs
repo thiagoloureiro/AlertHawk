@@ -97,12 +97,21 @@ try
 {
     while (!cancellationTokenSource.Token.IsCancellationRequested)
     {
-        await PodMetricsCollector.CollectAsync(client, namespacesToWatch, apiClient);
-        await NodeMetricsCollector.CollectAsync(client, apiClient);
-        await PvcUsageCollector.CollectAsync(client, config, apiClient, namespacesToWatch);
-        await EventsCollector.CollectAsync(client, namespacesToWatch, apiClient);
+        var sw = new System.Diagnostics.Stopwatch();
+        sw.Start();
+
+        await Task.WhenAll(
+            PodMetricsCollector.CollectAsync(client, namespacesToWatch, apiClient),
+            NodeMetricsCollector.CollectAsync(client, apiClient),
+            PvcUsageCollector.CollectAsync(client, config, apiClient, namespacesToWatch),
+            EventsCollector.CollectAsync(client, namespacesToWatch, apiClient)
+        );
+
+        sw.Stop();
+        Log.Information("Metrics collection cycle completed in {ElapsedSeconds} seconds", sw.Elapsed.TotalSeconds);
         await Task.Delay(TimeSpan.FromSeconds(collectionIntervalSeconds), cancellationTokenSource.Token);
     }
+
 }
 catch (OperationCanceledException)
 {
