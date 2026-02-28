@@ -18,6 +18,14 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
     private readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy;
 
     public MetricsApiClient(string apiBaseUrl, string clusterName, string? clusterEnvironment = null)
+        : this(apiBaseUrl, clusterName, CreateDefaultHttpClient(), clusterEnvironment)
+    {
+    }
+
+    /// <summary>
+    /// Constructor that allows injecting HttpClient (e.g. for testing or custom configuration).
+    /// </summary>
+    public MetricsApiClient(string apiBaseUrl, string clusterName, HttpClient httpClient, string? clusterEnvironment = null)
     {
         if (string.IsNullOrWhiteSpace(apiBaseUrl))
         {
@@ -31,15 +39,7 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
         _apiBaseUrl = apiBaseUrl.TrimEnd('/');
         _clusterName = clusterName;
         _clusterEnvironment = clusterEnvironment ?? "PROD";
-        _httpClient = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(30)
-        };
-        
-        _httpClient.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
-        _httpClient.DefaultRequestHeaders.Add("Accept-Encoding", "br");
-        _httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
-        _httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
+        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 
         // Configure retry policy with exponential backoff
         _retryPolicy = Policy
@@ -55,6 +55,16 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
                     Log.Warning("Retry {RetryCount}/3: API call failed ({StatusCode}). Retrying in {DelaySeconds:F1}s...", 
                         retryCount, statusCode, timespan.TotalSeconds);
                 });
+    }
+
+    private static HttpClient CreateDefaultHttpClient()
+    {
+        var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
+        client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
+        client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+        client.DefaultRequestHeaders.Add("Accept", "*/*");
+        return client;
     }
 
     private static bool IsTransientError(HttpStatusCode statusCode)
@@ -252,6 +262,34 @@ public class MetricsApiClient : IMetricsApiClient, IDisposable
 
         var response = await _retryPolicy.ExecuteAsync(async () =>
             await _httpClient.PostAsync($"{_apiBaseUrl}/api/metrics/pvc", content));
+
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task WriteHostMetricAsync(
+        string hostname,
+        double cpuUsagePercent,
+        ulong memoryTotalBytes,
+        ulong memoryUsedBytes,
+        IReadOnlyList<(string DriveName, ulong TotalBytes, ulong FreeBytes)>? disks = null)
+    {
+        var disksPayload = disks?.Select(d => new { DriveName = d.DriveName, TotalBytes = d.TotalBytes, FreeBytes = d.FreeBytes }).ToList();
+        var request = new
+        {
+            Hostname = hostname,
+            CpuUsagePercent = cpuUsagePercent,
+            MemoryTotalBytes = memoryTotalBytes,
+            MemoryUsedBytes = memoryUsedBytes,
+            Disks = disksPayload
+        };
+
+        var json = JsonSerializer.Serialize(request);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        Log.Debug("Calling API: {ApiUrl}/api/metrics/host for host {Hostname}", _apiBaseUrl, hostname);
+
+        var response = await _retryPolicy.ExecuteAsync(async () =>
+            await _httpClient.PostAsync($"{_apiBaseUrl}/api/metrics/host", content));
 
         response.EnsureSuccessStatusCode();
     }

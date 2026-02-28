@@ -184,3 +184,40 @@ public class ClusterPriceDto
     public string ArmRegionName { get; set; } = string.Empty;
     public DateTime EffectiveStartDate { get; set; }
 }
+
+/// <summary>
+/// VM/Host metrics: CPU, RAM, and optional disk list. Sent by the VM agent with hostname.
+/// </summary>
+public class HostMetricRequest
+{
+    public string Hostname { get; set; } = string.Empty;
+    public double CpuUsagePercent { get; set; }
+    public ulong MemoryTotalBytes { get; set; }
+    public ulong MemoryUsedBytes { get; set; }
+    public List<HostDiskMetricItem>? Disks { get; set; }
+}
+
+public class HostDiskMetricItem
+{
+    public string DriveName { get; set; } = string.Empty;
+    public ulong TotalBytes { get; set; }
+    public ulong FreeBytes { get; set; }
+}
+
+public class HostMetricDto
+{
+    public DateTime Timestamp { get; set; }
+    public string Hostname { get; set; } = string.Empty;
+    public double CpuUsagePercent { get; set; }
+    public ulong MemoryTotalBytes { get; set; }
+    public ulong MemoryUsedBytes { get; set; }
+}
+
+public class HostDiskMetricDto
+{
+    public DateTime Timestamp { get; set; }
+    public string Hostname { get; set; } = string.Empty;
+    public string DriveName { get; set; } = string.Empty;
+    public ulong TotalBytes { get; set; }
+    public ulong FreeBytes { get; set; }
+}

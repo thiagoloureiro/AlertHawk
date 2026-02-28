@@ -64,5 +64,15 @@ public interface IMetricsApiClient
         ulong usedBytes,
         ulong availableBytes,
         ulong capacityBytes);
+
+    /// <summary>
+    /// Sends VM/host metrics (CPU, RAM, disks) to the API. Used when AGENT_TYPE=vm.
+    /// </summary>
+    Task WriteHostMetricAsync(
+        string hostname,
+        double cpuUsagePercent,
+        ulong memoryTotalBytes,
+        ulong memoryUsedBytes,
+        IReadOnlyList<(string DriveName, ulong TotalBytes, ulong FreeBytes)>? disks = null);
 }
 

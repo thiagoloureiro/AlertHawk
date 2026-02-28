@@ -16,10 +16,12 @@ public class ClickHouseService : IClickHouseService, IDisposable
     private readonly string _eventsTableName;
     private readonly string _clusterPricesTableName;
     private readonly string _pvcTableName;
+    private readonly string _vmMetricsTableName;
+    private readonly string _vmDiskMetricsTableName;
     private readonly string _clusterName;
     private readonly SemaphoreSlim _connectionSemaphore = new(1, 1);
 
-    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string podLogsTableName = "k8s_pod_logs", string eventsTableName = "k8s_events", string clusterPricesTableName = "k8s_cluster_prices", string pvcTableName = "k8s_pvc_metrics")
+    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string podLogsTableName = "k8s_pod_logs", string eventsTableName = "k8s_events", string clusterPricesTableName = "k8s_cluster_prices", string pvcTableName = "k8s_pvc_metrics", string vmMetricsTableName = "vm_metrics", string vmDiskMetricsTableName = "vm_disk_metrics")
     {
         _connectionString = connectionString;
         _database = ExtractDatabaseFromConnectionString(connectionString);
@@ -30,6 +32,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
         _eventsTableName = eventsTableName;
         _clusterPricesTableName = clusterPricesTableName;
         _pvcTableName = pvcTableName;
+        _vmMetricsTableName = vmMetricsTableName;
+        _vmDiskMetricsTableName = vmDiskMetricsTableName;
         EnsureTablesExistAsync().GetAwaiter().GetResult();
     }
 
@@ -514,6 +518,44 @@ public class ClickHouseService : IClickHouseService, IDisposable
         pvcCommand.CommandText = createPvcTableSql;
         await pvcCommand.ExecuteNonQueryAsync();
         Console.WriteLine($"Table '{_database}.{_pvcTableName}' ensured to exist");
+
+        // Create VM/host metrics table (CPU, RAM per host)
+        var createVmMetricsTableSql = $@"
+            CREATE TABLE IF NOT EXISTS {_database}.{_vmMetricsTableName}
+            (
+                timestamp DateTime64(3) DEFAULT now64(),
+                hostname String,
+                cpu_usage_percent Float64,
+                memory_total_bytes UInt64,
+                memory_used_bytes UInt64
+            )
+            ENGINE = MergeTree()
+            ORDER BY (timestamp, hostname)
+            TTL toDateTime(timestamp) + INTERVAL 90 DAY
+        ";
+        await using var vmMetricsCommand = connection.CreateCommand();
+        vmMetricsCommand.CommandText = createVmMetricsTableSql;
+        await vmMetricsCommand.ExecuteNonQueryAsync();
+        Console.WriteLine($"Table '{_database}.{_vmMetricsTableName}' ensured to exist");
+
+        // Create VM disk metrics table (per host + drive)
+        var createVmDiskTableSql = $@"
+            CREATE TABLE IF NOT EXISTS {_database}.{_vmDiskMetricsTableName}
+            (
+                timestamp DateTime64(3) DEFAULT now64(),
+                hostname String,
+                drive_name String,
+                total_bytes UInt64,
+                free_bytes UInt64
+            )
+            ENGINE = MergeTree()
+            ORDER BY (timestamp, hostname, drive_name)
+            TTL toDateTime(timestamp) + INTERVAL 90 DAY
+        ";
+        await using var vmDiskCommand = connection.CreateCommand();
+        vmDiskCommand.CommandText = createVmDiskTableSql;
+        await vmDiskCommand.ExecuteNonQueryAsync();
+        Console.WriteLine($"Table '{_database}.{_vmDiskMetricsTableName}' ensured to exist");
     }
 
     public async Task WriteMetricsAsync(
@@ -704,6 +746,60 @@ public class ClickHouseService : IClickHouseService, IDisposable
             await using var command = connection.CreateCommand();
             command.CommandText = insertSql;
             await command.ExecuteNonQueryAsync();
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
+    public async Task WriteHostMetricsAsync(
+        string hostname,
+        double cpuUsagePercent,
+        ulong memoryTotalBytes,
+        ulong memoryUsedBytes,
+        IReadOnlyList<(string DriveName, ulong TotalBytes, ulong FreeBytes)>? disks = null)
+    {
+        if (string.IsNullOrWhiteSpace(hostname))
+        {
+            throw new ArgumentException("Hostname is required for writing host metrics.", nameof(hostname));
+        }
+
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            var escapedHostname = hostname.Replace("'", "''").Replace("\\", "\\\\");
+
+            var insertHostSql = $@"
+                INSERT INTO {_database}.{_vmMetricsTableName}
+                (timestamp, hostname, cpu_usage_percent, memory_total_bytes, memory_used_bytes)
+                VALUES
+                ('{timestamp}', '{escapedHostname}', {cpuUsagePercent.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}, {memoryTotalBytes}, {memoryUsedBytes})
+            ";
+            await using var hostCommand = connection.CreateCommand();
+            hostCommand.CommandText = insertHostSql;
+            await hostCommand.ExecuteNonQueryAsync();
+
+            if (disks != null && disks.Count > 0)
+            {
+                foreach (var disk in disks)
+                {
+                    var escapedDriveName = disk.DriveName.Replace("'", "''").Replace("\\", "\\\\");
+                    var insertDiskSql = $@"
+                        INSERT INTO {_database}.{_vmDiskMetricsTableName}
+                        (timestamp, hostname, drive_name, total_bytes, free_bytes)
+                        VALUES
+                        ('{timestamp}', '{escapedHostname}', '{escapedDriveName}', {disk.TotalBytes}, {disk.FreeBytes})
+                    ";
+                    await using var diskCommand = connection.CreateCommand();
+                    diskCommand.CommandText = insertDiskSql;
+                    await diskCommand.ExecuteNonQueryAsync();
+                }
+            }
         }
         finally
         {
@@ -1087,6 +1183,96 @@ public class ClickHouseService : IClickHouseService, IDisposable
         }
     }
 
+    public async Task<List<HostMetricDto>> GetHostMetricsAsync(string? hostnameFilter = null, int? minutes = 1440)
+    {
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var minutesValue = minutes ?? 1440;
+            var whereClause = $"timestamp >= now() - INTERVAL {minutesValue} MINUTE";
+            if (!string.IsNullOrWhiteSpace(hostnameFilter))
+            {
+                var escapedHostname = hostnameFilter.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND hostname = '{escapedHostname}'";
+            }
+
+            var query = $@"
+                SELECT timestamp, hostname, cpu_usage_percent, memory_total_bytes, memory_used_bytes
+                FROM {_database}.{_vmMetricsTableName}
+                WHERE {whereClause}
+                ORDER BY timestamp DESC
+            ";
+            await using var command = connection.CreateCommand();
+            command.CommandText = query;
+            var results = new List<HostMetricDto>();
+            await using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                results.Add(new HostMetricDto
+                {
+                    Timestamp = reader.GetDateTime(0),
+                    Hostname = reader.GetString(1),
+                    CpuUsagePercent = reader.GetDouble(2),
+                    MemoryTotalBytes = Convert.ToUInt64(reader.GetValue(3)),
+                    MemoryUsedBytes = Convert.ToUInt64(reader.GetValue(4))
+                });
+            }
+            return results;
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
+    public async Task<List<HostDiskMetricDto>> GetHostDiskMetricsAsync(string? hostnameFilter = null, int? minutes = 1440)
+    {
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            await using var connection = new ClickHouseConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var minutesValue = minutes ?? 1440;
+            var whereClause = $"timestamp >= now() - INTERVAL {minutesValue} MINUTE";
+            if (!string.IsNullOrWhiteSpace(hostnameFilter))
+            {
+                var escapedHostname = hostnameFilter.Replace("'", "''").Replace("\\", "\\\\");
+                whereClause += $" AND hostname = '{escapedHostname}'";
+            }
+
+            var query = $@"
+                SELECT timestamp, hostname, drive_name, total_bytes, free_bytes
+                FROM {_database}.{_vmDiskMetricsTableName}
+                WHERE {whereClause}
+                ORDER BY timestamp DESC
+            ";
+            await using var command = connection.CreateCommand();
+            command.CommandText = query;
+            var results = new List<HostDiskMetricDto>();
+            await using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                results.Add(new HostDiskMetricDto
+                {
+                    Timestamp = reader.GetDateTime(0),
+                    Hostname = reader.GetString(1),
+                    DriveName = reader.GetString(2),
+                    TotalBytes = Convert.ToUInt64(reader.GetValue(3)),
+                    FreeBytes = Convert.ToUInt64(reader.GetValue(4))
+                });
+            }
+            return results;
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+    }
+
     public async Task<List<string>> GetUniqueClusterNamesAsync()
     {
         await _connectionSemaphore.WaitAsync();
@@ -1215,6 +1401,14 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 await using var truncatePvcCommand = connection.CreateCommand();
                 truncatePvcCommand.CommandText = $"TRUNCATE TABLE IF EXISTS {_database}.{_pvcTableName}";
                 await truncatePvcCommand.ExecuteNonQueryAsync();
+
+                await using var truncateVmMetricsCommand = connection.CreateCommand();
+                truncateVmMetricsCommand.CommandText = $"TRUNCATE TABLE IF EXISTS {_database}.{_vmMetricsTableName}";
+                await truncateVmMetricsCommand.ExecuteNonQueryAsync();
+
+                await using var truncateVmDiskCommand = connection.CreateCommand();
+                truncateVmDiskCommand.CommandText = $"TRUNCATE TABLE IF EXISTS {_database}.{_vmDiskMetricsTableName}";
+                await truncateVmDiskCommand.ExecuteNonQueryAsync();
             }
             else
             {
@@ -1256,6 +1450,20 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     DELETE WHERE timestamp < '{cutoffDateString}'
                 ";
                 await deletePvcCommand.ExecuteNonQueryAsync();
+
+                await using var deleteVmMetricsCommand = connection.CreateCommand();
+                deleteVmMetricsCommand.CommandText = $@"
+                    ALTER TABLE {_database}.{_vmMetricsTableName}
+                    DELETE WHERE timestamp < '{cutoffDateString}'
+                ";
+                await deleteVmMetricsCommand.ExecuteNonQueryAsync();
+
+                await using var deleteVmDiskCommand = connection.CreateCommand();
+                deleteVmDiskCommand.CommandText = $@"
+                    ALTER TABLE {_database}.{_vmDiskMetricsTableName}
+                    DELETE WHERE timestamp < '{cutoffDateString}'
+                ";
+                await deleteVmDiskCommand.ExecuteNonQueryAsync();
             }
         }
         finally

@@ -129,5 +129,16 @@ public interface IClickHouseService
         string? namespaceFilter = null,
         int? minutes = 1440,
         string? clusterName = null);
+
+    Task WriteHostMetricsAsync(
+        string hostname,
+        double cpuUsagePercent,
+        ulong memoryTotalBytes,
+        ulong memoryUsedBytes,
+        IReadOnlyList<(string DriveName, ulong TotalBytes, ulong FreeBytes)>? disks = null);
+
+    Task<List<HostMetricDto>> GetHostMetricsAsync(string? hostnameFilter = null, int? minutes = 1440);
+
+    Task<List<HostDiskMetricDto>> GetHostDiskMetricsAsync(string? hostnameFilter = null, int? minutes = 1440);
 }
 

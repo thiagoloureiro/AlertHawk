@@ -377,6 +377,87 @@ public class MetricsController : ControllerBase
     }
 
     /// <summary>
+    /// Write VM/host metrics (CPU, RAM, disks). Used by the VM agent; hostname is stored with the metrics.
+    /// </summary>
+    /// <param name="request">Host metric data including hostname</param>
+    /// <returns>Success status</returns>
+    [HttpPost("host")]
+    [AllowAnonymous]
+    public async Task<ActionResult> WriteHostMetric([FromBody] HostMetricRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.Hostname))
+            {
+                return BadRequest(new { error = "Hostname is required." });
+            }
+
+            var disks = request.Disks?
+                .Select(d => (d.DriveName, d.TotalBytes, d.FreeBytes))
+                .ToList();
+
+            await _clickHouseService.WriteHostMetricsAsync(
+                request.Hostname,
+                request.CpuUsagePercent,
+                request.MemoryTotalBytes,
+                request.MemoryUsedBytes,
+                disks);
+
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get VM/host metrics (CPU, RAM) by hostname and time range.
+    /// </summary>
+    /// <param name="hostname">Optional hostname filter</param>
+    /// <param name="minutes">Number of minutes to look back (default: 1440 = 24 hours)</param>
+    /// <returns>List of host metrics</returns>
+    [HttpGet("host")]
+    [Authorize]
+    public async Task<ActionResult<List<HostMetricDto>>> GetHostMetrics(
+        [FromQuery] string? hostname = null,
+        [FromQuery] int? minutes = 1440)
+    {
+        try
+        {
+            var metrics = await _clickHouseService.GetHostMetricsAsync(hostname, minutes);
+            return Ok(metrics);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get VM/host disk metrics by hostname and time range.
+    /// </summary>
+    /// <param name="hostname">Optional hostname filter</param>
+    /// <param name="minutes">Number of minutes to look back (default: 1440 = 24 hours)</param>
+    /// <returns>List of host disk metrics</returns>
+    [HttpGet("host/disk")]
+    [Authorize]
+    public async Task<ActionResult<List<HostDiskMetricDto>>> GetHostDiskMetrics(
+        [FromQuery] string? hostname = null,
+        [FromQuery] int? minutes = 1440)
+    {
+        try
+        {
+            var metrics = await _clickHouseService.GetHostDiskMetricsAsync(hostname, minutes);
+            return Ok(metrics);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Get unique cluster names from both node and namespace tables
     /// </summary>
     /// <returns>List of unique cluster names</returns>
@@ -436,8 +517,8 @@ public class MetricsController : ControllerBase
         {
             await _clickHouseService.CleanupMetricsAsync(days);
             var message = days == 0
-                ? "All five tables (k8s_metrics, k8s_node_metrics, k8s_pod_logs, k8s_events, k8s_pvc_metrics) have been truncated."
-                : $"Records older than {days} days have been deleted from all five tables (k8s_metrics, k8s_node_metrics, k8s_pod_logs, k8s_events, k8s_pvc_metrics).";
+                ? "All seven tables (k8s_metrics, k8s_node_metrics, k8s_pod_logs, k8s_events, k8s_pvc_metrics, vm_metrics, vm_disk_metrics) have been truncated."
+                : $"Records older than {days} days have been deleted from all seven tables (k8s_metrics, k8s_node_metrics, k8s_pod_logs, k8s_events, k8s_pvc_metrics, vm_metrics, vm_disk_metrics).";
             return Ok(new { success = true, message });
         }
         catch (Exception ex)

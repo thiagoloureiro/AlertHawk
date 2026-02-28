@@ -1908,6 +1908,296 @@ public class MetricsControllerTests
 
     #endregion
 
+    #region WriteHostMetric Tests
+
+    [Fact]
+    public async Task WriteHostMetric_WithValidRequest_ReturnsOk()
+    {
+        // Arrange
+        var request = new HostMetricRequest
+        {
+            Hostname = "server-01",
+            CpuUsagePercent = 25.5,
+            MemoryTotalBytes = 16 * 1024 * 1024 * 1024UL,
+            MemoryUsedBytes = 8 * 1024 * 1024 * 1024UL,
+            Disks = new List<HostDiskMetricItem>
+            {
+                new HostDiskMetricItem { DriveName = "C:", TotalBytes = 500 * 1024 * 1024 * 1024UL, FreeBytes = 100 * 1024 * 1024 * 1024UL }
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.WriteHostMetricsAsync(
+                request.Hostname,
+                request.CpuUsagePercent,
+                request.MemoryTotalBytes,
+                request.MemoryUsedBytes,
+                It.Is<IReadOnlyList<(string DriveName, ulong TotalBytes, ulong FreeBytes)>>(list =>
+                    list != null && list.Count == 1 &&
+                    list[0].DriveName == "C:" &&
+                    list[0].TotalBytes == 500 * 1024 * 1024 * 1024UL &&
+                    list[0].FreeBytes == 100 * 1024 * 1024 * 1024UL)))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.WriteHostMetric(request);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.NotNull(okResult.Value);
+        var responseType = okResult.Value.GetType();
+        var successProperty = responseType.GetProperty("success");
+        Assert.NotNull(successProperty);
+        Assert.True((bool)successProperty.GetValue(okResult.Value)!);
+        _mockClickHouseService.Verify(s => s.WriteHostMetricsAsync(
+            request.Hostname,
+            request.CpuUsagePercent,
+            request.MemoryTotalBytes,
+            request.MemoryUsedBytes,
+            It.IsAny<IReadOnlyList<(string DriveName, ulong TotalBytes, ulong FreeBytes)>?>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task WriteHostMetric_WithValidRequestAndNoDisks_ReturnsOk()
+    {
+        // Arrange
+        var request = new HostMetricRequest
+        {
+            Hostname = "server-02",
+            CpuUsagePercent = 10.0,
+            MemoryTotalBytes = 8 * 1024 * 1024 * 1024UL,
+            MemoryUsedBytes = 2 * 1024 * 1024 * 1024UL,
+            Disks = null
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.WriteHostMetricsAsync(
+                request.Hostname,
+                request.CpuUsagePercent,
+                request.MemoryTotalBytes,
+                request.MemoryUsedBytes,
+                null))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.WriteHostMetric(request);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        _mockClickHouseService.Verify(s => s.WriteHostMetricsAsync(
+            request.Hostname,
+            request.CpuUsagePercent,
+            request.MemoryTotalBytes,
+            request.MemoryUsedBytes,
+            null), Times.Once);
+    }
+
+    [Fact]
+    public async Task WriteHostMetric_WithEmptyHostname_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new HostMetricRequest
+        {
+            Hostname = "",
+            CpuUsagePercent = 5.0,
+            MemoryTotalBytes = 1024,
+            MemoryUsedBytes = 512
+        };
+
+        // Act
+        var result = await _controller.WriteHostMetric(request);
+
+        // Assert
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        _mockClickHouseService.Verify(s => s.WriteHostMetricsAsync(It.IsAny<string>(), It.IsAny<double>(), It.IsAny<ulong>(), It.IsAny<ulong>(), It.IsAny<IReadOnlyList<(string, ulong, ulong)>?>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task WriteHostMetric_WithNullHostname_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new HostMetricRequest
+        {
+            Hostname = null!,
+            CpuUsagePercent = 5.0,
+            MemoryTotalBytes = 1024,
+            MemoryUsedBytes = 512
+        };
+
+        // Act
+        var result = await _controller.WriteHostMetric(request);
+
+        // Assert
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        _mockClickHouseService.Verify(s => s.WriteHostMetricsAsync(It.IsAny<string>(), It.IsAny<double>(), It.IsAny<ulong>(), It.IsAny<ulong>(), It.IsAny<IReadOnlyList<(string, ulong, ulong)>?>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task WriteHostMetric_ServiceThrowsException_ReturnsInternalServerError()
+    {
+        // Arrange
+        var request = new HostMetricRequest
+        {
+            Hostname = "server-01",
+            CpuUsagePercent = 50.0,
+            MemoryTotalBytes = 1024,
+            MemoryUsedBytes = 512
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.WriteHostMetricsAsync(It.IsAny<string>(), It.IsAny<double>(), It.IsAny<ulong>(), It.IsAny<ulong>(), It.IsAny<IReadOnlyList<(string, ulong, ulong)>?>()))
+            .ThrowsAsync(new Exception("Database error"));
+
+        // Act
+        var result = await _controller.WriteHostMetric(request);
+
+        // Assert
+        var statusResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, statusResult.StatusCode);
+    }
+
+    #endregion
+
+    #region GetHostMetrics Tests
+
+    [Fact]
+    public async Task GetHostMetrics_WithHostnameFilter_ReturnsOkWithMetrics()
+    {
+        // Arrange
+        var expectedMetrics = new List<HostMetricDto>
+        {
+            new HostMetricDto
+            {
+                Timestamp = DateTime.UtcNow,
+                Hostname = "server-01",
+                CpuUsagePercent = 25.5,
+                MemoryTotalBytes = 16 * 1024 * 1024 * 1024UL,
+                MemoryUsedBytes = 8 * 1024 * 1024 * 1024UL
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.GetHostMetricsAsync("server-01", 1440))
+            .ReturnsAsync(expectedMetrics);
+
+        // Act
+        var result = await _controller.GetHostMetrics("server-01", 1440);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var metrics = Assert.IsAssignableFrom<List<HostMetricDto>>(okResult.Value);
+        Assert.Single(metrics);
+        Assert.Equal("server-01", metrics[0].Hostname);
+        Assert.Equal(25.5, metrics[0].CpuUsagePercent);
+        _mockClickHouseService.Verify(s => s.GetHostMetricsAsync("server-01", 1440), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetHostMetrics_WithoutHostname_UsesNullFilter()
+    {
+        // Arrange
+        var expectedMetrics = new List<HostMetricDto>();
+
+        _mockClickHouseService
+            .Setup(s => s.GetHostMetricsAsync(null, 1440))
+            .ReturnsAsync(expectedMetrics);
+
+        // Act
+        var result = await _controller.GetHostMetrics(minutes: 1440);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        _mockClickHouseService.Verify(s => s.GetHostMetricsAsync(null, 1440), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetHostMetrics_ServiceThrowsException_ReturnsInternalServerError()
+    {
+        // Arrange
+        _mockClickHouseService
+            .Setup(s => s.GetHostMetricsAsync(null, 1440))
+            .ThrowsAsync(new Exception("Query failed"));
+
+        // Act
+        var result = await _controller.GetHostMetrics();
+
+        // Assert
+        var statusResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(500, statusResult.StatusCode);
+    }
+
+    #endregion
+
+    #region GetHostDiskMetrics Tests
+
+    [Fact]
+    public async Task GetHostDiskMetrics_WithHostnameFilter_ReturnsOkWithMetrics()
+    {
+        // Arrange
+        var expectedMetrics = new List<HostDiskMetricDto>
+        {
+            new HostDiskMetricDto
+            {
+                Timestamp = DateTime.UtcNow,
+                Hostname = "server-01",
+                DriveName = "C:",
+                TotalBytes = 500 * 1024 * 1024 * 1024UL,
+                FreeBytes = 100 * 1024 * 1024 * 1024UL
+            }
+        };
+
+        _mockClickHouseService
+            .Setup(s => s.GetHostDiskMetricsAsync("server-01", 1440))
+            .ReturnsAsync(expectedMetrics);
+
+        // Act
+        var result = await _controller.GetHostDiskMetrics("server-01", 1440);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var metrics = Assert.IsAssignableFrom<List<HostDiskMetricDto>>(okResult.Value);
+        Assert.Single(metrics);
+        Assert.Equal("server-01", metrics[0].Hostname);
+        Assert.Equal("C:", metrics[0].DriveName);
+        _mockClickHouseService.Verify(s => s.GetHostDiskMetricsAsync("server-01", 1440), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetHostDiskMetrics_WithoutHostname_UsesNullFilter()
+    {
+        // Arrange
+        var expectedMetrics = new List<HostDiskMetricDto>();
+
+        _mockClickHouseService
+            .Setup(s => s.GetHostDiskMetricsAsync(null, 60))
+            .ReturnsAsync(expectedMetrics);
+
+        // Act
+        var result = await _controller.GetHostDiskMetrics(minutes: 60);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        _mockClickHouseService.Verify(s => s.GetHostDiskMetricsAsync(null, 60), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetHostDiskMetrics_ServiceThrowsException_ReturnsInternalServerError()
+    {
+        // Arrange
+        _mockClickHouseService
+            .Setup(s => s.GetHostDiskMetricsAsync(null, 1440))
+            .ThrowsAsync(new Exception("Query failed"));
+
+        // Act
+        var result = await _controller.GetHostDiskMetrics();
+
+        // Assert
+        var statusResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(500, statusResult.StatusCode);
+    }
+
+    #endregion
+
     #region GetPvcMetricsByNamespace Tests
 
     [Fact]
