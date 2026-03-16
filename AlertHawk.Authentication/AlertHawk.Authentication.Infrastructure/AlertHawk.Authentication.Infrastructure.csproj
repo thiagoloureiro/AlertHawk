@@ -7,10 +7,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Dapper" Version="2.1.66" />
+      <PackageReference Include="Dapper" Version="2.1.72" />
       <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
-      <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.2" />
-      <PackageReference Include="Sentry" Version="6.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.5" />
+      <PackageReference Include="Sentry" Version="6.2.0" />
     </ItemGroup>
 
     <ItemGroup>
