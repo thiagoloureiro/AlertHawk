@@ -14,6 +14,7 @@ public static class DependencyInjection
         services.AddTransient<IUsersMonitorGroupRepository, UsersMonitorGroupRepository>();
         services.AddTransient<IUserActionRepository, UserActionRepository>();
         services.AddTransient<IUserClustersRepository, UserClustersRepository>();
+        services.AddTransient<IUserSubscriptionsRepository, UserSubscriptionsRepository>();
         return services;
     }
 }

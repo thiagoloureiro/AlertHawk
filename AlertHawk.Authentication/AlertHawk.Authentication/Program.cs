@@ -135,6 +135,9 @@ using (var scope = app.Services.CreateScope())
 {
     var userClustersRepository = scope.ServiceProvider.GetRequiredService<IUserClustersRepository>();
     await userClustersRepository.EnsureTableExistsAsync();
+
+    var userSubscriptionsRepository = scope.ServiceProvider.GetRequiredService<IUserSubscriptionsRepository>();
+    await userSubscriptionsRepository.EnsureTableExistsAsync();
 }
 
 // Configure the HTTP request pipeline.
