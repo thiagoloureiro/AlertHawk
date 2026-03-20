@@ -60,7 +60,7 @@ public class UserSubscriptionsController : Controller
 
     [HttpPost("CreateOrUpdate")]
     [SwaggerOperation(
-        Summary = "Add or update multiple subscriptions for a user (subscriptionId + subscriptionName per row). Send empty list to remove all subscriptions.")]
+        Summary = "Add or update multiple subscriptions for a user. Send empty list to remove all subscriptions.")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -77,14 +77,14 @@ public class UserSubscriptionsController : Controller
             return BadRequest(ModelState);
         }
 
-        if (request.Subscriptions == null)
+        if (request.SubscriptionIds == null)
         {
-            return BadRequest(new Message("Subscriptions list cannot be null"));
+            return BadRequest(new Message("SubscriptionIds list cannot be null"));
         }
 
         try
         {
-            await _userSubscriptionsService.CreateOrUpdateAsync(request.UserId, request.Subscriptions);
+            await _userSubscriptionsService.CreateOrUpdateAsync(request.UserId, request.SubscriptionIds);
             return Ok();
         }
         catch (InvalidOperationException ex)
@@ -150,5 +150,5 @@ public class UserSubscriptionsController : Controller
 public class CreateOrUpdateUserSubscriptionsRequest
 {
     public Guid UserId { get; set; }
-    public List<UserSubscriptions> Subscriptions { get; set; } = new();
+    public List<Guid> SubscriptionIds { get; set; } = new();
 }

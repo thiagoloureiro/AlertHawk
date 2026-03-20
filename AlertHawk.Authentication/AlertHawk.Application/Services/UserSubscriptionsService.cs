@@ -11,24 +11,21 @@ public class UserSubscriptionsService(IUserSubscriptionsRepository repository) :
         await repository.CreateAsync(userSubscription);
     }
 
-    public async Task CreateOrUpdateAsync(Guid userId, IReadOnlyList<UserSubscriptions> subscriptions)
+    public async Task CreateOrUpdateAsync(Guid userId, List<Guid> subscriptionIds)
     {
         await DeleteAllByUserIdAsync(userId);
 
-        foreach (var row in subscriptions)
+        foreach (var subscriptionId in subscriptionIds)
         {
-            if (row.SubscriptionId == Guid.Empty)
+            if (subscriptionId != Guid.Empty)
             {
-                continue;
+                var userSubscription = new UserSubscriptions
+                {
+                    UserId = userId,
+                    SubscriptionId = subscriptionId
+                };
+                await repository.CreateAsync(userSubscription);
             }
-
-            var userSubscription = new UserSubscriptions
-            {
-                UserId = userId,
-                SubscriptionId = row.SubscriptionId,
-                SubscriptionName = row.SubscriptionName ?? string.Empty
-            };
-            await repository.CreateAsync(userSubscription);
         }
     }
 

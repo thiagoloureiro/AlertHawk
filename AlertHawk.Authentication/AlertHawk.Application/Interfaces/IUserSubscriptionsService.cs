@@ -6,7 +6,7 @@ public interface IUserSubscriptionsService
 {
     Task CreateAsync(UserSubscriptions userSubscription);
 
-    Task CreateOrUpdateAsync(Guid userId, IReadOnlyList<UserSubscriptions> subscriptions);
+    Task CreateOrUpdateAsync(Guid userId, List<Guid> subscriptionIds);
 
     Task DeleteAllByUserIdAsync(Guid userId);
 

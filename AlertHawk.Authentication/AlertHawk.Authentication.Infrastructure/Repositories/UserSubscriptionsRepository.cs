@@ -20,17 +20,15 @@ public class UserSubscriptionsRepository : BaseRepository, IUserSubscriptionsRep
                 CREATE TABLE [dbo].[UserSubscriptions] (
                     [UserId] UNIQUEIDENTIFIER NOT NULL,
                     [SubscriptionId] UNIQUEIDENTIFIER NOT NULL,
-                    [SubscriptionName] NVARCHAR(255) NOT NULL,
                     PRIMARY KEY ([UserId], [SubscriptionId])
                 );
                 CREATE INDEX IX_UserSubscriptions_UserId ON [dbo].[UserSubscriptions] ([UserId]);
             END
-            ELSE IF NOT EXISTS (
+            ELSE IF EXISTS (
                 SELECT 1 FROM sys.columns
                 WHERE object_id = OBJECT_ID(N'[dbo].[UserSubscriptions]') AND name = N'SubscriptionName')
             BEGIN
-                ALTER TABLE [dbo].[UserSubscriptions] ADD [SubscriptionName] NVARCHAR(255) NOT NULL CONSTRAINT DF_UserSubscriptions_SubscriptionName DEFAULT (N'');
-                ALTER TABLE [dbo].[UserSubscriptions] DROP CONSTRAINT DF_UserSubscriptions_SubscriptionName;
+                ALTER TABLE [dbo].[UserSubscriptions] DROP COLUMN [SubscriptionName];
             END";
 
         await ExecuteNonQueryAsync(checkTableSql, new { });
@@ -39,14 +37,9 @@ public class UserSubscriptionsRepository : BaseRepository, IUserSubscriptionsRep
     public async Task CreateAsync(UserSubscriptions userSubscription)
     {
         const string sql =
-            "INSERT INTO [dbo].[UserSubscriptions] ([UserId], [SubscriptionId], [SubscriptionName]) VALUES (@UserId, @SubscriptionId, @SubscriptionName)";
+            "INSERT INTO [dbo].[UserSubscriptions] ([UserId], [SubscriptionId]) VALUES (@UserId, @SubscriptionId)";
         await ExecuteNonQueryAsync(sql,
-            new
-            {
-                userSubscription.UserId,
-                userSubscription.SubscriptionId,
-                SubscriptionName = userSubscription.SubscriptionName ?? string.Empty
-            });
+            new { userSubscription.UserId, userSubscription.SubscriptionId });
     }
 
     public async Task DeleteAllByUserIdAsync(Guid userId)
@@ -58,7 +51,7 @@ public class UserSubscriptionsRepository : BaseRepository, IUserSubscriptionsRep
     public async Task<IEnumerable<UserSubscriptions>> GetByUserIdAsync(Guid userId)
     {
         const string sql =
-            "SELECT [UserId], [SubscriptionId], [SubscriptionName] FROM [dbo].[UserSubscriptions] WHERE [UserId] = @userId";
+            "SELECT [UserId], [SubscriptionId] FROM [dbo].[UserSubscriptions] WHERE [UserId] = @userId";
         return await ExecuteQueryAsyncWithParameters<UserSubscriptions>(sql, new { userId }) ??
                Array.Empty<UserSubscriptions>();
     }
