@@ -1,4 +1,5 @@
-﻿using FinOpsToolSample.Configuration;
+﻿using AlertHawk.FinOps;
+using FinOpsToolSample.Configuration;
 using FinOpsToolSample.Data;
 using FinOpsToolSample.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -15,6 +16,11 @@ namespace FinOpsToolSample
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.Services.AddControllers(options =>
+            {
+                options.Conventions.Insert(0, new GlobalRoutePrefixConvention("finops"));
+            });
 
             // Add services to the container
             builder.Services.AddControllers();
