@@ -149,7 +149,7 @@ namespace FinOpsToolSample.Services
                 var costService = new CostManagementService(credential);
                 var historicalCostService = new HistoricalCostService(credential);
                 var dataCollector = new DataCollectionService();
-                var AIService = new AIRecommendationService(_AIConfig.ApiKey);
+                var AIService = new AIRecommendationService(_AIConfig.ApiKey, _AIConfig.ApiUrl, _AIConfig.ApiKeyHeaderName);
 
                 // Get subscription info
                 var subscriptionData = await subscription.GetAsync();

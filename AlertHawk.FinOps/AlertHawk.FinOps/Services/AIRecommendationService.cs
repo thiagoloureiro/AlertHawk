@@ -12,14 +12,15 @@ namespace FinOpsToolSample.Services
     public class AIRecommendationService
     {
         private readonly string _apiKey;
-        private readonly string _apiUrl = Environment.GetEnvironmentVariable("AI_INTEGRATION_URL") ?? "";
+        private readonly string _apiUrl;
         private readonly HttpClient _httpClient;
 
-        public AIRecommendationService(string apiKey)
+        public AIRecommendationService(string apiKey, string apiUrl, string apiKeyHeaderName)
         {
             _apiKey = apiKey;
+            _apiUrl = apiUrl;
             _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Add("X-AI-API-Key", _apiKey);
+            _httpClient.DefaultRequestHeaders.Add(apiKeyHeaderName, _apiKey);
         }
 
         public async Task<(string recommendations, AIApiResponse? response)> GetRecommendationsAsync(AzureResourceData data)

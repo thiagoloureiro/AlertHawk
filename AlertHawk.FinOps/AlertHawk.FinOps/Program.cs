@@ -43,7 +43,7 @@ namespace FinOpsToolSample
 
             // Add DbContext
             builder.Services.AddDbContext<FinOpsDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("SqlConnectionString")));
 
             // Register services
             builder.Services.AddScoped<DatabaseService>();
