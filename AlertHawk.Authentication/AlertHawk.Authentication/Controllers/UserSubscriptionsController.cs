@@ -77,14 +77,14 @@ public class UserSubscriptionsController : Controller
             return BadRequest(ModelState);
         }
 
-        if (request.SubscriptionIds == null)
+        if (request.Subscriptions == null)
         {
-            return BadRequest(new Message("SubscriptionIds list cannot be null"));
+            return BadRequest(new Message("Subscriptions list cannot be null"));
         }
 
         try
         {
-            await _userSubscriptionsService.CreateOrUpdateAsync(request.UserId, request.SubscriptionIds);
+            await _userSubscriptionsService.CreateOrUpdateAsync(request.UserId, request.Subscriptions);
             return Ok();
         }
         catch (InvalidOperationException ex)
@@ -150,5 +150,5 @@ public class UserSubscriptionsController : Controller
 public class CreateOrUpdateUserSubscriptionsRequest
 {
     public Guid UserId { get; set; }
-    public List<Guid> SubscriptionIds { get; set; } = new();
+    public List<Guid> Subscriptions { get; set; } = new();
 }
