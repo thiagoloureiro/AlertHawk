@@ -696,5 +696,216 @@ namespace FinOpsToolSample.Services
                 Console.WriteLine($"Error collecting Kubernetes clusters: {ex.Message}");
             }
         }
+
+        public async Task CollectRedisCaches(SubscriptionResource subscription, ClientSecretCredential credential)
+        {
+            try
+            {
+                var metricsClient = new MetricsQueryClient(credential);
+                var resourceGroups = subscription.GetResourceGroups();
+
+                await foreach (var rg in resourceGroups)
+                {
+                    var redisCaches = rg.GetGenericResourcesAsync(
+                        filter: "resourceType eq 'Microsoft.Cache/Redis'"
+                    );
+
+                    await foreach (var cache in redisCaches)
+                    {
+                        var resource = new ResourceInfo
+                        {
+                            Type = "Redis Cache",
+                            Name = cache.Data.Name,
+                            ResourceGroup = cache.Data.Id.ResourceGroupName ?? "Unknown",
+                            Location = cache.Data.Location.ToString()
+                        };
+
+                        if (cache.Data.Sku != null)
+                        {
+                            resource.Properties["Tier"] = cache.Data.Sku.Tier ?? "Unknown";
+                            resource.Properties["SKU"] = cache.Data.Sku.Name ?? "Unknown";
+
+                            if (cache.Data.Sku.Capacity.HasValue)
+                            {
+                                resource.Properties["Capacity"] = $"C{cache.Data.Sku.Capacity.Value}";
+                            }
+                        }
+
+                        if (cache.Data.Properties != null)
+                        {
+                            var props = JsonSerializer.Deserialize<JsonElement>(cache.Data.Properties.ToString());
+
+                            if (props.TryGetProperty("redisVersion", out var version))
+                            {
+                                resource.Properties["RedisVersion"] = version.GetString() ?? "Unknown";
+                            }
+
+                            if (props.TryGetProperty("enableNonSslPort", out var nonSsl) && nonSsl.GetBoolean())
+                            {
+                                resource.Properties["NonSslPortEnabled"] = "true";
+                                resource.Flags.Add("Non-SSL port enabled - Security risk, consider disabling");
+                            }
+
+                            if (props.TryGetProperty("provisioningState", out var provisioningState))
+                            {
+                                resource.Properties["ProvisioningState"] = provisioningState.GetString() ?? "Unknown";
+                            }
+
+                            if (props.TryGetProperty("sku", out var skuProps))
+                            {
+                                if (skuProps.TryGetProperty("family", out var family))
+                                {
+                                    resource.Properties["Family"] = family.GetString() ?? "Unknown";
+                                }
+                            }
+                        }
+
+                        // Fetch performance metrics
+                        try
+                        {
+                            var endTime = DateTimeOffset.UtcNow;
+                            var startTime = endTime.AddDays(-7);
+
+                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                                cache.Id.ToString(),
+                                new[] { "percentProcessorTime", "usedmemorypercentage", "cacheLatency", "connectedclients", "totalcommandsprocessed", "cachehits", "cachemisses", "evictedkeys", "expiredkeys", "serverLoad" },
+                                new MetricsQueryOptions
+                                {
+                                    TimeRange = new QueryTimeRange(startTime, endTime),
+                                    Granularity = TimeSpan.FromHours(1),
+                                    Aggregations = { MetricAggregationType.Average, MetricAggregationType.Maximum }
+                                }
+                            );
+
+                            foreach (var metric in metricsResponse.Value.Metrics)
+                            {
+                                var timeSeries = metric.TimeSeries.SelectMany(ts => ts.Values).ToList();
+
+                                var avgValue = timeSeries
+                                    .Where(v => v.Average.HasValue)
+                                    .Select(v => v.Average.Value)
+                                    .DefaultIfEmpty(0)
+                                    .Average();
+
+                                var maxValue = timeSeries
+                                    .Where(v => v.Maximum.HasValue)
+                                    .Select(v => v.Maximum.Value)
+                                    .DefaultIfEmpty(0)
+                                    .Max();
+
+                                var totalValue = timeSeries
+                                    .Where(v => v.Total.HasValue)
+                                    .Select(v => v.Total.Value)
+                                    .DefaultIfEmpty(0)
+                                    .Sum();
+
+                                if (metric.Name == "percentProcessorTime")
+                                {
+                                    resource.Metrics["CPU_Average_%"] = avgValue;
+                                    resource.Metrics["CPU_Max_%"] = maxValue;
+
+                                    if (maxValue > 90)
+                                    {
+                                        resource.Flags.Add($"High CPU usage detected: {maxValue:F2}% max");
+                                    }
+                                    else if (avgValue < 10)
+                                    {
+                                        resource.Flags.Add($"Low CPU usage: {avgValue:F2}% average - Consider downsizing");
+                                    }
+                                }
+                                else if (metric.Name == "usedmemorypercentage")
+                                {
+                                    resource.Metrics["Memory_Average_%"] = avgValue;
+                                    resource.Metrics["Memory_Max_%"] = maxValue;
+
+                                    if (maxValue > 90)
+                                    {
+                                        resource.Flags.Add($"High memory usage detected: {maxValue:F2}% max");
+                                    }
+                                }
+                                else if (metric.Name == "cacheLatency")
+                                {
+                                    resource.Metrics["Latency_Average_Microseconds"] = avgValue;
+                                    resource.Metrics["Latency_Max_Microseconds"] = maxValue;
+                                }
+                                else if (metric.Name == "connectedclients")
+                                {
+                                    resource.Metrics["Connected_Clients_Average"] = avgValue;
+                                    resource.Metrics["Connected_Clients_Max"] = maxValue;
+                                }
+                                else if (metric.Name == "totalcommandsprocessed")
+                                {
+                                    resource.Metrics["Commands_Total"] = totalValue;
+
+                                    if (totalValue < 1000)
+                                    {
+                                        resource.Flags.Add($"Low usage: {totalValue:F0} total commands in 7 days - Consider if needed");
+                                    }
+                                }
+                                else if (metric.Name == "cachehits")
+                                {
+                                    resource.Metrics["Cache_Hits_Total"] = totalValue;
+                                }
+                                else if (metric.Name == "cachemisses")
+                                {
+                                    resource.Metrics["Cache_Misses_Total"] = totalValue;
+
+                                    // Calculate hit ratio if we have both hits and misses
+                                    if (resource.Metrics.ContainsKey("Cache_Hits_Total"))
+                                    {
+                                        var hits = resource.Metrics["Cache_Hits_Total"];
+                                        var totalRequests = hits + totalValue;
+
+                                        if (totalRequests > 0)
+                                        {
+                                            var hitRatio = (hits / totalRequests) * 100;
+                                            resource.Metrics["Cache_Hit_Ratio_%"] = hitRatio;
+
+                                            if (hitRatio < 70)
+                                            {
+                                                resource.Flags.Add($"Low cache hit ratio: {hitRatio:F2}% - Review caching strategy");
+                                            }
+                                        }
+                                    }
+                                }
+                                else if (metric.Name == "evictedkeys")
+                                {
+                                    resource.Metrics["Evicted_Keys_Total"] = totalValue;
+
+                                    if (totalValue > 1000)
+                                    {
+                                        resource.Flags.Add($"High key eviction: {totalValue:F0} keys evicted - Consider increasing memory");
+                                    }
+                                }
+                                else if (metric.Name == "expiredkeys")
+                                {
+                                    resource.Metrics["Expired_Keys_Total"] = totalValue;
+                                }
+                                else if (metric.Name == "serverLoad")
+                                {
+                                    resource.Metrics["Server_Load_Average_%"] = avgValue;
+                                    resource.Metrics["Server_Load_Max_%"] = maxValue;
+
+                                    if (maxValue > 80)
+                                    {
+                                        resource.Flags.Add($"High server load: {maxValue:F2}% max");
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Could not fetch metrics for Redis Cache {cache.Data.Name}: {ex.Message}");
+                        }
+
+                        AddResource(resource);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error collecting Redis Caches: {ex.Message}");
+            }
+        }
     }
 }
