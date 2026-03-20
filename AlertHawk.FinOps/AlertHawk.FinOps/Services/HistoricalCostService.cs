@@ -74,73 +74,102 @@ namespace FinOpsToolSample.Services
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token.Token);
 
                 var url = $"https://management.azure.com/subscriptions/{subscriptionId}/providers/Microsoft.CostManagement/query?api-version=2023-11-01";
-                var response = await httpClient.PostAsync(url, content);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    var error = await response.Content.ReadAsStringAsync();
-                    throw new Exception($"API Error: {response.StatusCode} - {error}");
-                }
-
-                var resultJson = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<JsonElement>(resultJson);
-
-                var rows = result.GetProperty("properties").GetProperty("rows");
-                var columns = result.GetProperty("properties").GetProperty("columns");
 
                 var historicalData = new List<HistoricalCostData>();
+                string? skipToken = null;
+                int pageCount = 0;
 
-                // Parse columns to understand data structure
-                var columnNames = new List<string>();
-                foreach (var column in columns.EnumerateArray())
+                do
                 {
-                    columnNames.Add(column.GetProperty("name").GetString() ?? "");
-                }
+                    pageCount++;
+                    var requestUrl = string.IsNullOrEmpty(skipToken) 
+                        ? url 
+                        : $"{url}&$skiptoken={Uri.EscapeDataString(skipToken)}";
 
-                Console.WriteLine($"📊 Processing {rows.GetArrayLength()} rows of historical data...");
+                    var response = await httpClient.PostAsync(requestUrl, content);
 
-                foreach (var row in rows.EnumerateArray())
-                {
-                    var values = row.EnumerateArray().ToList();
-                    
-                    var data = new HistoricalCostData
+                    if (!response.IsSuccessStatusCode)
                     {
-                        SubscriptionId = subscriptionId ?? "",
-                        Cost = values[0].GetDecimal()
-                    };
-
-                    // Parse date (usually in column index 1)
-                    if (values.Count > 1 && values[1].ValueKind == JsonValueKind.Number)
-                    {
-                        var dateInt = values[1].GetInt64();
-                        data.Date = DateTime.ParseExact(dateInt.ToString(), "yyyyMMdd", null);
+                        var error = await response.Content.ReadAsStringAsync();
+                        throw new Exception($"API Error: {response.StatusCode} - {error}");
                     }
-                    else if (values.Count > 1 && values[1].ValueKind == JsonValueKind.String)
+
+                    var resultJson = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<JsonElement>(resultJson);
+
+                    var properties = result.GetProperty("properties");
+                    var rows = properties.GetProperty("rows");
+                    var columns = properties.GetProperty("columns");
+
+                    // Parse columns to understand data structure (only once)
+                    if (pageCount == 1)
                     {
-                        var dateStr = values[1].GetString();
-                        if (DateTime.TryParse(dateStr, out var parsedDate))
+                        var columnNames = new List<string>();
+                        foreach (var column in columns.EnumerateArray())
                         {
-                            data.Date = parsedDate;
+                            columnNames.Add(column.GetProperty("name").GetString() ?? "");
                         }
                     }
 
-                    // Resource group (usually index 2)
-                    if (values.Count > 2)
+                    var rowCount = rows.GetArrayLength();
+                    Console.WriteLine($"📊 Processing page {pageCount}: {rowCount} rows of historical data...");
+
+                    foreach (var row in rows.EnumerateArray())
                     {
-                        data.ResourceGroup = values[2].GetString() ?? "Unknown";
+                        var values = row.EnumerateArray().ToList();
+
+                        var data = new HistoricalCostData
+                        {
+                            SubscriptionId = subscriptionId ?? "",
+                            Cost = values[0].GetDecimal()
+                        };
+
+                        // Parse date (usually in column index 1)
+                        if (values.Count > 1 && values[1].ValueKind == JsonValueKind.Number)
+                        {
+                            var dateInt = values[1].GetInt64();
+                            data.Date = DateTime.ParseExact(dateInt.ToString(), "yyyyMMdd", null);
+                        }
+                        else if (values.Count > 1 && values[1].ValueKind == JsonValueKind.String)
+                        {
+                            var dateStr = values[1].GetString();
+                            if (DateTime.TryParse(dateStr, out var parsedDate))
+                            {
+                                data.Date = parsedDate;
+                            }
+                        }
+
+                        // Resource group (usually index 2)
+                        if (values.Count > 2)
+                        {
+                            data.ResourceGroup = values[2].GetString() ?? "Unknown";
+                        }
+
+                        // Service name (usually index 3)
+                        if (values.Count > 3)
+                        {
+                            data.ServiceName = values[3].GetString() ?? "Unknown";
+                        }
+
+                        historicalData.Add(data);
                     }
 
-                    // Service name (usually index 3)
-                    if (values.Count > 3)
+                    // Check for continuation token
+                    skipToken = null;
+                    if (properties.TryGetProperty("nextLink", out var nextLinkElement))
                     {
-                        data.ServiceName = values[3].GetString() ?? "Unknown";
+                        var nextLink = nextLinkElement.GetString();
+                        if (!string.IsNullOrEmpty(nextLink) && nextLink.Contains("$skiptoken="))
+                        {
+                            var tokenStart = nextLink.IndexOf("$skiptoken=") + "$skiptoken=".Length;
+                            skipToken = nextLink.Substring(tokenStart);
+                        }
                     }
 
-                    historicalData.Add(data);
-                }
+                } while (!string.IsNullOrEmpty(skipToken));
 
-                Console.WriteLine($"✅ Fetched {historicalData.Count} historical cost records");
-                
+                Console.WriteLine($"✅ Fetched {historicalData.Count} historical cost records across {pageCount} page(s)");
+
                 // Show summary
                 var totalCost = historicalData.Sum(h => h.Cost);
                 var dateRange = historicalData.GroupBy(h => h.Date.Date).Count();
