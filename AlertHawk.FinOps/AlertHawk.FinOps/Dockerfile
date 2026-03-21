@@ -26,7 +26,7 @@ RUN dotnet build "./AlertHawk.FinOps.csproj" -c $BUILD_CONFIGURATION -o /app/bui
 # ---------- Publish ----------
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./AlertHawk.Authentication.csproj" \
+RUN dotnet publish "./AlertHawk.FinOps.csproj" \
     -c $BUILD_CONFIGURATION \
     -o /app/publish \
     /p:UseAppHost=false
