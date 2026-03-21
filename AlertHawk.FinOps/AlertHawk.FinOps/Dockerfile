@@ -1,9 +1,16 @@
-# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
-# This stage is used when running from VS in fast mode (Default for Debug configuration)
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
-USER $APP_UID
+# ---------- Base runtime (hardened, no shell) ----------
+FROM dhi.io/aspnetcore:10-alpine3.23 AS base
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+USER 65532
 WORKDIR /app
+EXPOSE 8080
+EXPOSE 8081
+
+
+# ---------- Cert stage (has apk + shell) ----------
+FROM alpine:3.22 AS certs
+RUN apk add --no-cache ca-certificates \
+ && update-ca-certificates
 
 
 # This stage is used to build the service project
@@ -16,13 +23,21 @@ COPY . .
 WORKDIR "/src/AlertHawk.FinOps"
 RUN dotnet build "./AlertHawk.FinOps.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# This stage is used to publish the service project to be copied to the final stage
+# ---------- Publish ----------
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./AlertHawk.FinOps.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./AlertHawk.Authentication.csproj" \
+    -c $BUILD_CONFIGURATION \
+    -o /app/publish \
+    /p:UseAppHost=false
 
-# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
+
+# ---------- Final ----------
 FROM base AS final
 WORKDIR /app
+
+# ✅ Copy trusted CA certs into hardened image
+COPY --from=certs /etc/ssl/certs /etc/ssl/certs
+
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "AlertHawk.FinOps.dll"]
