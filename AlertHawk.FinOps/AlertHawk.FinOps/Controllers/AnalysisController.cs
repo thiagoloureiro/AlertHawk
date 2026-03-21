@@ -11,12 +11,12 @@ namespace FinOpsToolSample.Controllers
     public class AnalysisController : ControllerBase
     {
         private readonly ILogger<AnalysisController> _logger;
-        private readonly AnalysisOrchestrationService _analysisService;
+        private readonly IAnalysisOrchestrationService _analysisService;
         private readonly IConfiguration _configuration;
 
         public AnalysisController(
             ILogger<AnalysisController> logger,
-            AnalysisOrchestrationService analysisService,
+            IAnalysisOrchestrationService analysisService,
             IConfiguration configuration)
         {
             _logger = logger;

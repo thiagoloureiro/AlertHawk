@@ -1,4 +1,4 @@
-﻿using AlertHawk.FinOps;
+using AlertHawk.FinOps;
 using FinOpsToolSample.Configuration;
 using FinOpsToolSample.Data;
 using FinOpsToolSample.Services;
@@ -53,7 +53,7 @@ namespace FinOpsToolSample
 
             // Register services
             builder.Services.AddScoped<DatabaseService>();
-            builder.Services.AddScoped<AnalysisOrchestrationService>();
+            builder.Services.AddScoped<IAnalysisOrchestrationService, AnalysisOrchestrationService>();
 
             var issuers = configuration["Jwt:Issuers"] ??
               "issuer";

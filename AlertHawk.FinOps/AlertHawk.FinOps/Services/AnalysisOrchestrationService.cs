@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace FinOpsToolSample.Services
 {
-    public class AnalysisOrchestrationService
+    public class AnalysisOrchestrationService : IAnalysisOrchestrationService
     {
         private readonly DatabaseService _databaseService;
         private readonly AzureConfiguration _azureConfig;
