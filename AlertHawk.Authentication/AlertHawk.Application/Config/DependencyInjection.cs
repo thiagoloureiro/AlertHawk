@@ -16,6 +16,7 @@ public static class DependencyInjection
         services.AddTransient<IUserActionService, UserActionService>();
         services.AddTransient<IGetOrCreateUserService, GetOrCreateUserService>();
         services.AddTransient<IUserClustersService, UserClustersService>();
+        services.AddTransient<IUserSubscriptionsService, UserSubscriptionsService>();
         return services;
     }
 }
