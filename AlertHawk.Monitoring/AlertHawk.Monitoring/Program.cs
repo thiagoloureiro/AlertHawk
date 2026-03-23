@@ -83,14 +83,24 @@ builder.Services.AddMassTransit(x =>
     switch (queueType.ToUpper())
     {
         case "RABBITMQ":
-            x.UsingRabbitMq((_, cfg) =>
+            x.UsingRabbitMq((context, cfg) =>
             {
                 Console.WriteLine($"Connecting to RabbitMQ at {rabbitMqHost}");
                 cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
                 {
                     if (rabbitMqUser != null) h.Username(rabbitMqUser);
                     if (rabbitMqPass != null) h.Password(rabbitMqPass);
+
+                    // Add connection timeout
+                    h.RequestedConnectionTimeout(TimeSpan.FromSeconds(30));
+                    h.UseCluster(c =>
+                    {
+                        c.Node(rabbitMqHost);
+                    });
                 });
+
+                // Configure message retry
+                cfg.UseMessageRetry(r => r.Immediate(5));
             });
             break;
 
@@ -107,7 +117,14 @@ builder.Services.AddMassTransit(x =>
             });
             break;
     }
+
+    // Add health checks
+    x.AddHealthChecks();
 });
+
+// Add health checks to the app
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy());
 
 var issuers = configuration["Jwt:Issuers"] ??
               "issuer";
@@ -273,6 +290,20 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 app.UseResponseCompression();
+
+// Verify MassTransit connection
+try
+{
+    var busControl = app.Services.GetRequiredService<IBusControl>();
+    Console.WriteLine("MassTransit bus control retrieved successfully");
+    Console.WriteLine($"Bus address: {busControl.Address}");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"ERROR: Failed to verify MassTransit connection: {ex.Message}");
+    Console.WriteLine($"Stack trace: {ex.StackTrace}");
+}
 
 app.Run();
