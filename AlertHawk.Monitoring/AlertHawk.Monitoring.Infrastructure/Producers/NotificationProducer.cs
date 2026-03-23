@@ -51,7 +51,7 @@ public class NotificationProducer : INotificationProducer
                     ReasonPhrase = reasonPhrase,
                 });
 
-                _notificationLogger.LogInformation("Notification sent successfully");
+                _notificationLogger.LogInformation("Error Notification sent successfully");
             }
         }
         catch (Exception err)
@@ -63,29 +63,38 @@ public class NotificationProducer : INotificationProducer
 
     public async Task HandleSuccessNotifications(MonitorHttp monitorHttp, string? reasonPhrase)
     {
-        var notificationIdList = await _monitorNotificationRepository.GetMonitorNotifications(monitorHttp.MonitorId);
-
-        _notificationLogger.LogInformation(
-            $"sending success notification calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}");
-
-        foreach (var item in notificationIdList)
+        try
         {
+            var notificationIdList = await _monitorNotificationRepository.GetMonitorNotifications(monitorHttp.MonitorId);
+
             _notificationLogger.LogInformation(
-                $"Notification Details: notificationId {item.NotificationId}, monitorId: {item.MonitorId}, ResponseStatusCode: {monitorHttp.ResponseStatusCode}, reasonPhrase {reasonPhrase}, name:  {monitorHttp.Name}");
-            await _publishEndpoint.Publish<NotificationAlert>(new
+                $"sending success notification calling {monitorHttp.UrlToCheck}, Response StatusCode: {monitorHttp.ResponseStatusCode}");
+
+            foreach (var item in notificationIdList)
             {
-                NotificationId = item.NotificationId,
-                MonitorId = item.MonitorId,
-                Service = monitorHttp.Name,
-                Region = (int)monitorHttp?.MonitorRegion,
-                Environment = (int)monitorHttp?.MonitorEnvironment,
-                URL = monitorHttp?.UrlToCheck,
-                Success = true,
-                TimeStamp = DateTime.UtcNow,
-                Message = $"Success calling {monitorHttp?.Name}, Response StatusCode: {monitorHttp?.ResponseStatusCode}",
-                StatusCode = (int)monitorHttp.ResponseStatusCode,
-                ReasonPhrase = reasonPhrase
-            });
+                _notificationLogger.LogInformation(
+                    $"Notification Details: notificationId {item.NotificationId}, monitorId: {item.MonitorId}, ResponseStatusCode: {monitorHttp.ResponseStatusCode}, reasonPhrase {reasonPhrase}, name:  {monitorHttp.Name}");
+                await _publishEndpoint.Publish<NotificationAlert>(new
+                {
+                    NotificationId = item.NotificationId,
+                    MonitorId = item.MonitorId,
+                    Service = monitorHttp.Name,
+                    Region = (int)monitorHttp?.MonitorRegion,
+                    Environment = (int)monitorHttp?.MonitorEnvironment,
+                    URL = monitorHttp?.UrlToCheck,
+                    Success = true,
+                    TimeStamp = DateTime.UtcNow,
+                    Message = $"Success calling {monitorHttp?.Name}, Response StatusCode: {monitorHttp?.ResponseStatusCode}",
+                    StatusCode = (int)monitorHttp.ResponseStatusCode,
+                    ReasonPhrase = reasonPhrase
+                });
+            }
+            _notificationLogger.LogInformation("Success Notification sent successfully");
+        }
+        catch (Exception err)
+        {
+            _notificationLogger.LogError($"Error in HandleSuccessNotifications: {err.Message}");
+            Sentry.SentrySdk.CaptureException(err);
         }
     }
 
