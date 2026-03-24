@@ -12,15 +12,18 @@ namespace FinOpsToolSample.Controllers
     {
         private readonly ILogger<AnalysisController> _logger;
         private readonly IAnalysisOrchestrationService _analysisService;
+        private readonly IAnalysisJobService _analysisJobService;
         private readonly IConfiguration _configuration;
 
         public AnalysisController(
             ILogger<AnalysisController> logger,
             IAnalysisOrchestrationService analysisService,
+            IAnalysisJobService analysisJobService,
             IConfiguration configuration)
         {
             _logger = logger;
             _analysisService = analysisService;
+            _analysisJobService = analysisJobService;
             _configuration = configuration;
         }
 
@@ -72,6 +75,49 @@ namespace FinOpsToolSample.Controllers
                     ErrorDetails = ex.Message
                 });
             }
+        }
+
+        /// <summary>
+        /// Starts analysis in the background and returns a job id. Poll GET jobs/{jobId} until status is completed or failed.
+        /// </summary>
+        [HttpPost("start-async")]
+        public IActionResult StartAnalysisAsync([FromBody] string subscriptionId)
+        {
+            if (string.IsNullOrWhiteSpace(subscriptionId))
+            {
+                return BadRequest(new
+                {
+                    Success = false,
+                    Message = "Subscription ID is required"
+                });
+            }
+
+            var jobId = _analysisJobService.StartAnalysis(subscriptionId.Trim());
+            _logger.LogInformation("Queued analysis job {JobId} for subscription {SubscriptionId}", jobId, subscriptionId);
+
+            return AcceptedAtAction(
+                nameof(GetAnalysisJobStatus),
+                new { jobId },
+                new
+                {
+                    JobId = jobId,
+                    subscriptionId = subscriptionId.Trim(),
+                    Status = "pending"
+                });
+        }
+
+        /// <summary>
+        /// Returns the current status of an analysis job created via start-async.
+        /// </summary>
+        [HttpGet("jobs/{jobId:guid}", Name = "GetAnalysisJobStatus")]
+        public ActionResult<AnalysisJobStatusDto> GetAnalysisJobStatus(Guid jobId)
+        {
+            if (!_analysisJobService.TryGetStatus(jobId, out var status) || status == null)
+            {
+                return NotFound(new { Message = "Unknown or expired job id" });
+            }
+
+            return Ok(status);
         }
     }
 

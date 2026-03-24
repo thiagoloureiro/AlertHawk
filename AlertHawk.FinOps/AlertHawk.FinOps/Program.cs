@@ -54,6 +54,7 @@ namespace FinOpsToolSample
             // Register services
             builder.Services.AddScoped<DatabaseService>();
             builder.Services.AddScoped<IAnalysisOrchestrationService, AnalysisOrchestrationService>();
+            builder.Services.AddSingleton<IAnalysisJobService, AnalysisJobService>();
 
             var issuers = configuration["Jwt:Issuers"] ??
               "issuer";
@@ -186,6 +187,8 @@ namespace FinOpsToolSample
 
             app.UseCors("AllowAll");
             app.UseHttpsRedirection();
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
             app.UseAuthentication();
             app.UseAuthorization();
 
