@@ -1,5 +1,6 @@
 using FinOpsToolSample.Data;
 using FinOpsToolSample.Data.Entities;
+using FinOpsToolSample.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -115,7 +116,7 @@ namespace FinOpsToolSample.Controllers
         /// Get the latest analysis run for each subscription
         /// </summary>
         [HttpGet("latest-per-subscription")]
-        public async Task<ActionResult<IEnumerable<AnalysisRun>>> GetLatestAnalysisRunsPerSubscription()
+        public async Task<ActionResult<IEnumerable<AnalysisRunWithDescriptionDto>>> GetLatestAnalysisRunsPerSubscription()
         {
             try
             {
@@ -123,6 +124,27 @@ namespace FinOpsToolSample.Controllers
                     .Where(ar => ar.RunDate == _context.AnalysisRuns
                         .Where(ar2 => ar2.SubscriptionId == ar.SubscriptionId)
                         .Max(ar2 => ar2.RunDate))
+                    .GroupJoin(
+                        _context.Subscriptions,
+                        ar => ar.SubscriptionId,
+                        s => s.SubscriptionId,
+                        (ar, subscriptions) => new { AnalysisRun = ar, Subscriptions = subscriptions })
+                    .SelectMany(
+                        x => x.Subscriptions.DefaultIfEmpty(),
+                        (x, subscription) => new AnalysisRunWithDescriptionDto
+                        {
+                            Id = x.AnalysisRun.Id,
+                            SubscriptionId = x.AnalysisRun.SubscriptionId,
+                            SubscriptionName = x.AnalysisRun.SubscriptionName,
+                            Description = subscription != null ? subscription.Description : string.Empty,
+                            RunDate = x.AnalysisRun.RunDate,
+                            TotalMonthlyCost = x.AnalysisRun.TotalMonthlyCost,
+                            TotalResourcesAnalyzed = x.AnalysisRun.TotalResourcesAnalyzed,
+                            AiModel = x.AnalysisRun.AiModel,
+                            ConversationId = x.AnalysisRun.ConversationId,
+                            ReportFilePath = x.AnalysisRun.ReportFilePath,
+                            CreatedAt = x.AnalysisRun.CreatedAt
+                        })
                     .OrderBy(a => a.SubscriptionName)
                     .ToListAsync();
 

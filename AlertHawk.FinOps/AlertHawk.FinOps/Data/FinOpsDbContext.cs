@@ -11,6 +11,7 @@ namespace FinOpsToolSample.Data
         public DbSet<ResourceAnalysis> ResourceAnalysis { get; set; }
         public DbSet<AiRecommendation> AiRecommendations { get; set; }
         public DbSet<HistoricalCost> HistoricalCosts { get; set; }
+        public DbSet<Subscription> Subscriptions { get; set; }
 
         public FinOpsDbContext(DbContextOptions<FinOpsDbContext> options) : base(options)
         {
@@ -63,6 +64,11 @@ namespace FinOpsToolSample.Data
 
             modelBuilder.Entity<HistoricalCost>()
                 .HasIndex(h => new { h.SubscriptionId, h.ResourceGroup, h.CostDate });
+
+            // Configure Subscription entity
+            modelBuilder.Entity<Subscription>()
+                .HasIndex(s => s.SubscriptionId)
+                .IsUnique();
         }
     }
 }
