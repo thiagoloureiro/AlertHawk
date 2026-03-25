@@ -46,6 +46,8 @@ namespace FinOpsToolSample
                 builder.Configuration.GetSection("Azure"));
             builder.Services.Configure<AIConfiguration>(
                 builder.Configuration.GetSection("AI"));
+            builder.Services.Configure<WeeklyAnalysisOptions>(
+                builder.Configuration.GetSection(WeeklyAnalysisOptions.SectionName));
 
             // Add DbContext
             builder.Services.AddDbContext<FinOpsDbContext>(options =>
@@ -55,6 +57,7 @@ namespace FinOpsToolSample
             builder.Services.AddScoped<DatabaseService>();
             builder.Services.AddScoped<IAnalysisOrchestrationService, AnalysisOrchestrationService>();
             builder.Services.AddSingleton<IAnalysisJobService, AnalysisJobService>();
+            builder.Services.AddHostedService<WeeklySubscriptionAnalysisHostedService>();
 
             var issuers = configuration["Jwt:Issuers"] ??
               "issuer";

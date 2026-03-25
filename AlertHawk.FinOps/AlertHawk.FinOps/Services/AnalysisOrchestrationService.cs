@@ -24,7 +24,7 @@ namespace FinOpsToolSample.Services
         }
 
         /// <summary>
-        /// Processes a single subscription - called by Hangfire background job
+        /// Processes a single subscription (API, async job queue, or weekly hosted scheduler).
         /// </summary>
         public async Task<SubscriptionAnalysisResult> RunAnalysisForSingleSubscriptionAsync(string subscriptionId)
         {
