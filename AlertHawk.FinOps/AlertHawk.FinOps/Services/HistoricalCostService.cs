@@ -99,72 +99,14 @@ namespace FinOpsToolSample.Services
 
                     var properties = result.GetProperty("properties");
                     var rows = properties.GetProperty("rows");
-                    var columns = properties.GetProperty("columns");
-
-                    // Parse columns to understand data structure (only once)
-                    if (pageCount == 1)
-                    {
-                        var columnNames = new List<string>();
-                        foreach (var column in columns.EnumerateArray())
-                        {
-                            columnNames.Add(column.GetProperty("name").GetString() ?? "");
-                        }
-                    }
 
                     var rowCount = rows.GetArrayLength();
                     Console.WriteLine($"📊 Processing page {pageCount}: {rowCount} rows of historical data...");
 
-                    foreach (var row in rows.EnumerateArray())
-                    {
-                        var values = row.EnumerateArray().ToList();
+                    historicalData.AddRange(
+                        HistoricalCostQueryResponseParser.ParseRows(rows, subscriptionId ?? ""));
 
-                        var data = new HistoricalCostData
-                        {
-                            SubscriptionId = subscriptionId ?? "",
-                            Cost = values[0].GetDecimal()
-                        };
-
-                        // Parse date (usually in column index 1)
-                        if (values.Count > 1 && values[1].ValueKind == JsonValueKind.Number)
-                        {
-                            var dateInt = values[1].GetInt64();
-                            data.Date = DateTime.ParseExact(dateInt.ToString(), "yyyyMMdd", null);
-                        }
-                        else if (values.Count > 1 && values[1].ValueKind == JsonValueKind.String)
-                        {
-                            var dateStr = values[1].GetString();
-                            if (DateTime.TryParse(dateStr, out var parsedDate))
-                            {
-                                data.Date = parsedDate;
-                            }
-                        }
-
-                        // Resource group (usually index 2)
-                        if (values.Count > 2)
-                        {
-                            data.ResourceGroup = values[2].GetString() ?? "Unknown";
-                        }
-
-                        // Service name (usually index 3)
-                        if (values.Count > 3)
-                        {
-                            data.ServiceName = values[3].GetString() ?? "Unknown";
-                        }
-
-                        historicalData.Add(data);
-                    }
-
-                    // Check for continuation token
-                    skipToken = null;
-                    if (properties.TryGetProperty("nextLink", out var nextLinkElement))
-                    {
-                        var nextLink = nextLinkElement.GetString();
-                        if (!string.IsNullOrEmpty(nextLink) && nextLink.Contains("$skiptoken="))
-                        {
-                            var tokenStart = nextLink.IndexOf("$skiptoken=") + "$skiptoken=".Length;
-                            skipToken = nextLink.Substring(tokenStart);
-                        }
-                    }
+                    skipToken = HistoricalCostQueryResponseParser.TryGetNextSkipToken(properties);
 
                 } while (!string.IsNullOrEmpty(skipToken));
 

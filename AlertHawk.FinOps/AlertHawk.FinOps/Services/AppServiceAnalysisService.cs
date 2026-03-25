@@ -82,34 +82,13 @@ namespace FinOpsToolSample.Services
                             foreach (var metric in metricsResponse.Value.Metrics)
                             {
                                 var timeSeries = metric.TimeSeries.SelectMany(ts => ts.Values).ToList();
+                                var (avgValue, totalValue) = AppServiceAnalysisMetrics.SummarizeTimeSeriesPoints(
+                                    timeSeries.Select(v => (v.Average, v.Total)));
 
-                                var avgValue = timeSeries
-                                    .Where(v => v.Average.HasValue)
-                                    .Select(v => v.Average.Value)
-                                    .DefaultIfEmpty(0)
-                                    .Average();
-
-                                var totalValue = timeSeries
-                                    .Where(v => v.Total.HasValue)
-                                    .Select(v => v.Total.Value)
-                                    .DefaultIfEmpty(0)
-                                    .Sum();
-
-                                if (metric.Name == "Requests")
+                                var line = AppServiceAnalysisMetrics.FormatMetricLine(metric.Name, avgValue, totalValue);
+                                if (line != null)
                                 {
-                                    Console.WriteLine($"    - Requests: Total = {totalValue:F0}");
-                                }
-                                else if (metric.Name == "MemoryWorkingSet")
-                                {
-                                    Console.WriteLine($"    - Memory: Avg = {avgValue / 1024 / 1024:F2} MB");
-                                }
-                                else if (metric.Name == "Http5xx")
-                                {
-                                    Console.WriteLine($"    - HTTP 5xx Errors: Total = {totalValue:F0}");
-                                }
-                                else if (metric.Name == "AverageResponseTime")
-                                {
-                                    Console.WriteLine($"    - Response Time: Avg = {avgValue:F2} seconds");
+                                    Console.WriteLine(line);
                                 }
                             }
                         }

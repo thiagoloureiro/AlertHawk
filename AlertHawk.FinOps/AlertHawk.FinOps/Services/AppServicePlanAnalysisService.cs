@@ -29,13 +29,15 @@ namespace FinOpsToolSample.Services
 
                     if (appCount == 0)
                     {
-                        Console.WriteLine($"⚠️ UNUSED: App Service Plan '{plan.Data.Name}' " +
-                                        $"has NO apps - SKU: {plan.Data.Sku.Name}, " +
-                                        $"Location: {plan.Data.Location}");
+                        var skuName = plan.Data.Sku?.Name ?? "Unknown";
+                        Console.WriteLine(AppServicePlanAnalysisMessages.FormatUnusedPlanWarning(
+                            plan.Data.Name,
+                            skuName,
+                            plan.Data.Location.ToString()));
                     }
                     else
                     {
-                        Console.WriteLine($"✓ Plan '{plan.Data.Name}' has {appCount} app(s)");
+                        Console.WriteLine(AppServicePlanAnalysisMessages.FormatPlanWithApps(plan.Data.Name, appCount));
                     }
                 }
             }

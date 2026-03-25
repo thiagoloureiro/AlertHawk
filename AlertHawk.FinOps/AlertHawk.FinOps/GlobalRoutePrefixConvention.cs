@@ -1,8 +1,11 @@
-﻿namespace AlertHawk.FinOps
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace AlertHawk.FinOps
 {
     using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
     [ExcludeFromDescription]
+    [ExcludeFromCodeCoverage]
     public class GlobalRoutePrefixConvention : IApplicationModelConvention
     {
         private readonly AttributeRouteModel _routePrefix;

@@ -2,6 +2,7 @@ using FinOpsToolSample.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace FinOpsToolSample.Controllers
 {
@@ -121,6 +122,7 @@ namespace FinOpsToolSample.Controllers
         }
     }
 
+    [ExcludeFromCodeCoverage]
     public class AnalysisResult
     {
         public bool Success { get; set; }

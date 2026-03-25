@@ -62,9 +62,11 @@ namespace FinOpsToolSample.Services
 
                         if (plan.Data.Sku != null)
                         {
-                            planResource.Properties["SKU"] = plan.Data.Sku.Name ?? "Unknown";
-                            planResource.Properties["Tier"] = plan.Data.Sku.Tier ?? "Unknown";
-                            planResource.Properties["Capacity"] = plan.Data.Sku.Capacity ?? 0;
+                            DataCollectionAppServicePlanSku.ApplyToResource(
+                                planResource,
+                                plan.Data.Sku.Name,
+                                plan.Data.Sku.Tier,
+                                plan.Data.Sku.Capacity);
                         }
 
                         AddResource(planResource);
@@ -88,17 +90,7 @@ namespace FinOpsToolSample.Services
                         if (app.Data.Properties != null)
                         {
                             var props = JsonSerializer.Deserialize<JsonElement>(app.Data.Properties.ToString());
-
-                            if (props.TryGetProperty("state", out var state))
-                            {
-                                appResource.Properties["State"] = state.GetString() ?? "Unknown";
-                            }
-
-                            if (props.TryGetProperty("serverFarmId", out var farmId))
-                            {
-                                var planName = farmId.GetString()?.Split('/').LastOrDefault();
-                                appResource.Properties["AppServicePlan"] = planName ?? "Unknown";
-                            }
+                            DataCollectionWebAppJsonProperties.ApplySitePropertiesFromJson(props, appResource);
                         }
 
                         // Fetch App Service metrics
@@ -122,45 +114,13 @@ namespace FinOpsToolSample.Services
                             foreach (var metric in metricsResponse.Value.Metrics)
                             {
                                 var timeSeries = metric.TimeSeries.SelectMany(ts => ts.Values).ToList();
-
-                                var avgValue = timeSeries
-                                    .Where(v => v.Average.HasValue)
-                                    .Select(v => v.Average.Value)
-                                    .DefaultIfEmpty(0)
-                                    .Average();
-
-                                var totalValue = timeSeries
-                                    .Where(v => v.Total.HasValue)
-                                    .Select(v => v.Total.Value)
-                                    .DefaultIfEmpty(0)
-                                    .Sum();
-
-                                if (metric.Name == "Requests")
-                                {
-                                    appResource.Metrics["Requests_Total"] = totalValue;
-                                }
-                                else if (metric.Name == "MemoryWorkingSet")
-                                {
-                                    appResource.Metrics["Memory_Average_MB"] = avgValue / 1024 / 1024;
-                                }
-                                else if (metric.Name == "Http5xx")
-                                {
-                                    appResource.Metrics["Http5xx_Errors_Total"] = totalValue;
-
-                                    if (totalValue > 0)
-                                    {
-                                        appResource.Flags.Add($"HTTP 5xx errors detected: {totalValue:F0} errors in last 7 days");
-                                    }
-                                }
-                                else if (metric.Name == "AverageResponseTime")
-                                {
-                                    appResource.Metrics["Response_Time_Average_Seconds"] = avgValue;
-
-                                    if (avgValue > 3)
-                                    {
-                                        appResource.Flags.Add($"Slow response time: {avgValue:F2}s average");
-                                    }
-                                }
+                                var (avgValue, totalValue) = AppServiceAnalysisMetrics.SummarizeTimeSeriesPoints(
+                                    timeSeries.Select(v => (v.Average, v.Total)));
+                                DataCollectionAppWebMonitoringMetrics.ApplyMetric(
+                                    appResource,
+                                    metric.Name,
+                                    avgValue,
+                                    totalValue);
                             }
                         }
                         catch (Exception ex)

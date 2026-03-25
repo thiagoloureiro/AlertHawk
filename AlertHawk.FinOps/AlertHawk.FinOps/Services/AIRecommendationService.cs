@@ -15,12 +15,16 @@ namespace FinOpsToolSample.Services
         private readonly string _apiUrl;
         private readonly HttpClient _httpClient;
 
-        public AIRecommendationService(string apiKey, string apiUrl, string apiKeyHeaderName)
+        public AIRecommendationService(
+            string apiKey,
+            string apiUrl,
+            string apiKeyHeaderName,
+            HttpClient? httpClient = null)
         {
             _apiKey = apiKey;
             _apiUrl = apiUrl;
-            _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Add(apiKeyHeaderName, _apiKey);
+            _httpClient = httpClient ?? new HttpClient();
+            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation(apiKeyHeaderName, _apiKey);
         }
 
         public async Task<(string recommendations, AIApiResponse? response)> GetRecommendationsAsync(AzureResourceData data)

@@ -1,9 +1,7 @@
-using FinOpsToolSample.Data.Entities;
 using FinOpsToolSample.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace FinOpsToolSample.Utilities
@@ -232,53 +230,14 @@ namespace FinOpsToolSample.Utilities
             Console.WriteLine();
         }
 
-        private void DrawAsciiChart(List<(DateTime Date, decimal Cost)> data)
+        private static void DrawAsciiChart(List<(DateTime Date, decimal Cost)> data)
         {
-            if (!data.Any()) return;
-
-            const int chartHeight = 10;
-            const int chartWidth = 50;
-
-            var maxCost = data.Max(d => d.Cost);
-            var minCost = data.Min(d => d.Cost);
-            var range = maxCost - minCost;
-
-            if (range == 0) range = 1;
-
-            var points = new List<int>();
-            foreach (var item in data)
+            if (!data.Any())
             {
-                var normalized = (int)(((item.Cost - minCost) / range) * (chartHeight - 1));
-                points.Add(normalized);
+                return;
             }
 
-            // Draw chart
-            for (int row = chartHeight - 1; row >= 0; row--)
-            {
-                var yValue = minCost + (range * row / (chartHeight - 1));
-                Console.Write($"${yValue,8:F0} |");
-
-                for (int col = 0; col < Math.Min(points.Count, chartWidth); col++)
-                {
-                    if (points[col] == row)
-                        Console.Write("●");
-                    else if (points[col] > row)
-                        Console.Write("│");
-                    else
-                        Console.Write(" ");
-                }
-                Console.WriteLine();
-            }
-
-            Console.Write("         └");
-            Console.WriteLine(new string('─', Math.Min(data.Count, chartWidth)));
-
-            // Show date range
-            if (data.Any())
-            {
-                Console.WriteLine($"         {data.First().Date:MM/dd} → {data.Last().Date:MM/dd}");
-            }
-            Console.WriteLine();
+            CostTrendAsciiChart.WriteChart(Console.Out, data, chartHeight: 10, chartWidth: 50);
         }
     }
 }

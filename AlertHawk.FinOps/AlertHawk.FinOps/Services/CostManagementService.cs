@@ -84,27 +84,8 @@ namespace FinOpsToolSample.Services
                 Console.WriteLine($"Total rows: {rows.GetArrayLength()}");
                 Console.WriteLine();
 
-                var costsByResourceGroup = new Dictionary<string, decimal>();
-                var costsByService = new List<ServiceCostDetail>();
-
-                foreach (var row in rows.EnumerateArray())
-                {
-                    var values = row.EnumerateArray().ToList();
-                    var cost = values[0].GetDecimal();
-                    var resourceGroup = values.Count > 2 ? values[2].GetString() ?? "Unknown" : "Unknown";
-                    var serviceName = values.Count > 3 ? values[3].GetString() ?? "Unknown" : "Unknown";
-
-                    if (!costsByResourceGroup.ContainsKey(resourceGroup))
-                        costsByResourceGroup[resourceGroup] = 0;
-                    costsByResourceGroup[resourceGroup] += cost;
-
-                    costsByService.Add(new ServiceCostDetail
-                    {
-                        ServiceName = serviceName,
-                        ResourceGroup = resourceGroup,
-                        Cost = cost
-                    });
-                }
+                var (totalCost, costsByResourceGroup, costsByService) =
+                    CostManagementQueryResultParser.ParseCostRows(rows);
 
                 Console.WriteLine("💰 Top Costs by Resource Group:");
                 foreach (var kvp in costsByResourceGroup.OrderByDescending(x => x.Value).Take(10))
@@ -124,7 +105,6 @@ namespace FinOpsToolSample.Services
                     Console.WriteLine($"  {svc.ServiceName}: ${svc.Cost:F2}");
                 }
 
-                var totalCost = costsByResourceGroup.Values.Sum();
                 Console.WriteLine($"\n💵 Total Cost (Month to Date): ${totalCost:F2}");
 
                 return (totalCost, costsByResourceGroup, costsByService);
