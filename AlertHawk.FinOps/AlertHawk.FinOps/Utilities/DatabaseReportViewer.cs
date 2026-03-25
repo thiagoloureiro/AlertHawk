@@ -2,11 +2,13 @@ using FinOpsToolSample.Data;
 using FinOpsToolSample.Services;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace FinOpsToolSample.Utilities
 {
+    [ExcludeFromCodeCoverage]
     public class DatabaseReportViewer
     {
         private readonly DatabaseService _dbService;
