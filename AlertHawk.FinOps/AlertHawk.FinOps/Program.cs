@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using AlertHawk.FinOps;
 using FinOpsToolSample.Configuration;
 using FinOpsToolSample.Data;
@@ -11,6 +12,7 @@ using System.Text;
 
 namespace FinOpsToolSample
 {
+    [ExcludeFromCodeCoverage]
     public class Program
     {
         public static void Main(string[] args)
