@@ -36,9 +36,10 @@ namespace FinOpsToolSample.Services
                 );
                 var token = await _credential.GetTokenAsync(tokenRequestContext, default);
 
-                // Calculate date range
+                // Calculate date range - start from 1st day of the month N months ago
                 var endDate = DateTime.UtcNow;
                 var startDate = endDate.AddMonths(-months);
+                startDate = new DateTime(startDate.Year, startDate.Month, 1);
 
                 Console.WriteLine($"📅 Date Range: {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
 
