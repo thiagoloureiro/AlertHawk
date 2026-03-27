@@ -17,11 +17,13 @@ public class AnalysisControllerTests
     {
         var orchestration = new Mock<IAnalysisOrchestrationService>(MockBehavior.Strict);
         var jobs = new Mock<IAnalysisJobService>(MockBehavior.Strict);
+        var cleanup = new Mock<IDataCleanupService>(MockBehavior.Strict);
         var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
         var controller = new AnalysisController(
             NullLogger<AnalysisController>.Instance,
             orchestration.Object,
             jobs.Object,
+            cleanup.Object,
             config);
 
         var result = await controller.StartAnalysis(subscriptionId!);
@@ -38,6 +40,7 @@ public class AnalysisControllerTests
     {
         var orchestration = new Mock<IAnalysisOrchestrationService>();
         var jobs = new Mock<IAnalysisJobService>(MockBehavior.Strict);
+        var cleanup = new Mock<IDataCleanupService>(MockBehavior.Strict);
         orchestration
             .Setup(o => o.RunAnalysisForSingleSubscriptionAsync("sub-a"))
             .ReturnsAsync(new SubscriptionAnalysisResult
@@ -56,6 +59,7 @@ public class AnalysisControllerTests
             NullLogger<AnalysisController>.Instance,
             orchestration.Object,
             jobs.Object,
+            cleanup.Object,
             config);
 
         var result = await controller.StartAnalysis("sub-a");
@@ -69,6 +73,7 @@ public class AnalysisControllerTests
     {
         var orchestration = new Mock<IAnalysisOrchestrationService>();
         var jobs = new Mock<IAnalysisJobService>(MockBehavior.Strict);
+        var cleanup = new Mock<IDataCleanupService>(MockBehavior.Strict);
         orchestration
             .Setup(o => o.RunAnalysisForSingleSubscriptionAsync("sub-x"))
             .ThrowsAsync(new InvalidOperationException("boom"));
@@ -78,6 +83,7 @@ public class AnalysisControllerTests
             NullLogger<AnalysisController>.Instance,
             orchestration.Object,
             jobs.Object,
+            cleanup.Object,
             config);
 
         var result = await controller.StartAnalysis("sub-x");
@@ -94,10 +100,12 @@ public class AnalysisControllerTests
     {
         var orchestration = new Mock<IAnalysisOrchestrationService>(MockBehavior.Strict);
         var jobs = new Mock<IAnalysisJobService>(MockBehavior.Strict);
+        var cleanup = new Mock<IDataCleanupService>(MockBehavior.Strict);
         var controller = new AnalysisController(
             NullLogger<AnalysisController>.Instance,
             orchestration.Object,
             jobs.Object,
+            cleanup.Object,
             new ConfigurationBuilder().Build());
 
         var result = controller.StartAnalysisAsync(subscriptionId!);
@@ -117,6 +125,7 @@ public class AnalysisControllerTests
             NullLogger<AnalysisController>.Instance,
             new Mock<IAnalysisOrchestrationService>(MockBehavior.Strict).Object,
             jobs.Object,
+            new Mock<IDataCleanupService>(MockBehavior.Strict).Object,
             new ConfigurationBuilder().Build());
 
         var result = controller.StartAnalysisAsync("sub-z");
@@ -137,6 +146,7 @@ public class AnalysisControllerTests
             NullLogger<AnalysisController>.Instance,
             new Mock<IAnalysisOrchestrationService>(MockBehavior.Strict).Object,
             jobs.Object,
+            new Mock<IDataCleanupService>(MockBehavior.Strict).Object,
             new ConfigurationBuilder().Build());
 
         var result = controller.GetAnalysisJobStatus(Guid.NewGuid());
@@ -163,6 +173,7 @@ public class AnalysisControllerTests
             NullLogger<AnalysisController>.Instance,
             new Mock<IAnalysisOrchestrationService>(MockBehavior.Strict).Object,
             jobs,
+            new Mock<IDataCleanupService>(MockBehavior.Strict).Object,
             new ConfigurationBuilder().Build());
 
         var result = controller.GetAnalysisJobStatus(jobId);
@@ -170,6 +181,82 @@ public class AnalysisControllerTests
         var ok = Assert.IsType<OkObjectResult>(result.Result);
         var body = Assert.IsType<AnalysisJobStatusDto>(ok.Value);
         Assert.Equal("running", body.Status);
+    }
+
+    [Fact]
+    public async Task CleanupOldAnalysisRuns_Success_ReturnsOk()
+    {
+        var cleanup = new Mock<IDataCleanupService>();
+        cleanup
+            .Setup(c => c.CleanupOldAnalysisRunsAsync())
+            .ReturnsAsync(new CleanupResult
+            {
+                Success = true,
+                AnalysisRunsDeleted = 5,
+                AnalysisRunsKept = 3,
+                Message = "Cleanup successful",
+                DeletedRunDetails = new List<string> { "Run #1", "Run #2" }
+            });
+
+        var controller = new AnalysisController(
+            NullLogger<AnalysisController>.Instance,
+            new Mock<IAnalysisOrchestrationService>(MockBehavior.Strict).Object,
+            new Mock<IAnalysisJobService>(MockBehavior.Strict).Object,
+            cleanup.Object,
+            new ConfigurationBuilder().Build());
+
+        var result = await controller.CleanupOldAnalysisRuns();
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        Assert.NotNull(ok.Value);
+        cleanup.Verify(c => c.CleanupOldAnalysisRunsAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task CleanupOldAnalysisRuns_ServiceFails_Returns500()
+    {
+        var cleanup = new Mock<IDataCleanupService>();
+        cleanup
+            .Setup(c => c.CleanupOldAnalysisRunsAsync())
+            .ReturnsAsync(new CleanupResult
+            {
+                Success = false,
+                Message = "Database error",
+                ErrorDetails = "Connection failed"
+            });
+
+        var controller = new AnalysisController(
+            NullLogger<AnalysisController>.Instance,
+            new Mock<IAnalysisOrchestrationService>(MockBehavior.Strict).Object,
+            new Mock<IAnalysisJobService>(MockBehavior.Strict).Object,
+            cleanup.Object,
+            new ConfigurationBuilder().Build());
+
+        var result = await controller.CleanupOldAnalysisRuns();
+
+        var status = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, status.StatusCode);
+    }
+
+    [Fact]
+    public async Task CleanupOldAnalysisRuns_ServiceThrows_Returns500()
+    {
+        var cleanup = new Mock<IDataCleanupService>();
+        cleanup
+            .Setup(c => c.CleanupOldAnalysisRunsAsync())
+            .ThrowsAsync(new Exception("Unexpected error"));
+
+        var controller = new AnalysisController(
+            NullLogger<AnalysisController>.Instance,
+            new Mock<IAnalysisOrchestrationService>(MockBehavior.Strict).Object,
+            new Mock<IAnalysisJobService>(MockBehavior.Strict).Object,
+            cleanup.Object,
+            new ConfigurationBuilder().Build());
+
+        var result = await controller.CleanupOldAnalysisRuns();
+
+        var status = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, status.StatusCode);
     }
 
     private sealed class StubAnalysisJobService : IAnalysisJobService

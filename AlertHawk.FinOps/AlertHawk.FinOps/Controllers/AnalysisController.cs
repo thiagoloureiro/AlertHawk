@@ -14,17 +14,20 @@ namespace FinOpsToolSample.Controllers
         private readonly ILogger<AnalysisController> _logger;
         private readonly IAnalysisOrchestrationService _analysisService;
         private readonly IAnalysisJobService _analysisJobService;
+        private readonly IDataCleanupService _dataCleanupService;
         private readonly IConfiguration _configuration;
 
         public AnalysisController(
             ILogger<AnalysisController> logger,
             IAnalysisOrchestrationService analysisService,
             IAnalysisJobService analysisJobService,
+            IDataCleanupService dataCleanupService,
             IConfiguration configuration)
         {
             _logger = logger;
             _analysisService = analysisService;
             _analysisJobService = analysisJobService;
+            _dataCleanupService = dataCleanupService;
             _configuration = configuration;
         }
 
@@ -119,6 +122,53 @@ namespace FinOpsToolSample.Controllers
             }
 
             return Ok(status);
+        }
+
+        /// <summary>
+        /// Cleans up old analysis runs, keeping only the latest run per subscription.
+        /// Deletes all related data (resources, cost details, AI recommendations) for old runs.
+        /// </summary>
+        [HttpPost("cleanup")]
+        public async Task<IActionResult> CleanupOldAnalysisRuns()
+        {
+            _logger.LogInformation("Starting cleanup of old analysis runs");
+
+            try
+            {
+                var result = await _dataCleanupService.CleanupOldAnalysisRunsAsync();
+
+                if (!result.Success)
+                {
+                    _logger.LogWarning("Cleanup failed: {Message}", result.Message);
+                    return StatusCode(500, new
+                    {
+                        Success = false,
+                        Message = result.Message,
+                        ErrorDetails = result.ErrorDetails
+                    });
+                }
+
+                _logger.LogInformation("Cleanup completed successfully: {Message}", result.Message);
+
+                return Ok(new
+                {
+                    Success = true,
+                    Message = result.Message,
+                    AnalysisRunsDeleted = result.AnalysisRunsDeleted,
+                    AnalysisRunsKept = result.AnalysisRunsKept,
+                    DeletedRuns = result.DeletedRunDetails
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during cleanup operation");
+                return StatusCode(500, new
+                {
+                    Success = false,
+                    Message = "Internal server error during cleanup",
+                    ErrorDetails = ex.Message
+                });
+            }
         }
     }
 

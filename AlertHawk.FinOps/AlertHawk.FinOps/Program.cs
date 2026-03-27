@@ -59,6 +59,7 @@ namespace FinOpsToolSample
             builder.Services.AddScoped<DatabaseService>();
             builder.Services.AddScoped<IAnalysisOrchestrationService, AnalysisOrchestrationService>();
             builder.Services.AddSingleton<IAnalysisJobService, AnalysisJobService>();
+            builder.Services.AddScoped<IDataCleanupService, DataCleanupService>();
             builder.Services.AddHostedService<WeeklySubscriptionAnalysisHostedService>();
 
             var issuers = configuration["Jwt:Issuers"] ??
