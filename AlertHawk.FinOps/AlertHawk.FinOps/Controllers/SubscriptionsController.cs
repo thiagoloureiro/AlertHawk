@@ -38,6 +38,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving subscriptions");
                 return StatusCode(500, new { Message = "Internal server error", ErrorDetails = ex.Message });
             }
@@ -62,6 +63,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving subscription {Id}", id);
                 return StatusCode(500, new { Message = "Internal server error", ErrorDetails = ex.Message });
             }
@@ -87,6 +89,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving subscription {SubscriptionId}", subscriptionId);
                 return StatusCode(500, new { Message = "Internal server error", ErrorDetails = ex.Message });
             }
@@ -134,11 +137,13 @@ namespace FinOpsToolSample.Controllers
             catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("duplicate") == true || 
                                                ex.InnerException?.Message.Contains("UNIQUE") == true)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Duplicate subscription ID {SubscriptionId}", dto.SubscriptionId);
                 return Conflict(new { Message = "A subscription with this ID already exists" });
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error creating or updating subscription");
                 return StatusCode(500, new { Message = "Internal server error", ErrorDetails = ex.Message });
             }
@@ -171,6 +176,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error updating subscription {Id}", id);
                 return StatusCode(500, new { Message = "Internal server error", ErrorDetails = ex.Message });
             }
@@ -200,6 +206,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error deleting subscription {Id}", id);
                 return StatusCode(500, new { Message = "Internal server error", ErrorDetails = ex.Message });
             }

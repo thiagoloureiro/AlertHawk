@@ -97,6 +97,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving dashboard summary");
                 return StatusCode(500, "Internal server error");
             }
@@ -132,6 +133,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving cost trends");
                 return StatusCode(500, "Internal server error");
             }
@@ -183,6 +185,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving resource distribution");
                 return StatusCode(500, "Internal server error");
             }
@@ -233,6 +236,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving optimization opportunities");
                 return StatusCode(500, "Internal server error");
             }

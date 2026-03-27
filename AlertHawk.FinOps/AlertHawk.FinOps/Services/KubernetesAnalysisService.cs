@@ -112,6 +112,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"Error checking Kubernetes clusters: {ex.Message}");
             }
         }
@@ -142,6 +143,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"  ⚠️  Could not analyze cluster nodes: {ex.Message}");
             }
         }

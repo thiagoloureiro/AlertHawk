@@ -69,6 +69,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"Error checking unattached disks: {ex.Message}");
             }
         }

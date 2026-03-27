@@ -48,6 +48,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving distinct subscriptions from analysis runs");
                 return StatusCode(500, "Internal server error");
             }

@@ -125,6 +125,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"❌ Error fetching historical costs: {ex.Message}");
                 return new List<HistoricalCostData>();
             }

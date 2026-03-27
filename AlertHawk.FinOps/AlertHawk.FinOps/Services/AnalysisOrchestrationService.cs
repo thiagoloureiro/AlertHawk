@@ -43,6 +43,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 return new SubscriptionAnalysisResult
                 {
                     Success = false,
@@ -92,8 +93,8 @@ namespace FinOpsToolSample.Services
                 foreach (var subscriptionId in subscriptionIds)
                 {
                     var subResult = await RunAnalysisForSubscriptionAsync(
-                        armClient, 
-                        credential, 
+                        armClient,
+                        credential,
                         subscriptionId
                     );
 
@@ -122,8 +123,8 @@ namespace FinOpsToolSample.Services
         }
 
         private async Task<SubscriptionAnalysisResult> RunAnalysisForSubscriptionAsync(
-            ArmClient armClient, 
-            ClientSecretCredential credential, 
+            ArmClient armClient,
+            ClientSecretCredential credential,
             string subscriptionId)
         {
             try
@@ -160,7 +161,7 @@ namespace FinOpsToolSample.Services
                 );
 
                 // Fetch Cost Data
-                var (totalCost, costsByResourceGroup, costsByService) = 
+                var (totalCost, costsByResourceGroup, costsByService) =
                     await costService.AnalyzeAsync(subscription, armClient);
 
                 // Set cost data in collector
@@ -219,6 +220,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 return new SubscriptionAnalysisResult
                 {
                     Success = false,

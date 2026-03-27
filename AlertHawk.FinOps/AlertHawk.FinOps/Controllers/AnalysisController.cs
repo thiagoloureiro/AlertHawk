@@ -71,6 +71,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error running analysis");
                 return StatusCode(500, new
                 {
@@ -161,6 +162,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error during cleanup operation");
                 return StatusCode(500, new
                 {

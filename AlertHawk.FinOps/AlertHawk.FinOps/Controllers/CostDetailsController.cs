@@ -39,6 +39,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving cost details for analysis run {AnalysisRunId}", analysisRunId);
                 return StatusCode(500, "Internal server error");
             }
@@ -63,6 +64,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving cost details by type for analysis run {AnalysisRunId}", analysisRunId);
                 return StatusCode(500, "Internal server error");
             }
@@ -88,6 +90,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving top cost details for analysis run {AnalysisRunId}", analysisRunId);
                 return StatusCode(500, "Internal server error");
             }
@@ -117,6 +120,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving cost summary by resource group");
                 return StatusCode(500, "Internal server error");
             }
@@ -146,6 +150,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving cost summary by service");
                 return StatusCode(500, "Internal server error");
             }

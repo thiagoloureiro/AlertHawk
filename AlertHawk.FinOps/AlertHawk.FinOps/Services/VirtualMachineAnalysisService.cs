@@ -113,6 +113,7 @@ namespace FinOpsToolSample.Services
                         }
                         catch (Exception ex)
                         {
+                            SentrySdk.CaptureException(ex);
                             Console.WriteLine($"  ❌ Could not fetch metrics: {ex.Message}");
                         }
                     }
@@ -120,6 +121,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"Error checking VMs: {ex.Message}");
             }
         }

@@ -125,6 +125,7 @@ namespace FinOpsToolSample.Services
                         }
                         catch (Exception ex)
                         {
+                            SentrySdk.CaptureException(ex);
                             Console.WriteLine($"Could not fetch metrics for App Service {app.Data.Name}: {ex.Message}");
                         }
 
@@ -134,6 +135,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"Error collecting App Service Plans: {ex.Message}");
             }
         }
@@ -274,6 +276,7 @@ namespace FinOpsToolSample.Services
                         }
                         catch (Exception ex)
                         {
+                            SentrySdk.CaptureException(ex);
                             Console.WriteLine($"Could not fetch metrics for SQL DB {db.Data.Name}: {ex.Message}");
                         }
 
@@ -283,6 +286,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"Error collecting SQL Databases: {ex.Message}");
             }
         }
@@ -386,6 +390,7 @@ namespace FinOpsToolSample.Services
                         }
                         catch (Exception ex)
                         {
+                            SentrySdk.CaptureException(ex);
                             Console.WriteLine($"Could not fetch metrics for VM {vm.Data.Name}: {ex.Message}");
                         }
 
@@ -395,6 +400,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"Error collecting VMs: {ex.Message}");
             }
         }
@@ -438,6 +444,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"Error collecting Storage Accounts: {ex.Message}");
             }
         }
@@ -494,6 +501,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"Error collecting Unattached Disks: {ex.Message}");
             }
         }
@@ -553,6 +561,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"Error collecting Unused Public IPs: {ex.Message}");
             }
         }
@@ -653,6 +662,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"Error collecting Kubernetes clusters: {ex.Message}");
             }
         }
@@ -855,6 +865,7 @@ namespace FinOpsToolSample.Services
                         }
                         catch (Exception ex)
                         {
+                            SentrySdk.CaptureException(ex);
                             Console.WriteLine($"Could not fetch metrics for Redis Cache {cache.Data.Name}: {ex.Message}");
                         }
 
@@ -864,6 +875,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"Error collecting Redis Caches: {ex.Message}");
             }
         }

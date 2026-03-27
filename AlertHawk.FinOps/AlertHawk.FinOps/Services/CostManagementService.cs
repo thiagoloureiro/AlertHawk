@@ -111,6 +111,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"Error fetching cost data: {ex.Message}");
                 Console.WriteLine("\nNote: Ensure your service principal has 'Cost Management Reader' role.");
                 return (0, new Dictionary<string, decimal>(), new List<ServiceCostDetail>());

@@ -86,6 +86,7 @@ public class DataCleanupService : IDataCleanupService
         }
         catch (Exception ex)
         {
+            SentrySdk.CaptureException(ex);
             _logger.LogError(ex, "Error during cleanup of old analysis runs");
             result.Success = false;
             result.Message = "Failed to cleanup old analysis runs";

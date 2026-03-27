@@ -39,6 +39,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving historical costs for analysis run {AnalysisRunId}", analysisRunId);
                 return StatusCode(500, "Internal server error");
             }
@@ -76,6 +77,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving historical costs for subscription {SubscriptionId}", subscriptionId);
                 return StatusCode(500, "Internal server error");
             }
@@ -104,6 +106,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving daily totals for analysis run {AnalysisRunId}", analysisRunId);
                 return StatusCode(500, "Internal server error");
             }
@@ -143,6 +146,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving historical costs by resource group");
                 return StatusCode(500, "Internal server error");
             }
@@ -183,6 +187,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving historical costs by service");
                 return StatusCode(500, "Internal server error");
             }
@@ -235,6 +240,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error calculating cost trend");
                 return StatusCode(500, "Internal server error");
             }

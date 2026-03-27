@@ -39,6 +39,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving recommendations for analysis run {AnalysisRunId}", analysisRunId);
                 return StatusCode(500, "Internal server error");
             }
@@ -66,6 +67,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving latest recommendation");
                 return StatusCode(500, "Internal server error");
             }
@@ -98,6 +100,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving formatted recommendation");
                 return StatusCode(500, "Internal server error");
             }
@@ -131,6 +134,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving all recommendations");
                 return StatusCode(500, "Internal server error");
             }

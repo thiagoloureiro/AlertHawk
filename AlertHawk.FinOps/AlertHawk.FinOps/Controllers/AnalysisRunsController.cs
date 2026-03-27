@@ -50,6 +50,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving analysis runs");
                 return StatusCode(500, "Internal server error");
             }
@@ -78,6 +79,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving analysis run {Id}", id);
                 return StatusCode(500, "Internal server error");
             }
@@ -107,6 +109,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving latest analysis run");
                 return StatusCode(500, "Internal server error");
             }
@@ -152,6 +155,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving latest analysis runs per subscription");
                 return StatusCode(500, "Internal server error");
             }
@@ -186,6 +190,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving analysis runs for subscription {SubscriptionId}", subscriptionId);
                 return StatusCode(500, "Internal server error");
             }
@@ -212,6 +217,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error deleting analysis run {Id}", id);
                 return StatusCode(500, "Internal server error");
             }

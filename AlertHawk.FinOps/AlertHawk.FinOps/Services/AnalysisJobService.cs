@@ -78,6 +78,7 @@ public sealed class AnalysisJobService : IAnalysisJobService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Background analysis failed for job {JobId}", entry.JobId);
+            SentrySdk.CaptureException(ex);
             lock (entry.Gate)
             {
                 entry.Phase = AnalysisJobPhase.Failed;

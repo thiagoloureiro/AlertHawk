@@ -89,6 +89,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"❌ Error getting recommendations from AI AI: {ex.Message}");
                 return (string.Empty, null);
             }
@@ -211,6 +212,7 @@ namespace FinOpsToolSample.Services
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 Console.WriteLine($"⚠️  Warning: Could not save report to file: {ex.Message}");
                 return string.Empty;
             }

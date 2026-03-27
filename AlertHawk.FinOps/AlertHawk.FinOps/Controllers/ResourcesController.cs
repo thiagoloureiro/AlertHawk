@@ -52,6 +52,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving resources for analysis run {AnalysisRunId}", analysisRunId);
                 return StatusCode(500, "Internal server error");
             }
@@ -76,6 +77,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving resources by type");
                 return StatusCode(500, "Internal server error");
             }
@@ -101,6 +103,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving resources by resource group");
                 return StatusCode(500, "Internal server error");
             }
@@ -133,6 +136,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving resources with flags");
                 return StatusCode(500, "Internal server error");
             }
@@ -162,6 +166,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving resource type summary");
                 return StatusCode(500, "Internal server error");
             }
@@ -192,6 +197,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving resource group summary");
                 return StatusCode(500, "Internal server error");
             }
@@ -225,6 +231,7 @@ namespace FinOpsToolSample.Controllers
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error searching resources");
                 return StatusCode(500, "Internal server error");
             }
