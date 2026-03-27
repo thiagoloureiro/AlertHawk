@@ -40,11 +40,19 @@ namespace FinOpsToolSample.Services
                         Console.WriteLine($"  Resource Group: {db.Data.Id.ResourceGroupName}");
                         Console.WriteLine($"  Location: {db.Data.Location}");
 
+                        // Check if database is in an elastic pool
+                        var isElasticPool = db.Data.Sku?.Name?.Equals("ElasticPool", StringComparison.OrdinalIgnoreCase) ?? false;
+
                         if (db.Data.Sku != null)
                         {
                             Console.WriteLine($"  📦 SKU Details:");
                             Console.WriteLine($"    - Tier: {db.Data.Sku.Tier ?? "N/A"}");
                             Console.WriteLine($"    - Name: {db.Data.Sku.Name ?? "N/A"}");
+
+                            if (isElasticPool)
+                            {
+                                Console.WriteLine($"    - Type: Elastic Pool Database");
+                            }
 
                             if (db.Data.Sku.Capacity.HasValue)
                             {
@@ -83,12 +91,18 @@ namespace FinOpsToolSample.Services
                         {
                             Console.WriteLine($"  📈 Performance Metrics (Last 7 Days):");
 
-                            // Determine which metrics to query based on tier
+                            // Determine which metrics to query based on tier and pool status
                             var tier = db.Data.Sku?.Tier?.ToLower() ?? "";
                             var skuName = db.Data.Sku?.Name?.ToLower() ?? "";
                             string[] metricsToQuery;
 
-                            if (tier.Contains("datawarehouse") || skuName.Contains("datawarehouse") || skuName.StartsWith("dw"))
+                            if (isElasticPool)
+                            {
+                                // Elastic Pool databases use different metrics
+                                Console.WriteLine($"  → Detected Elastic Pool Database, using available metrics");
+                                metricsToQuery = new[] { "cpu_percent", "physical_data_read_percent", "log_write_percent" };
+                            }
+                            else if (tier.Contains("datawarehouse") || skuName.Contains("datawarehouse") || skuName.StartsWith("dw"))
                             {
                                 // Data Warehouse (Synapse) uses DWU metrics
                                 Console.WriteLine($"  → Detected Data Warehouse, using DWU metrics");
@@ -141,6 +155,8 @@ namespace FinOpsToolSample.Services
                                     "dwu_consumption_percent" => "DWU Consumption",
                                     "storage_percent" => "Storage Usage",
                                     "memory_usage_percent" => "Memory Usage",
+                                    "physical_data_read_percent" => "Physical Data Read",
+                                    "log_write_percent" => "Log Write",
                                     _ => metric.Name
                                 };
 
