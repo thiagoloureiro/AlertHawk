@@ -9,16 +9,17 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="AlertHawk.Notification.Domain" Version="1.0.9" />
 		<PackageReference Include="ClickHouse.Client" Version="7.14.0" />
 		<PackageReference Include="Azure.Identity" Version="1.19.0" />
 		<PackageReference Include="EasyMemoryCache" Version="3.0.7" />
 		<PackageReference Include="Hangfire.InMemory" Version="1.0.0" />
 		<PackageReference Include="Rebus.AzureServiceBus" Version="10.5.1" />
 		<PackageReference Include="Rebus.RabbitMq" Version="10.1.1" />
-		<PackageReference Include="Rebus.ServiceProvider" Version="10.7.0" />
+		<PackageReference Include="Rebus.ServiceProvider" Version="10.7.2" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
 		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.1.5" />
-		<PackageReference Include="Sentry.AspNetCore" Version="6.2.0" />
+		<PackageReference Include="Sentry.AspNetCore" Version="6.3.0" />
 		<PackageReference Include="Microsoft.Identity.Web" Version="4.6.0" />
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
 		<PackageReference Include="Hangfire.Core" Version="1.8.23" />
@@ -26,10 +27,6 @@
 		<PackageReference Include="Dapper" Version="2.1.72" />
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.0" />
 
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\..\AlertHawk.Notification\AlertHawk.Notification.Domain\AlertHawk.Notification.Domain.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
