@@ -9,9 +9,11 @@ using AlertHawk.Monitoring.Infrastructure.Producers;
 using AlertHawk.Monitoring.Infrastructure.Repositories.Class;
 using EasyMemoryCache.Configuration;
 using Hangfire;
-using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
+using Rebus.Bus;
+using SharedModels;
 using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring.Tests;
@@ -52,20 +54,10 @@ public class Startup
         services.AddTransient<IK8sClientRunner, K8sClientRunner>();
         
         services.AddTransient<INotificationProducer, NotificationProducer>();
-        var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
-        var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
-        var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
 
-        services.AddMassTransit(x =>
-        {
-            x.UsingRabbitMq((context, cfg) =>
-            {
-                cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
-                {
-                    if (rabbitMqUser != null) h.Username(rabbitMqUser);
-                    if (rabbitMqPass != null) h.Password(rabbitMqPass);
-                });
-            });
-        });
+        var bus = Substitute.For<IBus>();
+        bus.Send(Arg.Any<NotificationAlertMessage>(), Arg.Any<IDictionary<string, string>>())
+            .Returns(Task.CompletedTask);
+        services.AddSingleton(bus);
     }
 }

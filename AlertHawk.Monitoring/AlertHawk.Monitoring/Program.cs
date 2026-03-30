@@ -5,13 +5,13 @@ using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Helpers;
+using AlertHawk.Monitoring.Infrastructure;
 using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 using AlertHawk.Monitoring.Infrastructure.Producers;
 using AlertHawk.Monitoring.Infrastructure.Utils;
 using EasyMemoryCache.Configuration;
 using Hangfire;
 using Hangfire.InMemory;
-using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -22,7 +22,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using SharedModels;
+using Rebus.Bus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,13 +37,7 @@ builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 builder.Logging.AddEventSourceLogger();
 
-var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
-var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
-var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
 var sentryEnabled = configuration.GetValue<string>("Sentry:Enabled") ?? "false";
-var queueType = configuration.GetValue<string>("QueueType") ?? "RABBITMQ";
-var serviceBusConnectionString = configuration.GetValue<string>("ServiceBus:ConnectionString");
-var serviceBusQueueName = configuration.GetValue<string>("ServiceBus:QueueName");
 
 var cacheFrequency = configuration.GetValue<string>("DataCacheFrequencyCron") ?? "*/2 * * * *";
 
@@ -74,53 +68,9 @@ if (string.Equals(sentryEnabled, "true", StringComparison.InvariantCultureIgnore
     );
 }
 
-Console.WriteLine("Starting MassTransit Configuration");
+Console.WriteLine("Configuring Rebus notification publisher");
 
-builder.Services.AddMassTransit(x =>
-{
-    x.DisableUsageTelemetry();
-
-    switch (queueType.ToUpper())
-    {
-        case "RABBITMQ":
-            x.UsingRabbitMq((context, cfg) =>
-            {
-                Console.WriteLine($"Connecting to RabbitMQ at {rabbitMqHost}");
-                cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
-                {
-                    if (rabbitMqUser != null) h.Username(rabbitMqUser);
-                    if (rabbitMqPass != null) h.Password(rabbitMqPass);
-
-                    // Add connection timeout
-                    h.RequestedConnectionTimeout(TimeSpan.FromSeconds(30));
-                    h.UseCluster(c =>
-                    {
-                        c.Node(rabbitMqHost);
-                    });
-                });
-
-                // Configure message retry
-                cfg.UseMessageRetry(r => r.Immediate(5));
-            });
-            break;
-
-        case "SERVICEBUS":
-            x.UsingAzureServiceBus((context, cfg) =>
-            {
-                Console.WriteLine($"Connecting to Azure Service Bus");
-                cfg.Host(serviceBusConnectionString);
-                cfg.Message<NotificationAlert>(config =>
-                {
-                    config.SetEntityName(serviceBusQueueName);
-                });
-                cfg.Message<NotificationAlert>(c => c.SetEntityName("notificationsTopic"));
-            });
-            break;
-    }
-
-    // Add health checks
-    x.AddHealthChecks();
-});
+builder.Services.AddMonitoringNotificationRebus(configuration);
 
 // Add health checks to the app
 builder.Services.AddHealthChecks()
@@ -293,16 +243,14 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 app.UseResponseCompression();
 
-// Verify MassTransit connection
 try
 {
-    var busControl = app.Services.GetRequiredService<IBusControl>();
-    Console.WriteLine("MassTransit bus control retrieved successfully");
-    Console.WriteLine($"Bus address: {busControl.Address}");
+    _ = app.Services.GetRequiredService<IBus>();
+    Console.WriteLine("Rebus notification publisher bus resolved successfully");
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"ERROR: Failed to verify MassTransit connection: {ex.Message}");
+    Console.WriteLine($"ERROR: Failed to verify Rebus bus: {ex.Message}");
     Console.WriteLine($"Stack trace: {ex.StackTrace}");
 }
 

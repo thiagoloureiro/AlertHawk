@@ -23,4 +23,31 @@ namespace SharedModels
         public bool? HasDiskPressure { get; set; }
         public bool? HasPidPressure { get; set; }
     }
+
+    /// <summary>
+    /// Concrete type for Rebus (and JSON) deserialization.
+    /// </summary>
+    public sealed class NotificationAlertMessage : NotificationAlert
+    {
+        public int NotificationId { get; set; }
+        public int MonitorId { get; set; }
+        public string Service { get; set; } = "";
+        public int Region { get; set; }
+        public int Environment { get; set; }
+        public string URL { get; set; } = "";
+        public string IP { get; set; } = "";
+        public string Port { get; set; } = "";
+        public bool Success { get; set; }
+        public DateTime TimeStamp { get; set; }
+        public string Message { get; set; } = "";
+        public string ReasonPhrase { get; set; } = "";
+        public int StatusCode { get; set; }
+        public string ClusterName { get; set; } = "";
+        public string NodeName { get; set; } = "";
+        public string ClusterEnvironment { get; set; } = "";
+        public bool? IsReady { get; set; }
+        public bool? HasMemoryPressure { get; set; }
+        public bool? HasDiskPressure { get; set; }
+        public bool? HasPidPressure { get; set; }
+    }
 }

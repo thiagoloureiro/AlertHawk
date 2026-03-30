@@ -4,16 +4,15 @@ using AlertHawk.Notification.Domain.Interfaces.Notifiers;
 using AlertHawk.Notification.Domain.Interfaces.Repositories;
 using AlertHawk.Notification.Domain.Interfaces.Services;
 using AlertHawk.Notification.Helpers;
+using AlertHawk.Notification.Infrastructure;
 using AlertHawk.Notification.Infrastructure.Notifiers;
 using AlertHawk.Notification.Infrastructure.Repositories.Class;
 using EasyMemoryCache.Configuration;
-using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using SharedModels;
 using System.Reflection;
 using System.Text;
 
@@ -25,13 +24,7 @@ var configuration = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
-var rabbitMqHost = configuration.GetValue<string>("RabbitMq:Host");
-var rabbitMqUser = configuration.GetValue<string>("RabbitMq:User");
-var rabbitMqPass = configuration.GetValue<string>("RabbitMq:Pass");
 var sentryEnabled = configuration.GetValue<string>("Sentry:Enabled") ?? "false";
-var queueType = configuration.GetValue<string>("QueueType") ?? "RABBITMQ";
-var serviceBusConnectionString = configuration.GetValue<string>("ServiceBus:ConnectionString");
-var serviceBusQueueName = configuration.GetValue<string>("ServiceBus:QueueName");
 
 builder.Services.AddControllers(options =>
 {
@@ -62,37 +55,7 @@ builder.Services.AddSwaggerGen(c =>
     c.OperationFilter<SecurityRequirementsOperationFilter>();
 });
 
-builder.Services.AddMassTransit(x =>
-{
-    x.AddConsumer<NotificationConsumer>();
-    switch (queueType.ToUpper())
-    {
-        case "RABBITMQ":
-            x.UsingRabbitMq((context, cfg) =>
-            {
-                cfg.Host(new Uri($"rabbitmq://{rabbitMqHost}"), h =>
-                {
-                    h.Username(rabbitMqUser);
-                    h.Password(rabbitMqPass);
-                });
-
-                cfg.ReceiveEndpoint("notifications", e => { e.ConfigureConsumer<NotificationConsumer>(context); });
-            });
-            break;
-        case "SERVICEBUS":
-            x.UsingAzureServiceBus((context, cfg) =>
-            {
-                // Set the connection string
-                cfg.Host(serviceBusConnectionString);
-
-                // Configure the receive endpoint and the consumer
-                cfg.ReceiveEndpoint(serviceBusQueueName, e => { e.ConfigureConsumer<NotificationConsumer>(context); });
-                cfg.Message<NotificationAlert>(c => c.SetEntityName("notificationsTopic"));
-            });
-
-            break;
-    }
-});
+builder.Services.AddNotificationRebus(configuration);
 
 // DI
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());

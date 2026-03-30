@@ -9,10 +9,12 @@
   <ItemGroup>
     <PackageReference Include="AlertHawk.Authentication.Domain" Version="1.0.5" />
     <PackageReference Include="Dapper" Version="2.1.72" />
-    <PackageReference Include="MassTransit.Abstractions" Version="8.5.8" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.5" />
     <PackageReference Include="Polly" Version="8.6.6" />
+    <PackageReference Include="Rebus.AzureServiceBus" Version="10.5.1" />
+    <PackageReference Include="Rebus.RabbitMq" Version="10.1.1" />
+    <PackageReference Include="Rebus.ServiceProvider" Version="10.7.0" />
     <PackageReference Include="Sentry" Version="6.2.0" />
   </ItemGroup>
 

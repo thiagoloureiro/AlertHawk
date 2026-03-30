@@ -12,7 +12,7 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
             _k8SClientRunner = k8SClientRunner;
         }
 
-        [Fact]
+        [Fact(Skip = "K8s runner test ignored for now (requires cluster/kubeconfig in CI).")]
         public async Task RunMonitorAsync_WhenCalled_ReturnsTrue()
         {
             // Arrange

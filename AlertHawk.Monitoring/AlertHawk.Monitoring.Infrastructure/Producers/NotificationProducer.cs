@@ -1,8 +1,8 @@
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
-using MassTransit;
 using Microsoft.Extensions.Logging;
+using Rebus.Bus;
 using SharedModels;
 using System.Diagnostics.CodeAnalysis;
 
@@ -11,14 +11,14 @@ namespace AlertHawk.Monitoring.Infrastructure.Producers;
 [ExcludeFromCodeCoverage]
 public class NotificationProducer : INotificationProducer
 {
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IBus _bus;
     private readonly IMonitorNotificationRepository _monitorNotificationRepository;
     private readonly ILogger<NotificationProducer> _notificationLogger;
 
-    public NotificationProducer(IPublishEndpoint publishEndpoint,
+    public NotificationProducer(IBus bus,
         IMonitorNotificationRepository monitorNotificationRepository, ILogger<NotificationProducer> notificationLogger)
     {
-        _publishEndpoint = publishEndpoint;
+        _bus = bus;
         _monitorNotificationRepository = monitorNotificationRepository;
         _notificationLogger = notificationLogger;
     }
@@ -36,19 +36,20 @@ public class NotificationProducer : INotificationProducer
             {
                 _notificationLogger.LogInformation(
                     $"Notification Details: notificationId {item.NotificationId}, monitorId: {item.MonitorId}, ResponseStatusCode: {monitorHttp.ResponseStatusCode}, reasonPhrase {reasonPhrase}, name:  {monitorHttp.Name}");
-                await _publishEndpoint.Publish<NotificationAlert>(new
+                await _bus.Send(new NotificationAlertMessage
                 {
                     NotificationId = item.NotificationId,
                     MonitorId = item.MonitorId,
                     Service = monitorHttp.Name,
-                    Region = (int)monitorHttp?.MonitorRegion,
-                    Environment = (int)monitorHttp?.MonitorEnvironment,
-                    URL = monitorHttp?.UrlToCheck,
+                    Region = (int)monitorHttp.MonitorRegion,
+                    Environment = (int)monitorHttp.MonitorEnvironment,
+                    URL = monitorHttp.UrlToCheck ?? "",
                     Success = false,
                     TimeStamp = DateTime.UtcNow,
-                    Message = $"Error calling {monitorHttp?.Name}, Response StatusCode: {monitorHttp?.ResponseStatusCode}",
+                    Message =
+                        $"Error calling {monitorHttp.Name}, Response StatusCode: {monitorHttp.ResponseStatusCode}",
                     StatusCode = (int)monitorHttp.ResponseStatusCode,
-                    ReasonPhrase = reasonPhrase,
+                    ReasonPhrase = reasonPhrase ?? "",
                 });
 
                 _notificationLogger.LogInformation("Error Notification sent successfully");
@@ -74,21 +75,23 @@ public class NotificationProducer : INotificationProducer
             {
                 _notificationLogger.LogInformation(
                     $"Notification Details: notificationId {item.NotificationId}, monitorId: {item.MonitorId}, ResponseStatusCode: {monitorHttp.ResponseStatusCode}, reasonPhrase {reasonPhrase}, name:  {monitorHttp.Name}");
-                await _publishEndpoint.Publish<NotificationAlert>(new
+                await _bus.Send(new NotificationAlertMessage
                 {
                     NotificationId = item.NotificationId,
                     MonitorId = item.MonitorId,
                     Service = monitorHttp.Name,
-                    Region = (int)monitorHttp?.MonitorRegion,
-                    Environment = (int)monitorHttp?.MonitorEnvironment,
-                    URL = monitorHttp?.UrlToCheck,
+                    Region = (int)monitorHttp.MonitorRegion,
+                    Environment = (int)monitorHttp.MonitorEnvironment,
+                    URL = monitorHttp.UrlToCheck ?? "",
                     Success = true,
                     TimeStamp = DateTime.UtcNow,
-                    Message = $"Success calling {monitorHttp?.Name}, Response StatusCode: {monitorHttp?.ResponseStatusCode}",
+                    Message =
+                        $"Success calling {monitorHttp.Name}, Response StatusCode: {monitorHttp.ResponseStatusCode}",
                     StatusCode = (int)monitorHttp.ResponseStatusCode,
-                    ReasonPhrase = reasonPhrase
+                    ReasonPhrase = reasonPhrase ?? ""
                 });
             }
+
             _notificationLogger.LogInformation("Success Notification sent successfully");
         }
         catch (Exception err)
@@ -107,15 +110,15 @@ public class NotificationProducer : INotificationProducer
 
         foreach (var item in notificationIdList)
         {
-            await _publishEndpoint.Publish<NotificationAlert>(new
+            await _bus.Send(new NotificationAlertMessage
             {
                 NotificationId = item.NotificationId,
                 MonitorId = item.MonitorId,
                 Service = monitorTcp.Name,
                 Region = (int)monitorTcp.MonitorRegion,
                 Environment = (int)monitorTcp.MonitorEnvironment,
-                IP = monitorTcp.IP,
-                Port = monitorTcp.Port,
+                IP = monitorTcp.IP ?? "",
+                Port = monitorTcp.Port.ToString(),
                 Success = true,
                 TimeStamp = DateTime.UtcNow,
                 Message = $"Success calling {monitorTcp.Name}, Response StatusCode: {monitorTcp.Response}"
@@ -132,18 +135,18 @@ public class NotificationProducer : INotificationProducer
 
         foreach (var item in notificationIdList)
         {
-            await _publishEndpoint.Publish<NotificationAlert>(new
+            await _bus.Send(new NotificationAlertMessage
             {
                 NotificationId = item.NotificationId,
                 MonitorId = item.MonitorId,
                 Service = monitorTcp.Name,
-                Region = (int)monitorTcp?.MonitorRegion,
-                Environment = (int)monitorTcp?.MonitorEnvironment,
-                IP = monitorTcp?.IP,
-                Port = monitorTcp?.Port,
+                Region = (int)monitorTcp.MonitorRegion,
+                Environment = (int)monitorTcp.MonitorEnvironment,
+                IP = monitorTcp.IP ?? "",
+                Port = monitorTcp.Port.ToString(),
                 Success = false,
                 TimeStamp = DateTime.UtcNow,
-                Message = $"Error calling {monitorTcp?.Name}, Response StatusCode: {monitorTcp?.Response}"
+                Message = $"Error calling {monitorTcp.Name}, Response StatusCode: {monitorTcp.Response}"
             });
         }
     }
@@ -157,14 +160,14 @@ public class NotificationProducer : INotificationProducer
 
         foreach (var item in notificationIdList)
         {
-            await _publishEndpoint.Publish<NotificationAlert>(new
+            await _bus.Send(new NotificationAlertMessage
             {
                 NotificationId = item.NotificationId,
                 MonitorId = item.MonitorId,
                 Service = monitorK8S.Name,
                 Region = (int)monitorK8S.MonitorRegion,
                 Environment = (int)monitorK8S.MonitorEnvironment,
-                ClusterName = monitorK8S.ClusterName,
+                ClusterName = monitorK8S.ClusterName ?? "",
                 Success = true,
                 TimeStamp = DateTime.UtcNow,
                 Message = $"Success calling {monitorK8S.ClusterName}"
@@ -181,17 +184,17 @@ public class NotificationProducer : INotificationProducer
 
         foreach (var item in notificationIdList)
         {
-            await _publishEndpoint.Publish<NotificationAlert>(new
+            await _bus.Send(new NotificationAlertMessage
             {
                 NotificationId = item.NotificationId,
                 MonitorId = item.MonitorId,
                 Service = monitorK8S.Name,
-                Region = (int)monitorK8S?.MonitorRegion,
-                Environment = (int)monitorK8S?.MonitorEnvironment,
-                ClusterName = monitorK8S?.ClusterName,
+                Region = (int)monitorK8S.MonitorRegion,
+                Environment = (int)monitorK8S.MonitorEnvironment,
+                ClusterName = monitorK8S.ClusterName ?? "",
                 Success = false,
                 TimeStamp = DateTime.UtcNow,
-                Message = $"Error calling {monitorK8S?.Name}, Error Detail: {response}"
+                Message = $"Error calling {monitorK8S.Name}, Error Detail: {response}"
             });
         }
     }

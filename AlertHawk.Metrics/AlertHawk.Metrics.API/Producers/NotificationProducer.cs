@@ -1,7 +1,7 @@
 using AlertHawk.Metrics.API.Entities;
 using AlertHawk.Metrics.API.Repositories;
-using MassTransit;
 using Microsoft.Extensions.Logging;
+using Rebus.Bus;
 using SharedModels;
 using System.Diagnostics.CodeAnalysis;
 
@@ -10,18 +10,18 @@ namespace AlertHawk.Metrics.API.Producers;
 [ExcludeFromCodeCoverage]
 public class NotificationProducer : INotificationProducer
 {
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IBus _bus;
     private readonly IMetricsNotificationRepository _metricsNotificationRepository;
     private readonly IMetricsAlertRepository _metricsAlertRepository;
     private readonly ILogger<NotificationProducer> _logger;
 
     public NotificationProducer(
-        IPublishEndpoint publishEndpoint,
+        IBus bus,
         IMetricsNotificationRepository metricsNotificationRepository,
         IMetricsAlertRepository metricsAlertRepository,
         ILogger<NotificationProducer> logger)
     {
-        _publishEndpoint = publishEndpoint;
+        _bus = bus;
         _metricsNotificationRepository = metricsNotificationRepository;
         _metricsAlertRepository = metricsAlertRepository;
         _logger = logger;
@@ -78,13 +78,13 @@ public class NotificationProducer : INotificationProducer
                 _logger.LogInformation(
                     $"Notification Details: notificationId {item.NotificationId}, clusterName: {item.ClusterName}, Success: {success}");
 
-                await _publishEndpoint.Publish<NotificationAlert>(new
+                await _bus.Send(new NotificationAlertMessage
                 {
                     NotificationId = item.NotificationId,
-                    MonitorId = 0, // Node metrics don't have a monitor ID
+                    MonitorId = 0,
                     Service = $"Node: {nodeName}",
-                    Region = 0, // Node metrics don't have a region mapping
-                    Environment = 0, // Node metrics don't have an environment mapping
+                    Region = 0,
+                    Environment = 0,
                     URL = string.Empty,
                     Success = success,
                     TimeStamp = DateTime.UtcNow,
