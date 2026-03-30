@@ -27,10 +27,7 @@
       <PackageReference Include="EasyMemoryCache" Version="3.0.7" />
       <PackageReference Include="Hangfire.Core" Version="1.8.23" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.5" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\..\AlertHawk.Notification\AlertHawk.Notification.Domain\AlertHawk.Notification.Domain.csproj" />
+      <PackageReference Include="Sentry.AspNetCore" Version="6.3.0" />
     </ItemGroup>
 
 </Project>

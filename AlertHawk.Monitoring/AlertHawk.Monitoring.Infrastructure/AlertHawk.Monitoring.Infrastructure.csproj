@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
     <ItemGroup>
+        <PackageReference Include="AlertHawk.Notification.Domain" Version="1.0.9" />
         <PackageReference Include="Azure.Identity" Version="1.19.0" />
         <PackageReference Include="Azure.Storage.Blobs" Version="12.27.0" />
         <PackageReference Include="ClosedXML" Version="0.105.0" />
@@ -18,14 +19,14 @@
         <PackageReference Include="Polly" Version="8.6.6" />
         <PackageReference Include="Rebus.AzureServiceBus" Version="10.5.1" />
         <PackageReference Include="Rebus.RabbitMq" Version="10.1.1" />
-        <PackageReference Include="Rebus.ServiceProvider" Version="10.7.0" />
-        <PackageReference Include="Sentry" Version="6.2.0" />
-    </ItemGroup>
-    <ItemGroup>
-      <ProjectReference Include="..\AlertHawk.Monitoring.Domain\AlertHawk.Monitoring.Domain.csproj" />
+        <PackageReference Include="Rebus.ServiceProvider" Version="10.7.2" />
+        <PackageReference Include="Sentry" Version="6.3.0" />
     </ItemGroup>
     <ItemGroup>
       <Compile Remove="MonitorRunner\HttpClientScreenshot.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\AlertHawk.Monitoring.Domain\AlertHawk.Monitoring.Domain.csproj" />
     </ItemGroup>
 
 </Project>
