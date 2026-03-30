@@ -16,7 +16,7 @@ public class MetricsController : ControllerBase
     private readonly INotificationProducer _notificationProducer;
     private readonly IAzurePricesService _azurePricesService;
     private readonly ILogger<MetricsController> _logger;
-    
+
     public MetricsController(
         IClickHouseService clickHouseService,
         NodeStatusTracker nodeStatusTracker,
@@ -218,7 +218,7 @@ public class MetricsController : ControllerBase
                     $"HasDiskPressure={previousStatus.HasDiskPressure}, HasPidPressure={previousStatus.HasPidPressure}. " +
                     $"New status: IsReady={request.IsReady}, HasMemoryPressure={request.HasMemoryPressure}, " +
                     $"HasDiskPressure={request.HasDiskPressure}, HasPidPressure={request.HasPidPressure}.");
-                
+
                 // Determine if the node is healthy (all conditions are OK)
                 var isHealthy = (request.IsReady == true || request.IsReady == null) &&
                                (request.HasMemoryPressure == false || request.HasMemoryPressure == null) &&
@@ -241,18 +241,18 @@ public class MetricsController : ControllerBase
             _logger.LogDebug("Checking price fetch conditions for node {NodeName} in cluster {ClusterName}: CloudProvider={CloudProvider}, Region={Region}, InstanceType={InstanceType}",
                 request.NodeName, clusterName, request.CloudProvider ?? "null", request.Region ?? "null", request.InstanceType ?? "null");
 
-            var isAzure = !string.IsNullOrWhiteSpace(request.CloudProvider) && 
+            var isAzure = !string.IsNullOrWhiteSpace(request.CloudProvider) &&
                           (request.CloudProvider.Equals("Azure", StringComparison.OrdinalIgnoreCase) ||
                            request.CloudProvider.Equals("AKS", StringComparison.OrdinalIgnoreCase));
 
-            if (!string.IsNullOrWhiteSpace(clusterName) && 
+            if (!string.IsNullOrWhiteSpace(clusterName) &&
                 isAzure &&
                 !string.IsNullOrWhiteSpace(request.Region) &&
                 !string.IsNullOrWhiteSpace(request.InstanceType))
             {
                 _logger.LogInformation("Price fetch conditions met. Fetching Azure prices for node {NodeName} in cluster {ClusterName}, Region={Region}, InstanceType={InstanceType}, OS={OperatingSystem}",
                     request.NodeName, clusterName, request.Region, request.InstanceType, request.OperatingSystem ?? "null");
-                
+
                 try
                 {
                     await FetchAndStoreClusterPriceAsync(
@@ -266,7 +266,7 @@ public class MetricsController : ControllerBase
                 catch (Exception ex)
                 {
                     // Log but don't fail the request if price fetching fails
-                    _logger.LogWarning(ex, "Failed to fetch and store cluster price for node {NodeName} in cluster {ClusterName}", 
+                    _logger.LogWarning(ex, "Failed to fetch and store cluster price for node {NodeName} in cluster {ClusterName}",
                         request.NodeName, clusterName);
                     SentrySdk.CaptureException(ex);
                 }
@@ -279,7 +279,7 @@ public class MetricsController : ControllerBase
                 else if (!isAzure) missingFields.Add($"CloudProvider (not Azure/AKS, got: {request.CloudProvider})");
                 if (string.IsNullOrWhiteSpace(request.Region)) missingFields.Add("Region");
                 if (string.IsNullOrWhiteSpace(request.InstanceType)) missingFields.Add("InstanceType");
-                
+
                 _logger.LogDebug("Skipping price fetch for node {NodeName} in cluster {ClusterName}. Missing or invalid fields: {MissingFields}",
                     request.NodeName, clusterName, string.Join(", ", missingFields));
             }
@@ -387,10 +387,10 @@ public class MetricsController : ControllerBase
         try
         {
             var clusterNames = await _clickHouseService.GetUniqueClusterNamesAsync();
-           
+
             // Order alphabetically
             var orderedClusterNames = clusterNames.OrderBy(name => name).ToList();
-            
+
             return Ok(orderedClusterNames);
         }
         catch (Exception ex)
@@ -411,10 +411,10 @@ public class MetricsController : ControllerBase
         try
         {
             var namespaceNames = await _clickHouseService.GetUniqueNamespaceNamesAsync(clusterName);
-          
+
             // Order alphabetically
             var orderedNamespaces = namespaceNames.OrderBy(name => name).ToList();
-            
+
             return Ok(orderedNamespaces);
         }
         catch (Exception ex)
@@ -436,7 +436,7 @@ public class MetricsController : ControllerBase
         {
             await _clickHouseService.CleanupMetricsAsync(days);
             var message = days == 0
-                ? "All five tables (k8s_metrics, k8s_node_metrics, k8s_pod_logs, k8s_events, k8s_pvc_metrics) have been truncated."
+                ? "All five tables (k8s_metrics, k8s_node_metrics, k8s_pod_logs, k8s_events, k8s_pvc_metrics, k8s_cluster_prices) have been truncated."
                 : $"Records older than {days} days have been deleted from all five tables (k8s_metrics, k8s_node_metrics, k8s_pod_logs, k8s_events, k8s_pvc_metrics).";
             return Ok(new { success = true, message });
         }
@@ -581,7 +581,6 @@ public class MetricsController : ControllerBase
         string? operatingSystem,
         string? cloudProvider)
     {
-
         // capitalize first character of the OS
         if (!string.IsNullOrWhiteSpace(operatingSystem))
         {
@@ -612,20 +611,20 @@ public class MetricsController : ControllerBase
         try
         {
             var priceResponse = await _azurePricesService.GetPricesAsync(priceRequest);
-            
+
             _logger.LogDebug("Azure prices API returned {Count} items for node {NodeName} in cluster {ClusterName}",
                 priceResponse?.Items?.Count ?? 0, nodeName, clusterName);
-            
+
             if (priceResponse?.Items != null && priceResponse.Items.Any())
             {
                 // Store the first matching price (you might want to filter more specifically)
                 var priceItem = priceResponse.Items.FirstOrDefault();
-                
+
                 if (priceItem != null)
                 {
                     _logger.LogInformation("Storing cluster price for node {NodeName} in cluster {ClusterName}: UnitPrice={UnitPrice} {CurrencyCode}/hour, ProductName={ProductName}, SkuName={SkuName}",
                         nodeName, clusterName, priceItem.UnitPrice, priceItem.CurrencyCode, priceItem.ProductName, priceItem.SkuName);
-                    
+
                     await _clickHouseService.WriteClusterPriceAsync(
                         clusterName,
                         nodeName,
@@ -642,8 +641,8 @@ public class MetricsController : ControllerBase
                         priceItem.ServiceName,
                         priceItem.ArmRegionName,
                         priceItem.EffectiveStartDate);
-                    
-                    _logger.LogInformation("Successfully stored cluster price for node {NodeName} in cluster {ClusterName}: {UnitPrice} {CurrencyCode}/hour", 
+
+                    _logger.LogInformation("Successfully stored cluster price for node {NodeName} in cluster {ClusterName}: {UnitPrice} {CurrencyCode}/hour",
                         nodeName, clusterName, priceItem.UnitPrice, priceItem.CurrencyCode);
                 }
                 else
@@ -660,7 +659,7 @@ public class MetricsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching Azure prices for node {NodeName} in cluster {ClusterName}, Region={Region}, InstanceType={InstanceType}", 
+            _logger.LogError(ex, "Error fetching Azure prices for node {NodeName} in cluster {ClusterName}, Region={Region}, InstanceType={InstanceType}",
                 nodeName, clusterName, region, instanceType);
             throw;
         }

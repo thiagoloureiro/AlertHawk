@@ -52,7 +52,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
     {
         await using var connection = new ClickHouseConnection(_connectionString);
         await connection.OpenAsync();
-        
+
         // Ensure database exists
         try
         {
@@ -65,12 +65,12 @@ public class ClickHouseService : IClickHouseService, IDisposable
         {
             Console.WriteLine($"Warning: Could not ensure database exists (it may already exist): {ex.Message}");
         }
-        
+
         // Use the database explicitly
         await using var useDbCommand = connection.CreateCommand();
         useDbCommand.CommandText = $"USE {_database}";
         await useDbCommand.ExecuteNonQueryAsync();
-        
+
         // Create pod/container metrics table
         var createTableSql = $@"
             CREATE TABLE IF NOT EXISTS {_database}.{_tableName}
@@ -123,21 +123,21 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 ADD COLUMN IF NOT EXISTS pod_state Nullable(String)
             ";
             await alterCommand1.ExecuteNonQueryAsync();
-            
+
             await using var alterCommand2 = connection.CreateCommand();
             alterCommand2.CommandText = $@"
                 ALTER TABLE {_database}.{_tableName}
                 ADD COLUMN IF NOT EXISTS restart_count UInt32 DEFAULT 0
             ";
             await alterCommand2.ExecuteNonQueryAsync();
-            
+
             await using var alterCommand3 = connection.CreateCommand();
             alterCommand3.CommandText = $@"
                 ALTER TABLE {_database}.{_tableName}
                 ADD COLUMN IF NOT EXISTS pod_age Nullable(Int64)
             ";
             await alterCommand3.ExecuteNonQueryAsync();
-            
+
             Console.WriteLine($"Columns 'pod_state', 'restart_count', and 'pod_age' ensured to exist in '{_database}.{_tableName}'");
         }
         catch (Exception ex)
@@ -187,14 +187,14 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 ADD COLUMN IF NOT EXISTS kubernetes_version Nullable(String)
             ";
             await alterCommand1.ExecuteNonQueryAsync();
-            
+
             await using var alterCommand2 = connection.CreateCommand();
             alterCommand2.CommandText = $@"
                 ALTER TABLE {_database}.{_nodeTableName}
                 ADD COLUMN IF NOT EXISTS cloud_provider Nullable(String)
             ";
             await alterCommand2.ExecuteNonQueryAsync();
-            
+
             Console.WriteLine($"Columns 'kubernetes_version' and 'cloud_provider' ensured to exist in '{_database}.{_nodeTableName}'");
         }
         catch (Exception ex)
@@ -211,28 +211,28 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 ADD COLUMN IF NOT EXISTS is_ready Nullable(UInt8)
             ";
             await alterCommand1.ExecuteNonQueryAsync();
-            
+
             await using var alterCommand2 = connection.CreateCommand();
             alterCommand2.CommandText = $@"
                 ALTER TABLE {_database}.{_nodeTableName}
                 ADD COLUMN IF NOT EXISTS has_memory_pressure Nullable(UInt8)
             ";
             await alterCommand2.ExecuteNonQueryAsync();
-            
+
             await using var alterCommand3 = connection.CreateCommand();
             alterCommand3.CommandText = $@"
                 ALTER TABLE {_database}.{_nodeTableName}
                 ADD COLUMN IF NOT EXISTS has_disk_pressure Nullable(UInt8)
             ";
             await alterCommand3.ExecuteNonQueryAsync();
-            
+
             await using var alterCommand4 = connection.CreateCommand();
             alterCommand4.CommandText = $@"
                 ALTER TABLE {_database}.{_nodeTableName}
                 ADD COLUMN IF NOT EXISTS has_pid_pressure Nullable(UInt8)
             ";
             await alterCommand4.ExecuteNonQueryAsync();
-            
+
             Console.WriteLine($"Columns 'is_ready', 'has_memory_pressure', 'has_disk_pressure', and 'has_pid_pressure' ensured to exist in '{_database}.{_nodeTableName}'");
         }
         catch (Exception ex)
@@ -249,14 +249,14 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 ADD COLUMN IF NOT EXISTS architecture Nullable(String)
             ";
             await alterCommand1.ExecuteNonQueryAsync();
-            
+
             await using var alterCommand2 = connection.CreateCommand();
             alterCommand2.CommandText = $@"
                 ALTER TABLE {_database}.{_nodeTableName}
                 ADD COLUMN IF NOT EXISTS operating_system Nullable(String)
             ";
             await alterCommand2.ExecuteNonQueryAsync();
-            
+
             Console.WriteLine($"Columns 'architecture' and 'operating_system' ensured to exist in '{_database}.{_nodeTableName}'");
         }
         catch (Exception ex)
@@ -273,14 +273,14 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 ADD COLUMN IF NOT EXISTS region Nullable(String)
             ";
             await alterCommand1.ExecuteNonQueryAsync();
-            
+
             await using var alterCommand2 = connection.CreateCommand();
             alterCommand2.CommandText = $@"
                 ALTER TABLE {_database}.{_nodeTableName}
                 ADD COLUMN IF NOT EXISTS instance_type Nullable(String)
             ";
             await alterCommand2.ExecuteNonQueryAsync();
-            
+
             Console.WriteLine($"Columns 'region' and 'instance_type' ensured to exist in '{_database}.{_nodeTableName}'");
         }
         catch (Exception ex)
@@ -347,8 +347,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
         {
             await using var checkEngineCommand = connection.CreateCommand();
             checkEngineCommand.CommandText = $@"
-                SELECT engine 
-                FROM system.tables 
+                SELECT engine
+                FROM system.tables
                 WHERE database = '{_database}' AND name = '{_podLogsTableName}'
             ";
             await using var reader = await checkEngineCommand.ExecuteReaderAsync();
@@ -359,13 +359,13 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 {
                     Console.WriteLine($"WARNING: Table '{_database}.{_podLogsTableName}' is using '{engine}' engine instead of 'ReplacingMergeTree'.");
                     Console.WriteLine($"Dropping and recreating the table with ReplacingMergeTree engine...");
-                    
+
                     // Drop the old table
                     await using var dropCommand = connection.CreateCommand();
                     dropCommand.CommandText = $"DROP TABLE IF EXISTS {_database}.{_podLogsTableName}";
                     await dropCommand.ExecuteNonQueryAsync();
                     Console.WriteLine($"Dropped old table '{_database}.{_podLogsTableName}'");
-                    
+
                     // Recreate with ReplacingMergeTree
                     await using var recreateCommand = connection.CreateCommand();
                     recreateCommand.CommandText = createPodLogsTableSql;
@@ -435,8 +435,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
         {
             await using var checkEngineCommand = connection.CreateCommand();
             checkEngineCommand.CommandText = $@"
-                SELECT engine 
-                FROM system.tables 
+                SELECT engine
+                FROM system.tables
                 WHERE database = '{_database}' AND name = '{_eventsTableName}'
             ";
             await using var reader = await checkEngineCommand.ExecuteReaderAsync();
@@ -602,9 +602,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
         }
         // Normalize cluster name to lowercase for case-insensitive storage
         effectiveClusterName = effectiveClusterName.ToLowerInvariant();
-        
-        var effectiveClusterEnvironment = !string.IsNullOrWhiteSpace(clusterEnvironment) 
-            ? clusterEnvironment 
+
+        var effectiveClusterEnvironment = !string.IsNullOrWhiteSpace(clusterEnvironment)
+            ? clusterEnvironment
             : "PROD";
 
         await _connectionSemaphore.WaitAsync();
@@ -736,7 +736,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
             }
 
             string query;
-            
+
             // If more than 6 hours (360 minutes), interpolate data using time intervals
             if (minutesValue > 360)
             {
@@ -759,7 +759,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 }
 
                 query = $@"
-                    SELECT 
+                    SELECT
                         toStartOfInterval(timestamp, INTERVAL {intervalMinutes} MINUTE) AS timestamp,
                         cluster_name,
                         namespace,
@@ -774,7 +774,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                         max(pod_age) AS pod_age
                     FROM {_database}.{_tableName}
                     WHERE {whereClause}
-                    GROUP BY 
+                    GROUP BY
                         timestamp,
                         cluster_name,
                         namespace,
@@ -787,7 +787,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
             {
                 // Return all data without interpolation for <= 6 hours
                 query = $@"
-                    SELECT 
+                    SELECT
                         timestamp,
                         cluster_name,
                         namespace,
@@ -808,10 +808,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
             await using var command = connection.CreateCommand();
             command.CommandText = query;
-            
+
             var results = new List<PodMetricDto>();
             await using var reader = await command.ExecuteReaderAsync();
-            
+
             while (await reader.ReadAsync())
             {
                 results.Add(new PodMetricDto
@@ -864,7 +864,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
             }
 
             string query;
-            
+
             // If more than 6 hours (360 minutes), interpolate data using time intervals
             if (minutesValue > 360)
             {
@@ -887,7 +887,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 }
 
                 query = $@"
-                    SELECT 
+                    SELECT
                         toStartOfInterval(timestamp, INTERVAL {intervalMinutes} MINUTE) AS timestamp,
                         cluster_name,
                         any(cluster_environment) AS cluster_environment,
@@ -908,7 +908,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                         any(instance_type) AS instance_type
                     FROM {_database}.{_nodeTableName}
                     WHERE {whereClause}
-                    GROUP BY 
+                    GROUP BY
                         timestamp,
                         cluster_name,
                         node_name
@@ -919,7 +919,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
             {
                 // Return all data without interpolation for <= 6 hours
                 query = $@"
-                    SELECT 
+                    SELECT
                         timestamp,
                         cluster_name,
                         cluster_environment,
@@ -946,10 +946,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
             await using var command = connection.CreateCommand();
             command.CommandText = query;
-            
+
             var results = new List<NodeMetricDto>();
             await using var reader = await command.ExecuteReaderAsync();
-            
+
             while (await reader.ReadAsync())
             {
                 results.Add(new NodeMetricDto
@@ -1013,7 +1013,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 // 48h–7 days: 30 min intervals; 7+ days: 60 min intervals
                 int intervalMinutes = minutesValue <= 10080 ? 30 : 60;
                 query = $@"
-                    SELECT 
+                    SELECT
                         toStartOfInterval(timestamp, INTERVAL {intervalMinutes} MINUTE) AS timestamp,
                         cluster_name,
                         namespace,
@@ -1026,7 +1026,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                         toUInt64(round(avg(capacity_bytes))) AS capacity_bytes
                     FROM {_database}.{_pvcTableName}
                     WHERE {whereClause}
-                    GROUP BY 
+                    GROUP BY
                         timestamp,
                         cluster_name,
                         namespace,
@@ -1039,7 +1039,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
             else
             {
                 query = $@"
-                    SELECT 
+                    SELECT
                         timestamp,
                         cluster_name,
                         namespace,
@@ -1111,10 +1111,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
             await using var command = connection.CreateCommand();
             command.CommandText = query;
-            
+
             var results = new List<string>();
             await using var reader = await command.ExecuteReaderAsync();
-            
+
             while (await reader.ReadAsync())
             {
                 var clusterName = reader.GetString(0);
@@ -1160,10 +1160,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
             await using var command = connection.CreateCommand();
             command.CommandText = query;
-            
+
             var results = new List<string>();
             await using var reader = await command.ExecuteReaderAsync();
-            
+
             while (await reader.ReadAsync())
             {
                 var namespaceName = reader.GetString(0);
@@ -1215,6 +1215,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 await using var truncatePvcCommand = connection.CreateCommand();
                 truncatePvcCommand.CommandText = $"TRUNCATE TABLE IF EXISTS {_database}.{_pvcTableName}";
                 await truncatePvcCommand.ExecuteNonQueryAsync();
+
+                await using var truncateClusterPrices = connection.CreateCommand();
+                truncatePvcCommand.CommandText = $"TRUNCATE TABLE IF EXISTS {_database}.{_clusterPricesTableName}";
+                await truncateClusterPrices.ExecuteNonQueryAsync();
             }
             else
             {
@@ -1256,6 +1260,13 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     DELETE WHERE timestamp < '{cutoffDateString}'
                 ";
                 await deletePvcCommand.ExecuteNonQueryAsync();
+
+                await using var deleteClusterPricesCommand = connection.CreateCommand();
+                deletePvcCommand.CommandText = $@"
+                    ALTER TABLE {_database}.{_clusterPricesTableName}
+                    DELETE WHERE timestamp < '{cutoffDateString}'
+                ";
+                await deleteClusterPricesCommand.ExecuteNonQueryAsync();
             }
         }
         finally
@@ -1330,10 +1341,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
             await connection.OpenAsync();
 
             var effectiveClusterName = clusterName ?? _clusterName;
-            
+
             // Build WHERE clause with parameter placeholders
             var whereConditions = new List<string> { "timestamp >= now() - INTERVAL {minutes:Int32} MINUTE" };
-            
+
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
                 // Use case-insensitive comparison
@@ -1351,7 +1362,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
             {
                 whereConditions.Add("container = {container:String}");
             }
-            
+
             var whereClause = string.Join(" AND ", whereConditions);
 
             // Check table engine to determine if we can use FINAL
@@ -1360,25 +1371,25 @@ public class ClickHouseService : IClickHouseService, IDisposable
             {
                 await using var checkEngineCommand = connection.CreateCommand();
                 checkEngineCommand.CommandText = @"
-                    SELECT engine 
-                    FROM system.tables 
+                    SELECT engine
+                    FROM system.tables
                     WHERE database = {database:String} AND name = {table_name:String}
                 ";
-                
+
                 checkEngineCommand.Parameters.Add(new ClickHouseDbParameter
                 {
                     ParameterName = "database",
                     DbType = System.Data.DbType.String,
                     Value = _database
                 });
-                
+
                 checkEngineCommand.Parameters.Add(new ClickHouseDbParameter
                 {
                     ParameterName = "table_name",
                     DbType = System.Data.DbType.String,
                     Value = _podLogsTableName
                 });
-                
+
                 await using var engineReader = await checkEngineCommand.ExecuteReaderAsync();
                 if (await engineReader.ReadAsync())
                 {
@@ -1392,10 +1403,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
             // Use FINAL only if table is using ReplacingMergeTree, otherwise query without FINAL
             var finalClause = (tableEngine != null && tableEngine.Contains("ReplacingMergeTree")) ? " FINAL" : "";
-            
+
             // Build query with parameter placeholders (using string concatenation for table names which are safe)
             var query = $@"
-                SELECT 
+                SELECT
                     timestamp,
                     cluster_name,
                     namespace,
@@ -1409,7 +1420,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
             await using var command = connection.CreateCommand();
             command.CommandText = query;
-            
+
             // Add parameters
             command.Parameters.Add(new ClickHouseDbParameter
             {
@@ -1417,14 +1428,14 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 DbType = System.Data.DbType.Int32,
                 Value = minutes ?? 1440
             });
-            
+
             command.Parameters.Add(new ClickHouseDbParameter
             {
                 ParameterName = "limit",
                 DbType = System.Data.DbType.Int32,
                 Value = limit
             });
-            
+
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
                 // Normalize to lowercase for case-insensitive comparison
@@ -1436,7 +1447,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     Value = normalizedClusterName
                 });
             }
-            
+
             if (!string.IsNullOrWhiteSpace(namespaceFilter))
             {
                 command.Parameters.Add(new ClickHouseDbParameter
@@ -1446,7 +1457,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     Value = namespaceFilter
                 });
             }
-            
+
             if (!string.IsNullOrWhiteSpace(podFilter))
             {
                 command.Parameters.Add(new ClickHouseDbParameter
@@ -1456,7 +1467,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     Value = podFilter
                 });
             }
-            
+
             if (!string.IsNullOrWhiteSpace(containerFilter))
             {
                 command.Parameters.Add(new ClickHouseDbParameter
@@ -1466,10 +1477,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     Value = containerFilter
                 });
             }
-            
+
             var results = new List<PodLogDto>();
             await using var reader = await command.ExecuteReaderAsync();
-            
+
             while (await reader.ReadAsync())
             {
                 results.Add(new PodLogDto
@@ -1508,10 +1519,17 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 "part_log",
                 "asynchronous_metric_log",
                 "metric_log",
+                "metric_log_0",
                 "query_metric_log",
                 "text_log",
                 "error_log",
-                "trace_log"
+                "trace_log",
+                "trace_log_0",
+                "trace_log_1",
+                "trace_log_2",
+                "trace_log_3",
+                "trace_log_4",
+                "trace_log_5",
             };
 
             foreach (var tableName in systemLogTables)
@@ -1559,10 +1577,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
             await using var command = connection.CreateCommand();
             command.CommandText = query;
-            
+
             var results = new List<TableSizeDto>();
             await using var reader = await command.ExecuteReaderAsync();
-            
+
             while (await reader.ReadAsync())
             {
                 results.Add(new TableSizeDto
@@ -1634,7 +1652,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 : "NULL";
 
             var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
-            
+
             // ReplacingMergeTree will automatically replace old rows with the same ORDER BY key
             // when version is higher, keeping only the latest event per unique combination
             var insertSql = $@"
@@ -1670,10 +1688,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
             await connection.OpenAsync();
 
             var effectiveClusterName = clusterName ?? _clusterName;
-            
+
             // Build WHERE clause
             var whereConditions = new List<string> { "timestamp >= now() - INTERVAL {minutes:Int32} MINUTE" };
-            
+
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
                 // Use case-insensitive comparison
@@ -1695,12 +1713,12 @@ public class ClickHouseService : IClickHouseService, IDisposable
             {
                 whereConditions.Add("event_type = {event_type:String}");
             }
-            
+
             var whereClause = string.Join(" AND ", whereConditions);
 
             // Use FINAL to get the latest version of each event (ReplacingMergeTree deduplication)
             var query = $@"
-                SELECT 
+                SELECT
                     timestamp,
                     cluster_name,
                     namespace,
@@ -1723,7 +1741,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
 
             await using var command = connection.CreateCommand();
             command.CommandText = query;
-            
+
             // Add parameters
             command.Parameters.Add(new ClickHouseDbParameter
             {
@@ -1731,14 +1749,14 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 DbType = System.Data.DbType.Int32,
                 Value = minutes ?? 1440
             });
-            
+
             command.Parameters.Add(new ClickHouseDbParameter
             {
                 ParameterName = "limit",
                 DbType = System.Data.DbType.Int32,
                 Value = limit
             });
-            
+
             if (!string.IsNullOrWhiteSpace(effectiveClusterName))
             {
                 // Normalize to lowercase for case-insensitive comparison
@@ -1750,7 +1768,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     Value = normalizedClusterName
                 });
             }
-            
+
             if (!string.IsNullOrWhiteSpace(namespaceFilter))
             {
                 command.Parameters.Add(new ClickHouseDbParameter
@@ -1760,7 +1778,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     Value = namespaceFilter
                 });
             }
-            
+
             if (!string.IsNullOrWhiteSpace(involvedObjectKindFilter))
             {
                 command.Parameters.Add(new ClickHouseDbParameter
@@ -1770,7 +1788,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     Value = involvedObjectKindFilter
                 });
             }
-            
+
             if (!string.IsNullOrWhiteSpace(involvedObjectNameFilter))
             {
                 command.Parameters.Add(new ClickHouseDbParameter
@@ -1780,7 +1798,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     Value = involvedObjectNameFilter
                 });
             }
-            
+
             if (!string.IsNullOrWhiteSpace(eventTypeFilter))
             {
                 command.Parameters.Add(new ClickHouseDbParameter
@@ -1790,10 +1808,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     Value = eventTypeFilter
                 });
             }
-            
+
             var results = new List<KubernetesEventDto>();
             await using var reader = await command.ExecuteReaderAsync();
-            
+
             while (await reader.ReadAsync())
             {
                 results.Add(new KubernetesEventDto
@@ -1943,7 +1961,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 : "";
 
             string querySql;
-            
+
             // If more than 6 hours (360 minutes), interpolate data using time intervals
             if (minutesValue > 360)
             {
@@ -1966,7 +1984,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 }
 
                 querySql = $@"
-                    SELECT 
+                    SELECT
                         toStartOfInterval(timestamp, INTERVAL {intervalMinutes} MINUTE) AS timestamp,
                         cluster_name,
                         node_name,
@@ -1985,7 +2003,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                         any(effective_start_date) AS effective_start_date
                     FROM {_database}.{_clusterPricesTableName}
                     {whereClause}
-                    GROUP BY 
+                    GROUP BY
                         timestamp,
                         cluster_name,
                         node_name
@@ -1996,7 +2014,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
             {
                 // Return all data without interpolation for <= 6 hours
                 querySql = $@"
-                    SELECT 
+                    SELECT
                         timestamp,
                         cluster_name,
                         node_name,
@@ -2060,4 +2078,3 @@ public class ClickHouseService : IClickHouseService, IDisposable
         _connectionSemaphore?.Dispose();
     }
 }
-
