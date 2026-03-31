@@ -16,6 +16,5 @@ namespace FinOpsToolSample.Models
     public class AIOutputContent
     {
         public string content { get; set; } = string.Empty;
-        public List<string> tools_called { get; set; } = new();
     }
 }
