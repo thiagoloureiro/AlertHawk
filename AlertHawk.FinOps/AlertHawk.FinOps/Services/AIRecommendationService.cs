@@ -55,6 +55,7 @@ namespace FinOpsToolSample.Services
                 var jsonRequest = JsonSerializer.Serialize(request);
                 var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
+                _httpClient.Timeout = TimeSpan.FromSeconds(240);
                 var response = await _httpClient.PostAsync(_apiUrl, content);
 
                 if (!response.IsSuccessStatusCode)
