@@ -12,6 +12,7 @@ public interface IMetricsApiClient
         double cpuUsageCores,
         double? cpuLimitCores,
         double memoryUsageBytes,
+        double? memoryLimitBytes = null,
         string? nodeName = null,
         string? podState = null,
         int restartCount = 0,

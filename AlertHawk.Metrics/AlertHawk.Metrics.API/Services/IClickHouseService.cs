@@ -11,6 +11,7 @@ public interface IClickHouseService
         double cpuUsageCores,
         double? cpuLimitCores,
         double memoryUsageBytes,
+        double? memoryLimitBytes = null,
         string? clusterName = null,
         string? nodeName = null,
         string? podState = null,
