@@ -153,6 +153,7 @@ public class MetricsController : ControllerBase
                 request.CpuUsageCores,
                 request.CpuLimitCores,
                 request.MemoryUsageBytes,
+                request.MemoryLimitBytes,
                 clusterName,
                 request.NodeName,
                 request.PodState,

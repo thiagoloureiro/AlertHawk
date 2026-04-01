@@ -36,7 +36,7 @@ public class PodMetricsCollectorTests
             .ReturnsAsync(podMetrics);
 
         _mockApiClient
-            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
+            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -51,6 +51,7 @@ public class PodMetricsCollectorTests
                 It.IsAny<double>(),
                 It.IsAny<double?>(),
                 It.IsAny<double>(),
+                It.IsAny<double?>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<int>(),
@@ -80,7 +81,7 @@ public class PodMetricsCollectorTests
             .ReturnsAsync(podMetrics);
 
         _mockApiClient
-            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
+            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -112,7 +113,7 @@ public class PodMetricsCollectorTests
             .ReturnsAsync(podMetrics);
 
         _mockApiClient
-            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
+            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -127,6 +128,49 @@ public class PodMetricsCollectorTests
                 It.IsAny<double>(),
                 0.5, // CPU limit should be 0.5 cores
                 It.IsAny<double>(),
+                It.IsAny<double?>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<long?>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CollectAsync_WithMemoryLimit_IncludesMemoryLimit()
+    {
+        // Arrange
+        var namespaces = new[] { "default" };
+        var podList = CreatePodListWithMemoryLimit("default", "test-pod", "test-container", "512Mi");
+        var podMetrics = CreatePodMetricsList("default", "test-pod", "test-container", "100m", "128Mi");
+
+        _mockKubernetesWrapper
+            .Setup(c => c.ListNamespacedPodAsync("default"))
+            .ReturnsAsync(podList);
+
+        _mockKubernetesWrapper
+            .Setup(c => c.ListClusterCustomObjectAsync("metrics.k8s.io", "v1beta1", "pods"))
+            .ReturnsAsync(podMetrics);
+
+        _mockApiClient
+            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
+            .Returns(Task.CompletedTask);
+
+        var expectedBytes = (double)(512L * 1024L * 1024L);
+
+        // Act
+        await PodMetricsCollector.CollectAsync(_mockKubernetesWrapper.Object, namespaces, _mockApiClient.Object);
+
+        // Assert
+        _mockApiClient.Verify(
+            a => a.WritePodMetricAsync(
+                "default",
+                "test-pod",
+                "test-container",
+                It.IsAny<double>(),
+                It.IsAny<double?>(),
+                It.IsAny<double>(),
+                expectedBytes,
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<int>(),
@@ -151,7 +195,7 @@ public class PodMetricsCollectorTests
             .ReturnsAsync(podMetrics);
 
         _mockApiClient
-            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
+            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
             .ThrowsAsync(new Exception("API error"));
 
         // Act & Assert - Should not throw
@@ -179,7 +223,7 @@ public class PodMetricsCollectorTests
             .ReturnsAsync(podMetrics);
 
         _mockApiClient
-            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
+            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
             .Returns(Task.CompletedTask);
 
         // Act & Assert - Should not throw
@@ -187,7 +231,7 @@ public class PodMetricsCollectorTests
 
         // Should still process the default namespace
         _mockApiClient.Verify(
-            a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()),
+            a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()),
             Times.Once);
     }
 
@@ -208,7 +252,7 @@ public class PodMetricsCollectorTests
             .ReturnsAsync(podMetrics);
 
         _mockApiClient
-            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
+            .Setup(a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -216,7 +260,7 @@ public class PodMetricsCollectorTests
 
         // Assert - Should be called twice (once for each container)
         _mockApiClient.Verify(
-            a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()),
+            a => a.WritePodMetricAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<double>(), It.IsAny<double?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<long?>()),
             Times.Exactly(2));
     }
 
@@ -287,6 +331,54 @@ public class PodMetricsCollectorTests
                                     Limits = new Dictionary<string, ResourceQuantity>
                                     {
                                         { "cpu", new ResourceQuantity(cpuLimit) }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    Status = new V1PodStatus
+                    {
+                        Phase = "Running",
+                        ContainerStatuses = new List<V1ContainerStatus>
+                        {
+                            new V1ContainerStatus
+                            {
+                                Name = containerName,
+                                RestartCount = 0
+                            }
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    private V1PodList CreatePodListWithMemoryLimit(string @namespace, string podName, string containerName, string memoryLimit)
+    {
+        return new V1PodList
+        {
+            Items = new List<V1Pod>
+            {
+                new V1Pod
+                {
+                    Metadata = new V1ObjectMeta
+                    {
+                        Name = podName,
+                        NamespaceProperty = @namespace,
+                        CreationTimestamp = DateTime.UtcNow.AddHours(-1)
+                    },
+                    Spec = new V1PodSpec
+                    {
+                        Containers = new List<V1Container>
+                        {
+                            new V1Container
+                            {
+                                Name = containerName,
+                                Resources = new V1ResourceRequirements
+                                {
+                                    Limits = new Dictionary<string, ResourceQuantity>
+                                    {
+                                        { "memory", new ResourceQuantity(memoryLimit) }
                                     }
                                 }
                             }

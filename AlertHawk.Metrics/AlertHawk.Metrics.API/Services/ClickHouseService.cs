@@ -83,6 +83,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                 cpu_usage_cores Float64,
                 cpu_limit_cores Nullable(Float64),
                 memory_usage_bytes Float64,
+                memory_limit_bytes Nullable(Float64),
                 node_name Nullable(String),
                 pod_state Nullable(String),
                 restart_count UInt32,
@@ -143,6 +144,21 @@ public class ClickHouseService : IClickHouseService, IDisposable
         catch (Exception ex)
         {
             Console.WriteLine($"Warning: Could not add pod_state/restart_count/pod_age columns (they may already exist): {ex.Message}");
+        }
+
+        try
+        {
+            await using var alterMemoryLimitCommand = connection.CreateCommand();
+            alterMemoryLimitCommand.CommandText = $@"
+                ALTER TABLE {_database}.{_tableName}
+                ADD COLUMN IF NOT EXISTS memory_limit_bytes Nullable(Float64)
+            ";
+            await alterMemoryLimitCommand.ExecuteNonQueryAsync();
+            Console.WriteLine($"Column 'memory_limit_bytes' ensured to exist in '{_database}.{_tableName}'");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not add memory_limit_bytes column (it may already exist): {ex.Message}");
         }
 
         // Create node metrics table
@@ -523,6 +539,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
         double cpuUsageCores,
         double? cpuLimitCores,
         double memoryUsageBytes,
+        double? memoryLimitBytes = null,
         string? clusterName = null,
         string? nodeName = null,
         string? podState = null,
@@ -550,6 +567,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
             var escapedPod = pod.Replace("'", "''").Replace("\\", "\\\\");
             var escapedContainer = container.Replace("'", "''").Replace("\\", "\\\\");
             var cpuLimitValue = cpuLimitCores?.ToString("F6", System.Globalization.CultureInfo.InvariantCulture) ?? "NULL";
+            var memoryLimitValue = memoryLimitBytes?.ToString("F0", System.Globalization.CultureInfo.InvariantCulture) ?? "NULL";
             var nodeNameValue = !string.IsNullOrWhiteSpace(nodeName)
                 ? $"'{nodeName.Replace("'", "''").Replace("\\", "\\\\")}'"
                 : "NULL";
@@ -561,9 +579,9 @@ public class ClickHouseService : IClickHouseService, IDisposable
             var escapedClusterName = effectiveClusterName.Replace("'", "''").Replace("\\", "\\\\");
             var insertSql = $@"
                 INSERT INTO {_database}.{_tableName}
-                (timestamp, cluster_name, namespace, pod, container, cpu_usage_cores, cpu_limit_cores, memory_usage_bytes, node_name, pod_state, restart_count, pod_age)
+                (timestamp, cluster_name, namespace, pod, container, cpu_usage_cores, cpu_limit_cores, memory_usage_bytes, memory_limit_bytes, node_name, pod_state, restart_count, pod_age)
                 VALUES
-                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedPod}', '{escapedContainer}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuLimitValue}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {nodeNameValue}, {podStateValue}, {restartCount}, {podAgeValue})
+                ('{timestamp}', '{escapedClusterName}', '{escapedNamespace}', '{escapedPod}', '{escapedContainer}', {cpuUsageCores.ToString("F6", System.Globalization.CultureInfo.InvariantCulture)}, {cpuLimitValue}, {memoryUsageBytes.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)}, {memoryLimitValue}, {nodeNameValue}, {podStateValue}, {restartCount}, {podAgeValue})
             ";
 
             await using var command = connection.CreateCommand();
@@ -768,6 +786,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                         avg(cpu_usage_cores) AS cpu_usage_cores,
                         avg(cpu_limit_cores) AS cpu_limit_cores,
                         avg(memory_usage_bytes) AS memory_usage_bytes,
+                        avg(memory_limit_bytes) AS memory_limit_bytes,
                         any(node_name) AS node_name,
                         any(pod_state) AS pod_state,
                         max(restart_count) AS restart_count,
@@ -796,6 +815,7 @@ public class ClickHouseService : IClickHouseService, IDisposable
                         cpu_usage_cores,
                         cpu_limit_cores,
                         memory_usage_bytes,
+                        memory_limit_bytes,
                         node_name,
                         pod_state,
                         restart_count,
@@ -824,10 +844,11 @@ public class ClickHouseService : IClickHouseService, IDisposable
                     CpuUsageCores = reader.GetDouble(5),
                     CpuLimitCores = reader.IsDBNull(6) ? null : reader.GetDouble(6),
                     MemoryUsageBytes = reader.GetDouble(7),
-                    NodeName = reader.IsDBNull(8) ? null : reader.GetString(8),
-                    PodState = reader.IsDBNull(9) ? null : reader.GetString(9),
-                    RestartCount = reader.IsDBNull(10) ? 0 : Convert.ToInt32(reader.GetValue(10)),
-                    PodAge = reader.IsDBNull(11) ? null : reader.GetInt64(11)
+                    MemoryLimitBytes = reader.IsDBNull(8) ? null : reader.GetDouble(8),
+                    NodeName = reader.IsDBNull(9) ? null : reader.GetString(9),
+                    PodState = reader.IsDBNull(10) ? null : reader.GetString(10),
+                    RestartCount = reader.IsDBNull(11) ? 0 : Convert.ToInt32(reader.GetValue(11)),
+                    PodAge = reader.IsDBNull(12) ? null : reader.GetInt64(12)
                 });
             }
 

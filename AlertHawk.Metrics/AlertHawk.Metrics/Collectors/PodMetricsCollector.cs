@@ -40,8 +40,9 @@ public static class PodMetricsCollector
                 {
                     var pods = await clientWrapper.ListNamespacedPodAsync(ns);
 
-                    // Build a dictionary of pod name -> container CPU limits
+                    // Build dictionaries of pod name -> per-container resource limits (string form from the API)
                     var podCpuLimits = new Dictionary<string, Dictionary<string, string>>();
+                    var podMemoryLimits = new Dictionary<string, Dictionary<string, string>>();
                     // Build a dictionary of pod name -> node name
                     var podNodeNames = new Dictionary<string, string>();
                     // Build a dictionary of pod name -> pod state (Phase)
@@ -53,7 +54,12 @@ public static class PodMetricsCollector
                     
                     foreach (var pod in pods.Items)
                     {
-                        var containerLimits = new Dictionary<string, string>();
+                        var podName = pod.Metadata?.Name;
+                        if (string.IsNullOrEmpty(podName))
+                            continue;
+
+                        var containerCpuLimits = new Dictionary<string, string>();
+                        var containerMemoryLimits = new Dictionary<string, string>();
                         if (pod.Spec?.Containers != null)
                         {
                             foreach (var container in pod.Spec.Containers)
@@ -67,35 +73,47 @@ public static class PodMetricsCollector
 
                                 if (cpuLimit != null)
                                 {
-                                    containerLimits[container.Name] = cpuLimit;
+                                    containerCpuLimits[container.Name] = cpuLimit;
+                                }
+
+                                var memoryLimit = container.Resources?.Limits?.ContainsKey("memory") == true
+                                    ? container.Resources.Limits["memory"].ToString()
+                                    : container.Resources?.Requests?.ContainsKey("memory") == true
+                                        ? container.Resources.Requests["memory"].ToString()
+                                        : null;
+
+                                if (memoryLimit != null)
+                                {
+                                    containerMemoryLimits[container.Name] = memoryLimit;
                                 }
                             }
                         }
-                        podCpuLimits[pod.Metadata.Name] = containerLimits;
+                        podCpuLimits[podName] = containerCpuLimits;
+                        podMemoryLimits[podName] = containerMemoryLimits;
                         
                         // Store node name for this pod
                         if (!string.IsNullOrWhiteSpace(pod.Spec?.NodeName))
                         {
-                            podNodeNames[pod.Metadata.Name] = pod.Spec.NodeName;
+                            podNodeNames[podName] = pod.Spec.NodeName;
                         }
                         
                         // Store pod state (Phase)
                         if (!string.IsNullOrWhiteSpace(pod.Status?.Phase))
                         {
-                            podStates[pod.Metadata.Name] = pod.Status.Phase;
+                            podStates[podName] = pod.Status.Phase;
                         }
                         
                         // Calculate total restart count for all containers
                         var restartCount = pod.Status?.ContainerStatuses != null
                             ? pod.Status.ContainerStatuses.Sum(cs => cs.RestartCount)
                             : 0;
-                        podRestarts[pod.Metadata.Name] = restartCount;
+                        podRestarts[podName] = restartCount;
                         
                         // Calculate pod age in seconds
                         if (pod.Metadata?.CreationTimestamp != null)
                         {
                             var age = (long)(DateTime.UtcNow - pod.Metadata.CreationTimestamp.Value).TotalSeconds;
-                            podAges[pod.Metadata.Name] = age;
+                            podAges[podName] = age;
                         }
                     }
 
@@ -129,10 +147,15 @@ public static class PodMetricsCollector
                                 item.Metadata.Namespace, item.Metadata.Name, item.Timestamp);
                             foreach (var container in item.Containers)
                             {
-                                // Get CPU limit for this container
-                                var cpuLimit = podCpuLimits.TryGetValue(item.Metadata.Name, out var containerLimits) &&
-                                             containerLimits.TryGetValue(container.Name, out var limit)
-                                    ? limit
+                                // Get CPU / memory limits for this container
+                                var cpuLimit = podCpuLimits.TryGetValue(item.Metadata.Name, out var containerCpuLimits) &&
+                                             containerCpuLimits.TryGetValue(container.Name, out var cpuLimitStr)
+                                    ? cpuLimitStr
+                                    : null;
+
+                                var memoryLimit = podMemoryLimits.TryGetValue(item.Metadata.Name, out var containerMemLimits) &&
+                                                  containerMemLimits.TryGetValue(container.Name, out var memoryLimitStr)
+                                    ? memoryLimitStr
                                     : null;
 
                                 // Get node name for this pod
@@ -165,6 +188,12 @@ public static class PodMetricsCollector
                                     cpuLimitCores = ResourceFormatter.ParseCpuToCores(cpuLimit);
                                 }
 
+                                double? memoryLimitBytes = null;
+                                if (memoryLimit != null)
+                                {
+                                    memoryLimitBytes = Utils.MemoryParser.ParseToBytes(memoryLimit);
+                                }
+
                                 try
                                 {
                                     await apiClient.WritePodMetricAsync(
@@ -174,6 +203,7 @@ public static class PodMetricsCollector
                                         cpuCores,
                                         cpuLimitCores,
                                         memoryBytes,
+                                        memoryLimitBytes,
                                         nodeName,
                                         podState,
                                         restartCount,
@@ -225,16 +255,27 @@ public static class PodMetricsCollector
                         {
                             foreach (var container in pod.Spec.Containers)
                             {
-                                // Get CPU limit for this container
-                                var cpuLimit = podCpuLimits.TryGetValue(pod.Metadata.Name, out var containerLimits) &&
-                                             containerLimits.TryGetValue(container.Name, out var limit)
-                                    ? limit
+                                // Get CPU / memory limits for this container
+                                var cpuLimit = podCpuLimits.TryGetValue(pod.Metadata.Name, out var containerCpuLimits) &&
+                                             containerCpuLimits.TryGetValue(container.Name, out var cpuLimitStr)
+                                    ? cpuLimitStr
+                                    : null;
+
+                                var memoryLimit = podMemoryLimits.TryGetValue(pod.Metadata.Name, out var containerMemLimits) &&
+                                                  containerMemLimits.TryGetValue(container.Name, out var memoryLimitStr)
+                                    ? memoryLimitStr
                                     : null;
 
                                 double? cpuLimitCores = null;
                                 if (cpuLimit != null)
                                 {
                                     cpuLimitCores = ResourceFormatter.ParseCpuToCores(cpuLimit);
+                                }
+
+                                double? memoryLimitBytes = null;
+                                if (memoryLimit != null)
+                                {
+                                    memoryLimitBytes = Utils.MemoryParser.ParseToBytes(memoryLimit);
                                 }
 
                                 try
@@ -247,6 +288,7 @@ public static class PodMetricsCollector
                                         0.0, // CPU usage
                                         cpuLimitCores,
                                         0.0, // Memory usage
+                                        memoryLimitBytes,
                                         nodeName,
                                         podState,
                                         restartCount,
