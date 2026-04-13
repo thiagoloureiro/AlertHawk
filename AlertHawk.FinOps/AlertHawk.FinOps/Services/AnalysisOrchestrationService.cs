@@ -215,7 +215,13 @@ namespace FinOpsToolSample.Services
                 }
 
                 var cleanupResult = await _dataCleanupService.CleanupOldAnalysisRunsAsync();
-                if (!cleanupResult.Success)
+                if (cleanupResult.Success)
+                {
+                    _logger.LogInformation(
+                        "Post-analysis cleanup: {Message}",
+                        cleanupResult.Message);
+                }
+                else
                 {
                     _logger.LogWarning(
                         "Post-analysis cleanup did not complete successfully: {Message}. {Error}",

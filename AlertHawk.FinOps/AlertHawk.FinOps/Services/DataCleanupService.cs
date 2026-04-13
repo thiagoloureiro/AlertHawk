@@ -1,3 +1,4 @@
+using System;
 using FinOpsToolSample.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -55,6 +56,7 @@ public class DataCleanupService : IDataCleanupService
                 _logger.LogInformation("No old analysis runs to delete");
                 result.Success = true;
                 result.Message = "No old analysis runs found to delete. All subscriptions have only their latest run.";
+                Console.WriteLine($"\n🧹 Cleanup: {result.Message}");
                 return result;
             }
 
@@ -95,6 +97,12 @@ public class DataCleanupService : IDataCleanupService
                 result.AnalysisRunsDeleted,
                 result.AnalysisRunsKept
             );
+
+            Console.WriteLine($"\n🧹 Cleanup: {result.Message}");
+            foreach (var detail in result.DeletedRunDetails)
+            {
+                Console.WriteLine($"   - Removed {detail}");
+            }
         }
         catch (Exception ex)
         {
@@ -103,6 +111,7 @@ public class DataCleanupService : IDataCleanupService
             result.Success = false;
             result.Message = "Failed to cleanup old analysis runs";
             result.ErrorDetails = ex.Message;
+            Console.WriteLine($"\n🧹 Cleanup failed: {ex.Message}");
         }
 
         return result;
