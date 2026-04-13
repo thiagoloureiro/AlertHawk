@@ -3,6 +3,7 @@ using Azure.ResourceManager;
 using FinOpsToolSample.Configuration;
 using FinOpsToolSample.Data;
 using FinOpsToolSample.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace FinOpsToolSample.Services
@@ -10,15 +11,21 @@ namespace FinOpsToolSample.Services
     public class AnalysisOrchestrationService : IAnalysisOrchestrationService
     {
         private readonly DatabaseService _databaseService;
+        private readonly IDataCleanupService _dataCleanupService;
+        private readonly ILogger<AnalysisOrchestrationService> _logger;
         private readonly AzureConfiguration _azureConfig;
         private readonly AIConfiguration _AIConfig;
 
         public AnalysisOrchestrationService(
             DatabaseService databaseService,
+            IDataCleanupService dataCleanupService,
+            ILogger<AnalysisOrchestrationService> logger,
             IOptions<AzureConfiguration> azureConfig,
             IOptions<AIConfiguration> AIConfig)
         {
             _databaseService = databaseService;
+            _dataCleanupService = dataCleanupService;
+            _logger = logger;
             _azureConfig = azureConfig.Value;
             _AIConfig = AIConfig.Value;
         }
@@ -205,6 +212,15 @@ namespace FinOpsToolSample.Services
                 if (historicalCosts.Any())
                 {
                     await _databaseService.SaveHistoricalCostsAsync(analysisRunId, historicalCosts);
+                }
+
+                var cleanupResult = await _dataCleanupService.CleanupOldAnalysisRunsAsync();
+                if (!cleanupResult.Success)
+                {
+                    _logger.LogWarning(
+                        "Post-analysis cleanup did not complete successfully: {Message}. {Error}",
+                        cleanupResult.Message,
+                        cleanupResult.ErrorDetails);
                 }
 
                 return new SubscriptionAnalysisResult

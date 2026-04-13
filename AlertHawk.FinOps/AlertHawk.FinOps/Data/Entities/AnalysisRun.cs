@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -39,5 +40,6 @@ namespace FinOpsToolSample.Data.Entities
         public virtual ICollection<CostDetail> CostDetails { get; set; } = new List<CostDetail>();
         public virtual ICollection<ResourceAnalysis> Resources { get; set; } = new List<ResourceAnalysis>();
         public virtual ICollection<AiRecommendation> AiRecommendations { get; set; } = new List<AiRecommendation>();
+        public virtual ICollection<HistoricalCost> HistoricalCosts { get; set; } = new List<HistoricalCost>();
     }
 }

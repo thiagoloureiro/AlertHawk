@@ -60,7 +60,19 @@ public class DataCleanupService : IDataCleanupService
 
             _logger.LogInformation("Found {Count} analysis runs to delete", runsToDelete.Count);
 
-            // Delete the old runs (cascade delete will handle related records)
+            var idsToDelete = runsToDelete.Select(r => r.Id).ToList();
+
+            // HistoricalCosts: remove explicitly so older databases without ON DELETE CASCADE stay consistent.
+            // (ExecuteDelete is not supported on the EF InMemory provider used in tests.)
+            var historicalRows = await _dbContext.HistoricalCosts
+                .Where(h => idsToDelete.Contains(h.AnalysisRunId))
+                .ToListAsync();
+            if (historicalRows.Count > 0)
+            {
+                _dbContext.HistoricalCosts.RemoveRange(historicalRows);
+            }
+
+            // Delete the old runs (cascade delete removes CostDetails, ResourceAnalysis, AiRecommendations)
             foreach (var runToDelete in runsToDelete)
             {
                 var runEntity = await _dbContext.AnalysisRuns.FindAsync(runToDelete.Id);
