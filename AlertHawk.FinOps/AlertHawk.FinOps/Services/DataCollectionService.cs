@@ -200,6 +200,7 @@ namespace FinOpsToolSample.Services
                             var tier = db.Data.Sku?.Tier?.ToLower() ?? "";
                             var skuName = db.Data.Sku?.Name?.ToLower() ?? "";
                             string[] metricsToQuery;
+                            var useVCoreStorageBytes = false;
 
                             if (tier.Contains("datawarehouse") || skuName.Contains("datawarehouse") || skuName.StartsWith("dw"))
                             {
@@ -217,8 +218,14 @@ namespace FinOpsToolSample.Services
                             {
                                 // vCore-based databases (GeneralPurpose, BusinessCritical, Hyperscale)
                                 Console.WriteLine($"  → Detected vCore-based database");
-                                metricsToQuery = new[] { "cpu_percent", "storage_percent" };
+                                useVCoreStorageBytes = true;
+                                metricsToQuery = SqlDatabaseVCoreMetrics.MetricsToQuery;
                             }
+
+                            double vCoreStorageUsedAvg = 0, vCoreStorageUsedMax = 0;
+                            double vCoreAllocatedAvg = 0, vCoreAllocatedMax = 0;
+                            var hasVCoreStorageUsed = false;
+                            var hasVCoreAllocated = false;
 
                             var metricsResponse = await metricsClient.QueryResourceAsync(
                                 db.Id.ToString(),
@@ -267,10 +274,40 @@ namespace FinOpsToolSample.Services
                                     resource.Metrics["Storage_Average_%"] = avgValue;
                                     resource.Metrics["Storage_Max_%"] = maxValue;
                                 }
+                                else if (useVCoreStorageBytes && metric.Name == SqlDatabaseVCoreMetrics.StorageUsed)
+                                {
+                                    hasVCoreStorageUsed = true;
+                                    vCoreStorageUsedAvg = avgValue;
+                                    vCoreStorageUsedMax = maxValue;
+                                    resource.Metrics["Storage_Used_Avg_Bytes"] = avgValue;
+                                    resource.Metrics["Storage_Used_Max_Bytes"] = maxValue;
+                                }
+                                else if (useVCoreStorageBytes && metric.Name == SqlDatabaseVCoreMetrics.StorageAllocated)
+                                {
+                                    hasVCoreAllocated = true;
+                                    vCoreAllocatedAvg = avgValue;
+                                    vCoreAllocatedMax = maxValue;
+                                    resource.Metrics["Storage_Allocated_Avg_Bytes"] = avgValue;
+                                    resource.Metrics["Storage_Allocated_Max_Bytes"] = maxValue;
+                                }
                                 else if (metric.Name == "memory_usage_percent")
                                 {
                                     resource.Metrics["Memory_Average_%"] = avgValue;
                                     resource.Metrics["Memory_Max_%"] = maxValue;
+                                }
+                            }
+
+                            if (useVCoreStorageBytes && hasVCoreStorageUsed && hasVCoreAllocated)
+                            {
+                                var storagePct = SqlDatabaseVCoreMetrics.TryComputeStorageUtilizationPercent(
+                                    vCoreStorageUsedAvg,
+                                    vCoreStorageUsedMax,
+                                    vCoreAllocatedAvg,
+                                    vCoreAllocatedMax);
+                                if (storagePct.HasValue)
+                                {
+                                    resource.Metrics["Storage_Average_%"] = storagePct.Value.AveragePercent;
+                                    resource.Metrics["Storage_Max_%"] = storagePct.Value.MaxPercent;
                                 }
                             }
                         }
