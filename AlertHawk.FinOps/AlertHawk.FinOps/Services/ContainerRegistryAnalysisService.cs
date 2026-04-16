@@ -72,7 +72,7 @@ namespace FinOpsToolSample.Services
                         {
                             Console.WriteLine($"  📈 Metrics (Last 7 Days):");
 
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 registry.Id.ToString(),
                                 new[]
                                 {

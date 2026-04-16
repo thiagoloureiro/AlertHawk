@@ -81,7 +81,7 @@ namespace FinOpsToolSample.Services
                         {
                             Console.WriteLine($"  📈 Performance Metrics (Last 7 Days):");
 
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 cache.Id.ToString(),
                                 new[] { "percentProcessorTime", "usedmemorypercentage" },
                                 new MetricsQueryOptions

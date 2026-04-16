@@ -1,3 +1,4 @@
+using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager;
 using FinOpsToolSample.Configuration;
@@ -43,7 +44,17 @@ namespace FinOpsToolSample.Services
                     _azureConfig.ClientId,
                     _azureConfig.ClientSecret);
 
-                var armClient = new ArmClient(credential);
+                var armOptions = new ArmClientOptions
+                {
+                    Retry =
+                    {
+                        Mode = RetryMode.Exponential,
+                        MaxRetries = 6,
+                        Delay = TimeSpan.FromSeconds(2),
+                        MaxDelay = TimeSpan.FromSeconds(120)
+                    }
+                };
+                var armClient = new ArmClient(credential, default, armOptions);
 
                 // Process the subscription
                 return await RunAnalysisForSubscriptionAsync(armClient, credential, subscriptionId);
@@ -82,7 +93,17 @@ namespace FinOpsToolSample.Services
                     _azureConfig.ClientId,
                     _azureConfig.ClientSecret);
 
-                var armClient = new ArmClient(credential);
+                var armOptions = new ArmClientOptions
+                {
+                    Retry =
+                    {
+                        Mode = RetryMode.Exponential,
+                        MaxRetries = 6,
+                        Delay = TimeSpan.FromSeconds(2),
+                        MaxDelay = TimeSpan.FromSeconds(120)
+                    }
+                };
+                var armClient = new ArmClient(credential, default, armOptions);
 
                 // Get list of subscription IDs
                 var subscriptionIds = _azureConfig.GetSubscriptionIdList();
@@ -163,7 +184,8 @@ namespace FinOpsToolSample.Services
                 var AIService = new AIRecommendationService(_AIConfig.ApiKey, _AIConfig.ApiUrl, _AIConfig.ApiKeyHeaderName);
 
                 // Get subscription info
-                var subscriptionData = await subscription.GetAsync();
+                var subscriptionData = await AzureThrottledRequestRetry.ExecuteAsync(
+                    () => subscription.GetAsync());
                 dataCollector.SetSubscriptionInfo(
                     subscriptionData.Value.Data.DisplayName ?? "Unknown",
                     subscriptionData.Value.Data.SubscriptionId ?? "Unknown"

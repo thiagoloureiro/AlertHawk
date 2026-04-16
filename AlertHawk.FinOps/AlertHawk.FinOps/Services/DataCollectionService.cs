@@ -100,7 +100,7 @@ namespace FinOpsToolSample.Services
                             var startTime = endTime.AddDays(-7);
 
                             // Query only metrics available across all App Service types
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 app.Id.ToString(),
                                 new[] { "Requests", "MemoryWorkingSet", "Http5xx", "AverageResponseTime" },
                                 new MetricsQueryOptions
@@ -234,7 +234,7 @@ namespace FinOpsToolSample.Services
                             var hasVCoreStorageUsed = false;
                             var hasVCoreAllocated = false;
 
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 db.Id.ToString(),
                                 metricsToQuery,
                                 new MetricsQueryOptions
@@ -368,7 +368,7 @@ namespace FinOpsToolSample.Services
                             var endTime = DateTimeOffset.UtcNow;
                             var startTime = endTime.AddDays(-7);
 
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 ws.Id.ToString(),
                                 new[] { "BuiltinSqlPoolDataProcessedBytes" },
                                 new MetricsQueryOptions
@@ -440,7 +440,7 @@ namespace FinOpsToolSample.Services
                             var endTime = DateTimeOffset.UtcNow;
                             var startTime = endTime.AddDays(-7);
 
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 pool.Id.ToString(),
                                 new[] { "DWUUsedPercent", "CPUPercent", "MemoryUsedPercent" },
                                 new MetricsQueryOptions
@@ -556,7 +556,7 @@ namespace FinOpsToolSample.Services
                             var endTime = DateTimeOffset.UtcNow;
                             var startTime = endTime.AddDays(-7);
 
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 vm.Id.ToString(),
                                 new[] { "Percentage CPU", "Network In Total", "Network Out Total" },
                                 new MetricsQueryOptions
@@ -931,7 +931,7 @@ namespace FinOpsToolSample.Services
                             var endTime = DateTimeOffset.UtcNow;
                             var startTime = endTime.AddDays(-7);
 
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 registry.Id.ToString(),
                                 new[]
                                 {
@@ -1089,7 +1089,7 @@ namespace FinOpsToolSample.Services
                             var endTime = DateTimeOffset.UtcNow;
                             var startTime = endTime.AddDays(-7);
 
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 cache.Id.ToString(),
                                 new[] { "percentProcessorTime", "usedmemorypercentage" },
                                 new MetricsQueryOptions

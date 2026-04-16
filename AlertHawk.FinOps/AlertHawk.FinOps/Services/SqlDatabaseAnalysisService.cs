@@ -135,7 +135,7 @@ namespace FinOpsToolSample.Services
                             var hasVCoreStorageUsed = false;
                             var hasVCoreAllocated = false;
 
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 db.Id.ToString(),
                                 metricsToQuery,
                                 new MetricsQueryOptions

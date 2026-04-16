@@ -51,7 +51,7 @@ namespace FinOpsToolSample.Services
                         try
                         {
                             Console.WriteLine($"  📈 Built-in SQL pool activity (Last 7 Days):");
-                            var wsMetrics = await metricsClient.QueryResourceAsync(
+                            var wsMetrics = await metricsClient.QueryResourceWithRetryAsync(
                                 ws.Id.ToString(),
                                 new[] { "BuiltinSqlPoolDataProcessedBytes" },
                                 new MetricsQueryOptions
@@ -118,7 +118,7 @@ namespace FinOpsToolSample.Services
                         try
                         {
                             Console.WriteLine($"  📈 Pool metrics (Last 7 Days, Azure Monitor sqlPools):");
-                            var poolMetrics = await metricsClient.QueryResourceAsync(
+                            var poolMetrics = await metricsClient.QueryResourceWithRetryAsync(
                                 pool.Id.ToString(),
                                 new[] { "DWUUsedPercent", "CPUPercent", "MemoryUsedPercent" },
                                 new MetricsQueryOptions
