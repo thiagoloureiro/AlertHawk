@@ -145,8 +145,7 @@ namespace FinOpsToolSample.Services
             try
             {
                 var metricsClient = new MetricsQueryClient(credential);
-                var synapseSqlServers =
-                    await SynapseLinkedSqlServerDiscovery.GetSynapseLinkedSqlServerResourceIdsAsync(subscription);
+                var synapseExclusions = await SynapseSqlExclusions.DiscoverAsync(subscription);
                 var resourceGroups = subscription.GetResourceGroups();
 
                 await foreach (var rg in resourceGroups)
@@ -160,8 +159,7 @@ namespace FinOpsToolSample.Services
                         if (db.Data.Name.Equals("master", StringComparison.OrdinalIgnoreCase)) continue;
                         if (db.Data.Name.EndsWith("/master", StringComparison.OrdinalIgnoreCase)) continue;
 
-                        var parentServerId = db.Id.Parent?.ToString();
-                        if (parentServerId != null && synapseSqlServers.Contains(parentServerId))
+                        if (synapseExclusions.IsSynapseWorkspaceSqlDatabase(db))
                         {
                             continue;
                         }
