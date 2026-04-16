@@ -24,6 +24,8 @@ namespace FinOpsToolSample.Services
             try
             {
                 var metricsClient = new MetricsQueryClient(_credential);
+                var synapseSqlServers =
+                    await SynapseLinkedSqlServerDiscovery.GetSynapseLinkedSqlServerResourceIdsAsync(subscription);
                 var resourceGroups = subscription.GetResourceGroups();
 
                 await foreach (var rg in resourceGroups)
@@ -34,7 +36,14 @@ namespace FinOpsToolSample.Services
 
                     await foreach (var db in resources)
                     {
-                        if (db.Data.Name.ToLower() == "master") continue;
+                        if (db.Data.Name.Equals("master", StringComparison.OrdinalIgnoreCase)) continue;
+                        if (db.Data.Name.EndsWith("/master", StringComparison.OrdinalIgnoreCase)) continue;
+
+                        var parentServerId = db.Id.Parent?.ToString();
+                        if (parentServerId != null && synapseSqlServers.Contains(parentServerId))
+                        {
+                            continue;
+                        }
 
                         Console.WriteLine($"\n📊 Checking database: {db.Data.Name}");
                         Console.WriteLine($"  Resource Group: {db.Data.Id.ResourceGroupName}");

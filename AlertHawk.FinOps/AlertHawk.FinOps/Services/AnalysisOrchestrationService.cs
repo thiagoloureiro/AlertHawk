@@ -146,6 +146,7 @@ namespace FinOpsToolSample.Services
                 {
                     new AppServicePlanAnalysisService(),
                     new SqlDatabaseAnalysisService(credential),
+                    new SynapseAnalysisService(credential),
                     new VirtualMachineAnalysisService(credential),
                     new StorageAccountAnalysisService(),
                     new AppServiceAnalysisService(credential),
@@ -186,6 +187,7 @@ namespace FinOpsToolSample.Services
                 // Collect data for AI analysis
                 await dataCollector.CollectAppServicePlans(subscription, credential);
                 await dataCollector.CollectSqlDatabases(subscription, credential);
+                await dataCollector.CollectSynapseResources(subscription, credential);
                 await dataCollector.CollectVirtualMachines(subscription, credential);
                 await dataCollector.CollectStorageAccounts(subscription);
                 await dataCollector.CollectUnattachedDisks(subscription);

@@ -83,7 +83,7 @@ namespace FinOpsToolSample.Services
 
                             var metricsResponse = await metricsClient.QueryResourceAsync(
                                 cache.Id.ToString(),
-                                new[] { "percentProcessorTime", "usedmemorypercentage", "cacheLatency", "connectedclients", "totalcommandsprocessed", "cachehits", "cachemisses", "evictedkeys", "expiredkeys", "serverLoad" },
+                                new[] { "percentProcessorTime", "usedmemorypercentage" },
                                 new MetricsQueryOptions
                                 {
                                     TimeRange = new QueryTimeRange(startTime, endTime),
@@ -108,58 +108,23 @@ namespace FinOpsToolSample.Services
                                     .DefaultIfEmpty(0)
                                     .Max();
 
-                                var totalValue = timeSeries
-                                    .Where(v => v.Total.HasValue)
-                                    .Select(v => v.Total.Value)
-                                    .DefaultIfEmpty(0)
-                                    .Sum();
-
                                 var metricDisplay = metric.Name switch
                                 {
                                     "percentProcessorTime" => "CPU Usage",
                                     "usedmemorypercentage" => "Memory Usage",
-                                    "cacheLatency" => "Cache Latency",
-                                    "connectedclients" => "Connected Clients",
-                                    "totalcommandsprocessed" => "Commands Processed",
-                                    "cachehits" => "Cache Hits",
-                                    "cachemisses" => "Cache Misses",
-                                    "evictedkeys" => "Evicted Keys",
-                                    "expiredkeys" => "Expired Keys",
-                                    "serverLoad" => "Server Load",
                                     _ => metric.Name
                                 };
 
-                                if (metric.Name == "percentProcessorTime" || metric.Name == "usedmemorypercentage" || metric.Name == "serverLoad")
-                                {
-                                    Console.WriteLine($"    - {metricDisplay}: Avg = {avgValue:F2}%, Max = {maxValue:F2}%");
-                                }
-                                else if (metric.Name == "cacheLatency")
-                                {
-                                    Console.WriteLine($"    - {metricDisplay}: Avg = {avgValue:F2}μs, Max = {maxValue:F2}μs");
-                                }
-                                else if (metric.Name == "connectedclients")
-                                {
-                                    Console.WriteLine($"    - {metricDisplay}: Avg = {avgValue:F0}, Max = {maxValue:F0}");
-                                }
-                                else
-                                {
-                                    Console.WriteLine($"    - {metricDisplay}: Total = {totalValue:F0}");
-                                }
+                                Console.WriteLine($"    - {metricDisplay}: Avg = {avgValue:F2}%, Max = {maxValue:F2}%");
 
-                                // Check for performance issues
                                 if (metric.Name == "percentProcessorTime" && maxValue > 90)
                                 {
                                     Console.WriteLine($"    ⚠️  High CPU usage detected");
                                 }
-                                
+
                                 if (metric.Name == "usedmemorypercentage" && maxValue > 90)
                                 {
                                     Console.WriteLine($"    ⚠️  High memory usage detected");
-                                }
-
-                                if (metric.Name == "serverLoad" && maxValue > 80)
-                                {
-                                    Console.WriteLine($"    ⚠️  High server load detected");
                                 }
                             }
                         }
