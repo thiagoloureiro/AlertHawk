@@ -153,6 +153,7 @@ namespace FinOpsToolSample.Services
                     new UnattachedDiskAnalysisService(),
                     new UnusedPublicIpAnalysisService(),
                     new KubernetesAnalysisService(credential),
+                    new ContainerRegistryAnalysisService(credential),
                     new RedisAnalysisService(credential)
                 };
 
@@ -193,6 +194,7 @@ namespace FinOpsToolSample.Services
                 await dataCollector.CollectUnattachedDisks(subscription);
                 await dataCollector.CollectUnusedPublicIPs(subscription);
                 await dataCollector.CollectKubernetesClusters(subscription);
+                await dataCollector.CollectContainerRegistries(subscription, credential);
                 await dataCollector.CollectRedisCaches(subscription, credential);
 
                 var collectedData = dataCollector.GetCollectedData();

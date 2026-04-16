@@ -879,6 +879,147 @@ namespace FinOpsToolSample.Services
             }
         }
 
+        public async Task CollectContainerRegistries(SubscriptionResource subscription, ClientSecretCredential credential)
+        {
+            try
+            {
+                var metricsClient = new MetricsQueryClient(credential);
+                var resourceGroups = subscription.GetResourceGroups();
+
+                await foreach (var rg in resourceGroups)
+                {
+                    var registries = rg.GetGenericResourcesAsync(
+                        filter: "resourceType eq 'Microsoft.ContainerRegistry/registries'");
+
+                    await foreach (var registry in registries)
+                    {
+                        var resource = new ResourceInfo
+                        {
+                            Type = "Container Registry",
+                            Name = registry.Data.Name,
+                            ResourceGroup = registry.Data.Id.ResourceGroupName ?? "Unknown",
+                            Location = registry.Data.Location.ToString()
+                        };
+
+                        if (registry.Data.Sku != null)
+                        {
+                            resource.Properties["Tier"] = registry.Data.Sku.Tier ?? "Unknown";
+                            resource.Properties["SKU"] = registry.Data.Sku.Name ?? "Unknown";
+                        }
+
+                        if (registry.Data.Properties != null)
+                        {
+                            var props = JsonSerializer.Deserialize<JsonElement>(registry.Data.Properties.ToString());
+
+                            if (props.TryGetProperty("adminUserEnabled", out var admin))
+                            {
+                                resource.Properties["AdminUserEnabled"] = admin.GetBoolean() ? "true" : "false";
+                                if (admin.GetBoolean())
+                                {
+                                    resource.Flags.Add("Admin user enabled - prefer workload identity / tokens where possible");
+                                }
+                            }
+
+                            if (props.TryGetProperty("publicNetworkAccess", out var pub))
+                            {
+                                resource.Properties["PublicNetworkAccess"] = pub.GetString() ?? "Unknown";
+                            }
+                        }
+
+                        try
+                        {
+                            var endTime = DateTimeOffset.UtcNow;
+                            var startTime = endTime.AddDays(-7);
+
+                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                                registry.Id.ToString(),
+                                new[]
+                                {
+                                    "StorageUsed",
+                                    "TotalPullCount",
+                                    "TotalPushCount",
+                                    "SuccessfulPullCount",
+                                    "SuccessfulPushCount"
+                                },
+                                new MetricsQueryOptions
+                                {
+                                    TimeRange = new QueryTimeRange(startTime, endTime),
+                                    Granularity = TimeSpan.FromHours(1),
+                                    Aggregations =
+                                    {
+                                        MetricAggregationType.Average,
+                                        MetricAggregationType.Maximum,
+                                        MetricAggregationType.Total
+                                    }
+                                });
+
+                            foreach (var metric in metricsResponse.Value.Metrics)
+                            {
+                                var timeSeries = metric.TimeSeries.SelectMany(ts => ts.Values).ToList();
+
+                                var avgValue = timeSeries
+                                    .Where(v => v.Average.HasValue)
+                                    .Select(v => v.Average!.Value)
+                                    .DefaultIfEmpty(0)
+                                    .Average();
+
+                                var maxValue = timeSeries
+                                    .Where(v => v.Maximum.HasValue)
+                                    .Select(v => v.Maximum!.Value)
+                                    .DefaultIfEmpty(0)
+                                    .Max();
+
+                                var totalValue = timeSeries
+                                    .Where(v => v.Total.HasValue)
+                                    .Select(v => v.Total!.Value)
+                                    .DefaultIfEmpty(0)
+                                    .Sum();
+
+                                if (metric.Name == "StorageUsed")
+                                {
+                                    resource.Metrics["Storage_Used_Avg_Bytes"] = avgValue;
+                                    resource.Metrics["Storage_Used_Max_Bytes"] = maxValue;
+                                }
+                                else if (metric.Name == "TotalPullCount")
+                                {
+                                    resource.Metrics["Total_Pulls_7d"] = totalValue;
+                                }
+                                else if (metric.Name == "TotalPushCount")
+                                {
+                                    resource.Metrics["Total_Pushes_7d"] = totalValue;
+                                }
+                                else if (metric.Name == "SuccessfulPullCount")
+                                {
+                                    resource.Metrics["Successful_Pulls_7d"] = totalValue;
+                                }
+                                else if (metric.Name == "SuccessfulPushCount")
+                                {
+                                    resource.Metrics["Successful_Pushes_7d"] = totalValue;
+                                }
+                            }
+
+                            if (resource.Metrics.TryGetValue("Total_Pulls_7d", out var pulls) && pulls < 10)
+                            {
+                                resource.Flags.Add("Very low pull volume in last 7 days - review if registry is needed");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            SentrySdk.CaptureException(ex);
+                            Console.WriteLine($"Could not fetch metrics for Container Registry {registry.Data.Name}: {ex.Message}");
+                        }
+
+                        AddResource(resource);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                SentrySdk.CaptureException(ex);
+                Console.WriteLine($"Error collecting Container Registries: {ex.Message}");
+            }
+        }
+
         public async Task CollectRedisCaches(SubscriptionResource subscription, ClientSecretCredential credential)
         {
             try
