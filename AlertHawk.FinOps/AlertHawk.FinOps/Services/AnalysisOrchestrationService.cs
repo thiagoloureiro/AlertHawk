@@ -1,3 +1,4 @@
+using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager;
 using FinOpsToolSample.Configuration;
@@ -43,7 +44,17 @@ namespace FinOpsToolSample.Services
                     _azureConfig.ClientId,
                     _azureConfig.ClientSecret);
 
-                var armClient = new ArmClient(credential);
+                var armOptions = new ArmClientOptions
+                {
+                    Retry =
+                    {
+                        Mode = RetryMode.Exponential,
+                        MaxRetries = 6,
+                        Delay = TimeSpan.FromSeconds(2),
+                        MaxDelay = TimeSpan.FromSeconds(120)
+                    }
+                };
+                var armClient = new ArmClient(credential, default, armOptions);
 
                 // Process the subscription
                 return await RunAnalysisForSubscriptionAsync(armClient, credential, subscriptionId);
@@ -82,7 +93,17 @@ namespace FinOpsToolSample.Services
                     _azureConfig.ClientId,
                     _azureConfig.ClientSecret);
 
-                var armClient = new ArmClient(credential);
+                var armOptions = new ArmClientOptions
+                {
+                    Retry =
+                    {
+                        Mode = RetryMode.Exponential,
+                        MaxRetries = 6,
+                        Delay = TimeSpan.FromSeconds(2),
+                        MaxDelay = TimeSpan.FromSeconds(120)
+                    }
+                };
+                var armClient = new ArmClient(credential, default, armOptions);
 
                 // Get list of subscription IDs
                 var subscriptionIds = _azureConfig.GetSubscriptionIdList();
@@ -146,12 +167,14 @@ namespace FinOpsToolSample.Services
                 {
                     new AppServicePlanAnalysisService(),
                     new SqlDatabaseAnalysisService(credential),
+                    new SynapseAnalysisService(credential),
                     new VirtualMachineAnalysisService(credential),
                     new StorageAccountAnalysisService(),
                     new AppServiceAnalysisService(credential),
                     new UnattachedDiskAnalysisService(),
                     new UnusedPublicIpAnalysisService(),
                     new KubernetesAnalysisService(credential),
+                    new ContainerRegistryAnalysisService(credential),
                     new RedisAnalysisService(credential)
                 };
 
@@ -161,7 +184,8 @@ namespace FinOpsToolSample.Services
                 var AIService = new AIRecommendationService(_AIConfig.ApiKey, _AIConfig.ApiUrl, _AIConfig.ApiKeyHeaderName);
 
                 // Get subscription info
-                var subscriptionData = await subscription.GetAsync();
+                var subscriptionData = await AzureThrottledRequestRetry.ExecuteAsync(
+                    () => subscription.GetAsync());
                 dataCollector.SetSubscriptionInfo(
                     subscriptionData.Value.Data.DisplayName ?? "Unknown",
                     subscriptionData.Value.Data.SubscriptionId ?? "Unknown"
@@ -186,11 +210,13 @@ namespace FinOpsToolSample.Services
                 // Collect data for AI analysis
                 await dataCollector.CollectAppServicePlans(subscription, credential);
                 await dataCollector.CollectSqlDatabases(subscription, credential);
+                await dataCollector.CollectSynapseResources(subscription, credential);
                 await dataCollector.CollectVirtualMachines(subscription, credential);
                 await dataCollector.CollectStorageAccounts(subscription);
                 await dataCollector.CollectUnattachedDisks(subscription);
                 await dataCollector.CollectUnusedPublicIPs(subscription);
                 await dataCollector.CollectKubernetesClusters(subscription);
+                await dataCollector.CollectContainerRegistries(subscription, credential);
                 await dataCollector.CollectRedisCaches(subscription, credential);
 
                 var collectedData = dataCollector.GetCollectedData();

@@ -70,7 +70,7 @@ namespace FinOpsToolSample.Services
                         {
                             Console.WriteLine($"  📈 Performance Metrics (Last 7 Days):");
 
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 vm.Id.ToString(),
                                 new[] { "Percentage CPU", "Network In Total", "Network Out Total", "Disk Read Bytes", "Disk Write Bytes" },
                                 new MetricsQueryOptions

@@ -100,7 +100,7 @@ namespace FinOpsToolSample.Services
                             var startTime = endTime.AddDays(-7);
 
                             // Query only metrics available across all App Service types
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 app.Id.ToString(),
                                 new[] { "Requests", "MemoryWorkingSet", "Http5xx", "AverageResponseTime" },
                                 new MetricsQueryOptions
@@ -145,6 +145,7 @@ namespace FinOpsToolSample.Services
             try
             {
                 var metricsClient = new MetricsQueryClient(credential);
+                var synapseExclusions = await SynapseSqlExclusions.DiscoverAsync(subscription);
                 var resourceGroups = subscription.GetResourceGroups();
 
                 await foreach (var rg in resourceGroups)
@@ -155,7 +156,13 @@ namespace FinOpsToolSample.Services
 
                     await foreach (var db in databases)
                     {
-                        if (db.Data.Name.ToLower() == "master") continue;
+                        if (db.Data.Name.Equals("master", StringComparison.OrdinalIgnoreCase)) continue;
+                        if (db.Data.Name.EndsWith("/master", StringComparison.OrdinalIgnoreCase)) continue;
+
+                        if (synapseExclusions.IsSynapseWorkspaceSqlDatabase(db))
+                        {
+                            continue;
+                        }
 
                         var resource = new ResourceInfo
                         {
@@ -227,7 +234,7 @@ namespace FinOpsToolSample.Services
                             var hasVCoreStorageUsed = false;
                             var hasVCoreAllocated = false;
 
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 db.Id.ToString(),
                                 metricsToQuery,
                                 new MetricsQueryOptions
@@ -328,6 +335,174 @@ namespace FinOpsToolSample.Services
             }
         }
 
+        public async Task CollectSynapseResources(SubscriptionResource subscription, ClientSecretCredential credential)
+        {
+            try
+            {
+                var metricsClient = new MetricsQueryClient(credential);
+                var resourceGroups = subscription.GetResourceGroups();
+
+                await foreach (var rg in resourceGroups)
+                {
+                    var workspaces = rg.GetGenericResourcesAsync(
+                        filter: "resourceType eq 'Microsoft.Synapse/workspaces'");
+
+                    await foreach (var ws in workspaces)
+                    {
+                        var resource = new ResourceInfo
+                        {
+                            Type = "Synapse Workspace",
+                            Name = ws.Data.Name,
+                            ResourceGroup = ws.Data.Id.ResourceGroupName ?? "Unknown",
+                            Location = ws.Data.Location.ToString()
+                        };
+
+                        if (ws.Data.Sku != null)
+                        {
+                            resource.Properties["Tier"] = ws.Data.Sku.Tier ?? "Unknown";
+                            resource.Properties["SKU"] = ws.Data.Sku.Name ?? "Unknown";
+                        }
+
+                        try
+                        {
+                            var endTime = DateTimeOffset.UtcNow;
+                            var startTime = endTime.AddDays(-7);
+
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
+                                ws.Id.ToString(),
+                                new[] { "BuiltinSqlPoolDataProcessedBytes" },
+                                new MetricsQueryOptions
+                                {
+                                    TimeRange = new QueryTimeRange(startTime, endTime),
+                                    Granularity = TimeSpan.FromHours(1),
+                                    Aggregations =
+                                    {
+                                        MetricAggregationType.Total,
+                                        MetricAggregationType.Average
+                                    }
+                                });
+
+                            foreach (var metric in metricsResponse.Value.Metrics)
+                            {
+                                var timeSeries = metric.TimeSeries.SelectMany(ts => ts.Values).ToList();
+                                var avgValue = timeSeries
+                                    .Where(v => v.Average.HasValue)
+                                    .Select(v => v.Average!.Value)
+                                    .DefaultIfEmpty(0)
+                                    .Average();
+                                var totalValue = timeSeries
+                                    .Where(v => v.Total.HasValue)
+                                    .Select(v => v.Total!.Value)
+                                    .DefaultIfEmpty(0)
+                                    .Sum();
+
+                                if (metric.Name == "BuiltinSqlPoolDataProcessedBytes")
+                                {
+                                    resource.Metrics["BuiltinSqlPool_DataProcessed_Total_Bytes"] = totalValue;
+                                    resource.Metrics["BuiltinSqlPool_DataProcessed_Avg_Bytes"] = avgValue;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            SentrySdk.CaptureException(ex);
+                            Console.WriteLine($"Could not fetch metrics for Synapse workspace {ws.Data.Name}: {ex.Message}");
+                        }
+
+                        AddResource(resource);
+                    }
+
+                    var sqlPools = rg.GetGenericResourcesAsync(
+                        filter: "resourceType eq 'Microsoft.Synapse/workspaces/sqlPools'");
+
+                    await foreach (var pool in sqlPools)
+                    {
+                        var resource = new ResourceInfo
+                        {
+                            Type = "Synapse Dedicated SQL Pool",
+                            Name = pool.Data.Name,
+                            ResourceGroup = pool.Data.Id.ResourceGroupName ?? "Unknown",
+                            Location = pool.Data.Location.ToString()
+                        };
+
+                        if (pool.Data.Sku != null)
+                        {
+                            resource.Properties["Tier"] = pool.Data.Sku.Tier ?? "Unknown";
+                            resource.Properties["SKU"] = pool.Data.Sku.Name ?? "Unknown";
+                            if (pool.Data.Sku.Capacity.HasValue)
+                            {
+                                resource.Properties["Capacity"] = $"{pool.Data.Sku.Capacity.Value} DWUs";
+                            }
+                        }
+
+                        try
+                        {
+                            var endTime = DateTimeOffset.UtcNow;
+                            var startTime = endTime.AddDays(-7);
+
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
+                                pool.Id.ToString(),
+                                new[] { "DWUUsedPercent", "CPUPercent", "MemoryUsedPercent" },
+                                new MetricsQueryOptions
+                                {
+                                    TimeRange = new QueryTimeRange(startTime, endTime),
+                                    Granularity = TimeSpan.FromHours(1),
+                                    Aggregations =
+                                    {
+                                        MetricAggregationType.Average,
+                                        MetricAggregationType.Maximum
+                                    }
+                                });
+
+                            foreach (var metric in metricsResponse.Value.Metrics)
+                            {
+                                var timeSeries = metric.TimeSeries.SelectMany(ts => ts.Values).ToList();
+                                var avgValue = timeSeries
+                                    .Where(v => v.Average.HasValue)
+                                    .Select(v => v.Average!.Value)
+                                    .DefaultIfEmpty(0)
+                                    .Average();
+                                var maxValue = timeSeries
+                                    .Where(v => v.Maximum.HasValue)
+                                    .Select(v => v.Maximum!.Value)
+                                    .DefaultIfEmpty(0)
+                                    .Max();
+
+                                if (metric.Name == "DWUUsedPercent")
+                                {
+                                    resource.Metrics["DWU_Average_%"] = avgValue;
+                                    resource.Metrics["DWU_Max_%"] = maxValue;
+                                }
+                                else if (metric.Name == "CPUPercent")
+                                {
+                                    resource.Metrics["CPU_Average_%"] = avgValue;
+                                    resource.Metrics["CPU_Max_%"] = maxValue;
+                                }
+                                else if (metric.Name == "MemoryUsedPercent")
+                                {
+                                    resource.Metrics["Memory_Average_%"] = avgValue;
+                                    resource.Metrics["Memory_Max_%"] = maxValue;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            SentrySdk.CaptureException(ex);
+                            Console.WriteLine(
+                                $"Could not fetch metrics for Synapse SQL pool {pool.Data.Name}: {ex.Message}");
+                        }
+
+                        AddResource(resource);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                SentrySdk.CaptureException(ex);
+                Console.WriteLine($"Error collecting Synapse resources: {ex.Message}");
+            }
+        }
+
         public async Task CollectVirtualMachines(SubscriptionResource subscription, ClientSecretCredential credential)
         {
             try
@@ -381,7 +556,7 @@ namespace FinOpsToolSample.Services
                             var endTime = DateTimeOffset.UtcNow;
                             var startTime = endTime.AddDays(-7);
 
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 vm.Id.ToString(),
                                 new[] { "Percentage CPU", "Network In Total", "Network Out Total" },
                                 new MetricsQueryOptions
@@ -704,6 +879,147 @@ namespace FinOpsToolSample.Services
             }
         }
 
+        public async Task CollectContainerRegistries(SubscriptionResource subscription, ClientSecretCredential credential)
+        {
+            try
+            {
+                var metricsClient = new MetricsQueryClient(credential);
+                var resourceGroups = subscription.GetResourceGroups();
+
+                await foreach (var rg in resourceGroups)
+                {
+                    var registries = rg.GetGenericResourcesAsync(
+                        filter: "resourceType eq 'Microsoft.ContainerRegistry/registries'");
+
+                    await foreach (var registry in registries)
+                    {
+                        var resource = new ResourceInfo
+                        {
+                            Type = "Container Registry",
+                            Name = registry.Data.Name,
+                            ResourceGroup = registry.Data.Id.ResourceGroupName ?? "Unknown",
+                            Location = registry.Data.Location.ToString()
+                        };
+
+                        if (registry.Data.Sku != null)
+                        {
+                            resource.Properties["Tier"] = registry.Data.Sku.Tier ?? "Unknown";
+                            resource.Properties["SKU"] = registry.Data.Sku.Name ?? "Unknown";
+                        }
+
+                        if (registry.Data.Properties != null)
+                        {
+                            var props = JsonSerializer.Deserialize<JsonElement>(registry.Data.Properties.ToString());
+
+                            if (props.TryGetProperty("adminUserEnabled", out var admin))
+                            {
+                                resource.Properties["AdminUserEnabled"] = admin.GetBoolean() ? "true" : "false";
+                                if (admin.GetBoolean())
+                                {
+                                    resource.Flags.Add("Admin user enabled - prefer workload identity / tokens where possible");
+                                }
+                            }
+
+                            if (props.TryGetProperty("publicNetworkAccess", out var pub))
+                            {
+                                resource.Properties["PublicNetworkAccess"] = pub.GetString() ?? "Unknown";
+                            }
+                        }
+
+                        try
+                        {
+                            var endTime = DateTimeOffset.UtcNow;
+                            var startTime = endTime.AddDays(-7);
+
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
+                                registry.Id.ToString(),
+                                new[]
+                                {
+                                    "StorageUsed",
+                                    "TotalPullCount",
+                                    "TotalPushCount",
+                                    "SuccessfulPullCount",
+                                    "SuccessfulPushCount"
+                                },
+                                new MetricsQueryOptions
+                                {
+                                    TimeRange = new QueryTimeRange(startTime, endTime),
+                                    Granularity = TimeSpan.FromHours(1),
+                                    Aggregations =
+                                    {
+                                        MetricAggregationType.Average,
+                                        MetricAggregationType.Maximum,
+                                        MetricAggregationType.Total
+                                    }
+                                });
+
+                            foreach (var metric in metricsResponse.Value.Metrics)
+                            {
+                                var timeSeries = metric.TimeSeries.SelectMany(ts => ts.Values).ToList();
+
+                                var avgValue = timeSeries
+                                    .Where(v => v.Average.HasValue)
+                                    .Select(v => v.Average!.Value)
+                                    .DefaultIfEmpty(0)
+                                    .Average();
+
+                                var maxValue = timeSeries
+                                    .Where(v => v.Maximum.HasValue)
+                                    .Select(v => v.Maximum!.Value)
+                                    .DefaultIfEmpty(0)
+                                    .Max();
+
+                                var totalValue = timeSeries
+                                    .Where(v => v.Total.HasValue)
+                                    .Select(v => v.Total!.Value)
+                                    .DefaultIfEmpty(0)
+                                    .Sum();
+
+                                if (metric.Name == "StorageUsed")
+                                {
+                                    resource.Metrics["Storage_Used_Avg_Bytes"] = avgValue;
+                                    resource.Metrics["Storage_Used_Max_Bytes"] = maxValue;
+                                }
+                                else if (metric.Name == "TotalPullCount")
+                                {
+                                    resource.Metrics["Total_Pulls_7d"] = totalValue;
+                                }
+                                else if (metric.Name == "TotalPushCount")
+                                {
+                                    resource.Metrics["Total_Pushes_7d"] = totalValue;
+                                }
+                                else if (metric.Name == "SuccessfulPullCount")
+                                {
+                                    resource.Metrics["Successful_Pulls_7d"] = totalValue;
+                                }
+                                else if (metric.Name == "SuccessfulPushCount")
+                                {
+                                    resource.Metrics["Successful_Pushes_7d"] = totalValue;
+                                }
+                            }
+
+                            if (resource.Metrics.TryGetValue("Total_Pulls_7d", out var pulls) && pulls < 10)
+                            {
+                                resource.Flags.Add("Very low pull volume in last 7 days - review if registry is needed");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            SentrySdk.CaptureException(ex);
+                            Console.WriteLine($"Could not fetch metrics for Container Registry {registry.Data.Name}: {ex.Message}");
+                        }
+
+                        AddResource(resource);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                SentrySdk.CaptureException(ex);
+                Console.WriteLine($"Error collecting Container Registries: {ex.Message}");
+            }
+        }
+
         public async Task CollectRedisCaches(SubscriptionResource subscription, ClientSecretCredential credential)
         {
             try
@@ -773,9 +1089,9 @@ namespace FinOpsToolSample.Services
                             var endTime = DateTimeOffset.UtcNow;
                             var startTime = endTime.AddDays(-7);
 
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 cache.Id.ToString(),
-                                new[] { "percentProcessorTime", "usedmemorypercentage", "cacheLatency", "connectedclients", "totalcommandsprocessed", "cachehits", "cachemisses", "evictedkeys", "expiredkeys", "serverLoad" },
+                                new[] { "percentProcessorTime", "usedmemorypercentage" },
                                 new MetricsQueryOptions
                                 {
                                     TimeRange = new QueryTimeRange(startTime, endTime),
@@ -800,12 +1116,6 @@ namespace FinOpsToolSample.Services
                                     .DefaultIfEmpty(0)
                                     .Max();
 
-                                var totalValue = timeSeries
-                                    .Where(v => v.Total.HasValue)
-                                    .Select(v => v.Total.Value)
-                                    .DefaultIfEmpty(0)
-                                    .Sum();
-
                                 if (metric.Name == "percentProcessorTime")
                                 {
                                     resource.Metrics["CPU_Average_%"] = avgValue;
@@ -828,74 +1138,6 @@ namespace FinOpsToolSample.Services
                                     if (maxValue > 90)
                                     {
                                         resource.Flags.Add($"High memory usage detected: {maxValue:F2}% max");
-                                    }
-                                }
-                                else if (metric.Name == "cacheLatency")
-                                {
-                                    resource.Metrics["Latency_Average_Microseconds"] = avgValue;
-                                    resource.Metrics["Latency_Max_Microseconds"] = maxValue;
-                                }
-                                else if (metric.Name == "connectedclients")
-                                {
-                                    resource.Metrics["Connected_Clients_Average"] = avgValue;
-                                    resource.Metrics["Connected_Clients_Max"] = maxValue;
-                                }
-                                else if (metric.Name == "totalcommandsprocessed")
-                                {
-                                    resource.Metrics["Commands_Total"] = totalValue;
-
-                                    if (totalValue < 1000)
-                                    {
-                                        resource.Flags.Add($"Low usage: {totalValue:F0} total commands in 7 days - Consider if needed");
-                                    }
-                                }
-                                else if (metric.Name == "cachehits")
-                                {
-                                    resource.Metrics["Cache_Hits_Total"] = totalValue;
-                                }
-                                else if (metric.Name == "cachemisses")
-                                {
-                                    resource.Metrics["Cache_Misses_Total"] = totalValue;
-
-                                    // Calculate hit ratio if we have both hits and misses
-                                    if (resource.Metrics.ContainsKey("Cache_Hits_Total"))
-                                    {
-                                        var hits = resource.Metrics["Cache_Hits_Total"];
-                                        var totalRequests = hits + totalValue;
-
-                                        if (totalRequests > 0)
-                                        {
-                                            var hitRatio = (hits / totalRequests) * 100;
-                                            resource.Metrics["Cache_Hit_Ratio_%"] = hitRatio;
-
-                                            if (hitRatio < 70)
-                                            {
-                                                resource.Flags.Add($"Low cache hit ratio: {hitRatio:F2}% - Review caching strategy");
-                                            }
-                                        }
-                                    }
-                                }
-                                else if (metric.Name == "evictedkeys")
-                                {
-                                    resource.Metrics["Evicted_Keys_Total"] = totalValue;
-
-                                    if (totalValue > 1000)
-                                    {
-                                        resource.Flags.Add($"High key eviction: {totalValue:F0} keys evicted - Consider increasing memory");
-                                    }
-                                }
-                                else if (metric.Name == "expiredkeys")
-                                {
-                                    resource.Metrics["Expired_Keys_Total"] = totalValue;
-                                }
-                                else if (metric.Name == "serverLoad")
-                                {
-                                    resource.Metrics["Server_Load_Average_%"] = avgValue;
-                                    resource.Metrics["Server_Load_Max_%"] = maxValue;
-
-                                    if (maxValue > 80)
-                                    {
-                                        resource.Flags.Add($"High server load: {maxValue:F2}% max");
                                     }
                                 }
                             }

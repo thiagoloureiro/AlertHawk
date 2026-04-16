@@ -27,7 +27,8 @@ namespace FinOpsToolSample.Services
 
             try
             {
-                var subscriptionData = await subscription.GetAsync();
+                var subscriptionData = await AzureThrottledRequestRetry.ExecuteAsync(
+                    () => subscription.GetAsync());
 
                 Console.WriteLine($"Subscription: {subscriptionData.Value.Data.DisplayName}");
                 Console.WriteLine($"Subscription ID: {subscriptionData.Value.Data.SubscriptionId}");
@@ -38,7 +39,8 @@ namespace FinOpsToolSample.Services
                 var tokenRequestContext = new Azure.Core.TokenRequestContext(
                     new[] { "https://management.azure.com/.default" }
                 );
-                var token = await _credential.GetTokenAsync(tokenRequestContext, default);
+                var token = await AzureThrottledRequestRetry.ExecuteAsync(
+                    async () => await _credential.GetTokenAsync(tokenRequestContext, default));
 
                 var queryPayload = new
                 {
@@ -60,14 +62,16 @@ namespace FinOpsToolSample.Services
                 };
 
                 var jsonPayload = JsonSerializer.Serialize(queryPayload);
-                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
                 using var httpClient = new HttpClient();
                 httpClient.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token.Token);
 
                 var url = $"https://management.azure.com/subscriptions/{subscriptionId}/providers/Microsoft.CostManagement/query?api-version=2023-11-01";
-                var response = await httpClient.PostAsync(url, content);
+                using var response = await AzureThrottledRequestRetry.SendPostWithRetryAsync(
+                    httpClient,
+                    url,
+                    () => new StringContent(jsonPayload, Encoding.UTF8, "application/json"));
 
                 if (!response.IsSuccessStatusCode)
                 {
