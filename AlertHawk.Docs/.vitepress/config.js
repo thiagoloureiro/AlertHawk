@@ -13,6 +13,7 @@ export default defineConfig({
       { text: 'Metrics API', link: '/metrics-api/' },
       { text: 'Monitoring', link: '/monitoring/' },
       { text: 'Notification', link: '/notification/' },
+      { text: 'FinOps', link: '/finops/' },
       { text: 'Helm Chart', link: '/helm/' },
       { text: 'Agents Chart', link: '/agents-chart/' },
     ],
@@ -76,6 +77,17 @@ export default defineConfig({
           { text: 'API Controllers', link: '/notification/#api-controllers' },
           { text: 'Supported Channels', link: '/notification/#supported-channels' },
           { text: 'Helm Chart', link: '/notification/#helm-chart-reference' },
+        ],
+      },
+      {
+        text: 'FinOps',
+        collapsed: false,
+        items: [
+          { text: 'Overview', link: '/finops/' },
+          { text: 'Environment Variables', link: '/finops/#environment-variables' },
+          { text: 'API Controllers', link: '/finops/#api-controllers' },
+          { text: 'Helm Chart', link: '/finops/#helm-chart-reference' },
+          { text: 'Local Development', link: '/finops/#local-development' },
         ],
       },
       {

@@ -10,6 +10,7 @@ The AlertHawk Helm chart deploys all AlertHawk components on Kubernetes as deplo
 | **auth** | `alerthawk-auth` | Authentication (Azure AD, JWT, user management) |
 | **notification** | `alerthawk-notification` | Sends alerts (Slack, Teams, email, webhooks, etc.) |
 | **metrics-api** | `alerthawk-metrics-api` | Metrics API (ClickHouse + SQL Server) |
+| **finops-api** | `alerthawk-finops-api` | Azure FinOps analysis API (cost and resource insights) |
 | **ui** | `alerthawk-ui` | Web UI |
 
 ## Charts in the repo
@@ -20,7 +21,7 @@ The AlertHawk Helm chart deploys all AlertHawk components on Kubernetes as deplo
 
 | Chart | Description |
 |-------|-------------|
-| **alerthawk** | Main chart: monitoring, auth, notification, metrics-api, UI (see [Installation](/helm/installation), [Configuration](/helm/configuration), [Environment variables](/helm/environment-variables)). |
+| **alerthawk** | Main chart: monitoring, auth, notification, metrics-api, finops-api, UI (see [Installation](/helm/installation), [Configuration](/helm/configuration), [Environment variables](/helm/environment-variables)). |
 | **alerthawk-metrics-agent** | Metrics Agent only: collects Kubernetes metrics and sends them to the Metrics API. See [Agents Chart](/agents-chart/). |
 
 ## Quick start

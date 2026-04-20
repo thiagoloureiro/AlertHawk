@@ -6,7 +6,7 @@ All environment variables for the Helm chart are set under each component’s `e
 
 ## Common (shared across services)
 
-Used by **auth**, **monitoring**, **notification**, and **metrics-api** where applicable:
+Used by **auth**, **monitoring**, **notification**, **metrics-api**, and **finops-api** where applicable:
 
 | Variable | Description |
 |----------|-------------|
@@ -124,6 +124,35 @@ Under `metrics-api.env` in `values.yaml`.
 | `ENABLE_LOG_CLEANUP` | Enable log cleanup (`true` / `false`) |
 | `LOG_CLEANUP_INTERVAL_HOURS` | Cron expression for cleanup (e.g. `0 0 * * *`) |
 | `Sentry__*`, `SwaggerUICredentials__*`, `AzureAd__*`, `Jwt__*`, `Logging__*` | As in Common |
+
+---
+
+## finops-api
+
+Under `finops-api.env` in `values.yaml`. Container image: `image.finops-api`. See also [FinOps](/finops/) service documentation.
+
+| Variable | Description |
+|----------|-------------|
+| `ConnectionStrings__SqlConnectionString` | **Required.** SQL Server connection string for FinOps data |
+| `ASPNETCORE_ENVIRONMENT` | `Development` enables Swagger UI; use `Production` in clusters |
+| `Azure__TenantId` | Azure AD tenant for the **service principal** used against Azure Resource Manager / Cost Management |
+| `Azure__ClientId` | Application (client) id for Azure data collection (often the same app as `AzureAd__ClientId` when one registration is used for both API auth and ARM) |
+| `Azure__ClientSecret` | Client secret for `Azure__*` (store as a secret in real deployments) |
+| `Azure__SubscriptionIds` | **Required for scheduled or multi-subscription analysis.** Comma-separated Azure subscription GUIDs |
+| `AI__ApiUrl` | AI / agent HTTP endpoint for recommendations (must match `AI:ApiUrl` in configuration) |
+| `AI__ApiKey` | API key sent to the AI endpoint |
+| `AI__ApiKeyHeaderName` | HTTP header name for the API key |
+| `WeeklyAnalysis__Enabled` | `true` to run the weekly UTC analysis hosted service for every id in `Azure__SubscriptionIds` |
+| `WeeklyAnalysis__DayOfWeekUtc` | Day name, e.g. `Sunday` |
+| `WeeklyAnalysis__HourUtc` | 0–23 (UTC) |
+| `WeeklyAnalysis__MinuteUtc` | 0–59 (UTC) |
+| `Sentry__*`, `SwaggerUICredentials__*`, `AzureAd__*`, `Jwt__*`, `Logging__*`, `DOTNET_SYSTEM_GLOBALIZATION_INVARIANT` | As in Common |
+
+::: tip `AI__ApiUrl` spelling
+
+Use **`AI__ApiUrl`** (ends in `Url`) so it binds to `AI:ApiUrl`. A typo such as `AI__ApiURl` may not populate the FinOps `AIConfiguration.ApiUrl` property reliably on Linux.
+
+:::
 
 ---
 

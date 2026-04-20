@@ -7,13 +7,14 @@ The chart is configured via `values.yaml`. Top-level keys map to global settings
 | Key | Description |
 |----|-------------|
 | `defaultReplicas` | Default replica count when a component doesn’t set `replicas` |
-| `image` | Container images per component (`monitoring`, `auth`, `notification`, `metrics-api`, `ui`) |
+| `image` | Container images per component (`monitoring`, `auth`, `notification`, `metrics-api`, `finops-api`, `ui`) |
 | `service` | Shared service config (e.g. `port`) |
 | `clickhouse` | ClickHouse subchart (enable/disable and subchart values) |
 | `auth` | Auth component: `replicas`, `env` |
 | `monitoring` | Monitoring component: `replicas`, `env` |
 | `notification` | Notification component: `replicas`, `env` |
 | `metrics-api` | Metrics API component: `replicas`, `env` |
+| `finops-api` | FinOps API component: `replicas`, `env` |
 | `ui` | UI component: `replicas` (no env in default chart) |
 
 ## Global values
@@ -36,6 +37,7 @@ image:
   auth: thiagoguaru/alerthawk.authentication:3.1.2
   notification: thiagoguaru/alerthawk.notification:3.1.2
   metrics-api: thiagoguaru/alerthawk.metrics.api:3.1.13
+  finops-api: thiagoguaru/alerthawk.finops.api:3.1.34
   ui: thiagoguaru/alerthawk.ui-demo-v2:3.1.16
 ```
 
@@ -61,7 +63,7 @@ clickhouse:
 
 ## Per-component: replicas and env
 
-Each component (auth, monitoring, notification, metrics-api) can set:
+Each component (auth, monitoring, notification, metrics-api, finops-api) can set:
 
 ```yaml
 <component>:
@@ -89,10 +91,24 @@ image:
   auth: thiagoguaru/alerthawk.authentication:3.1.2
   notification: thiagoguaru/alerthawk.notification:3.1.2
   metrics-api: thiagoguaru/alerthawk.metrics.api:3.1.13
+  finops-api: thiagoguaru/alerthawk.finops.api:3.1.34
   ui: thiagoguaru/alerthawk.ui-demo-v2:3.1.16
 
 service:
   port: 8080
+
+finops-api:
+  replicas: 1
+  env:
+    ConnectionStrings__SqlConnectionString: "Server=..."
+    Azure__SubscriptionIds: "sub-guid-1,sub-guid-2"
+    Azure__TenantId: "tenant-id"
+    Azure__ClientId: "client-id"
+    Azure__ClientSecret: "***"
+    Jwt__Key: "your-jwt-secret-key"
+    Jwt__Issuers: "https://your-issuer"
+    Jwt__Audiences: "your-audience"
+    # ... see Environment variables → finops-api
 
 auth:
   replicas: 1

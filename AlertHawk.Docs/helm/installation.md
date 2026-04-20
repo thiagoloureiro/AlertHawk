@@ -14,7 +14,7 @@ You must have (or install) these before or with the chart:
 
 ### SQL Server
 
-Required for **auth**, **notification**, **monitoring**, and **metrics-api**. Provide a SQL Server instance and set `ConnectionStrings__SqlConnectionString` in each component’s `env` section (see [Environment variables](/helm/environment-variables)).
+Required for **auth**, **notification**, **monitoring**, **metrics-api**, and **finops-api**. Provide a SQL Server instance and set `ConnectionStrings__SqlConnectionString` in each component’s `env` section (see [Environment variables](/helm/environment-variables)).
 
 ### ClickHouse (for metrics-api)
 
@@ -52,7 +52,7 @@ See [Environment variables](/helm/environment-variables) per service.
 
 ### Azure AD (optional)
 
-For SSO and JWT validation, configure Azure AD in the services that need it (auth, monitoring, notification, metrics-api):
+For SSO and JWT validation, configure Azure AD in the services that need it (auth, monitoring, notification, metrics-api, finops-api):
 
 - `AzureAd__ClientId`
 - `AzureAd__TenantId`
@@ -80,9 +80,10 @@ helm show values alerthawk/alerthawk > my-values.yaml
 
 Edit `my-values.yaml`:
 
-- Set **SQL Server** connection strings for auth, notification, monitoring, metrics-api.
+- Set **SQL Server** connection strings for auth, notification, monitoring, metrics-api, and finops-api.
 - Set **ClickHouse** connection string in `metrics-api.env` (and optionally enable `clickhouse.enabled: true`).
 - Set **RabbitMQ** or **Service Bus** in monitoring, notification, and metrics-api.
+- For **finops-api**, set **Azure** service principal and subscriptions (`Azure__TenantId`, `Azure__ClientId`, `Azure__ClientSecret`, `Azure__SubscriptionIds`), optional **AI** and **WeeklyAnalysis** keys, and the same **JWT** / **Azure AD** pattern as other APIs (see [FinOps](/finops/) and [Environment variables — finops-api](/helm/environment-variables#finops-api)).
 - Set **JWT** (`Jwt__Key`, `Jwt__Issuers`, `Jwt__Audiences`) consistently across services.
 - Set **Azure AD** and other secrets as needed.
 
@@ -107,7 +108,7 @@ kubectl get pods
 kubectl get svc
 ```
 
-Check that deployments for `alerthawk-monitoring`, `alerthawk-auth`, `alerthawk-notification`, `alerthawk-metrics-api`, and `alerthawk-ui` are running.
+Check that deployments for `alerthawk-monitoring`, `alerthawk-auth`, `alerthawk-notification`, `alerthawk-metrics-api`, `alerthawk-finops-api`, and `alerthawk-ui` are running (names assume the Helm release is `alerthawk`).
 
 ---
 
