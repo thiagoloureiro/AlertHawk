@@ -195,6 +195,16 @@ public class DataCleanupServiceTests
             RecordedAt = now.AddDays(-7)
         });
 
+        dbContext.HistoricalCosts.Add(new HistoricalCost
+        {
+            AnalysisRunId = oldRun.Id,
+            SubscriptionId = "sub-1",
+            CostDate = now.AddDays(-7).Date,
+            CostType = "Total",
+            Cost = 42,
+            RecordedAt = now.AddDays(-7)
+        });
+
         await dbContext.SaveChangesAsync();
 
         // Create latest run
@@ -224,6 +234,7 @@ public class DataCleanupServiceTests
         Assert.Equal(0, await dbContext.CostDetails.CountAsync());
         Assert.Equal(0, await dbContext.ResourceAnalysis.CountAsync());
         Assert.Equal(0, await dbContext.AiRecommendations.CountAsync());
+        Assert.Equal(0, await dbContext.HistoricalCosts.CountAsync());
         
         // Verify the latest run is still there
         var remainingRun = await dbContext.AnalysisRuns.FirstAsync();

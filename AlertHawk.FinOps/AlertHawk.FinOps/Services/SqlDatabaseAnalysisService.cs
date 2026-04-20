@@ -24,6 +24,7 @@ namespace FinOpsToolSample.Services
             try
             {
                 var metricsClient = new MetricsQueryClient(_credential);
+                var synapseExclusions = await SynapseSqlExclusions.DiscoverAsync(subscription);
                 var resourceGroups = subscription.GetResourceGroups();
 
                 await foreach (var rg in resourceGroups)
@@ -34,7 +35,13 @@ namespace FinOpsToolSample.Services
 
                     await foreach (var db in resources)
                     {
-                        if (db.Data.Name.ToLower() == "master") continue;
+                        if (db.Data.Name.Equals("master", StringComparison.OrdinalIgnoreCase)) continue;
+                        if (db.Data.Name.EndsWith("/master", StringComparison.OrdinalIgnoreCase)) continue;
+
+                        if (synapseExclusions.IsSynapseWorkspaceSqlDatabase(db))
+                        {
+                            continue;
+                        }
 
                         Console.WriteLine($"\n📊 Checking database: {db.Data.Name}");
                         Console.WriteLine($"  Resource Group: {db.Data.Id.ResourceGroupName}");
@@ -95,6 +102,7 @@ namespace FinOpsToolSample.Services
                             var tier = db.Data.Sku?.Tier?.ToLower() ?? "";
                             var skuName = db.Data.Sku?.Name?.ToLower() ?? "";
                             string[] metricsToQuery;
+                            var useVCoreStorageBytes = false;
 
                             if (isElasticPool)
                             {
@@ -118,10 +126,16 @@ namespace FinOpsToolSample.Services
                             {
                                 // vCore-based databases (GeneralPurpose, BusinessCritical, Hyperscale)
                                 Console.WriteLine($"  → Detected vCore-based database");
-                                metricsToQuery = new[] { "cpu_percent", "storage_percent" };
+                                useVCoreStorageBytes = true;
+                                metricsToQuery = SqlDatabaseVCoreMetrics.MetricsToQuery;
                             }
 
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            double vCoreStorageUsedAvg = 0, vCoreStorageUsedMax = 0;
+                            double vCoreAllocatedAvg = 0, vCoreAllocatedMax = 0;
+                            var hasVCoreStorageUsed = false;
+                            var hasVCoreAllocated = false;
+
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 db.Id.ToString(),
                                 metricsToQuery,
                                 new MetricsQueryOptions
@@ -148,6 +162,26 @@ namespace FinOpsToolSample.Services
                                     .DefaultIfEmpty(0)
                                     .Max();
 
+                                if (useVCoreStorageBytes && metric.Name == SqlDatabaseVCoreMetrics.StorageUsed)
+                                {
+                                    hasVCoreStorageUsed = true;
+                                    vCoreStorageUsedAvg = avgValue;
+                                    vCoreStorageUsedMax = maxValue;
+                                    Console.WriteLine(
+                                        $"    - Data space used: Avg = {FormatBytes(avgValue)}, Max = {FormatBytes(maxValue)}");
+                                    continue;
+                                }
+
+                                if (useVCoreStorageBytes && metric.Name == SqlDatabaseVCoreMetrics.StorageAllocated)
+                                {
+                                    hasVCoreAllocated = true;
+                                    vCoreAllocatedAvg = avgValue;
+                                    vCoreAllocatedMax = maxValue;
+                                    Console.WriteLine(
+                                        $"    - Allocated data storage: Avg = {FormatBytes(avgValue)}, Max = {FormatBytes(maxValue)}");
+                                    continue;
+                                }
+
                                 var metricDisplay = metric.Name switch
                                 {
                                     "cpu_percent" => "CPU Usage",
@@ -161,6 +195,20 @@ namespace FinOpsToolSample.Services
                                 };
 
                                 Console.WriteLine($"    - {metricDisplay}: Avg = {avgValue:F2}%, Max = {maxValue:F2}%");
+                            }
+
+                            if (useVCoreStorageBytes && hasVCoreStorageUsed && hasVCoreAllocated)
+                            {
+                                var storagePct = SqlDatabaseVCoreMetrics.TryComputeStorageUtilizationPercent(
+                                    vCoreStorageUsedAvg,
+                                    vCoreStorageUsedMax,
+                                    vCoreAllocatedAvg,
+                                    vCoreAllocatedMax);
+                                if (storagePct.HasValue)
+                                {
+                                    Console.WriteLine(
+                                        $"    - Storage utilization (used / allocated): Avg = {storagePct.Value.AveragePercent:F2}%, Max = {storagePct.Value.MaxPercent:F2}%");
+                                }
                             }
                         }
                         catch (Exception ex)
@@ -176,6 +224,27 @@ namespace FinOpsToolSample.Services
                 SentrySdk.CaptureException(ex);
                 Console.WriteLine($"Error checking database usage: {ex.Message}");
             }
+        }
+
+        private static string FormatBytes(double bytes)
+        {
+            const double k = 1024d;
+            if (bytes >= k * k * k)
+            {
+                return $"{bytes / (k * k * k):F2} GiB";
+            }
+
+            if (bytes >= k * k)
+            {
+                return $"{bytes / (k * k):F2} MiB";
+            }
+
+            if (bytes >= k)
+            {
+                return $"{bytes / k:F2} KiB";
+            }
+
+            return $"{bytes:F0} B";
         }
     }
 }

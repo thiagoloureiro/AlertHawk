@@ -28,13 +28,15 @@ namespace FinOpsToolSample.Services
 
             try
             {
-                var subscriptionData = await subscription.GetAsync();
+                var subscriptionData = await AzureThrottledRequestRetry.ExecuteAsync(
+                    () => subscription.GetAsync());
                 var subscriptionId = subscriptionData.Value.Data.SubscriptionId;
 
                 var tokenRequestContext = new Azure.Core.TokenRequestContext(
                     new[] { "https://management.azure.com/.default" }
                 );
-                var token = await _credential.GetTokenAsync(tokenRequestContext, default);
+                var token = await AzureThrottledRequestRetry.ExecuteAsync(
+                    async () => await _credential.GetTokenAsync(tokenRequestContext, default));
 
                 // Calculate date range - start from 1st day of the month N months ago
                 var endDate = DateTime.UtcNow;
@@ -68,7 +70,6 @@ namespace FinOpsToolSample.Services
                 };
 
                 var jsonPayload = JsonSerializer.Serialize(queryPayload);
-                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
                 using var httpClient = new HttpClient();
                 httpClient.DefaultRequestHeaders.Authorization =
@@ -87,7 +88,10 @@ namespace FinOpsToolSample.Services
                         ? url 
                         : $"{url}&$skiptoken={Uri.EscapeDataString(skipToken)}";
 
-                    var response = await httpClient.PostAsync(requestUrl, content);
+                    using var response = await AzureThrottledRequestRetry.SendPostWithRetryAsync(
+                        httpClient,
+                        requestUrl,
+                        () => new StringContent(jsonPayload, Encoding.UTF8, "application/json"));
 
                     if (!response.IsSuccessStatusCode)
                     {

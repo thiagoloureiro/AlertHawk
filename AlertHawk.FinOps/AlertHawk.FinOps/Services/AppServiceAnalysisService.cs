@@ -68,7 +68,7 @@ namespace FinOpsToolSample.Services
                             Console.WriteLine($"  📈 Performance Metrics (Last 7 Days):");
 
                             // Query only metrics available across all App Service types
-                            var metricsResponse = await metricsClient.QueryResourceAsync(
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
                                 app.Id.ToString(),
                                 new[] { "Requests", "MemoryWorkingSet", "Http5xx", "AverageResponseTime" },
                                 new MetricsQueryOptions

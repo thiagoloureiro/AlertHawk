@@ -40,6 +40,12 @@ namespace FinOpsToolSample.Data
                 .HasForeignKey(ai => ai.AnalysisRunId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<AnalysisRun>()
+                .HasMany(a => a.HistoricalCosts)
+                .WithOne(h => h.AnalysisRun)
+                .HasForeignKey(h => h.AnalysisRunId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // Indexes for better query performance
             modelBuilder.Entity<AnalysisRun>()
                 .HasIndex(a => a.SubscriptionId);

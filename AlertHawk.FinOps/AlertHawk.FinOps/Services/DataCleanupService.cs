@@ -1,3 +1,4 @@
+using System;
 using FinOpsToolSample.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -55,12 +56,25 @@ public class DataCleanupService : IDataCleanupService
                 _logger.LogInformation("No old analysis runs to delete");
                 result.Success = true;
                 result.Message = "No old analysis runs found to delete. All subscriptions have only their latest run.";
+                Console.WriteLine($"\n🧹 Cleanup: {result.Message}");
                 return result;
             }
 
             _logger.LogInformation("Found {Count} analysis runs to delete", runsToDelete.Count);
 
-            // Delete the old runs (cascade delete will handle related records)
+            var idsToDelete = runsToDelete.Select(r => r.Id).ToList();
+
+            // HistoricalCosts: remove explicitly so older databases without ON DELETE CASCADE stay consistent.
+            // (ExecuteDelete is not supported on the EF InMemory provider used in tests.)
+            var historicalRows = await _dbContext.HistoricalCosts
+                .Where(h => idsToDelete.Contains(h.AnalysisRunId))
+                .ToListAsync();
+            if (historicalRows.Count > 0)
+            {
+                _dbContext.HistoricalCosts.RemoveRange(historicalRows);
+            }
+
+            // Delete the old runs (cascade delete removes CostDetails, ResourceAnalysis, AiRecommendations)
             foreach (var runToDelete in runsToDelete)
             {
                 var runEntity = await _dbContext.AnalysisRuns.FindAsync(runToDelete.Id);
@@ -83,6 +97,12 @@ public class DataCleanupService : IDataCleanupService
                 result.AnalysisRunsDeleted,
                 result.AnalysisRunsKept
             );
+
+            Console.WriteLine($"\n🧹 Cleanup: {result.Message}");
+            foreach (var detail in result.DeletedRunDetails)
+            {
+                Console.WriteLine($"   - Removed {detail}");
+            }
         }
         catch (Exception ex)
         {
@@ -91,6 +111,7 @@ public class DataCleanupService : IDataCleanupService
             result.Success = false;
             result.Message = "Failed to cleanup old analysis runs";
             result.ErrorDetails = ex.Message;
+            Console.WriteLine($"\n🧹 Cleanup failed: {ex.Message}");
         }
 
         return result;
