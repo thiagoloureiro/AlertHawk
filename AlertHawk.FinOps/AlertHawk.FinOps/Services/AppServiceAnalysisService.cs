@@ -1,4 +1,3 @@
-using Azure.Identity;
 using Azure.Monitor.Query;
 using Azure.Monitor.Query.Models;
 using Azure.ResourceManager.Resources;
@@ -11,11 +10,11 @@ namespace FinOpsToolSample.Services
 {
     public class AppServiceAnalysisService : IResourceAnalysisService
     {
-        private readonly ClientSecretCredential _credential;
+        private readonly MetricsQueryClient _metricsClient;
 
-        public AppServiceAnalysisService(ClientSecretCredential credential)
+        public AppServiceAnalysisService(MetricsQueryClient metricsClient)
         {
-            _credential = credential;
+            _metricsClient = metricsClient;
         }
 
         public async Task AnalyzeAsync(SubscriptionResource subscription)
@@ -24,7 +23,6 @@ namespace FinOpsToolSample.Services
 
             try
             {
-                var metricsClient = new MetricsQueryClient(_credential);
                 var resourceGroups = subscription.GetResourceGroups();
 
                 await foreach (var rg in resourceGroups)
@@ -68,7 +66,7 @@ namespace FinOpsToolSample.Services
                             Console.WriteLine($"  📈 Performance Metrics (Last 7 Days):");
 
                             // Query only metrics available across all App Service types
-                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
+                            var metricsResponse = await _metricsClient.QueryResourceWithRetryAsync(
                                 app.Id.ToString(),
                                 new[] { "Requests", "MemoryWorkingSet", "Http5xx", "AverageResponseTime" },
                                 new MetricsQueryOptions

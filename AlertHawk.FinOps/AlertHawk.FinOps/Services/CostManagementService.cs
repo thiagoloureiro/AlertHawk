@@ -15,10 +15,12 @@ namespace FinOpsToolSample.Services
     public class CostManagementService : ICostAnalysisService
     {
         private readonly ClientSecretCredential _credential;
+        private readonly HttpClient _httpClient;
 
-        public CostManagementService(ClientSecretCredential credential)
+        public CostManagementService(ClientSecretCredential credential, HttpClient httpClient)
         {
             _credential = credential;
+            _httpClient = httpClient;
         }
 
         public async Task<(decimal totalCost, Dictionary<string, decimal> byResourceGroup, List<ServiceCostDetail> byService)> AnalyzeAsync(SubscriptionResource subscription, ArmClient armClient)
@@ -63,13 +65,12 @@ namespace FinOpsToolSample.Services
 
                 var jsonPayload = JsonSerializer.Serialize(queryPayload);
 
-                using var httpClient = new HttpClient();
-                httpClient.DefaultRequestHeaders.Authorization =
+                _httpClient.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token.Token);
 
                 var url = $"https://management.azure.com/subscriptions/{subscriptionId}/providers/Microsoft.CostManagement/query?api-version=2023-11-01";
                 using var response = await AzureThrottledRequestRetry.SendPostWithRetryAsync(
-                    httpClient,
+                    _httpClient,
                     url,
                     () => new StringContent(jsonPayload, Encoding.UTF8, "application/json"));
 

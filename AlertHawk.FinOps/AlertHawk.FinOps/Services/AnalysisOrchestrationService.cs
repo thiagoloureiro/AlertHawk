@@ -1,11 +1,13 @@
 using Azure.Core;
 using Azure.Identity;
+using Azure.Monitor.Query;
 using Azure.ResourceManager;
 using FinOpsToolSample.Configuration;
 using FinOpsToolSample.Data;
 using FinOpsToolSample.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Net.Http;
 
 namespace FinOpsToolSample.Services
 {
@@ -44,6 +46,8 @@ namespace FinOpsToolSample.Services
                     _azureConfig.ClientId,
                     _azureConfig.ClientSecret);
 
+                var metricsClient = new MetricsQueryClient(credential);
+
                 var armOptions = new ArmClientOptions
                 {
                     Retry =
@@ -57,7 +61,7 @@ namespace FinOpsToolSample.Services
                 var armClient = new ArmClient(credential, default, armOptions);
 
                 // Process the subscription
-                return await RunAnalysisForSubscriptionAsync(armClient, credential, subscriptionId);
+                return await RunAnalysisForSubscriptionAsync(armClient, credential, metricsClient, subscriptionId);
             }
             catch (Exception ex)
             {
@@ -93,6 +97,8 @@ namespace FinOpsToolSample.Services
                     _azureConfig.ClientId,
                     _azureConfig.ClientSecret);
 
+                var metricsClient = new MetricsQueryClient(credential);
+
                 var armOptions = new ArmClientOptions
                 {
                     Retry =
@@ -123,6 +129,7 @@ namespace FinOpsToolSample.Services
                     var subResult = await RunAnalysisForSubscriptionAsync(
                         armClient,
                         credential,
+                        metricsClient,
                         subscriptionId
                     );
 
@@ -153,6 +160,7 @@ namespace FinOpsToolSample.Services
         private async Task<SubscriptionAnalysisResult> RunAnalysisForSubscriptionAsync(
             ArmClient armClient,
             ClientSecretCredential credential,
+            MetricsQueryClient metricsClient,
             string subscriptionId)
         {
             try
@@ -166,21 +174,22 @@ namespace FinOpsToolSample.Services
                 var analysisServices = new List<IResourceAnalysisService>
                 {
                     new AppServicePlanAnalysisService(),
-                    new SqlDatabaseAnalysisService(credential),
-                    new SynapseAnalysisService(credential),
-                    new VirtualMachineAnalysisService(credential),
+                    new SqlDatabaseAnalysisService(metricsClient),
+                    new SynapseAnalysisService(metricsClient),
+                    new VirtualMachineAnalysisService(metricsClient),
                     new StorageAccountAnalysisService(),
-                    new AppServiceAnalysisService(credential),
+                    new AppServiceAnalysisService(metricsClient),
                     new UnattachedDiskAnalysisService(),
                     new UnusedPublicIpAnalysisService(),
                     new KubernetesAnalysisService(credential),
-                    new ContainerRegistryAnalysisService(credential),
-                    new RedisAnalysisService(credential)
+                    new ContainerRegistryAnalysisService(metricsClient),
+                    new RedisAnalysisService(metricsClient)
                 };
 
-                var costService = new CostManagementService(credential);
-                var historicalCostService = new HistoricalCostService(credential);
-                var dataCollector = new DataCollectionService();
+                using var managementHttpClient = new HttpClient();
+                var costService = new CostManagementService(credential, managementHttpClient);
+                var historicalCostService = new HistoricalCostService(credential, managementHttpClient);
+                var dataCollector = new DataCollectionService(metricsClient);
                 var AIService = new AIRecommendationService(_AIConfig.ApiKey, _AIConfig.ApiUrl, _AIConfig.ApiKeyHeaderName);
 
                 // Get subscription info
@@ -208,16 +217,16 @@ namespace FinOpsToolSample.Services
                 }
 
                 // Collect data for AI analysis
-                await dataCollector.CollectAppServicePlans(subscription, credential);
-                await dataCollector.CollectSqlDatabases(subscription, credential);
-                await dataCollector.CollectSynapseResources(subscription, credential);
-                await dataCollector.CollectVirtualMachines(subscription, credential);
+                await dataCollector.CollectAppServicePlans(subscription);
+                await dataCollector.CollectSqlDatabases(subscription);
+                await dataCollector.CollectSynapseResources(subscription);
+                await dataCollector.CollectVirtualMachines(subscription);
                 await dataCollector.CollectStorageAccounts(subscription);
                 await dataCollector.CollectUnattachedDisks(subscription);
                 await dataCollector.CollectUnusedPublicIPs(subscription);
                 await dataCollector.CollectKubernetesClusters(subscription);
-                await dataCollector.CollectContainerRegistries(subscription, credential);
-                await dataCollector.CollectRedisCaches(subscription, credential);
+                await dataCollector.CollectContainerRegistries(subscription);
+                await dataCollector.CollectRedisCaches(subscription);
 
                 var collectedData = dataCollector.GetCollectedData();
 

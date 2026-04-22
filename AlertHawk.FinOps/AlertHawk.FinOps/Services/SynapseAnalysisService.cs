@@ -1,4 +1,3 @@
-using Azure.Identity;
 using Azure.Monitor.Query;
 using Azure.Monitor.Query.Models;
 using Azure.ResourceManager.Resources;
@@ -11,11 +10,11 @@ namespace FinOpsToolSample.Services
 {
     public class SynapseAnalysisService : IResourceAnalysisService
     {
-        private readonly ClientSecretCredential _credential;
+        private readonly MetricsQueryClient _metricsClient;
 
-        public SynapseAnalysisService(ClientSecretCredential credential)
+        public SynapseAnalysisService(MetricsQueryClient metricsClient)
         {
-            _credential = credential;
+            _metricsClient = metricsClient;
         }
 
         public async Task AnalyzeAsync(SubscriptionResource subscription)
@@ -24,7 +23,6 @@ namespace FinOpsToolSample.Services
 
             try
             {
-                var metricsClient = new MetricsQueryClient(_credential);
                 var resourceGroups = subscription.GetResourceGroups();
 
                 await foreach (var rg in resourceGroups)
@@ -51,7 +49,7 @@ namespace FinOpsToolSample.Services
                         try
                         {
                             Console.WriteLine($"  📈 Built-in SQL pool activity (Last 7 Days):");
-                            var wsMetrics = await metricsClient.QueryResourceWithRetryAsync(
+                            var wsMetrics = await _metricsClient.QueryResourceWithRetryAsync(
                                 ws.Id.ToString(),
                                 new[] { "BuiltinSqlPoolDataProcessedBytes" },
                                 new MetricsQueryOptions
@@ -118,7 +116,7 @@ namespace FinOpsToolSample.Services
                         try
                         {
                             Console.WriteLine($"  📈 Pool metrics (Last 7 Days, Azure Monitor sqlPools):");
-                            var poolMetrics = await metricsClient.QueryResourceWithRetryAsync(
+                            var poolMetrics = await _metricsClient.QueryResourceWithRetryAsync(
                                 pool.Id.ToString(),
                                 new[] { "DWUUsedPercent", "CPUPercent", "MemoryUsedPercent" },
                                 new MetricsQueryOptions

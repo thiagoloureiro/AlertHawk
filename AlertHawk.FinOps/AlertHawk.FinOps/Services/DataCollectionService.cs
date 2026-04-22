@@ -1,4 +1,3 @@
-using Azure.Identity;
 using Azure.Monitor.Query;
 using Azure.Monitor.Query.Models;
 using Azure.ResourceManager.AppService;
@@ -14,7 +13,13 @@ namespace FinOpsToolSample.Services
 {
     public class DataCollectionService
     {
+        private readonly MetricsQueryClient _metricsClient;
         private readonly AzureResourceData _data = new();
+
+        public DataCollectionService(MetricsQueryClient metricsClient)
+        {
+            _metricsClient = metricsClient;
+        }
 
         public AzureResourceData GetCollectedData() => _data;
 
@@ -36,11 +41,10 @@ namespace FinOpsToolSample.Services
             _data.Resources.Add(resource);
         }
 
-        public async Task CollectAppServicePlans(SubscriptionResource subscription, ClientSecretCredential credential)
+        public async Task CollectAppServicePlans(SubscriptionResource subscription)
         {
             try
             {
-                var metricsClient = new MetricsQueryClient(credential);
                 var resourceGroups = subscription.GetResourceGroups();
 
                 await foreach (var rg in resourceGroups)
@@ -100,7 +104,7 @@ namespace FinOpsToolSample.Services
                             var startTime = endTime.AddDays(-7);
 
                             // Query only metrics available across all App Service types
-                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
+                            var metricsResponse = await _metricsClient.QueryResourceWithRetryAsync(
                                 app.Id.ToString(),
                                 new[] { "Requests", "MemoryWorkingSet", "Http5xx", "AverageResponseTime" },
                                 new MetricsQueryOptions
@@ -140,11 +144,10 @@ namespace FinOpsToolSample.Services
             }
         }
 
-        public async Task CollectSqlDatabases(SubscriptionResource subscription, ClientSecretCredential credential)
+        public async Task CollectSqlDatabases(SubscriptionResource subscription)
         {
             try
             {
-                var metricsClient = new MetricsQueryClient(credential);
                 var synapseExclusions = await SynapseSqlExclusions.DiscoverAsync(subscription);
                 var resourceGroups = subscription.GetResourceGroups();
 
@@ -234,7 +237,7 @@ namespace FinOpsToolSample.Services
                             var hasVCoreStorageUsed = false;
                             var hasVCoreAllocated = false;
 
-                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
+                            var metricsResponse = await _metricsClient.QueryResourceWithRetryAsync(
                                 db.Id.ToString(),
                                 metricsToQuery,
                                 new MetricsQueryOptions
@@ -335,11 +338,10 @@ namespace FinOpsToolSample.Services
             }
         }
 
-        public async Task CollectSynapseResources(SubscriptionResource subscription, ClientSecretCredential credential)
+        public async Task CollectSynapseResources(SubscriptionResource subscription)
         {
             try
             {
-                var metricsClient = new MetricsQueryClient(credential);
                 var resourceGroups = subscription.GetResourceGroups();
 
                 await foreach (var rg in resourceGroups)
@@ -368,7 +370,7 @@ namespace FinOpsToolSample.Services
                             var endTime = DateTimeOffset.UtcNow;
                             var startTime = endTime.AddDays(-7);
 
-                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
+                            var metricsResponse = await _metricsClient.QueryResourceWithRetryAsync(
                                 ws.Id.ToString(),
                                 new[] { "BuiltinSqlPoolDataProcessedBytes" },
                                 new MetricsQueryOptions
@@ -440,7 +442,7 @@ namespace FinOpsToolSample.Services
                             var endTime = DateTimeOffset.UtcNow;
                             var startTime = endTime.AddDays(-7);
 
-                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
+                            var metricsResponse = await _metricsClient.QueryResourceWithRetryAsync(
                                 pool.Id.ToString(),
                                 new[] { "DWUUsedPercent", "CPUPercent", "MemoryUsedPercent" },
                                 new MetricsQueryOptions
@@ -503,11 +505,10 @@ namespace FinOpsToolSample.Services
             }
         }
 
-        public async Task CollectVirtualMachines(SubscriptionResource subscription, ClientSecretCredential credential)
+        public async Task CollectVirtualMachines(SubscriptionResource subscription)
         {
             try
             {
-                var metricsClient = new MetricsQueryClient(credential);
                 var resourceGroups = subscription.GetResourceGroups();
 
                 await foreach (var rg in resourceGroups)
@@ -556,7 +557,7 @@ namespace FinOpsToolSample.Services
                             var endTime = DateTimeOffset.UtcNow;
                             var startTime = endTime.AddDays(-7);
 
-                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
+                            var metricsResponse = await _metricsClient.QueryResourceWithRetryAsync(
                                 vm.Id.ToString(),
                                 new[] { "Percentage CPU", "Network In Total", "Network Out Total" },
                                 new MetricsQueryOptions
@@ -879,11 +880,10 @@ namespace FinOpsToolSample.Services
             }
         }
 
-        public async Task CollectContainerRegistries(SubscriptionResource subscription, ClientSecretCredential credential)
+        public async Task CollectContainerRegistries(SubscriptionResource subscription)
         {
             try
             {
-                var metricsClient = new MetricsQueryClient(credential);
                 var resourceGroups = subscription.GetResourceGroups();
 
                 await foreach (var rg in resourceGroups)
@@ -931,7 +931,7 @@ namespace FinOpsToolSample.Services
                             var endTime = DateTimeOffset.UtcNow;
                             var startTime = endTime.AddDays(-7);
 
-                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
+                            var metricsResponse = await _metricsClient.QueryResourceWithRetryAsync(
                                 registry.Id.ToString(),
                                 new[]
                                 {
@@ -1020,11 +1020,10 @@ namespace FinOpsToolSample.Services
             }
         }
 
-        public async Task CollectRedisCaches(SubscriptionResource subscription, ClientSecretCredential credential)
+        public async Task CollectRedisCaches(SubscriptionResource subscription)
         {
             try
             {
-                var metricsClient = new MetricsQueryClient(credential);
                 var resourceGroups = subscription.GetResourceGroups();
 
                 await foreach (var rg in resourceGroups)
@@ -1089,7 +1088,7 @@ namespace FinOpsToolSample.Services
                             var endTime = DateTimeOffset.UtcNow;
                             var startTime = endTime.AddDays(-7);
 
-                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
+                            var metricsResponse = await _metricsClient.QueryResourceWithRetryAsync(
                                 cache.Id.ToString(),
                                 new[] { "percentProcessorTime", "usedmemorypercentage" },
                                 new MetricsQueryOptions
