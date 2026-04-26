@@ -51,6 +51,11 @@ namespace FinOpsToolSample.Services
                 Console.WriteLine("🔍 Prompt sent to AI:");
                 Console.WriteLine(prompt);
                 Console.WriteLine();
+                
+                _httpClient.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
+                _httpClient.DefaultRequestHeaders.Add("Accept-Encoding", "br");
+                _httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
+                _httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
 
                 var jsonRequest = JsonSerializer.Serialize(request);
                 var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
