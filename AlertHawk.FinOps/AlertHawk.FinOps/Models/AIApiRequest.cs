@@ -2,7 +2,7 @@ namespace FinOpsToolSample.Models
 {
     public class AIApiRequest
     {
-        public string agent_id { get; set; } = "b38b9d31-0d3e-4662-9af8-07859a055d5c";
+        public string agent_id { get; set; } = "f6dbd362-aefd-47f5-8b84-8dd14d5ed7c3";
         public string input { get; set; } = string.Empty;
     }
 }
