@@ -182,7 +182,7 @@ namespace FinOpsToolSample.Controllers
                     continue;
                 }
 
-                if (map.TryGetValue((c.AnalysisRunId, c.ResourceGroup), out var tags))
+                if (map.TryGetValue((c.AnalysisRunId, c.ResourceGroup.ToUpperInvariant()), out var tags))
                 {
                     c.Tags = tags;
                 }

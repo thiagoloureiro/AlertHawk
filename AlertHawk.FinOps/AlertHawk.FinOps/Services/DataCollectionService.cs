@@ -16,6 +16,11 @@ namespace FinOpsToolSample.Services
     {
         private readonly AzureResourceData _data = new();
 
+        /// <summary>
+        /// Subscription-scoped ARM resources (e.g. Microsoft.Security/pricings) have no resource group; ResourceAnalysis requires a non-empty value.
+        /// </summary>
+        private const string SubscriptionScopeResourceGroupPlaceholder = "(subscription scope)";
+
         public AzureResourceData GetCollectedData() => _data;
 
         public void SetSubscriptionInfo(string name, string id)
@@ -1168,6 +1173,223 @@ namespace FinOpsToolSample.Services
             {
                 SentrySdk.CaptureException(ex);
                 Console.WriteLine($"Error collecting Redis Caches: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Collects API Management, PostgreSQL (single and flexible servers), virtual networks, and Defender for Cloud pricing plans
+        /// into resource inventory so ResourceAnalysis rows (and per–resource-group tag merge for costs) include these workloads.
+        /// </summary>
+        public async Task CollectApiManagementPostgreSqlVirtualNetworksAndDefender(
+            SubscriptionResource subscription,
+            ClientSecretCredential credential)
+        {
+            try
+            {
+                var metricsClient = new MetricsQueryClient(credential);
+                var resourceGroups = subscription.GetResourceGroups();
+                var endTime = DateTimeOffset.UtcNow;
+                var startTime = endTime.AddDays(-7);
+                var metricOptionsAvgMax = new MetricsQueryOptions
+                {
+                    TimeRange = new QueryTimeRange(startTime, endTime),
+                    Granularity = TimeSpan.FromHours(1),
+                    Aggregations = { MetricAggregationType.Average, MetricAggregationType.Maximum }
+                };
+                var metricOptionsAvgTotal = new MetricsQueryOptions
+                {
+                    TimeRange = new QueryTimeRange(startTime, endTime),
+                    Granularity = TimeSpan.FromHours(1),
+                    Aggregations = { MetricAggregationType.Average, MetricAggregationType.Total }
+                };
+
+                await foreach (var rg in resourceGroups)
+                {
+                    await foreach (var apim in rg.GetGenericResourcesAsync(
+                                       filter: "resourceType eq 'Microsoft.ApiManagement/service'"))
+                    {
+                        var resource = new ResourceInfo
+                        {
+                            Type = "API Management",
+                            Name = apim.Data.Name,
+                            ResourceGroup = apim.Data.Id.ResourceGroupName ?? "Unknown",
+                            Location = apim.Data.Location.ToString()
+                        };
+                        DataCollectionResourceTags.ApplyMergedFromArm(resource, rg.Data.Tags, apim.Data.Tags);
+
+                        if (apim.Data.Sku != null)
+                        {
+                            resource.Properties["Tier"] = apim.Data.Sku.Tier ?? "Unknown";
+                            resource.Properties["SKU"] = apim.Data.Sku.Name ?? "Unknown";
+                            if (apim.Data.Sku.Capacity.HasValue)
+                            {
+                                resource.Properties["Capacity"] = apim.Data.Sku.Capacity.Value.ToString();
+                            }
+                        }
+
+                        if (apim.Data.Properties != null)
+                        {
+                            var props = JsonSerializer.Deserialize<JsonElement>(apim.Data.Properties.ToString());
+                            if (props.TryGetProperty("virtualNetworkType", out var vnt))
+                            {
+                                resource.Properties["VirtualNetworkType"] = vnt.GetString() ?? "Unknown";
+                            }
+                        }
+
+                        try
+                        {
+                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
+                                apim.Id.ToString(),
+                                new[] { "Requests", "Duration" },
+                                metricOptionsAvgTotal);
+
+                            foreach (var metric in metricsResponse.Value.Metrics)
+                            {
+                                var timeSeries = metric.TimeSeries.SelectMany(ts => ts.Values).ToList();
+                                if (metric.Name == "Requests")
+                                {
+                                    var total = timeSeries.Where(v => v.Total.HasValue).Sum(v => v.Total!.Value);
+                                    resource.Metrics["Requests_7d_Total"] = total;
+                                }
+                                else if (metric.Name == "Duration")
+                                {
+                                    var avg = timeSeries
+                                        .Where(v => v.Average.HasValue)
+                                        .Select(v => v.Average!.Value)
+                                        .DefaultIfEmpty(0)
+                                        .Average();
+                                    resource.Metrics["Duration_Avg_ms"] = avg;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            SentrySdk.CaptureException(ex);
+                            Console.WriteLine($"Could not fetch metrics for API Management {apim.Data.Name}: {ex.Message}");
+                        }
+
+                        AddResource(resource);
+                    }
+
+                    foreach (var pgFilter in new[]
+                             {
+                                 "resourceType eq 'Microsoft.DBforPostgreSQL/flexibleServers'",
+                                 "resourceType eq 'Microsoft.DBforPostgreSQL/servers'"
+                             })
+                    {
+                        var isFlexible = pgFilter.Contains("flexibleServers", StringComparison.Ordinal);
+                        await foreach (var pg in rg.GetGenericResourcesAsync(filter: pgFilter))
+                        {
+                            var resource = new ResourceInfo
+                            {
+                                Type = "Azure Database for PostgreSQL",
+                                Name = pg.Data.Name,
+                                ResourceGroup = pg.Data.Id.ResourceGroupName ?? "Unknown",
+                                Location = pg.Data.Location.ToString()
+                            };
+                            DataCollectionResourceTags.ApplyMergedFromArm(resource, rg.Data.Tags, pg.Data.Tags);
+                            resource.Properties["DeploymentModel"] = isFlexible ? "Flexible server" : "Single server";
+
+                            if (pg.Data.Sku != null)
+                            {
+                                resource.Properties["Tier"] = pg.Data.Sku.Tier ?? "Unknown";
+                                resource.Properties["SKU"] = pg.Data.Sku.Name ?? "Unknown";
+                            }
+
+                            try
+                            {
+                                var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
+                                    pg.Id.ToString(),
+                                    new[] { "cpu_percent", "memory_percent", "storage_percent" },
+                                    metricOptionsAvgMax);
+
+                                foreach (var metric in metricsResponse.Value.Metrics)
+                                {
+                                    var timeSeries = metric.TimeSeries.SelectMany(ts => ts.Values).ToList();
+                                    var avg = timeSeries
+                                        .Where(v => v.Average.HasValue)
+                                        .Select(v => v.Average!.Value)
+                                        .DefaultIfEmpty(0)
+                                        .Average();
+                                    var max = timeSeries
+                                        .Where(v => v.Maximum.HasValue)
+                                        .Select(v => v.Maximum!.Value)
+                                        .DefaultIfEmpty(0)
+                                        .Max();
+                                    resource.Metrics[$"{metric.Name}_avg"] = avg;
+                                    resource.Metrics[$"{metric.Name}_max"] = max;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                SentrySdk.CaptureException(ex);
+                                Console.WriteLine($"Could not fetch metrics for PostgreSQL {pg.Data.Name}: {ex.Message}");
+                            }
+
+                            AddResource(resource);
+                        }
+                    }
+
+                    await foreach (var vnet in rg.GetGenericResourcesAsync(
+                                       filter: "resourceType eq 'Microsoft.Network/virtualNetworks'"))
+                    {
+                        var resource = new ResourceInfo
+                        {
+                            Type = "Virtual Network",
+                            Name = vnet.Data.Name,
+                            ResourceGroup = vnet.Data.Id.ResourceGroupName ?? "Unknown",
+                            Location = vnet.Data.Location.ToString()
+                        };
+                        DataCollectionResourceTags.ApplyMergedFromArm(resource, rg.Data.Tags, vnet.Data.Tags);
+
+                        if (vnet.Data.Properties != null)
+                        {
+                            var props = JsonSerializer.Deserialize<JsonElement>(vnet.Data.Properties.ToString());
+                            if (props.TryGetProperty("subnets", out var subnets) &&
+                                subnets.ValueKind == JsonValueKind.Array)
+                            {
+                                resource.Properties["SubnetCount"] = subnets.GetArrayLength().ToString();
+                            }
+                        }
+
+                        AddResource(resource);
+                    }
+                }
+
+                await foreach (var pricing in subscription.GetGenericResourcesAsync(
+                                   filter: "resourceType eq 'Microsoft.Security/pricings'"))
+                {
+                    var resource = new ResourceInfo
+                    {
+                        Type = "Microsoft Defender for Cloud",
+                        Name = pricing.Data.Name,
+                        ResourceGroup = SubscriptionScopeResourceGroupPlaceholder,
+                        Location = pricing.Data.Location.ToString()
+                    };
+                    DataCollectionResourceTags.ApplyMergedFromArm(resource, resourceGroupTags: null, pricing.Data.Tags);
+                    resource.Properties["ARMResourceType"] = "Microsoft.Security/pricings";
+
+                    if (pricing.Data.Properties != null)
+                    {
+                        var props = JsonSerializer.Deserialize<JsonElement>(pricing.Data.Properties.ToString());
+                        if (props.TryGetProperty("pricingTier", out var tier))
+                        {
+                            resource.Properties["PricingTier"] = tier.GetString() ?? "Unknown";
+                        }
+
+                        if (props.TryGetProperty("subPlan", out var subPlan))
+                        {
+                            resource.Properties["SubPlan"] = subPlan.GetString() ?? "";
+                        }
+                    }
+
+                    AddResource(resource);
+                }
+            }
+            catch (Exception ex)
+            {
+                SentrySdk.CaptureException(ex);
+                Console.WriteLine($"Error collecting API Management / PostgreSQL / VNet / Defender resources: {ex.Message}");
             }
         }
     }

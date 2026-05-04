@@ -65,6 +65,42 @@ public class CostDetailsControllerTests
     }
 
     [Fact]
+    public async Task GetCostDetailsByAnalysisRun_MatchesTagsWhenResourceGroupCasingDiffers()
+    {
+        await using var db = FinOpsDbContextFactory.Create();
+        var runId = await SeedAnalysisRunAsync(db);
+        db.CostDetails.Add(new CostDetail
+        {
+            AnalysisRunId = runId,
+            CostType = "Service",
+            Name = "Storage",
+            ResourceGroup = "RG-PROD",
+            Cost = 100,
+            RecordedAt = DateTime.UtcNow
+        });
+        db.ResourceAnalysis.Add(new ResourceAnalysis
+        {
+            AnalysisRunId = runId,
+            ResourceType = "Storage Account",
+            ResourceName = "sa1",
+            ResourceGroup = "rg-prod",
+            Location = "eastus",
+            TagsJson = """{"GAR_ID":"gar-1"}""",
+            RecordedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var controller = new CostDetailsController(db, NullLogger<CostDetailsController>.Instance);
+        var result = await controller.GetCostDetailsByAnalysisRun(runId);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var list = Assert.IsAssignableFrom<IEnumerable<CostDetail>>(ok.Value)!.ToList();
+        var row = Assert.Single(list);
+        Assert.NotNull(row.Tags);
+        Assert.Equal("gar-1", row.Tags["GAR_ID"]);
+    }
+
+    [Fact]
     public async Task GetCostDetailsByAnalysisRun_OrdersByCostDescending()
     {
         await using var db = FinOpsDbContextFactory.Create();

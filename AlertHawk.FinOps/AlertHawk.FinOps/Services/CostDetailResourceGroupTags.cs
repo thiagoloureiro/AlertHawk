@@ -117,7 +117,7 @@ namespace FinOpsToolSample.Services
                 .ToListAsync(cancellationToken);
 
             return MergeByAnalysisRunAndResourceGroup(
-                rows.Select(r => (r.AnalysisRunId, r.ResourceGroup, r.TagsJson)));
+                rows.Select(r => (r.AnalysisRunId, r.ResourceGroup.ToUpperInvariant(), r.TagsJson)));
         }
 
         internal static Dictionary<string, string>? MergeTagDictionaries(IReadOnlyList<Dictionary<string, string>> dicts)

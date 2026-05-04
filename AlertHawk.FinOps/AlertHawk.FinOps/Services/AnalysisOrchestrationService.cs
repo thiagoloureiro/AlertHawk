@@ -218,6 +218,7 @@ namespace FinOpsToolSample.Services
                 await dataCollector.CollectKubernetesClusters(subscription);
                 await dataCollector.CollectContainerRegistries(subscription, credential);
                 await dataCollector.CollectRedisCaches(subscription, credential);
+                await dataCollector.CollectApiManagementPostgreSqlVirtualNetworksAndDefender(subscription, credential);
 
                 var collectedData = dataCollector.GetCollectedData();
 

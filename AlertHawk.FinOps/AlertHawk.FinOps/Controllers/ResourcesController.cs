@@ -93,8 +93,9 @@ namespace FinOpsToolSample.Controllers
         {
             try
             {
+                var rgKey = resourceGroup.ToUpperInvariant();
                 var resources = await _context.ResourceAnalysis
-                    .Where(r => r.AnalysisRunId == analysisRunId && r.ResourceGroup == resourceGroup)
+                    .Where(r => r.AnalysisRunId == analysisRunId && r.ResourceGroup.ToUpper() == rgKey)
                     .OrderBy(r => r.ResourceType)
                     .ThenBy(r => r.ResourceName)
                     .ToListAsync();
