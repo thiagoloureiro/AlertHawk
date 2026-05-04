@@ -28,6 +28,46 @@ public class HistoricalCostsControllerTests
     }
 
     [Fact]
+    public async Task GetHistoricalCostsByAnalysisRun_IncludesTagsWhenResourceGroupMatchesResourceAnalysis()
+    {
+        await using var db = FinOpsDbContextFactory.Create();
+        var runId = await SeedRunAsync(db);
+        var day = new DateTime(2025, 2, 1, 0, 0, 0, DateTimeKind.Utc);
+        db.HistoricalCosts.Add(new HistoricalCost
+        {
+            AnalysisRunId = runId,
+            SubscriptionId = "sub-x",
+            CostDate = day,
+            CostType = "Service",
+            ResourceGroup = "rg-prod",
+            Name = "Storage",
+            Cost = 50,
+            RecordedAt = DateTime.UtcNow
+        });
+        db.ResourceAnalysis.Add(new ResourceAnalysis
+        {
+            AnalysisRunId = runId,
+            ResourceType = "Storage Account",
+            ResourceName = "sa1",
+            ResourceGroup = "rg-prod",
+            Location = "eastus",
+            TagsJson = """{"GAR_ID":"g-1","COST_CENTER":"cc"}""",
+            RecordedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var controller = new HistoricalCostsController(db, NullLogger<HistoricalCostsController>.Instance);
+        var result = await controller.GetHistoricalCostsByAnalysisRun(runId);
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var list = Assert.IsAssignableFrom<IEnumerable<HistoricalCost>>(ok.Value)!.ToList();
+        var row = Assert.Single(list);
+        Assert.NotNull(row.Tags);
+        Assert.Equal("g-1", row.Tags["GAR_ID"]);
+        Assert.Equal("cc", row.Tags["COST_CENTER"]);
+    }
+
+    [Fact]
     public async Task GetHistoricalCostsByAnalysisRun_OrdersByCostDate()
     {
         await using var db = FinOpsDbContextFactory.Create();

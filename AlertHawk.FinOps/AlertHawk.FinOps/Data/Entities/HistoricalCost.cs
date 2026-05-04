@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -37,6 +38,12 @@ namespace FinOpsToolSample.Data.Entities
         public string Currency { get; set; } = "USD";
 
         public DateTime RecordedAt { get; set; }
+
+        /// <summary>
+        /// Populated for API responses from <see cref="FinOpsToolSample.Data.Entities.ResourceAnalysis"/> for the same analysis run and resource group (not stored in HistoricalCosts table).
+        /// </summary>
+        [NotMapped]
+        public Dictionary<string, string>? Tags { get; set; }
 
         // Navigation property
         [ForeignKey("AnalysisRunId")]

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -28,6 +29,12 @@ namespace FinOpsToolSample.Data.Entities
         public decimal Cost { get; set; }
 
         public DateTime RecordedAt { get; set; }
+
+        /// <summary>
+        /// Populated for API responses from <see cref="FinOpsToolSample.Data.Entities.ResourceAnalysis"/> in the same analysis run and resource group (not stored in CostDetails table).
+        /// </summary>
+        [NotMapped]
+        public Dictionary<string, string>? Tags { get; set; }
 
         // Navigation property
         [ForeignKey("AnalysisRunId")]

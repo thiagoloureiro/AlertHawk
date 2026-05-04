@@ -1,5 +1,6 @@
 using FinOpsToolSample.Data;
 using FinOpsToolSample.Data.Entities;
+using FinOpsToolSample.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,8 @@ namespace FinOpsToolSample.Controllers
                     .OrderByDescending(c => c.Cost)
                     .ToListAsync();
 
+                await AttachTagsFromResourceAnalysisAsync(analysisRunId, costDetails);
+
                 return Ok(costDetails);
             }
             catch (Exception ex)
@@ -59,6 +62,8 @@ namespace FinOpsToolSample.Controllers
                     .Where(c => c.AnalysisRunId == analysisRunId && c.CostType == costType)
                     .OrderByDescending(c => c.Cost)
                     .ToListAsync();
+
+                await AttachTagsFromResourceAnalysisAsync(analysisRunId, costDetails);
 
                 return Ok(costDetails);
             }
@@ -85,6 +90,8 @@ namespace FinOpsToolSample.Controllers
                     .OrderByDescending(c => c.Cost)
                     .Take(count)
                     .ToListAsync();
+
+                await AttachTagsFromResourceAnalysisAsync(analysisRunId, costDetails);
 
                 return Ok(costDetails);
             }
@@ -153,6 +160,32 @@ namespace FinOpsToolSample.Controllers
                 SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error retrieving cost summary by service");
                 return StatusCode(500, "Internal server error");
+            }
+        }
+
+        private async Task AttachTagsFromResourceAnalysisAsync(int analysisRunId, List<CostDetail> costDetails)
+        {
+            if (costDetails.Count == 0)
+            {
+                return;
+            }
+
+            var map = await CostDetailResourceGroupTags.LoadMergedTagsByAnalysisRunsAsync(
+                _context,
+                [analysisRunId],
+                HttpContext?.RequestAborted ?? default);
+
+            foreach (var c in costDetails)
+            {
+                if (string.IsNullOrEmpty(c.ResourceGroup))
+                {
+                    continue;
+                }
+
+                if (map.TryGetValue((c.AnalysisRunId, c.ResourceGroup), out var tags))
+                {
+                    c.Tags = tags;
+                }
             }
         }
     }

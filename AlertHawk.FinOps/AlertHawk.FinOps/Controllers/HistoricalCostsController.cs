@@ -1,5 +1,6 @@
 using FinOpsToolSample.Data;
 using FinOpsToolSample.Data.Entities;
+using FinOpsToolSample.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,8 @@ namespace FinOpsToolSample.Controllers
                     .Where(h => h.AnalysisRunId == analysisRunId)
                     .OrderBy(h => h.CostDate)
                     .ToListAsync();
+
+                await AttachHistoricalCostTagsAsync(costs);
 
                 return Ok(costs);
             }
@@ -72,6 +75,8 @@ namespace FinOpsToolSample.Controllers
                 var costs = await query
                     .OrderBy(h => h.CostDate)
                     .ToListAsync();
+
+                await AttachHistoricalCostTagsAsync(costs);
 
                 return Ok(costs);
             }
@@ -243,6 +248,42 @@ namespace FinOpsToolSample.Controllers
                 SentrySdk.CaptureException(ex);
                 _logger.LogError(ex, "Error calculating cost trend");
                 return StatusCode(500, "Internal server error");
+            }
+        }
+
+        private async Task AttachHistoricalCostTagsAsync(List<HistoricalCost> costs)
+        {
+            if (costs.Count == 0)
+            {
+                return;
+            }
+
+            var runIds = costs
+                .Where(c => !string.IsNullOrEmpty(c.ResourceGroup))
+                .Select(c => c.AnalysisRunId)
+                .Distinct()
+                .ToList();
+            if (runIds.Count == 0)
+            {
+                return;
+            }
+
+            var map = await CostDetailResourceGroupTags.LoadMergedTagsByAnalysisRunsAsync(
+                _context,
+                runIds,
+                HttpContext?.RequestAborted ?? default);
+
+            foreach (var c in costs)
+            {
+                if (string.IsNullOrEmpty(c.ResourceGroup))
+                {
+                    continue;
+                }
+
+                if (map.TryGetValue((c.AnalysisRunId, c.ResourceGroup), out var tags))
+                {
+                    c.Tags = tags;
+                }
             }
         }
     }
