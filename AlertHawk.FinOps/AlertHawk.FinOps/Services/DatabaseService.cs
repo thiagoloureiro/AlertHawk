@@ -195,12 +195,13 @@ namespace FinOpsToolSample.Services
             // Save costs by resource group
             foreach (var kvp in data.CostsByResourceGroup)
             {
+                var rg = kvp.Key.ToUpperInvariant();
                 costDetails.Add(new CostDetail
                 {
                     AnalysisRunId = analysisRunId,
                     CostType = "ResourceGroup",
-                    Name = kvp.Key,
-                    ResourceGroup = kvp.Key,
+                    Name = rg,
+                    ResourceGroup = rg,
                     Cost = kvp.Value,
                     RecordedAt = DateTime.UtcNow
                 });
@@ -223,7 +224,7 @@ namespace FinOpsToolSample.Services
                     AnalysisRunId = analysisRunId,
                     CostType = "Service",
                     Name = serviceDetail.ServiceName,
-                    ResourceGroup = serviceDetail.ResourceGroup,
+                    ResourceGroup = serviceDetail.ResourceGroup.ToUpperInvariant(),
                     Cost = serviceDetail.TotalCost,
                     RecordedAt = DateTime.UtcNow
                 });
@@ -244,7 +245,7 @@ namespace FinOpsToolSample.Services
                     AnalysisRunId = analysisRunId,
                     ResourceType = resource.Type,
                     ResourceName = resource.Name,
-                    ResourceGroup = resource.ResourceGroup,
+                    ResourceGroup = resource.ResourceGroup.ToUpperInvariant(),
                     Location = resource.Location,
                     PropertiesJson = JsonSerializer.Serialize(resource.Properties),
                     TagsJson = resource.Tags.Count > 0 ? JsonSerializer.Serialize(resource.Tags) : null,
