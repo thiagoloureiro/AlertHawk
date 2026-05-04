@@ -247,6 +247,7 @@ namespace FinOpsToolSample.Services
                     ResourceGroup = resource.ResourceGroup,
                     Location = resource.Location,
                     PropertiesJson = JsonSerializer.Serialize(resource.Properties),
+                    TagsJson = resource.Tags.Count > 0 ? JsonSerializer.Serialize(resource.Tags) : null,
                     MetricsJson = JsonSerializer.Serialize(resource.Metrics),
                     Flags = string.Join("; ", resource.Flags),
                     RecordedAt = DateTime.UtcNow

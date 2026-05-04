@@ -30,6 +30,9 @@ namespace FinOpsToolSample.Data.Entities
 
         public string? PropertiesJson { get; set; }
 
+        /// <summary>ARM tags (e.g. GAR_ID, COST_CENTER) merged from resource group and resource, JSON object.</summary>
+        public string? TagsJson { get; set; }
+
         public string? MetricsJson { get; set; }
 
         public string? Flags { get; set; }

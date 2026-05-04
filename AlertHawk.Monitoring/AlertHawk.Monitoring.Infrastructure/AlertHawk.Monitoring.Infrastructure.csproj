@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Azure.Identity" Version="1.19.0" />
+        <PackageReference Include="Azure.Identity" Version="1.21.0" />
         <PackageReference Include="Azure.Storage.Blobs" Version="12.27.0" />
         <PackageReference Include="ClosedXML" Version="0.105.0" />
         <PackageReference Include="Dapper" Version="2.1.72" />
@@ -14,7 +14,7 @@
         <PackageReference Include="Hangfire.Core" Version="1.8.23" />
         <PackageReference Include="KubernetesClient" Version="19.0.2" />
         <PackageReference Include="MassTransit.Abstractions" Version="8.5.8" />
-        <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.0" />
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.1" />
         <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.5" />
         <PackageReference Include="Polly" Version="8.6.6" />
         <PackageReference Include="Sentry" Version="6.2.0" />

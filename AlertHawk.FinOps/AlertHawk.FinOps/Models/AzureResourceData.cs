@@ -25,6 +25,8 @@ namespace FinOpsToolSample.Models
         public string Name { get; set; } = string.Empty;
         public string ResourceGroup { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
+        /// <summary>ARM tags merged from resource group then resource (resource overrides on key clash).</summary>
+        public Dictionary<string, string> Tags { get; set; } = new();
         public Dictionary<string, object> Properties { get; set; } = new();
         public Dictionary<string, double> Metrics { get; set; } = new();
         public List<string> Flags { get; set; } = new();

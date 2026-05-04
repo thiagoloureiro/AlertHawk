@@ -59,6 +59,7 @@ namespace FinOpsToolSample.Services
                             ResourceGroup = plan.Data.Id.ResourceGroupName ?? "Unknown",
                             Location = plan.Data.Location.ToString()
                         };
+                        DataCollectionResourceTags.ApplyMergedFromArm(planResource, rg.Data.Tags, plan.Data.Tags);
 
                         if (plan.Data.Sku != null)
                         {
@@ -86,6 +87,7 @@ namespace FinOpsToolSample.Services
                             ResourceGroup = app.Data.Id.ResourceGroupName ?? "Unknown",
                             Location = app.Data.Location.ToString()
                         };
+                        DataCollectionResourceTags.ApplyMergedFromArm(appResource, rg.Data.Tags, app.Data.Tags);
 
                         if (app.Data.Properties != null)
                         {
@@ -171,6 +173,7 @@ namespace FinOpsToolSample.Services
                             ResourceGroup = db.Data.Id.ResourceGroupName ?? "Unknown",
                             Location = db.Data.Location.ToString()
                         };
+                        DataCollectionResourceTags.ApplyMergedFromArm(resource, rg.Data.Tags, db.Data.Tags);
 
                         if (db.Data.Sku != null)
                         {
@@ -356,6 +359,7 @@ namespace FinOpsToolSample.Services
                             ResourceGroup = ws.Data.Id.ResourceGroupName ?? "Unknown",
                             Location = ws.Data.Location.ToString()
                         };
+                        DataCollectionResourceTags.ApplyMergedFromArm(resource, rg.Data.Tags, ws.Data.Tags);
 
                         if (ws.Data.Sku != null)
                         {
@@ -424,6 +428,7 @@ namespace FinOpsToolSample.Services
                             ResourceGroup = pool.Data.Id.ResourceGroupName ?? "Unknown",
                             Location = pool.Data.Location.ToString()
                         };
+                        DataCollectionResourceTags.ApplyMergedFromArm(resource, rg.Data.Tags, pool.Data.Tags);
 
                         if (pool.Data.Sku != null)
                         {
@@ -525,6 +530,7 @@ namespace FinOpsToolSample.Services
                             ResourceGroup = vm.Data.Id.ResourceGroupName ?? "Unknown",
                             Location = vm.Data.Location.ToString()
                         };
+                        DataCollectionResourceTags.ApplyMergedFromArm(resource, rg.Data.Tags, vm.Data.Tags);
 
                         if (vm.Data.Properties != null)
                         {
@@ -638,6 +644,7 @@ namespace FinOpsToolSample.Services
                             ResourceGroup = storage.Data.Id.ResourceGroupName ?? "Unknown",
                             Location = storage.Data.Location.ToString()
                         };
+                        DataCollectionResourceTags.ApplyMergedFromArm(resource, rg.Data.Tags, storage.Data.Tags);
 
                         if (storage.Data.Sku != null)
                         {
@@ -691,6 +698,7 @@ namespace FinOpsToolSample.Services
                                         ResourceGroup = disk.Data.Id.ResourceGroupName ?? "Unknown",
                                         Location = disk.Data.Location.ToString()
                                     };
+                                    DataCollectionResourceTags.ApplyMergedFromArm(resource, rg.Data.Tags, disk.Data.Tags);
 
                                     if (disk.Data.Sku != null)
                                     {
@@ -747,6 +755,7 @@ namespace FinOpsToolSample.Services
                                     ResourceGroup = ip.Data.Id.ResourceGroupName ?? "Unknown",
                                     Location = ip.Data.Location.ToString()
                                 };
+                                DataCollectionResourceTags.ApplyMergedFromArm(resource, rg.Data.Tags, ip.Data.Tags);
 
                                 if (ip.Data.Sku != null)
                                 {
@@ -799,6 +808,7 @@ namespace FinOpsToolSample.Services
                             ResourceGroup = cluster.Data.Id.ResourceGroupName ?? "Unknown",
                             Location = cluster.Data.Location.ToString()
                         };
+                        DataCollectionResourceTags.ApplyMergedFromArm(resource, rg.Data.Tags, cluster.Data.Tags);
 
                         if (cluster.Data.Properties != null)
                         {
@@ -900,6 +910,7 @@ namespace FinOpsToolSample.Services
                             ResourceGroup = registry.Data.Id.ResourceGroupName ?? "Unknown",
                             Location = registry.Data.Location.ToString()
                         };
+                        DataCollectionResourceTags.ApplyMergedFromArm(resource, rg.Data.Tags, registry.Data.Tags);
 
                         if (registry.Data.Sku != null)
                         {
@@ -1042,6 +1053,7 @@ namespace FinOpsToolSample.Services
                             ResourceGroup = cache.Data.Id.ResourceGroupName ?? "Unknown",
                             Location = cache.Data.Location.ToString()
                         };
+                        DataCollectionResourceTags.ApplyMergedFromArm(resource, rg.Data.Tags, cache.Data.Tags);
 
                         if (cache.Data.Sku != null)
                         {
