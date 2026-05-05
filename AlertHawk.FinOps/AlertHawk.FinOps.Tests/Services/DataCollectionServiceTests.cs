@@ -1,15 +1,21 @@
 using System.Text.Json;
+using Azure.Core;
+using Azure.Monitor.Query;
 using FinOpsToolSample.Models;
 using FinOpsToolSample.Services;
+using Moq;
 
 namespace AlertHawk.FinOps.Tests.Services;
 
 public class DataCollectionServiceTests
 {
+    private static DataCollectionService CreateService() =>
+        new(new MetricsQueryClient(Mock.Of<TokenCredential>()));
+
     [Fact]
     public void SetSubscriptionInfo_UpdatesCollectedData()
     {
-        var svc = new DataCollectionService();
+        var svc = CreateService();
 
         svc.SetSubscriptionInfo("MySub", "sub-id-1");
 
@@ -21,7 +27,7 @@ public class DataCollectionServiceTests
     [Fact]
     public void SetCostData_UpdatesTotalsAndBreakdowns()
     {
-        var svc = new DataCollectionService();
+        var svc = CreateService();
         var byRg = new Dictionary<string, decimal> { ["rg-a"] = 100 };
         var byService = new List<ServiceCostDetail>
         {
@@ -41,7 +47,7 @@ public class DataCollectionServiceTests
     [Fact]
     public void AddResource_AppendsToResourcesList()
     {
-        var svc = new DataCollectionService();
+        var svc = CreateService();
         var r = new ResourceInfo { Type = "VM", Name = "vm1", ResourceGroup = "rg", Location = "eastus" };
 
         svc.AddResource(r);
