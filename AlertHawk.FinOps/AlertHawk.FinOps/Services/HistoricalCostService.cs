@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace FinOpsToolSample.Services
@@ -83,6 +84,8 @@ namespace FinOpsToolSample.Services
 
                 do
                 {
+                    // ARM rate limits are shared; spacing pages reduces 429s vs back-to-back POSTs.
+                    await PaceBeforeCostQueryPageAsync(pageCount == 0, CancellationToken.None);
                     pageCount++;
                     var requestUrl = string.IsNullOrEmpty(skipToken) 
                         ? url 
@@ -133,6 +136,14 @@ namespace FinOpsToolSample.Services
                 Console.WriteLine($"❌ Error fetching historical costs: {ex.Message}");
                 return new List<HistoricalCostData>();
             }
+        }
+
+        private static Task PaceBeforeCostQueryPageAsync(bool isFirstPage, CancellationToken cancellationToken)
+        {
+            var ms = isFirstPage
+                ? 300 + Random.Shared.Next(0, 400)
+                : 450 + Random.Shared.Next(0, 550);
+            return Task.Delay(TimeSpan.FromMilliseconds(ms), cancellationToken);
         }
     }
 
