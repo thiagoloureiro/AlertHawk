@@ -1,4 +1,3 @@
-using Azure.Identity;
 using Azure.Monitor.Query;
 using Azure.Monitor.Query.Models;
 using Azure.ResourceManager.Resources;
@@ -10,11 +9,11 @@ namespace FinOpsToolSample.Services
 {
     public class SqlDatabaseAnalysisService : IResourceAnalysisService
     {
-        private readonly ClientSecretCredential _credential;
+        private readonly MetricsQueryClient _metricsClient;
 
-        public SqlDatabaseAnalysisService(ClientSecretCredential credential)
+        public SqlDatabaseAnalysisService(MetricsQueryClient metricsClient)
         {
-            _credential = credential;
+            _metricsClient = metricsClient;
         }
 
         public async Task AnalyzeAsync(SubscriptionResource subscription)
@@ -23,7 +22,6 @@ namespace FinOpsToolSample.Services
 
             try
             {
-                var metricsClient = new MetricsQueryClient(_credential);
                 var synapseExclusions = await SynapseSqlExclusions.DiscoverAsync(subscription);
                 var resourceGroups = subscription.GetResourceGroups();
 
@@ -135,7 +133,7 @@ namespace FinOpsToolSample.Services
                             var hasVCoreStorageUsed = false;
                             var hasVCoreAllocated = false;
 
-                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
+                            var metricsResponse = await _metricsClient.QueryResourceWithRetryAsync(
                                 db.Id.ToString(),
                                 metricsToQuery,
                                 new MetricsQueryOptions

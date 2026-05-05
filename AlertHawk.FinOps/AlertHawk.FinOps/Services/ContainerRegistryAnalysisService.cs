@@ -1,4 +1,3 @@
-using Azure.Identity;
 using Azure.Monitor.Query;
 using Azure.Monitor.Query.Models;
 using Azure.ResourceManager.Resources;
@@ -11,11 +10,11 @@ namespace FinOpsToolSample.Services
 {
     public class ContainerRegistryAnalysisService : IResourceAnalysisService
     {
-        private readonly ClientSecretCredential _credential;
+        private readonly MetricsQueryClient _metricsClient;
 
-        public ContainerRegistryAnalysisService(ClientSecretCredential credential)
+        public ContainerRegistryAnalysisService(MetricsQueryClient metricsClient)
         {
-            _credential = credential;
+            _metricsClient = metricsClient;
         }
 
         public async Task AnalyzeAsync(SubscriptionResource subscription)
@@ -24,7 +23,6 @@ namespace FinOpsToolSample.Services
 
             try
             {
-                var metricsClient = new MetricsQueryClient(_credential);
                 var resourceGroups = subscription.GetResourceGroups();
 
                 await foreach (var rg in resourceGroups)
@@ -72,7 +70,7 @@ namespace FinOpsToolSample.Services
                         {
                             Console.WriteLine($"  📈 Metrics (Last 7 Days):");
 
-                            var metricsResponse = await metricsClient.QueryResourceWithRetryAsync(
+                            var metricsResponse = await _metricsClient.QueryResourceWithRetryAsync(
                                 registry.Id.ToString(),
                                 new[]
                                 {
