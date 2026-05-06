@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using AlertHawk.Metrics;
 using k8s;
+using k8s.Models;
 using Serilog;
 
 namespace AlertHawk.Metrics.Collectors;
@@ -51,6 +52,15 @@ public static class PodMetricsCollector
                 Log.Error(ex, "Error fetching cluster pod metrics from metrics API");
             }
 
+            ILookup<string, PodMetricsItem>? metricsByNamespace = null;
+            if (podMetricsList?.Items is { Length: > 0 } metricItems)
+            {
+                metricsByNamespace = metricItems.ToLookup(i => i.Metadata.Namespace);
+            }
+
+            var apiWriteParallelism = GetPositiveIntFromEnv("POD_METRICS_API_WRITE_PARALLELISM", defaultValue: 48);
+            using var apiWriteGate = new SemaphoreSlim(apiWriteParallelism, apiWriteParallelism);
+
             var parallelism = GetPositiveIntFromEnv("POD_METRICS_NAMESPACE_PARALLELISM", defaultValue: 8);
             var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = parallelism };
 
@@ -62,7 +72,8 @@ public static class PodMetricsCollector
                         clientWrapper,
                         apiClient,
                         ns,
-                        podMetricsList,
+                        metricsByNamespace,
+                        apiWriteGate,
                         isLogCollectionEnabled);
                 }
                 catch (Exception ex)
@@ -85,9 +96,23 @@ public static class PodMetricsCollector
         IKubernetesClientWrapper clientWrapper,
         IMetricsApiClient apiClient,
         string ns,
-        PodMetricsList? podMetricsList,
+        ILookup<string, PodMetricsItem>? metricsByNamespace,
+        SemaphoreSlim apiWriteGate,
         bool isLogCollectionEnabled)
     {
+        async Task GatedWriteAsync(Func<Task> send)
+        {
+            await apiWriteGate.WaitAsync();
+            try
+            {
+                await send();
+            }
+            finally
+            {
+                apiWriteGate.Release();
+            }
+        }
+
         var pods = await clientWrapper.ListNamespacedPodAsync(ns);
 
         var podCpuLimits = new Dictionary<string, Dictionary<string, string>>();
@@ -164,42 +189,41 @@ public static class PodMetricsCollector
         }
 
         var podsWithMetrics = new HashSet<string>();
-        if (podMetricsList != null)
+        var metricWriteTasks = new List<Task>();
+        var metricsForNs = metricsByNamespace?[ns];
+        if (metricsForNs != null)
         {
-            Log.Debug("Found {Count} pod metrics", podMetricsList.Items.Length);
-            foreach (var item in podMetricsList.Items)
+            foreach (var item in metricsForNs)
             {
-                if (item.Metadata.Namespace != ns)
-                    continue;
-
                 podsWithMetrics.Add(item.Metadata.Name);
                 Log.Debug("Pod: {Namespace}/{PodName} - Timestamp: {Timestamp}",
                     item.Metadata.Namespace, item.Metadata.Name, item.Timestamp);
                 foreach (var container in item.Containers)
                 {
-                    var cpuLimit = podCpuLimits.TryGetValue(item.Metadata.Name, out var containerCpuLimits) &&
+                    var podName = item.Metadata.Name;
+                    var cpuLimit = podCpuLimits.TryGetValue(podName, out var containerCpuLimits) &&
                                  containerCpuLimits.TryGetValue(container.Name, out var cpuLimitStr)
                         ? cpuLimitStr
                         : null;
 
-                    var memoryLimit = podMemoryLimits.TryGetValue(item.Metadata.Name, out var containerMemLimits) &&
+                    var memoryLimit = podMemoryLimits.TryGetValue(podName, out var containerMemLimits) &&
                                       containerMemLimits.TryGetValue(container.Name, out var memoryLimitStr)
                         ? memoryLimitStr
                         : null;
 
-                    var nodeName = podNodeNames.TryGetValue(item.Metadata.Name, out var node)
+                    var nodeName = podNodeNames.TryGetValue(podName, out var node)
                         ? node
                         : null;
 
-                    var podState = podStates.TryGetValue(item.Metadata.Name, out var state)
+                    var podState = podStates.TryGetValue(podName, out var state)
                         ? state
                         : null;
 
-                    var restartCount = podRestarts.TryGetValue(item.Metadata.Name, out var restarts)
+                    var restartCount = podRestarts.TryGetValue(podName, out var restarts)
                         ? restarts
                         : 0;
 
-                    var podAge = podAges.TryGetValue(item.Metadata.Name, out var age)
+                    var podAge = podAges.TryGetValue(podName, out var age)
                         ? age
                         : (long?)null;
 
@@ -218,35 +242,49 @@ public static class PodMetricsCollector
                         memoryLimitBytes = Utils.MemoryParser.ParseToBytes(memoryLimit);
                     }
 
-                    try
+                    var itemNs = item.Metadata.Namespace;
+                    var itemPod = item.Metadata.Name;
+                    var containerName = container.Name;
+                    var cpuU = container.Usage.Cpu;
+                    var memU = container.Usage.Memory;
+                    metricWriteTasks.Add(GatedWriteAsync(async () =>
                     {
-                        await apiClient.WritePodMetricAsync(
-                            item.Metadata.Namespace,
-                            item.Metadata.Name,
-                            container.Name,
-                            cpuCores,
-                            cpuLimitCores,
-                            memoryBytes,
-                            memoryLimitBytes,
-                            nodeName,
-                            podState,
-                            restartCount,
-                            podAge);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error(ex, "Error sending pod metric to API for {Namespace}/{PodName}/{Container}",
-                            item.Metadata.Namespace, item.Metadata.Name, container.Name);
-                    }
+                        try
+                        {
+                            await apiClient.WritePodMetricAsync(
+                                itemNs,
+                                itemPod,
+                                containerName,
+                                cpuCores,
+                                cpuLimitCores,
+                                memoryBytes,
+                                memoryLimitBytes,
+                                nodeName,
+                                podState,
+                                restartCount,
+                                podAge);
 
-                    var formattedCpu = ResourceFormatter.FormatCpu(container.Usage.Cpu, cpuLimit);
-                    var formattedMemory = ResourceFormatter.FormatMemory(container.Usage.Memory);
-                    Log.Debug("Container: {Container} - CPU: {Cpu}, Memory: {Memory}",
-                        container.Name, formattedCpu, formattedMemory);
+                            var formattedCpu = ResourceFormatter.FormatCpu(cpuU, cpuLimit);
+                            var formattedMemory = ResourceFormatter.FormatMemory(memU);
+                            Log.Debug("Container: {Container} - CPU: {Cpu}, Memory: {Memory}",
+                                containerName, formattedCpu, formattedMemory);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error(ex, "Error sending pod metric to API for {Namespace}/{PodName}/{Container}",
+                                itemNs, itemPod, containerName);
+                        }
+                    }));
                 }
             }
         }
 
+        if (metricWriteTasks.Count > 0)
+        {
+            await Task.WhenAll(metricWriteTasks);
+        }
+
+        var zeroMetricWriteTasks = new List<Task>();
         foreach (var pod in pods.Items)
         {
             if (podsWithMetrics.Contains(pod.Metadata.Name))
@@ -294,77 +332,96 @@ public static class PodMetricsCollector
                         memoryLimitBytes = Utils.MemoryParser.ParseToBytes(memoryLimit);
                     }
 
-                    try
+                    var podNs = pod.Metadata.NamespaceProperty;
+                    var podName = pod.Metadata.Name;
+                    var containerName = container.Name;
+                    zeroMetricWriteTasks.Add(GatedWriteAsync(async () =>
                     {
-                        await apiClient.WritePodMetricAsync(
-                            pod.Metadata.NamespaceProperty,
-                            pod.Metadata.Name,
-                            container.Name,
-                            0.0,
-                            cpuLimitCores,
-                            0.0,
-                            memoryLimitBytes,
-                            nodeName,
-                            podState,
-                            restartCount,
-                            podAge);
+                        try
+                        {
+                            await apiClient.WritePodMetricAsync(
+                                podNs,
+                                podName,
+                                containerName,
+                                0.0,
+                                cpuLimitCores,
+                                0.0,
+                                memoryLimitBytes,
+                                nodeName,
+                                podState,
+                                restartCount,
+                                podAge);
 
-                        Log.Debug("Stored metrics for non-running pod {Namespace}/{PodName}/{Container} - Phase: {Phase}",
-                            pod.Metadata.NamespaceProperty, pod.Metadata.Name, container.Name, podState);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error(ex, "Error sending pod metric to API for {Namespace}/{PodName}/{Container}",
-                            pod.Metadata.NamespaceProperty, pod.Metadata.Name, container.Name);
-                    }
+                            Log.Debug("Stored metrics for non-running pod {Namespace}/{PodName}/{Container} - Phase: {Phase}",
+                                podNs, podName, containerName, podState);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error(ex, "Error sending pod metric to API for {Namespace}/{PodName}/{Container}",
+                                podNs, podName, containerName);
+                        }
+                    }));
                 }
             }
+        }
+
+        if (zeroMetricWriteTasks.Count > 0)
+        {
+            await Task.WhenAll(zeroMetricWriteTasks);
         }
 
         if (isLogCollectionEnabled)
         {
             var tailLines = Environment.GetEnvironmentVariable("LOG_TAIL_LINES") ?? "100";
-            foreach (var pod in pods.Items)
+            var tailLinesInt = Convert.ToInt32(tailLines);
+            var logTasks = new List<Task>();
+
+            async Task FetchAndStoreLogAsync(V1Pod podRef, V1Container containerRef)
             {
                 try
                 {
-                    if (pod.Spec?.Containers != null)
+                    var logContent = await clientWrapper.ReadNamespacedPodLogAsync(
+                        podRef.Metadata.Name,
+                        podRef.Metadata.NamespaceProperty,
+                        containerRef.Name,
+                        tailLines: tailLinesInt);
+
+                    if (string.IsNullOrWhiteSpace(logContent))
+                        return;
+
+                    await GatedWriteAsync(async () =>
                     {
-                        foreach (var container in pod.Spec.Containers)
-                        {
-                            try
-                            {
-                                var logContent = await clientWrapper.ReadNamespacedPodLogAsync(
-                                    pod.Metadata.Name,
-                                    pod.Metadata.NamespaceProperty,
-                                    container.Name,
-                                    tailLines: Convert.ToInt32(tailLines));
+                        await apiClient.WritePodLogAsync(
+                            podRef.Metadata.NamespaceProperty,
+                            podRef.Metadata.Name,
+                            containerRef.Name,
+                            logContent);
+                    });
 
-                                if (!string.IsNullOrWhiteSpace(logContent))
-                                {
-                                    await apiClient.WritePodLogAsync(
-                                        pod.Metadata.NamespaceProperty,
-                                        pod.Metadata.Name,
-                                        container.Name,
-                                        logContent);
-
-                                    Log.Debug("Stored logs for {Namespace}/{Pod}/{Container} ({LogLength} characters)",
-                                        pod.Metadata.NamespaceProperty, pod.Metadata.Name, container.Name, logContent.Length);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                Log.Warning(ex, "Error fetching logs for {Namespace}/{Pod}/{Container}",
-                                    pod.Metadata.NamespaceProperty, pod.Metadata.Name, container.Name);
-                            }
-                        }
-                    }
+                    Log.Debug("Stored logs for {Namespace}/{Pod}/{Container} ({LogLength} characters)",
+                        podRef.Metadata.NamespaceProperty, podRef.Metadata.Name, containerRef.Name, logContent.Length);
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning(ex, "Error processing logs for pod {Namespace}/{Pod}",
-                        pod.Metadata.NamespaceProperty, pod.Metadata.Name);
+                    Log.Warning(ex, "Error fetching logs for {Namespace}/{Pod}/{Container}",
+                        podRef.Metadata.NamespaceProperty, podRef.Metadata.Name, containerRef.Name);
                 }
+            }
+
+            foreach (var pod in pods.Items)
+            {
+                if (pod.Spec?.Containers == null)
+                    continue;
+
+                foreach (var container in pod.Spec.Containers)
+                {
+                    logTasks.Add(FetchAndStoreLogAsync(pod, container));
+                }
+            }
+
+            if (logTasks.Count > 0)
+            {
+                await Task.WhenAll(logTasks);
             }
         }
         else
