@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using AlertHawk.Metrics.Models;
 using k8s;
@@ -30,6 +31,7 @@ public static class PvcUsageCollector
 
     public static async Task CollectAsync(IKubernetesClientWrapper clientWrapper, KubernetesClientConfiguration? config = null, IMetricsApiClient? apiClient = null, string[]? namespacesToWatch = null)
     {
+        var sw = Stopwatch.StartNew();
         try
         {
             var watchSet = namespacesToWatch != null && namespacesToWatch.Length > 0
@@ -38,7 +40,6 @@ public static class PvcUsageCollector
 
             Log.Information("Collecting PVC/volume usage from nodes (namespaces: {Namespaces})...",
                 watchSet != null ? string.Join(", ", watchSet) : "all");
-            Console.WriteLine("Namespace\tPod\tPVC/Volume\tVolumeName\tUsedBytes\tAvailableBytes\tCapacityBytes");
 
             var nodes = await clientWrapper.ListNodeAsync();
             if (nodes?.Items == null || nodes.Items.Count == 0)
@@ -47,39 +48,38 @@ public static class PvcUsageCollector
                 return;
             }
 
-            foreach (var node in nodes.Items)
-            {
-                var nodeName = node.Metadata?.Name;
-                if (string.IsNullOrEmpty(nodeName))
-                    continue;
+            var nodeItems = nodes.Items.Where(n => !string.IsNullOrEmpty(n.Metadata?.Name)).ToList();
+            var parallelism = GetPositiveIntFromEnv("PVC_NODE_COLLECTION_PARALLELISM", defaultValue: 8);
+            var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = parallelism };
 
+            await Parallel.ForEachAsync(nodeItems, parallelOptions, async (node, cancellationToken) =>
+            {
+                var nodeName = node.Metadata!.Name!;
                 try
                 {
                     var json = config != null
-                        ? await NodeProxyHttpHelper.GetNodeStatsSummaryAsync(config, nodeName)
-                        : await clientWrapper.GetNodeStatsSummaryAsync(nodeName);
+                        ? await NodeProxyHttpHelper.GetNodeStatsSummaryAsync(config, nodeName, cancellationToken)
+                        : await clientWrapper.GetNodeStatsSummaryAsync(nodeName, cancellationToken);
                     if (string.IsNullOrWhiteSpace(json))
                     {
                         Log.Debug("Empty stats/summary for node {NodeName}", nodeName);
-                        continue;
+                        return;
                     }
 
                     var summary = JsonSerializer.Deserialize<StatsSummary>(json, JsonOptions);
                     if (summary?.Pods == null)
-                        continue;
+                        return;
 
                     foreach (var pod in summary.Pods)
                     {
                         var ns = pod.PodRef?.Namespace ?? "";
                         var podName = pod.PodRef?.Name ?? "";
 
-                        // Only report PVCs for pods in watched namespaces
                         if (watchSet != null && !watchSet.Contains(ns))
                             continue;
 
                         foreach (var vol in pod.Volume)
                         {
-                            // Only report volumes backed by a PersistentVolumeClaim (actual PVC usage)
                             if (vol.PvcRef == null)
                                 continue;
 
@@ -87,9 +87,6 @@ public static class PvcUsageCollector
                             var available = vol.AvailableBytes ?? 0;
                             var capacity = vol.CapacityBytes ?? 0;
                             var pvcRef = $"{vol.PvcRef.Namespace}/{vol.PvcRef.Name}";
-
-                            Console.WriteLine(
-                                $"{ns}\t{podName}\t{pvcRef}\t{vol.Name}\t{used}\t{available}\t{capacity}");
 
                             if (apiClient != null)
                             {
@@ -117,11 +114,21 @@ public static class PvcUsageCollector
                 {
                     Log.Warning(ex, "Failed to get stats/summary for node {NodeName}", nodeName);
                 }
-            }
+            });
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Error during PVC usage collection");
         }
+        finally
+        {
+            Log.Information("PVC/volume usage collection finished in {ElapsedSeconds:F3} s", sw.Elapsed.TotalSeconds);
+        }
+    }
+
+    private static int GetPositiveIntFromEnv(string name, int defaultValue)
+    {
+        var raw = Environment.GetEnvironmentVariable(name);
+        return int.TryParse(raw, out var n) && n > 0 ? n : defaultValue;
     }
 }

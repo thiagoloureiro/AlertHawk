@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using AlertHawk.Metrics;
 using k8s;
@@ -23,6 +24,7 @@ public static class NodeMetricsCollector
             PropertyNameCaseInsensitive = true
         };
 
+        var sw = Stopwatch.StartNew();
         try
         {
             Log.Information("Collecting node metrics...");
@@ -228,6 +230,10 @@ public static class NodeMetricsCollector
         catch (Exception ex)
         {
             Log.Error(ex, "Error during node metrics collection");
+        }
+        finally
+        {
+            Log.Information("Node metrics collection finished in {ElapsedSeconds:F3} s", sw.Elapsed.TotalSeconds);
         }
     }
 }

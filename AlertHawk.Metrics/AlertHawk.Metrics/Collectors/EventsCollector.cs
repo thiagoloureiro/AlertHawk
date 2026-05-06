@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using k8s;
 using k8s.Models;
 using Serilog;
@@ -7,7 +9,7 @@ namespace AlertHawk.Metrics.Collectors;
 public static class EventsCollector
 {
     // Track last collection timestamp per namespace to only fetch new/modified events
-    private static readonly Dictionary<string, DateTime> LastCollectionTime = new();
+    private static readonly ConcurrentDictionary<string, DateTime> LastCollectionTime = new();
 
     public static async Task CollectAsync(
         Kubernetes client,
@@ -22,19 +24,22 @@ public static class EventsCollector
         string[] namespacesToWatch,
         IMetricsApiClient apiClient)
     {
+        var sw = Stopwatch.StartNew();
         try
         {
             Log.Information("Collecting Kubernetes events...");
 
-            foreach (var ns in namespacesToWatch)
+            var parallelism = GetPositiveIntFromEnv("EVENTS_NAMESPACE_PARALLELISM", defaultValue: 8);
+            var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = parallelism };
+
+            await Parallel.ForEachAsync(namespacesToWatch, parallelOptions, async (ns, _) =>
             {
                 try
                 {
                     var events = await clientWrapper.ListNamespacedEventAsync(ns);
-                    
-                    // Get the last collection time for this namespace
-                    var lastCollection = LastCollectionTime.TryGetValue(ns, out var lastTime) 
-                        ? lastTime 
+
+                    var lastCollection = LastCollectionTime.TryGetValue(ns, out var lastTime)
+                        ? lastTime
                         : DateTime.MinValue;
 
                     var newEventsCount = 0;
@@ -42,21 +47,15 @@ public static class EventsCollector
 
                     foreach (var evt in events.Items)
                     {
-                        // Only process events that are new or have been updated since last collection
-                        // Events are considered new/updated if:
-                        // 1. They were first seen after last collection, OR
-                        // 2. They were last modified after last collection
                         var firstSeen = evt.FirstTimestamp ?? DateTime.MinValue;
                         var lastModified = evt.LastTimestamp ?? evt.FirstTimestamp ?? DateTime.MinValue;
-                        
-                        // Use the later of firstSeen or lastModified to determine if event is new/updated
+
                         var eventTime = firstSeen > lastModified ? firstSeen : lastModified;
 
                         if (eventTime > lastCollection)
                         {
-                            // Determine if this is a new event or an update
                             var isNew = firstSeen > lastCollection;
-                            
+
                             try
                             {
                                 await apiClient.WriteKubernetesEventAsync(
@@ -75,28 +74,23 @@ public static class EventsCollector
                                     lastModified != DateTime.MinValue ? lastModified : null);
 
                                 if (isNew)
-                                {
                                     newEventsCount++;
-                                }
                                 else
-                                {
                                     updatedEventsCount++;
-                                }
                             }
                             catch (Exception ex)
                             {
-                                Log.Error(ex, "Error sending event to API for {Namespace}/{EventName}", 
+                                Log.Error(ex, "Error sending event to API for {Namespace}/{EventName}",
                                     ns, evt.Metadata?.Name);
                             }
                         }
                     }
 
-                    // Update last collection time for this namespace
                     LastCollectionTime[ns] = DateTime.UtcNow;
 
                     if (newEventsCount > 0 || updatedEventsCount > 0)
                     {
-                        Log.Information("Collected {NewCount} new and {UpdatedCount} updated events from namespace '{Namespace}'", 
+                        Log.Information("Collected {NewCount} new and {UpdatedCount} updated events from namespace '{Namespace}'",
                             newEventsCount, updatedEventsCount, ns);
                     }
                     else
@@ -108,12 +102,22 @@ public static class EventsCollector
                 {
                     Log.Error(ex, "Error collecting events for namespace '{Namespace}'", ns);
                 }
-            }
+            });
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Error during events collection");
         }
+        finally
+        {
+            Log.Information("Kubernetes events collection finished in {ElapsedSeconds:F3} s", sw.Elapsed.TotalSeconds);
+        }
+    }
+
+    private static int GetPositiveIntFromEnv(string name, int defaultValue)
+    {
+        var raw = Environment.GetEnvironmentVariable(name);
+        return int.TryParse(raw, out var n) && n > 0 ? n : defaultValue;
     }
 }
 
