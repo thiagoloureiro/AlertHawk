@@ -137,8 +137,16 @@ var clickHouseTableName = Environment.GetEnvironmentVariable("CLICKHOUSE_TABLE_N
 
 var clusterName = Environment.GetEnvironmentVariable("CLUSTER_NAME");
 
-builder.Services.AddSingleton<IClickHouseService>(sp =>
-    new ClickHouseService(clickHouseConnectionString, clusterName, clickHouseTableName));
+var clickHouseMaxConcurrentOpsEnv = Environment.GetEnvironmentVariable("CLICKHOUSE_MAX_CONCURRENT_OPERATIONS");
+var clickHouseMaxConcurrent = clickHouseMaxConcurrentOpsEnv != null &&
+                              int.TryParse(clickHouseMaxConcurrentOpsEnv, out var parsedMaxConcurrent) &&
+                              parsedMaxConcurrent >= 1
+    ? parsedMaxConcurrent
+    : builder.Configuration.GetValue("ClickHouse:MaxConcurrentOperations", 32);
+
+builder.Services.AddSingleton<IClickHouseService>(_ =>
+    new ClickHouseService(clickHouseConnectionString, clusterName, clickHouseTableName,
+        maxConcurrentOperations: clickHouseMaxConcurrent));
 
 // Register Azure Prices service
 builder.Services.AddHttpClient<IAzurePricesService, AzurePricesService>();

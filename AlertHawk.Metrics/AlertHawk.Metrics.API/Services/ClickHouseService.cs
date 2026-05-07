@@ -17,9 +17,10 @@ public class ClickHouseService : IClickHouseService, IDisposable
     private readonly string _clusterPricesTableName;
     private readonly string _pvcTableName;
     private readonly string _clusterName;
-    private readonly SemaphoreSlim _connectionSemaphore = new(1, 1);
+    private readonly SemaphoreSlim _connectionSemaphore;
 
-    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string podLogsTableName = "k8s_pod_logs", string eventsTableName = "k8s_events", string clusterPricesTableName = "k8s_cluster_prices", string pvcTableName = "k8s_pvc_metrics")
+    /// <param name="maxConcurrentOperations">Max concurrent ClickHouse operations (each uses its own connection). Use 1 only for debugging; default allows reads/writes in parallel.</param>
+    public ClickHouseService(string connectionString, string? clusterName = null, string tableName = "k8s_metrics", string nodeTableName = "k8s_node_metrics", string podLogsTableName = "k8s_pod_logs", string eventsTableName = "k8s_events", string clusterPricesTableName = "k8s_cluster_prices", string pvcTableName = "k8s_pvc_metrics", int maxConcurrentOperations = 32)
     {
         _connectionString = connectionString;
         _database = ExtractDatabaseFromConnectionString(connectionString);
@@ -30,6 +31,8 @@ public class ClickHouseService : IClickHouseService, IDisposable
         _eventsTableName = eventsTableName;
         _clusterPricesTableName = clusterPricesTableName;
         _pvcTableName = pvcTableName;
+        var concurrent = Math.Clamp(maxConcurrentOperations, 1, 10_000);
+        _connectionSemaphore = new SemaphoreSlim(concurrent, concurrent);
         EnsureTablesExistAsync().GetAwaiter().GetResult();
     }
 
