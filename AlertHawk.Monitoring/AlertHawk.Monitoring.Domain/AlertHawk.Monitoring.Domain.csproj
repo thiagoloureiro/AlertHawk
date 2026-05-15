@@ -23,11 +23,11 @@
 
     <ItemGroup>
       <PackageReference Include="AlertHawk.Authentication.Domain" Version="1.0.5" />
-      <PackageReference Include="AlertHawk.Notification.Domain" Version="1.0.8" />
+      <PackageReference Include="AlertHawk.Notification.Domain" Version="1.0.9" />
       <PackageReference Include="Azure.Identity" Version="1.21.0" />
-      <PackageReference Include="EasyMemoryCache" Version="3.0.6" />
+      <PackageReference Include="EasyMemoryCache" Version="3.1.2" />
       <PackageReference Include="Hangfire.Core" Version="1.8.23" />
-      <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.7" />
+      <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.8" />
     </ItemGroup>
 
 
