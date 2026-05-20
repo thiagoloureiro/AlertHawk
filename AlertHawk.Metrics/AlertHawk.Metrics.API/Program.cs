@@ -151,6 +151,19 @@ builder.Services.AddSingleton<IClickHouseService>(_ =>
 // Register Azure Prices service
 builder.Services.AddHttpClient<IAzurePricesService, AzurePricesService>();
 
+// Register GCP Prices service
+builder.Services.Configure<GcpBillingOptions>(options =>
+{
+    options.ApiKey = Environment.GetEnvironmentVariable("GCP_BILLING_API_KEY")
+                     ?? configuration["GcpBilling:ApiKey"];
+    var serviceIdFromConfig = configuration["GcpBilling:ComputeEngineServiceId"];
+    if (!string.IsNullOrWhiteSpace(serviceIdFromConfig))
+    {
+        options.ComputeEngineServiceId = serviceIdFromConfig;
+    }
+});
+builder.Services.AddHttpClient<IGcpPricesService, GcpPricesService>();
+
 // Configure Hangfire for background jobs
 builder.Services.AddHangfire(config => config
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
