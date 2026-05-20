@@ -51,6 +51,12 @@ Create a new account or login with any personal Microsoft Account and try it!
 ![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/thiagoguaru/alerthawk/54)
 ![Azure DevOps tests](https://img.shields.io/azure-devops/tests/thiagoguaru/alerthawk/54)
 
+## AlertHawk.FinOps - Docker Container
+![Docker Image Size (tag)](https://img.shields.io/docker/image-size/thiagoguaru/alerthawk.finops.api/latest)
+[![Build status](https://thiagoguaru.visualstudio.com/AlertHawk/_apis/build/status/AlertHawk.Monitoring%20-%20Docker)](https://thiagoguaru.visualstudio.com/AlertHawk/_build/latest?definitionId=65)
+![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/thiagoguaru/alerthawk/66)
+![Azure DevOps tests](https://img.shields.io/azure-devops/tests/thiagoguaru/alerthawk/66)
+
 ## Contributors
 
 Thanks to these wonderful people for their contributions to the project:
