@@ -10,11 +10,14 @@ public class MonitorHistoryService : IMonitorHistoryService
     private readonly string _monitorHistoryCount = "MonitorHistoryCountKey";
     private readonly ICaching _caching;
     private readonly IMonitorHistoryRepository _monitorHistoryRepository;
+    private readonly IMonitorAlertRepository _monitorAlertRepository;
 
-    public MonitorHistoryService(ICaching caching, IMonitorHistoryRepository monitorHistoryRepository)
+    public MonitorHistoryService(ICaching caching, IMonitorHistoryRepository monitorHistoryRepository,
+        IMonitorAlertRepository monitorAlertRepository)
     {
         _caching = caching;
         _monitorHistoryRepository = monitorHistoryRepository;
+        _monitorAlertRepository = monitorAlertRepository;
     }
 
     public async Task<IEnumerable<MonitorHistory>> GetMonitorHistory(int id)
@@ -73,6 +76,7 @@ public class MonitorHistoryService : IMonitorHistoryService
     public async Task DeleteMonitorHistory(int days)
     {
         await _monitorHistoryRepository.DeleteMonitorHistory(days);
+        await _monitorAlertRepository.DeleteMonitorAlerts(days);
         await _caching.InvalidateAllAsync();
     }
 

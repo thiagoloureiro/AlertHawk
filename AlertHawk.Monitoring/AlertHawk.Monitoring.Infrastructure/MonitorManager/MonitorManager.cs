@@ -19,14 +19,17 @@ public class MonitorManager : IMonitorManager
     private readonly IMonitorRepository _monitorRepository;
     private readonly ICaching _caching;
     private readonly IMonitorHistoryRepository _monitorHistoryRepository;
+    private readonly IMonitorAlertRepository _monitorAlertRepository;
 
     public MonitorManager(IMonitorAgentRepository monitorAgentRepository, IMonitorRepository monitorRepository,
-        ICaching caching, IMonitorHistoryRepository monitorHistoryRepository)
+        ICaching caching, IMonitorHistoryRepository monitorHistoryRepository,
+        IMonitorAlertRepository monitorAlertRepository)
     {
         _monitorAgentRepository = monitorAgentRepository;
         _monitorRepository = monitorRepository;
         _caching = caching;
         _monitorHistoryRepository = monitorHistoryRepository;
+        _monitorAlertRepository = monitorAlertRepository;
     }
 
     public async Task StartRunnerManager()
@@ -265,10 +268,25 @@ public class MonitorManager : IMonitorManager
 
     public async Task CleanMonitorHistoryTask()
     {
-        var settings = await _monitorHistoryRepository.GetMonitorHistoryRetention();
-        if (settings.HistoryDaysRetention > 0)
+        try
         {
-            await _monitorHistoryRepository.DeleteMonitorHistory(settings.HistoryDaysRetention);
+            var settings = await _monitorHistoryRepository.GetMonitorHistoryRetention();
+            if (settings == null)
+            {
+                SentrySdk.CaptureMessage("Monitor history retention settings not found; skipping cleanup.");
+                return;
+            }
+
+            if (settings.HistoryDaysRetention > 0)
+            {
+                await _monitorHistoryRepository.DeleteMonitorHistory(settings.HistoryDaysRetention);
+                await _monitorAlertRepository.DeleteMonitorAlerts(settings.HistoryDaysRetention);
+            }
+        }
+        catch (Exception e)
+        {
+            SentrySdk.CaptureException(e);
+            throw;
         }
     }
 

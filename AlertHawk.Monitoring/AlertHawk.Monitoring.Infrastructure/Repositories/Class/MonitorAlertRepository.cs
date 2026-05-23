@@ -172,4 +172,19 @@ public class MonitorAlertRepository : RepositoryBase, IMonitorAlertRepository
         return await db.QueryAsync<MonitorAlert>(sql, new { monitorListIds, days, environment },
             commandType: CommandType.Text);
     }
+
+    public async Task DeleteMonitorAlerts(int days)
+    {
+        await using var db = new SqlConnection(_connstring);
+
+        if (days == 0)
+        {
+            const string sqlTruncate = "TRUNCATE TABLE [MonitorAlert]";
+            await db.ExecuteAsync(sqlTruncate, commandType: CommandType.Text);
+            return;
+        }
+
+        const string sql = @"DELETE FROM [MonitorAlert] WHERE TimeStamp < DATEADD(DAY, -@days, GETUTCDATE())";
+        await db.ExecuteAsync(sql, new { days }, commandType: CommandType.Text, commandTimeout: 3600);
+    }
 }

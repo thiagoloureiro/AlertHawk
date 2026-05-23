@@ -11,4 +11,6 @@ public interface IMonitorAlertRepository
 
     Task SaveMonitorAlert(MonitorHistory monitorHistory, MonitorEnvironment environment);
     Task<IEnumerable<MonitorAlert>> GetMonitorAlertsByMonitorGroup(List<int> monitorIds, int? days, MonitorEnvironment? environment);
+
+    Task DeleteMonitorAlerts(int days);
 }

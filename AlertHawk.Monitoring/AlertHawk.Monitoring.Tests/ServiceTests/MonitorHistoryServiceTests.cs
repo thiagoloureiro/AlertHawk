@@ -10,6 +10,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
     public class MonitorHistoryServiceTests
     {
         private readonly Mock<IMonitorHistoryRepository> _monitorHistoryRepositoryMock;
+        private readonly Mock<IMonitorAlertRepository> _monitorAlertRepositoryMock;
         private readonly Mock<ICaching> _cachingMock;
         private readonly MonitorHistoryService _monitorHistoryService;
 
@@ -17,7 +18,9 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
         {
             _cachingMock = new Mock<ICaching>();
             _monitorHistoryRepositoryMock = new Mock<IMonitorHistoryRepository>();
-            _monitorHistoryService = new MonitorHistoryService(_cachingMock.Object, _monitorHistoryRepositoryMock.Object);
+            _monitorAlertRepositoryMock = new Mock<IMonitorAlertRepository>();
+            _monitorHistoryService = new MonitorHistoryService(_cachingMock.Object,
+                _monitorHistoryRepositoryMock.Object, _monitorAlertRepositoryMock.Object);
         }
 
         [Fact]
@@ -61,6 +64,7 @@ namespace AlertHawk.Monitoring.Tests.ServiceTests
 
             // Assert
             _monitorHistoryRepositoryMock.Verify(repo => repo.DeleteMonitorHistory(days), Times.Once);
+            _monitorAlertRepositoryMock.Verify(repo => repo.DeleteMonitorAlerts(days), Times.Once);
         }
 
         [Fact]
