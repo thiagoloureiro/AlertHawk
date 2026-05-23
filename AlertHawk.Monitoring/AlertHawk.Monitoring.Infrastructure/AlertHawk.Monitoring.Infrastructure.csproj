@@ -9,7 +9,7 @@
         <PackageReference Include="Azure.Identity" Version="1.21.0" />
         <PackageReference Include="Azure.Storage.Blobs" Version="12.28.0" />
         <PackageReference Include="ClosedXML" Version="0.105.0" />
-        <PackageReference Include="Dapper" Version="2.1.72" />
+        <PackageReference Include="Dapper" Version="2.1.79" />
         <PackageReference Include="EasyMemoryCache" Version="3.1.2" />
         <PackageReference Include="Hangfire.Core" Version="1.8.23" />
         <PackageReference Include="KubernetesClient" Version="19.0.2" />

@@ -107,23 +107,23 @@ public class TcpClientRunner : ITcpClientRunner
         using var tcpClient = new TcpClient();
         using var cancellationTokenSource = new CancellationTokenSource();
         var timeoutMilliseconds = monitorTcp.Timeout * 1000;
-
-        cancellationTokenSource.CancelAfter(timeoutMilliseconds * 1000);
+        cancellationTokenSource.CancelAfter(timeoutMilliseconds);
 
         try
         {
-            var connectTask = tcpClient.ConnectAsync(monitorTcp.IP, monitorTcp.Port);
-            var completedTask = await Task.WhenAny(connectTask, Task.Delay(timeoutMilliseconds, cancellationTokenSource.Token));
-
-            return completedTask == connectTask && tcpClient.Connected; // Return true if connected, false otherwise
+            await tcpClient.ConnectAsync(monitorTcp.IP, monitorTcp.Port, cancellationTokenSource.Token);
+            return tcpClient.Connected;
         }
         catch (SocketException)
         {
             return false;
         }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
         catch (Exception)
         {
-            // Handle exceptions (such as invalid IP, port out of range, etc.)
             return false;
         }
     }
