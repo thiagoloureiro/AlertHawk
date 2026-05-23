@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="AlertHawk.Authentication.Domain" Version="1.0.5" />
-    <PackageReference Include="Dapper" Version="2.1.72" />
+    <PackageReference Include="Dapper" Version="2.1.79" />
     <PackageReference Include="MassTransit.Abstractions" Version="8.5.9" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.8" />
