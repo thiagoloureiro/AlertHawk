@@ -15,4 +15,8 @@ public interface INotificationProducer
     Task HandleSuccessK8sNotifications(MonitorK8s monitorK8S, string response);
 
     Task HandleFailedK8sNotifications(MonitorK8s monitorK8S, string response);
+
+    Task HandleFailedSecretsNotifications(Entities.Monitor monitor, string message);
+
+    Task HandleSuccessSecretsNotifications(Entities.Monitor monitor, string message);
 }

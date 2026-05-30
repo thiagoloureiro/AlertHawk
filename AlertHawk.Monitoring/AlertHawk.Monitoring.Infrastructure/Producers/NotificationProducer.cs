@@ -195,4 +195,66 @@ public class NotificationProducer : INotificationProducer
             });
         }
     }
+
+    public async Task HandleFailedSecretsNotifications(Domain.Entities.Monitor monitor, string message)
+    {
+        var notificationIdList = await _monitorNotificationRepository.GetMonitorNotifications(monitor.Id);
+
+        _notificationLogger.LogInformation(
+            "Sending Azure secrets expiry notification for monitor {MonitorId}", monitor.Id);
+
+        try
+        {
+            foreach (var item in notificationIdList)
+            {
+                await _publishEndpoint.Publish<NotificationAlert>(new
+                {
+                    NotificationId = item.NotificationId,
+                    MonitorId = item.MonitorId,
+                    Service = monitor.Name,
+                    Region = (int)monitor.MonitorRegion,
+                    Environment = (int)monitor.MonitorEnvironment,
+                    Success = false,
+                    TimeStamp = DateTime.UtcNow,
+                    Message = message
+                });
+            }
+        }
+        catch (Exception err)
+        {
+            _notificationLogger.LogError("Error in HandleFailedSecretsNotifications: {Message}", err.Message);
+            Sentry.SentrySdk.CaptureException(err);
+        }
+    }
+
+    public async Task HandleSuccessSecretsNotifications(Domain.Entities.Monitor monitor, string message)
+    {
+        var notificationIdList = await _monitorNotificationRepository.GetMonitorNotifications(monitor.Id);
+
+        _notificationLogger.LogInformation(
+            "Sending Azure secrets recovery notification for monitor {MonitorId}", monitor.Id);
+
+        try
+        {
+            foreach (var item in notificationIdList)
+            {
+                await _publishEndpoint.Publish<NotificationAlert>(new
+                {
+                    NotificationId = item.NotificationId,
+                    MonitorId = item.MonitorId,
+                    Service = monitor.Name,
+                    Region = (int)monitor.MonitorRegion,
+                    Environment = (int)monitor.MonitorEnvironment,
+                    Success = true,
+                    TimeStamp = DateTime.UtcNow,
+                    Message = message
+                });
+            }
+        }
+        catch (Exception err)
+        {
+            _notificationLogger.LogError("Error in HandleSuccessSecretsNotifications: {Message}", err.Message);
+            Sentry.SentrySdk.CaptureException(err);
+        }
+    }
 }

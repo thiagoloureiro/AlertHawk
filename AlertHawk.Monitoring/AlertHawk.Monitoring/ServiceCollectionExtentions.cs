@@ -3,6 +3,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.MonitorManager;
 using AlertHawk.Monitoring.Infrastructure.Repositories.Class;
+using AlertHawk.Monitoring.Infrastructure.Services;
 using System.Diagnostics.CodeAnalysis;
 
 namespace AlertHawk.Monitoring
@@ -21,6 +22,7 @@ namespace AlertHawk.Monitoring
             services.AddTransient<IMonitorReportService, MonitorReportService>();
             services.AddTransient<IMonitorNotificationService, MonitorNotificationService>();
             services.AddTransient<IMonitorHistoryService, MonitorHistoryService>();
+            services.AddTransient<IAzureAppSecretService, AzureAppSecretService>();
 
             return services;
         }
@@ -38,6 +40,8 @@ namespace AlertHawk.Monitoring
             services.AddTransient<IMonitorNotificationRepository, MonitorNotificationRepository>();
             services.AddTransient<IMonitorHistoryRepository, MonitorHistoryRepository>();
             services.AddTransient<ISystemConfigurationRepository, SystemConfigurationRepository>();
+            services.AddTransient<IAzureAppSecretRepository, AzureAppSecretRepository>();
+            services.AddTransient<IAzureSecretsSettingsProvider, AzureSecretsSettingsProvider>();
 
             return services;
         }

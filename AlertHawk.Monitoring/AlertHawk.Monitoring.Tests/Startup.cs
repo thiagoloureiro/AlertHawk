@@ -46,8 +46,10 @@ public class Startup
         services.AddTransient<IMonitorGroupRepository, MonitorGroupRepository>();
         services.AddTransient<IMonitorAlertRepository, MonitorAlertRepository>();
         services.AddTransient<ISystemConfigurationRepository, SystemConfigurationRepository>();
+        services.AddTransient<IAzureAppSecretRepository, AzureAppSecretRepository>();
 
         services.AddTransient<IHttpClientRunner, HttpClientRunner>();
+        services.AddTransient<ISecretsRunner, SecretsRunner>();
         services.AddTransient<ITcpClientRunner, TcpClientRunner>();
         services.AddTransient<IK8sClientRunner, K8sClientRunner>();
         

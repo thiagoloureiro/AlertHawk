@@ -1,9 +1,11 @@
 using AlertHawk.Monitoring;
 using AlertHawk.Monitoring.Domain.Classes;
+using AlertHawk.Monitoring.Domain.Configuration;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
+using AlertHawk.Monitoring.Infrastructure.Services;
 using AlertHawk.Monitoring.Helpers;
 using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 using AlertHawk.Monitoring.Infrastructure.Producers;
@@ -174,6 +176,7 @@ builder.Services.AddHangfire(config => config.UseInMemoryStorage(new InMemorySto
 builder.Services.AddHangfireServer();
 
 builder.Services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
+builder.Services.Configure<AzureSecretsOptions>(configuration.GetSection(AzureSecretsOptions.SectionName));
 
 builder.Services.AddCustomServices();
 builder.Services.AddCustomRepositories();
@@ -181,6 +184,8 @@ builder.Services.AddCustomRepositories();
 builder.Services.AddTransient<IHttpClientRunner, HttpClientRunner>();
 builder.Services.AddTransient<ITcpClientRunner, TcpClientRunner>();
 builder.Services.AddTransient<IK8sClientRunner, K8sClientRunner>();
+builder.Services.AddTransient<IAzureAppSecretsFetcher, AzureGraphAppSecretsFetcher>();
+builder.Services.AddTransient<ISecretsRunner, SecretsRunner>();
 
 builder.Services.AddTransient<INotificationProducer, NotificationProducer>();
 
@@ -254,6 +259,10 @@ recurringJobManager.AddOrUpdate<IMonitorService>("SetMonitorDashboardDataCacheLi
 recurringJobManager.AddOrUpdate<IMonitorManager>("CleanMonitorHistoryTask",
     x => x.CleanMonitorHistoryTask(), "0 0 * * *");
 
+var azureSecretsCron = configuration.GetValue<string>("AzureSecrets:Cron") ?? "0 */6 * * *";
+recurringJobManager.AddOrUpdate<ISecretsRunner>("CheckAzureAppSecrets",
+    x => x.CheckSecretsAsync(), azureSecretsCron);
+
 // Resolve the service and run the method immediately
 using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
 {
@@ -265,6 +274,12 @@ using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>(
     if (systemConfigurationRepository != null)
     {
         await systemConfigurationRepository.InitializeTableIfNotExists();
+    }
+
+    var azureAppSecretRepository = serviceScope.ServiceProvider.GetService<IAzureAppSecretRepository>();
+    if (azureAppSecretRepository != null)
+    {
+        await azureAppSecretRepository.InitializeTableIfNotExists();
     }
 }
 
