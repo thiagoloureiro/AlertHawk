@@ -9,4 +9,8 @@ public interface IAzureAppSecretRepository
     Task<IEnumerable<AzureAppSecret>> GetAllAsync();
 
     Task InitializeTableIfNotExists();
+
+    Task DeleteExceptApplicationObjectIdsAsync(IEnumerable<string> applicationObjectIds);
+
+    Task DeleteByApplicationObjectIdAsync(string applicationObjectId);
 }

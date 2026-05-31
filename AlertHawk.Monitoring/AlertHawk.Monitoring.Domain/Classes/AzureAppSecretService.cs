@@ -15,6 +15,8 @@ public class AzureAppSecretService : IAzureAppSecretService
     private readonly IMonitorAlertService _monitorAlertService;
     private readonly ISecretsRunner _secretsRunner;
     private readonly IMonitorGroupService _monitorGroupService;
+    private readonly IAzureAppRegistrationWatchRepository _watchRepository;
+    private readonly IAzureAppSecretsFetcher _azureAppSecretsFetcher;
 
     public AzureAppSecretService(
         IAzureAppSecretRepository azureAppSecretRepository,
@@ -23,7 +25,9 @@ public class AzureAppSecretService : IAzureAppSecretService
         IMonitorHistoryService monitorHistoryService,
         IMonitorAlertService monitorAlertService,
         ISecretsRunner secretsRunner,
-        IMonitorGroupService monitorGroupService)
+        IMonitorGroupService monitorGroupService,
+        IAzureAppRegistrationWatchRepository watchRepository,
+        IAzureAppSecretsFetcher azureAppSecretsFetcher)
     {
         _azureAppSecretRepository = azureAppSecretRepository;
         _settingsProvider = settingsProvider;
@@ -32,18 +36,30 @@ public class AzureAppSecretService : IAzureAppSecretService
         _monitorAlertService = monitorAlertService;
         _secretsRunner = secretsRunner;
         _monitorGroupService = monitorGroupService;
+        _watchRepository = watchRepository;
+        _azureAppSecretsFetcher = azureAppSecretsFetcher;
     }
 
     public async Task<IEnumerable<AzureAppSecret>> GetSecretsAsync(bool expiringOnly = false)
     {
-        var secrets = await _azureAppSecretRepository.GetAllAsync();
+        var registeredIds = (await _watchRepository.GetAllAsync())
+            .Select(w => w.ApplicationObjectId)
+            .ToHashSet();
+
+        var secrets = (await _azureAppSecretRepository.GetAllAsync())
+            .Where(s => registeredIds.Contains(s.ApplicationObjectId));
+
         return expiringOnly ? secrets.Where(s => s.IsExpiring) : secrets;
     }
 
     public async Task<AzureSecretsStatusSummary> GetStatusAsync()
     {
         var settings = await _settingsProvider.GetSettingsAsync();
-        var secrets = (await _azureAppSecretRepository.GetAllAsync()).ToList();
+        var registeredApps = (await _watchRepository.GetAllAsync()).ToList();
+        var registeredIds = registeredApps.Select(w => w.ApplicationObjectId).ToHashSet();
+        var secrets = (await _azureAppSecretRepository.GetAllAsync())
+            .Where(s => registeredIds.Contains(s.ApplicationObjectId))
+            .ToList();
 
         Monitor? monitor = null;
         if (settings.MonitorId > 0)
@@ -67,8 +83,62 @@ public class AzureAppSecretService : IAzureAppSecretService
             MonitorStatus = monitor?.Status,
             MonitorId = settings.MonitorId,
             MonitorName = monitor?.Name,
-            DaysBeforeExpiryToAlert = settings.DaysBeforeExpiryToAlert
+            DaysBeforeExpiryToAlert = settings.DaysBeforeExpiryToAlert,
+            RegisteredAppsCount = registeredApps.Count
         };
+    }
+
+    public Task<IEnumerable<AzureAppRegistrationWatch>> GetRegistrationsAsync() =>
+        _watchRepository.GetAllAsync(enabledOnly: false);
+
+    public async Task<IEnumerable<AzureAppRegistrationSummary>> DiscoverApplicationsAsync()
+    {
+        var registered = (await _watchRepository.GetAllAsync(enabledOnly: false))
+            .Select(w => w.ApplicationObjectId)
+            .ToHashSet();
+
+        var apps = await _azureAppSecretsFetcher.DiscoverApplicationsAsync();
+        return apps.Select(a =>
+        {
+            a.IsRegistered = registered.Contains(a.ApplicationObjectId);
+            return a;
+        });
+    }
+
+    public async Task<AzureAppRegistrationWatch> RegisterApplicationAsync(RegisterAzureAppRegistrationRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.ApplicationObjectId))
+        {
+            throw new ArgumentException("ApplicationObjectId is required.");
+        }
+
+        var existing = await _watchRepository.GetByObjectIdAsync(request.ApplicationObjectId);
+        if (existing != null)
+        {
+            return existing;
+        }
+
+        var watch = new AzureAppRegistrationWatch
+        {
+            ApplicationObjectId = request.ApplicationObjectId.Trim(),
+            ApplicationDisplayName = request.ApplicationDisplayName?.Trim() ?? "Unknown",
+            AppId = request.AppId?.Trim() ?? string.Empty,
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        watch.Id = await _watchRepository.AddAsync(watch);
+        return watch;
+    }
+
+    public async Task UnregisterApplicationAsync(int id)
+    {
+        var registrations = (await _watchRepository.GetAllAsync(enabledOnly: false)).ToList();
+        var registration = registrations.FirstOrDefault(r => r.Id == id)
+            ?? throw new InvalidOperationException("Registration not found.");
+
+        await _watchRepository.DeleteAsync(id);
+        await _azureAppSecretRepository.DeleteByApplicationObjectIdAsync(registration.ApplicationObjectId);
     }
 
     public async Task<IEnumerable<MonitorHistory>> GetHistoryAsync(int days)

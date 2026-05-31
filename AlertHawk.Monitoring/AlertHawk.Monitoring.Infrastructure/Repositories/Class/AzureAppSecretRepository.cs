@@ -78,4 +78,30 @@ public class AzureAppSecretRepository : RepositoryBase, IAzureAppSecretRepositor
             """;
         return await db.QueryAsync<AzureAppSecret>(sql, commandType: CommandType.Text);
     }
+
+    public async Task DeleteExceptApplicationObjectIdsAsync(IEnumerable<string> applicationObjectIds)
+    {
+        var ids = applicationObjectIds.ToList();
+        await using var db = new SqlConnection(_connstring);
+
+        if (ids.Count == 0)
+        {
+            await db.ExecuteAsync("DELETE FROM [AzureAppSecret]", commandType: CommandType.Text);
+            return;
+        }
+
+        await db.ExecuteAsync(
+            "DELETE FROM [AzureAppSecret] WHERE ApplicationObjectId NOT IN @ids",
+            new { ids },
+            commandType: CommandType.Text);
+    }
+
+    public async Task DeleteByApplicationObjectIdAsync(string applicationObjectId)
+    {
+        await using var db = new SqlConnection(_connstring);
+        await db.ExecuteAsync(
+            "DELETE FROM [AzureAppSecret] WHERE ApplicationObjectId = @applicationObjectId",
+            new { applicationObjectId },
+            commandType: CommandType.Text);
+    }
 }

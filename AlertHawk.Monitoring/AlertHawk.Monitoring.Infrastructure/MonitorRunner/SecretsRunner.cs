@@ -5,6 +5,7 @@ using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using Microsoft.Extensions.Logging;
+
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
 public class SecretsRunner : ISecretsRunner
@@ -12,6 +13,7 @@ public class SecretsRunner : ISecretsRunner
     private readonly IAzureSecretsSettingsProvider _settingsProvider;
     private readonly IAzureAppSecretsFetcher _azureAppSecretsFetcher;
     private readonly IAzureAppSecretRepository _azureAppSecretRepository;
+    private readonly IAzureAppRegistrationWatchRepository _watchRepository;
     private readonly IMonitorRepository _monitorRepository;
     private readonly INotificationProducer _notificationProducer;
     private readonly IMonitorAlertRepository _monitorAlertRepository;
@@ -23,6 +25,7 @@ public class SecretsRunner : ISecretsRunner
         IAzureSecretsSettingsProvider settingsProvider,
         IAzureAppSecretsFetcher azureAppSecretsFetcher,
         IAzureAppSecretRepository azureAppSecretRepository,
+        IAzureAppRegistrationWatchRepository watchRepository,
         IMonitorRepository monitorRepository,
         INotificationProducer notificationProducer,
         IMonitorAlertRepository monitorAlertRepository,
@@ -33,6 +36,7 @@ public class SecretsRunner : ISecretsRunner
         _settingsProvider = settingsProvider;
         _azureAppSecretsFetcher = azureAppSecretsFetcher;
         _azureAppSecretRepository = azureAppSecretRepository;
+        _watchRepository = watchRepository;
         _monitorRepository = monitorRepository;
         _notificationProducer = notificationProducer;
         _monitorAlertRepository = monitorAlertRepository;
@@ -70,6 +74,14 @@ public class SecretsRunner : ISecretsRunner
             return;
         }
 
+        var registeredApps = (await _watchRepository.GetAllAsync()).ToList();
+        if (registeredApps.Count == 0)
+        {
+            _logger.LogInformation("No app registrations registered for monitoring. Skipping Azure secrets check.");
+            await _azureAppSecretRepository.DeleteExceptApplicationObjectIdsAsync(Array.Empty<string>());
+            return;
+        }
+
         var monitor = await _monitorRepository.GetMonitorById(options.MonitorId);
         if (monitor == null)
         {
@@ -82,13 +94,15 @@ public class SecretsRunner : ISecretsRunner
         var newlyExpiringSecrets = new List<AzureAppSecret>();
         var recoveredSecrets = new List<AzureAppSecret>();
         var now = DateTime.UtcNow;
+        var registeredObjectIds = registeredApps.Select(a => a.ApplicationObjectId).ToList();
 
         try
         {
             var existingSecrets = (await _azureAppSecretRepository.GetAllAsync())
+                .Where(s => registeredObjectIds.Contains(s.ApplicationObjectId))
                 .ToDictionary(s => $"{s.ApplicationObjectId}:{s.KeyId}");
 
-            await foreach (var credential in _azureAppSecretsFetcher.FetchPasswordCredentialsAsync())
+            await foreach (var credential in _azureAppSecretsFetcher.FetchPasswordCredentialsAsync(registeredObjectIds))
             {
                 var daysUntilExpiry = (int)Math.Ceiling((credential.EndDateTime.UtcDateTime - now).TotalDays);
                 var isExpiring = daysUntilExpiry <= options.DaysBeforeExpiryToAlert;
@@ -124,6 +138,8 @@ public class SecretsRunner : ISecretsRunner
                     recoveredSecrets.Add(secret);
                 }
             }
+
+            await _azureAppSecretRepository.DeleteExceptApplicationObjectIdsAsync(registeredObjectIds);
 
             var succeeded = expiringSecrets.Count == 0;
             var responseMessage = SecretsRunnerMessages.BuildResponseMessage(expiringSecrets, succeeded);
@@ -162,8 +178,8 @@ public class SecretsRunner : ISecretsRunner
             }
 
             _logger.LogInformation(
-                "Azure secrets check completed. Total expiring: {ExpiringCount}, newly expiring: {NewCount}",
-                expiringSecrets.Count, newlyExpiringSecrets.Count);
+                "Azure secrets check completed for {AppCount} registered app(s). Expiring: {ExpiringCount}, newly expiring: {NewCount}",
+                registeredApps.Count, expiringSecrets.Count, newlyExpiringSecrets.Count);
         }
         catch (Exception ex)
         {

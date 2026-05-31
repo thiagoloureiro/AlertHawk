@@ -281,6 +281,12 @@ using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>(
     {
         await azureAppSecretRepository.InitializeTableIfNotExists();
     }
+
+    var watchRepository = serviceScope.ServiceProvider.GetService<IAzureAppRegistrationWatchRepository>();
+    if (watchRepository != null)
+    {
+        await watchRepository.InitializeTableIfNotExists();
+    }
 }
 
 // Configure the HTTP request pipeline.

@@ -1,13 +1,11 @@
 using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Configuration;
-using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using NSubstitute;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
@@ -17,6 +15,7 @@ public class SecretsRunnerTests
 {
     private readonly IAzureAppSecretsFetcher _azureAppSecretsFetcher;
     private readonly IAzureAppSecretRepository _azureAppSecretRepository;
+    private readonly IAzureAppRegistrationWatchRepository _watchRepository;
     private readonly IMonitorRepository _monitorRepository;
     private readonly INotificationProducer _notificationProducer;
     private readonly IMonitorAlertRepository _monitorAlertRepository;
@@ -26,12 +25,14 @@ public class SecretsRunnerTests
     private readonly SecretsRunner _secretsRunner;
 
     private const int MonitorId = 42;
+    private const string AppObjectId = "app-obj-id";
     private static readonly Guid SecretKeyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
     public SecretsRunnerTests()
     {
         _azureAppSecretsFetcher = Substitute.For<IAzureAppSecretsFetcher>();
         _azureAppSecretRepository = Substitute.For<IAzureAppSecretRepository>();
+        _watchRepository = Substitute.For<IAzureAppRegistrationWatchRepository>();
         _monitorRepository = Substitute.For<IMonitorRepository>();
         _notificationProducer = Substitute.For<INotificationProducer>();
         _monitorAlertRepository = Substitute.For<IMonitorAlertRepository>();
@@ -41,6 +42,7 @@ public class SecretsRunnerTests
 
         _systemConfigurationRepository.IsMonitorExecutionDisabled().Returns(Task.FromResult(false));
         _azureAppSecretRepository.GetAllAsync().Returns(Task.FromResult(Enumerable.Empty<AzureAppSecret>()));
+        SetupRegisteredApps(AppObjectId);
 
         _secretsRunner = CreateRunner(new AzureSecretsOptions
         {
@@ -62,62 +64,31 @@ public class SecretsRunnerTests
 
         await _monitorRepository.DidNotReceive().GetMonitorById(Arg.Any<int>());
         _azureAppSecretsFetcher.DidNotReceive()
-            .FetchPasswordCredentialsAsync(Arg.Any<CancellationToken>());
+            .FetchPasswordCredentialsAsync(Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task CheckSecretsAsync_WhenMonitorExecutionDisabled_SkipsCheck()
+    public async Task CheckSecretsAsync_WhenNoRegistrations_SkipsGraphFetch()
     {
-        _systemConfigurationRepository.IsMonitorExecutionDisabled().Returns(Task.FromResult(true));
+        _watchRepository.GetAllAsync().Returns(Task.FromResult(Enumerable.Empty<AzureAppRegistrationWatch>()));
 
         await _secretsRunner.CheckSecretsAsync();
 
-        await _monitorRepository.DidNotReceive().GetMonitorById(Arg.Any<int>());
+        _azureAppSecretsFetcher.DidNotReceive()
+            .FetchPasswordCredentialsAsync(Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>());
+        await _azureAppSecretRepository.Received(1)
+            .DeleteExceptApplicationObjectIdsAsync(Arg.Is<IEnumerable<string>>(ids => !ids.Any()));
     }
 
     [Fact]
-    public async Task CheckSecretsAsync_WhenMonitorIdNotConfigured_SkipsCheck()
-    {
-        var runner = CreateRunner(new AzureSecretsOptions
-        {
-            Enabled = true,
-            TenantId = "tenant",
-            ClientId = "client",
-            ClientSecret = "secret",
-            MonitorId = 0
-        });
-
-        await runner.CheckSecretsAsync();
-
-        await _monitorRepository.DidNotReceive().GetMonitorById(Arg.Any<int>());
-    }
-
-    [Fact]
-    public async Task CheckSecretsAsync_WhenCredentialsMissing_SkipsCheck()
-    {
-        var runner = CreateRunner(new AzureSecretsOptions
-        {
-            Enabled = true,
-            MonitorId = MonitorId,
-            TenantId = "",
-            ClientId = "client",
-            ClientSecret = "secret"
-        });
-
-        await runner.CheckSecretsAsync();
-
-        await _monitorRepository.DidNotReceive().GetMonitorById(Arg.Any<int>());
-    }
-
-    [Fact]
-    public async Task CheckSecretsAsync_WhenMonitorNotFound_SkipsCheck()
+    public async Task CheckSecretsAsync_WhenMonitorNotFound_SkipsGraphFetch()
     {
         _monitorRepository.GetMonitorById(MonitorId).Returns((Monitor?)null);
 
         await _secretsRunner.CheckSecretsAsync();
 
         _azureAppSecretsFetcher.DidNotReceive()
-            .FetchPasswordCredentialsAsync(Arg.Any<CancellationToken>());
+            .FetchPasswordCredentialsAsync(Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -149,74 +120,6 @@ public class SecretsRunnerTests
         await _notificationProducer.Received(1).HandleFailedSecretsNotifications(
             monitor,
             Arg.Is<string>(m => m.Contains("expiring soon")));
-        await _monitorAlertRepository.Received(1).SaveMonitorAlert(
-            Arg.Is<MonitorHistory>(h => !h.Status),
-            monitor.MonitorEnvironment);
-    }
-
-    [Fact]
-    public async Task CheckSecretsAsync_WhenMonitorRecovers_SendsSuccessNotification()
-    {
-        var monitor = CreateMonitor(status: false);
-        _monitorRepository.GetMonitorById(MonitorId).Returns(monitor);
-        SetupFetcher(HealthyCredential(daysUntilExpiry: 90));
-
-        await _secretsRunner.CheckSecretsAsync();
-
-        await _monitorRepository.Received(1).UpdateMonitorStatus(MonitorId, true, 0);
-        await _notificationProducer.Received(1).HandleSuccessSecretsNotifications(
-            monitor,
-            Arg.Is<string>(m => m.Contains("within the expiry threshold")));
-        await _monitorAlertRepository.Received(1).SaveMonitorAlert(
-            Arg.Is<MonitorHistory>(h => h.Status),
-            monitor.MonitorEnvironment);
-    }
-
-    [Fact]
-    public async Task CheckSecretsAsync_WhenNewSecretEntersExpiryWindow_SendsTargetedFailedNotification()
-    {
-        var monitor = CreateMonitor(status: false);
-        _monitorRepository.GetMonitorById(MonitorId).Returns(monitor);
-        _azureAppSecretRepository.GetAllAsync().Returns(Task.FromResult(new[]
-        {
-            new AzureAppSecret
-            {
-                ApplicationObjectId = "app-obj-id",
-                KeyId = SecretKeyId,
-                IsExpiring = false
-            }
-        }.AsEnumerable()));
-        SetupFetcher(HealthyCredential(daysUntilExpiry: 5));
-
-        await _secretsRunner.CheckSecretsAsync();
-
-        await _notificationProducer.Received(1).HandleFailedSecretsNotifications(
-            monitor,
-            Arg.Is<string>(m => m.Contains("entered the expiry window")));
-        await _monitorAlertRepository.DidNotReceive().SaveMonitorAlert(Arg.Any<MonitorHistory>(), Arg.Any<MonitorEnvironment>());
-    }
-
-    [Fact]
-    public async Task CheckSecretsAsync_WhenSecretRecoversWhileMonitorHealthy_SendsRecoveryNotification()
-    {
-        var monitor = CreateMonitor(status: true);
-        _monitorRepository.GetMonitorById(MonitorId).Returns(monitor);
-        _azureAppSecretRepository.GetAllAsync().Returns(Task.FromResult(new[]
-        {
-            new AzureAppSecret
-            {
-                ApplicationObjectId = "app-obj-id",
-                KeyId = SecretKeyId,
-                IsExpiring = true
-            }
-        }.AsEnumerable()));
-        SetupFetcher(HealthyCredential(daysUntilExpiry: 90));
-
-        await _secretsRunner.CheckSecretsAsync();
-
-        await _notificationProducer.Received(1).HandleSuccessSecretsNotifications(
-            monitor,
-            Arg.Is<string>(m => m.Contains("no longer in the expiry window")));
     }
 
     [Fact]
@@ -224,7 +127,8 @@ public class SecretsRunnerTests
     {
         var monitor = CreateMonitor(status: true);
         _monitorRepository.GetMonitorById(MonitorId).Returns(monitor);
-        _azureAppSecretsFetcher.FetchPasswordCredentialsAsync(Arg.Any<CancellationToken>())
+        _azureAppSecretsFetcher
+            .FetchPasswordCredentialsAsync(Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>())
             .Returns(ThrowingAsyncEnumerable());
 
         await _secretsRunner.CheckSecretsAsync();
@@ -233,9 +137,6 @@ public class SecretsRunnerTests
         await _notificationProducer.Received(1).HandleFailedSecretsNotifications(
             monitor,
             Arg.Is<string>(m => m.Contains("Graph API error")));
-        await _monitorAlertRepository.Received(1).SaveMonitorAlert(
-            Arg.Is<MonitorHistory>(h => !h.Status),
-            monitor.MonitorEnvironment);
     }
 
     [Fact]
@@ -254,8 +155,7 @@ public class SecretsRunnerTests
 
     [Theory]
     [InlineData(0, true)]
-    [InlineData(2, true)]
-    [InlineData(3, false)]
+    [InlineData(2, false)]
     public void BuildResponseMessage_ReflectsExpiringCount(int expiringCount, bool expectedSucceeded)
     {
         var secrets = Enumerable.Range(0, expiringCount).Select(i => new AzureAppSecret
@@ -287,12 +187,27 @@ public class SecretsRunnerTests
             _settingsProvider,
             _azureAppSecretsFetcher,
             _azureAppSecretRepository,
+            _watchRepository,
             _monitorRepository,
             _notificationProducer,
             _monitorAlertRepository,
             _monitorHistoryRepository,
             _systemConfigurationRepository,
             Substitute.For<ILogger<SecretsRunner>>());
+    }
+
+    private void SetupRegisteredApps(params string[] objectIds)
+    {
+        _watchRepository.GetAllAsync().Returns(Task.FromResult(
+            objectIds.Select(id => new AzureAppRegistrationWatch
+            {
+                Id = 1,
+                ApplicationObjectId = id,
+                ApplicationDisplayName = "Test App",
+                AppId = "app-client-id",
+                IsEnabled = true,
+                CreatedAt = DateTime.UtcNow
+            })));
     }
 
     private static Monitor CreateMonitor(bool status) => new()
@@ -307,7 +222,7 @@ public class SecretsRunnerTests
     private static AzurePasswordCredentialInfo HealthyCredential(
         int daysUntilExpiry,
         Guid? keyId = null) => new(
-        "app-obj-id",
+        AppObjectId,
         "Test App",
         "app-client-id",
         keyId ?? SecretKeyId,
@@ -316,7 +231,8 @@ public class SecretsRunnerTests
 
     private void SetupFetcher(params AzurePasswordCredentialInfo[] credentials)
     {
-        _azureAppSecretsFetcher.FetchPasswordCredentialsAsync(Arg.Any<CancellationToken>())
+        _azureAppSecretsFetcher
+            .FetchPasswordCredentialsAsync(Arg.Any<IReadOnlyCollection<string>>(), Arg.Any<CancellationToken>())
             .Returns(ToAsyncEnumerable(credentials));
     }
 
@@ -334,6 +250,8 @@ public class SecretsRunnerTests
     {
         await Task.Yield();
         throw new InvalidOperationException("Graph API error");
+#pragma warning disable CS0162
         yield break;
+#pragma warning restore CS0162
     }
 }

@@ -27,8 +27,42 @@ public class AzureAppSecretController : ControllerBase
         _monitorService = monitorService;
     }
 
+    [HttpGet("registrations")]
+    [SwaggerOperation(Summary = "List app registrations registered for monitoring")]
+    [ProducesResponseType(typeof(IEnumerable<AzureAppRegistrationWatch>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetRegistrations()
+    {
+        return Ok(await _azureAppSecretService.GetRegistrationsAsync());
+    }
+
+    [HttpGet("discover")]
+    [SwaggerOperation(Summary = "Discover app registrations from Azure AD tenant")]
+    [ProducesResponseType(typeof(IEnumerable<AzureAppRegistrationSummary>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> DiscoverApplications()
+    {
+        return Ok(await _azureAppSecretService.DiscoverApplicationsAsync());
+    }
+
+    [HttpPost("registrations")]
+    [SwaggerOperation(Summary = "Register an app registration for secret expiry monitoring")]
+    [ProducesResponseType(typeof(AzureAppRegistrationWatch), StatusCodes.Status200OK)]
+    public async Task<IActionResult> RegisterApplication([FromBody] RegisterAzureAppRegistrationRequest request)
+    {
+        var result = await _azureAppSecretService.RegisterApplicationAsync(request);
+        return Ok(result);
+    }
+
+    [HttpDelete("registrations/{id}")]
+    [SwaggerOperation(Summary = "Unregister an app registration from monitoring")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> UnregisterApplication(int id)
+    {
+        await _azureAppSecretService.UnregisterApplicationAsync(id);
+        return Ok();
+    }
+
     [HttpGet]
-    [SwaggerOperation(Summary = "List all Azure app registration secrets")]
+    [SwaggerOperation(Summary = "List secrets for registered app registrations")]
     [ProducesResponseType(typeof(IEnumerable<AzureAppSecret>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSecrets([FromQuery] bool expiringOnly = false)
     {

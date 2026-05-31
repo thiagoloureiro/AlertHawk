@@ -41,6 +41,7 @@ namespace AlertHawk.Monitoring
             services.AddTransient<IMonitorHistoryRepository, MonitorHistoryRepository>();
             services.AddTransient<ISystemConfigurationRepository, SystemConfigurationRepository>();
             services.AddTransient<IAzureAppSecretRepository, AzureAppSecretRepository>();
+            services.AddTransient<IAzureAppRegistrationWatchRepository, AzureAppRegistrationWatchRepository>();
             services.AddTransient<IAzureSecretsSettingsProvider, AzureSecretsSettingsProvider>();
 
             return services;

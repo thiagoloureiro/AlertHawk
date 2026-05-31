@@ -46,6 +46,8 @@ public class AzureSecretsStatusSummary
     public string? MonitorName { get; set; }
 
     public int DaysBeforeExpiryToAlert { get; set; }
+
+    public int RegisteredAppsCount { get; set; }
 }
 
 [ExcludeFromCodeCoverage]
