@@ -260,6 +260,7 @@ recurringJobManager.AddOrUpdate<IMonitorManager>("CleanMonitorHistoryTask",
     x => x.CleanMonitorHistoryTask(), "0 0 * * *");
 
 var azureSecretsCron = configuration.GetValue<string>("AzureSecrets:Cron") ?? "0 */6 * * *";
+Console.WriteLine($"[AzureSecrets] Scheduling Hangfire job CheckAzureAppSecrets with cron: {azureSecretsCron}");
 recurringJobManager.AddOrUpdate<ISecretsRunner>("CheckAzureAppSecrets",
     x => x.CheckSecretsAsync(), azureSecretsCron);
 
