@@ -16,50 +16,6 @@ public class AzureGraphAppSecretsFetcher : IAzureAppSecretsFetcher
         _settingsProvider = settingsProvider;
     }
 
-    public async Task<IEnumerable<AzureAppRegistrationSummary>> DiscoverApplicationsAsync(
-        CancellationToken cancellationToken = default)
-    {
-        var graphClient = await CreateGraphClientAsync(cancellationToken);
-        var results = new List<AzureAppRegistrationSummary>();
-
-        var response = await graphClient.Applications.GetAsync(requestConfiguration =>
-        {
-            requestConfiguration.QueryParameters.Select = ["id", "displayName", "appId"];
-            requestConfiguration.QueryParameters.Top = 999;
-        }, cancellationToken);
-
-        while (response?.Value != null)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            foreach (var application in response.Value)
-            {
-                if (string.IsNullOrEmpty(application.Id))
-                {
-                    continue;
-                }
-
-                results.Add(new AzureAppRegistrationSummary
-                {
-                    ApplicationObjectId = application.Id,
-                    ApplicationDisplayName = application.DisplayName ?? "Unknown",
-                    AppId = application.AppId ?? string.Empty
-                });
-            }
-
-            if (string.IsNullOrEmpty(response.OdataNextLink))
-            {
-                break;
-            }
-
-            response = await graphClient.Applications
-                .WithUrl(response.OdataNextLink)
-                .GetAsync(cancellationToken: cancellationToken);
-        }
-
-        return results.OrderBy(a => a.ApplicationDisplayName);
-    }
-
     public async IAsyncEnumerable<AzurePasswordCredentialInfo> FetchPasswordCredentialsAsync(
         IReadOnlyCollection<string> applicationObjectIds,
         [System.Runtime.CompilerServices.EnumeratorCancellation]

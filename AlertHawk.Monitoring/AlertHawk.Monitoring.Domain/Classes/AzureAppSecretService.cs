@@ -1,5 +1,4 @@
 using AlertHawk.Monitoring.Domain.Entities;
-using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
@@ -13,10 +12,8 @@ public class AzureAppSecretService : IAzureAppSecretService
     private readonly IMonitorService _monitorService;
     private readonly IMonitorHistoryService _monitorHistoryService;
     private readonly IMonitorAlertService _monitorAlertService;
-    private readonly ISecretsRunner _secretsRunner;
     private readonly IMonitorGroupService _monitorGroupService;
     private readonly IAzureAppRegistrationWatchRepository _watchRepository;
-    private readonly IAzureAppSecretsFetcher _azureAppSecretsFetcher;
 
     public AzureAppSecretService(
         IAzureAppSecretRepository azureAppSecretRepository,
@@ -24,20 +21,16 @@ public class AzureAppSecretService : IAzureAppSecretService
         IMonitorService monitorService,
         IMonitorHistoryService monitorHistoryService,
         IMonitorAlertService monitorAlertService,
-        ISecretsRunner secretsRunner,
         IMonitorGroupService monitorGroupService,
-        IAzureAppRegistrationWatchRepository watchRepository,
-        IAzureAppSecretsFetcher azureAppSecretsFetcher)
+        IAzureAppRegistrationWatchRepository watchRepository)
     {
         _azureAppSecretRepository = azureAppSecretRepository;
         _settingsProvider = settingsProvider;
         _monitorService = monitorService;
         _monitorHistoryService = monitorHistoryService;
         _monitorAlertService = monitorAlertService;
-        _secretsRunner = secretsRunner;
         _monitorGroupService = monitorGroupService;
         _watchRepository = watchRepository;
-        _azureAppSecretsFetcher = azureAppSecretsFetcher;
     }
 
     public async Task<IEnumerable<AzureAppSecret>> GetSecretsAsync(bool expiringOnly = false)
@@ -90,20 +83,6 @@ public class AzureAppSecretService : IAzureAppSecretService
 
     public Task<IEnumerable<AzureAppRegistrationWatch>> GetRegistrationsAsync() =>
         _watchRepository.GetAllAsync(enabledOnly: false);
-
-    public async Task<IEnumerable<AzureAppRegistrationSummary>> DiscoverApplicationsAsync()
-    {
-        var registered = (await _watchRepository.GetAllAsync(enabledOnly: false))
-            .Select(w => w.ApplicationObjectId)
-            .ToHashSet();
-
-        var apps = await _azureAppSecretsFetcher.DiscoverApplicationsAsync();
-        return apps.Select(a =>
-        {
-            a.IsRegistered = registered.Contains(a.ApplicationObjectId);
-            return a;
-        });
-    }
 
     public async Task<AzureAppRegistrationWatch> RegisterApplicationAsync(RegisterAzureAppRegistrationRequest request)
     {
@@ -234,5 +213,4 @@ public class AzureAppSecretService : IAzureAppSecretService
         }
     }
 
-    public Task TriggerSyncAsync() => _secretsRunner.CheckSecretsAsync();
 }

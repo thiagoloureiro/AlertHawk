@@ -18,11 +18,7 @@ public interface IAzureAppSecretService
 
     Task<Entities.Monitor?> GetAnchorMonitorAsync();
 
-    Task TriggerSyncAsync();
-
     Task<IEnumerable<AzureAppRegistrationWatch>> GetRegistrationsAsync();
-
-    Task<IEnumerable<AzureAppRegistrationSummary>> DiscoverApplicationsAsync();
 
     Task<AzureAppRegistrationWatch> RegisterApplicationAsync(RegisterAzureAppRegistrationRequest request);
 

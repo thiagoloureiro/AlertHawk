@@ -35,14 +35,6 @@ public class AzureAppSecretController : ControllerBase
         return Ok(await _azureAppSecretService.GetRegistrationsAsync());
     }
 
-    [HttpGet("discover")]
-    [SwaggerOperation(Summary = "Discover app registrations from Azure AD tenant")]
-    [ProducesResponseType(typeof(IEnumerable<AzureAppRegistrationSummary>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> DiscoverApplications()
-    {
-        return Ok(await _azureAppSecretService.DiscoverApplicationsAsync());
-    }
-
     [HttpPost("registrations")]
     [SwaggerOperation(Summary = "Register an app registration for secret expiry monitoring")]
     [ProducesResponseType(typeof(AzureAppRegistrationWatch), StatusCodes.Status200OK)]
@@ -100,22 +92,6 @@ public class AzureAppSecretController : ControllerBase
 
         await _settingsProvider.UpdateConfigAsync(update);
         return Ok(await _settingsProvider.GetConfigDtoAsync());
-    }
-
-    [HttpPost("sync")]
-    [SwaggerOperation(Summary = "Trigger Azure secrets sync immediately (admin)")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> Sync()
-    {
-        if (!await IsUserAdmin())
-        {
-            return StatusCode(StatusCodes.Status403Forbidden,
-                new Message("Admin access required to trigger sync."));
-        }
-
-        await _azureAppSecretService.TriggerSyncAsync();
-        return Ok(new { message = "Azure secrets sync completed." });
     }
 
     [HttpGet("history/{days}")]
