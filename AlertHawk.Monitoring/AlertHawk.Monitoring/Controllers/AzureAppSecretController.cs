@@ -94,58 +94,6 @@ public class AzureAppSecretController : ControllerBase
         return Ok(await _settingsProvider.GetConfigDtoAsync());
     }
 
-    [HttpGet("history/{days}")]
-    [SwaggerOperation(Summary = "Check history for the Azure secrets anchor monitor")]
-    [ProducesResponseType(typeof(IEnumerable<MonitorHistory>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetHistory(int days = 7)
-    {
-        return Ok(await _azureAppSecretService.GetHistoryAsync(days));
-    }
-
-    [HttpGet("alerts/{days}")]
-    [SwaggerOperation(Summary = "Alerts for the Azure secrets anchor monitor")]
-    [ProducesResponseType(typeof(IEnumerable<MonitorAlert>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAlerts(int days = 30)
-    {
-        var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
-        if (jwtToken == null)
-        {
-            return BadRequest("Invalid Token");
-        }
-
-        return Ok(await _azureAppSecretService.GetAlertsAsync(days, jwtToken));
-    }
-
-    [HttpGet("monitor")]
-    [SwaggerOperation(Summary = "Get the anchor monitor used for notifications")]
-    [ProducesResponseType(typeof(Domain.Entities.Monitor), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetMonitor()
-    {
-        var monitor = await _azureAppSecretService.GetAnchorMonitorAsync();
-        return monitor == null ? NotFound() : Ok(monitor);
-    }
-
-    [HttpPost("monitor")]
-    [SwaggerOperation(Summary = "Create anchor monitor for Azure secrets notifications")]
-    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
-    public async Task<IActionResult> CreateMonitor([FromBody] AzureAppSecretMonitorRequest request)
-    {
-        var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
-        var monitorId = await _azureAppSecretService.CreateAnchorMonitorAsync(request, jwtToken);
-        return Ok(monitorId);
-    }
-
-    [HttpPut("monitor")]
-    [SwaggerOperation(Summary = "Update anchor monitor settings")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> UpdateMonitor([FromBody] AzureAppSecretMonitorUpdateRequest request)
-    {
-        var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
-        await _azureAppSecretService.UpdateAnchorMonitorAsync(request, jwtToken);
-        return Ok();
-    }
-
     private async Task<bool> IsUserAdmin()
     {
         var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());

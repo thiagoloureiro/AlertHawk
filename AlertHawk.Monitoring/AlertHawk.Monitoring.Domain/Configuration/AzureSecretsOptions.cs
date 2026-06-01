@@ -16,14 +16,9 @@ public class AzureSecretsOptions
     public string ClientSecret { get; set; } = string.Empty;
 
     /// <summary>
-    /// Alert when a secret expires within this many days.
+    /// Flag secrets as expiring when they expire within this many days.
     /// </summary>
     public int DaysBeforeExpiryToAlert { get; set; } = 30;
-
-    /// <summary>
-    /// Monitor used for notifications and alert history (must exist in Monitor table).
-    /// </summary>
-    public int MonitorId { get; set; }
 
     /// <summary>
     /// Hangfire cron expression for the secrets sync job.

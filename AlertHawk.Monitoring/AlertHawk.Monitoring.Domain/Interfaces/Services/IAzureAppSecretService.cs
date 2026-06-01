@@ -8,16 +8,6 @@ public interface IAzureAppSecretService
 
     Task<AzureSecretsStatusSummary> GetStatusAsync();
 
-    Task<IEnumerable<MonitorHistory>> GetHistoryAsync(int days);
-
-    Task<IEnumerable<MonitorAlert>> GetAlertsAsync(int days, string? jwtToken);
-
-    Task<int> CreateAnchorMonitorAsync(AzureAppSecretMonitorRequest request, string? jwtToken);
-
-    Task UpdateAnchorMonitorAsync(AzureAppSecretMonitorUpdateRequest request, string? jwtToken);
-
-    Task<Entities.Monitor?> GetAnchorMonitorAsync();
-
     Task<IEnumerable<AzureAppRegistrationWatch>> GetRegistrationsAsync();
 
     Task<AzureAppRegistrationWatch> RegisterApplicationAsync(RegisterAzureAppRegistrationRequest request);

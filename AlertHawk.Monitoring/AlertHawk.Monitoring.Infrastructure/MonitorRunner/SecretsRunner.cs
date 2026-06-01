@@ -1,7 +1,5 @@
-using AlertHawk.Monitoring.Domain.Classes;
 using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
-using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Domain.Interfaces.Services;
 using Microsoft.Extensions.Logging;
@@ -14,10 +12,6 @@ public class SecretsRunner : ISecretsRunner
     private readonly IAzureAppSecretsFetcher _azureAppSecretsFetcher;
     private readonly IAzureAppSecretRepository _azureAppSecretRepository;
     private readonly IAzureAppRegistrationWatchRepository _watchRepository;
-    private readonly IMonitorRepository _monitorRepository;
-    private readonly INotificationProducer _notificationProducer;
-    private readonly IMonitorAlertRepository _monitorAlertRepository;
-    private readonly IMonitorHistoryRepository _monitorHistoryRepository;
     private readonly ISystemConfigurationRepository _systemConfigurationRepository;
     private readonly ILogger<SecretsRunner> _logger;
 
@@ -26,10 +20,6 @@ public class SecretsRunner : ISecretsRunner
         IAzureAppSecretsFetcher azureAppSecretsFetcher,
         IAzureAppSecretRepository azureAppSecretRepository,
         IAzureAppRegistrationWatchRepository watchRepository,
-        IMonitorRepository monitorRepository,
-        INotificationProducer notificationProducer,
-        IMonitorAlertRepository monitorAlertRepository,
-        IMonitorHistoryRepository monitorHistoryRepository,
         ISystemConfigurationRepository systemConfigurationRepository,
         ILogger<SecretsRunner> logger)
     {
@@ -37,10 +27,6 @@ public class SecretsRunner : ISecretsRunner
         _azureAppSecretsFetcher = azureAppSecretsFetcher;
         _azureAppSecretRepository = azureAppSecretRepository;
         _watchRepository = watchRepository;
-        _monitorRepository = monitorRepository;
-        _notificationProducer = notificationProducer;
-        _monitorAlertRepository = monitorAlertRepository;
-        _monitorHistoryRepository = monitorHistoryRepository;
         _systemConfigurationRepository = systemConfigurationRepository;
         _logger = logger;
     }
@@ -53,10 +39,9 @@ public class SecretsRunner : ISecretsRunner
         var options = await _settingsProvider.GetSettingsAsync();
 
         _logger.LogInformation(
-            "[AzureSecrets][{RunId}] Resolved settings: Enabled={Enabled}, MonitorId={MonitorId}, DaysBeforeExpiryToAlert={Days}, Cron={Cron}, TenantId={TenantId}, ClientId={ClientId}, HasClientSecret={HasSecret}",
+            "[AzureSecrets][{RunId}] Resolved settings: Enabled={Enabled}, DaysBeforeExpiryToAlert={Days}, Cron={Cron}, TenantId={TenantId}, ClientId={ClientId}, HasClientSecret={HasSecret}",
             runId,
             options.Enabled,
-            options.MonitorId,
             options.DaysBeforeExpiryToAlert,
             options.Cron,
             options.TenantId,
@@ -72,12 +57,6 @@ public class SecretsRunner : ISecretsRunner
         if (await _systemConfigurationRepository.IsMonitorExecutionDisabled())
         {
             _logger.LogInformation("[AzureSecrets][{RunId}] Job exiting: monitor execution is disabled (maintenance).", runId);
-            return;
-        }
-
-        if (options.MonitorId <= 0)
-        {
-            _logger.LogWarning("[AzureSecrets][{RunId}] Job exiting: MonitorId is not configured.", runId);
             return;
         }
 
@@ -112,25 +91,8 @@ public class SecretsRunner : ISecretsRunner
                 app.AppId);
         }
 
-        var monitor = await _monitorRepository.GetMonitorById(options.MonitorId);
-        if (monitor == null)
-        {
-            _logger.LogWarning("[AzureSecrets][{RunId}] Job exiting: anchor monitor {MonitorId} not found.", runId, options.MonitorId);
-            return;
-        }
-
-        _logger.LogInformation(
-            "[AzureSecrets][{RunId}] Anchor monitor loaded: Id={MonitorId}, Name={Name}, LastStatus={Status}",
-            runId,
-            monitor.Id,
-            monitor.Name,
-            monitor.Status);
-
-        var lastStatus = monitor.Status;
-        var expiringSecrets = new List<AzureAppSecret>();
-        var newlyExpiringSecrets = new List<AzureAppSecret>();
-        var recoveredSecrets = new List<AzureAppSecret>();
         var credentialsFetched = 0;
+        var expiringCount = 0;
         var now = DateTime.UtcNow;
         var registeredObjectIds = registeredApps.Select(a => a.ApplicationObjectId).ToList();
 
@@ -153,7 +115,6 @@ public class SecretsRunner : ISecretsRunner
                 var daysUntilExpiry = (int)Math.Ceiling((credential.EndDateTime.UtcDateTime - now).TotalDays);
                 var isExpiring = daysUntilExpiry <= options.DaysBeforeExpiryToAlert;
                 var lookupKey = $"{credential.ApplicationObjectId}:{credential.KeyId}";
-                var previouslyExpiring = existingSecrets.TryGetValue(lookupKey, out var existing) && existing.IsExpiring;
 
                 _logger.LogInformation(
                     "[AzureSecrets][{RunId}] Processing secret: {App} | keyId={KeyId} | daysUntilExpiry={Days} | isExpiring={IsExpiring}",
@@ -181,73 +142,18 @@ public class SecretsRunner : ISecretsRunner
 
                 if (isExpiring)
                 {
-                    expiringSecrets.Add(secret);
-                    if (!previouslyExpiring)
-                    {
-                        newlyExpiringSecrets.Add(secret);
-                    }
-                }
-                else if (previouslyExpiring)
-                {
-                    recoveredSecrets.Add(secret);
+                    expiringCount++;
                 }
             }
 
             _logger.LogInformation(
-                "[AzureSecrets][{RunId}] Graph returned {CredentialCount} credential(s). Upserted to database.",
+                "[AzureSecrets][{RunId}] Graph returned {CredentialCount} credential(s). Upserted to database. Expiring={Expiring}",
                 runId,
-                credentialsFetched);
+                credentialsFetched,
+                expiringCount);
 
             await _azureAppSecretRepository.DeleteExceptApplicationObjectIdsAsync(registeredObjectIds);
             _logger.LogInformation("[AzureSecrets][{RunId}] Removed stale secrets for unregistered apps.", runId);
-
-            var succeeded = expiringSecrets.Count == 0;
-            var responseMessage = SecretsRunnerMessages.BuildResponseMessage(expiringSecrets, succeeded);
-
-            _logger.LogInformation(
-                "[AzureSecrets][{RunId}] Check result: succeeded={Succeeded}, expiring={Expiring}, newlyExpiring={New}, recovered={Recovered}",
-                runId,
-                succeeded,
-                expiringSecrets.Count,
-                newlyExpiringSecrets.Count,
-                recoveredSecrets.Count);
-
-            var monitorHistory = new MonitorHistory
-            {
-                MonitorId = monitor.Id,
-                Status = succeeded,
-                TimeStamp = now,
-                ResponseMessage = responseMessage
-            };
-
-            await _monitorRepository.UpdateMonitorStatus(monitor.Id, succeeded, 0);
-            await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
-
-            if (!succeeded && lastStatus)
-            {
-                _logger.LogInformation("[AzureSecrets][{RunId}] Sending failed notification (healthy → alert).", runId);
-                await _notificationProducer.HandleFailedSecretsNotifications(monitor, responseMessage);
-                await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
-            }
-            else if (succeeded && !lastStatus)
-            {
-                _logger.LogInformation("[AzureSecrets][{RunId}] Sending success notification (alert → healthy).", runId);
-                await _notificationProducer.HandleSuccessSecretsNotifications(monitor,
-                    "All Azure app registration secrets are within the expiry threshold.");
-                await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
-            }
-            else if (newlyExpiringSecrets.Count > 0)
-            {
-                _logger.LogInformation("[AzureSecrets][{RunId}] Sending notification for newly expiring secret(s).", runId);
-                var alertMessage = SecretsRunnerMessages.BuildNewlyExpiringMessage(newlyExpiringSecrets);
-                await _notificationProducer.HandleFailedSecretsNotifications(monitor, alertMessage);
-            }
-            else if (recoveredSecrets.Count > 0 && succeeded)
-            {
-                _logger.LogInformation("[AzureSecrets][{RunId}] Sending recovery notification.", runId);
-                var recoveryMessage = SecretsRunnerMessages.BuildRecoveredMessage(recoveredSecrets);
-                await _notificationProducer.HandleSuccessSecretsNotifications(monitor, recoveryMessage);
-            }
 
             _logger.LogInformation(
                 "[AzureSecrets][{RunId}] Job completed successfully at {UtcNow}.",
@@ -257,24 +163,6 @@ public class SecretsRunner : ISecretsRunner
         catch (Exception ex)
         {
             _logger.LogError(ex, "[AzureSecrets][{RunId}] Job failed: {Message}", runId, ex.Message);
-
-            var monitorHistory = new MonitorHistory
-            {
-                MonitorId = monitor.Id,
-                Status = false,
-                TimeStamp = now,
-                ResponseMessage = $"Failed to check Azure secrets: {ex.Message}"
-            };
-
-            await _monitorHistoryRepository.SaveMonitorHistory(monitorHistory);
-            await _monitorRepository.UpdateMonitorStatus(monitor.Id, false, 0);
-
-            if (lastStatus)
-            {
-                await _notificationProducer.HandleFailedSecretsNotifications(monitor, monitorHistory.ResponseMessage);
-                await _monitorAlertRepository.SaveMonitorAlert(monitorHistory, monitor.MonitorEnvironment);
-            }
-
             SentrySdk.CaptureException(ex);
         }
     }

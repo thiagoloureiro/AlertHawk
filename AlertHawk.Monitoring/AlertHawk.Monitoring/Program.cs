@@ -47,8 +47,6 @@ var queueType = configuration.GetValue<string>("QueueType") ?? "RABBITMQ";
 var serviceBusConnectionString = configuration.GetValue<string>("ServiceBus:ConnectionString");
 var serviceBusQueueName = configuration.GetValue<string>("ServiceBus:QueueName");
 
-var cacheFrequency = configuration.GetValue<string>("DataCacheFrequencyCron") ?? "*/2 * * * *";
-
 if (string.Equals(sentryEnabled, "true", StringComparison.InvariantCultureIgnoreCase))
 {
     builder.WebHost.UseSentry(options =>
@@ -254,7 +252,7 @@ recurringJobManager.AddOrUpdate<IMonitorManager>("StartMasterMonitorAgentTaskMan
 recurringJobManager.AddOrUpdate<IMonitorManager>("StartRunnerManager", x => x.StartRunnerManager(), "*/25 * * * * *");
 
 recurringJobManager.AddOrUpdate<IMonitorService>("SetMonitorDashboardDataCacheList",
-    x => x.SetMonitorDashboardDataCacheList(), cacheFrequency);
+    x => x.SetMonitorDashboardDataCacheList(), "*/2 * * * *");
 
 recurringJobManager.AddOrUpdate<IMonitorManager>("CleanMonitorHistoryTask",
     x => x.CleanMonitorHistoryTask(), "0 0 * * *");
