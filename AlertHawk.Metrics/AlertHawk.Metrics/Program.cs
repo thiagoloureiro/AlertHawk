@@ -24,7 +24,7 @@ try
         // A Sentry Data Source Name (DSN) is required.
         // See https://docs.sentry.io/product/sentry-basics/dsn-explainer/
         // You can set it in the SENTRY_DSN environment variable, or you can set it in code here.
-        options.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN") ?? "https://7539147312d4c51ccf970c6ddd0f15ca@o418696.ingest.us.sentry.io/4510386963283968";
+        options.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
 
         // When debug is enabled, the Sentry client will emit detailed debugging information to the console.
         // This might be helpful, or might interfere with the normal operation of your application.
