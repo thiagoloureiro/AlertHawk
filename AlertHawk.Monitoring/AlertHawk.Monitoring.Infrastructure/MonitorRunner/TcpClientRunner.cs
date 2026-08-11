@@ -65,14 +65,19 @@ public class TcpClientRunner : ITcpClientRunner
                 else
                 {
                     retries++;
-                    continue;
+                    if (retries < monitorTcp.Retries)
+                    {
+                        await Task.Delay(retryIntervalMilliseconds);
+                    }
                 }
             }
             catch (Exception)
             {
                 retries++;
-                // Wait for the specified interval before retrying
-                Thread.Sleep(retryIntervalMilliseconds);
+                if (retries < monitorTcp.Retries)
+                {
+                    await Task.Delay(retryIntervalMilliseconds);
+                }
             }
         }
 

@@ -29,6 +29,9 @@ public class Startup
         services.AddEasyCache(configuration.GetSection("CacheSettings").Get<CacheSettings>());
 
         services.AddHangfire(config => config.UseInMemoryStorage());
+        services.AddHttpClient();
+        services.AddMonitorHttpClients();
+        services.AddLogging();
 
         services.AddTransient<IMonitorTypeService, MonitorTypeService>();
         services.AddTransient<IMonitorService, MonitorService>();

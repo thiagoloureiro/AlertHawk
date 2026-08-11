@@ -195,8 +195,9 @@ builder.Services.AddResponseCompression(options =>
         new[] { "application/json" }); // Compress JSON responses
 });
 
-// Add HttpClientFactory
+// Add HttpClientFactory (default + named clients used by monitor runners)
 builder.Services.AddHttpClient();
+builder.Services.AddMonitorHttpClients();
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.DefaultIgnoreCondition =

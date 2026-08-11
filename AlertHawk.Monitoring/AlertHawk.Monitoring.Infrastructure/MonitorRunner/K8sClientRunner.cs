@@ -74,7 +74,7 @@ public class K8sClientRunner : IK8sClientRunner
                     _logger.LogInformation($"K8s check failed with message: {responseMessage}");
                     monitorHistory.ResponseMessage = responseMessage;
                     retryCount++;
-                    Thread.Sleep(_retryIntervalMilliseconds);
+                    await Task.Delay(_retryIntervalMilliseconds);
 
                     if (retryCount == maxRetries)
                     {
@@ -183,7 +183,7 @@ public class K8sClientRunner : IK8sClientRunner
                 else
                 {
                     // Wait before retrying
-                    Thread.Sleep(_retryIntervalMilliseconds);
+                    await Task.Delay(_retryIntervalMilliseconds);
                 }
             }
         }

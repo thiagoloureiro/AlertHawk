@@ -3,6 +3,8 @@ using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
 using AlertHawk.Monitoring.Infrastructure.MonitorRunner;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using System.Net;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
@@ -29,7 +31,19 @@ namespace AlertHawk.Monitoring.Tests.RunnerTests
             // Setup default behavior: monitors are enabled
             _systemConfigurationRepository.IsMonitorExecutionDisabled().Returns(Task.FromResult(false));
 
-            _httpClientRunner = new HttpClientRunner(_monitorRepository, _notificationProducer, _monitorAlertRepository, _monitorHistoryRepository, _systemConfigurationRepository);
+            var services = new ServiceCollection();
+            services.AddMonitorHttpClients();
+            services.AddLogging();
+            var serviceProvider = services.BuildServiceProvider();
+
+            _httpClientRunner = new HttpClientRunner(
+                _monitorRepository,
+                _notificationProducer,
+                _monitorAlertRepository,
+                _monitorHistoryRepository,
+                _systemConfigurationRepository,
+                serviceProvider.GetRequiredService<IHttpClientFactory>(),
+                serviceProvider.GetRequiredService<ILogger<HttpClientRunner>>());
         }
 
         [Theory]

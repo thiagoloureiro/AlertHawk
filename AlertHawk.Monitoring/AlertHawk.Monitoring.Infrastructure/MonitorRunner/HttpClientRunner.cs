@@ -7,34 +7,42 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 
 namespace AlertHawk.Monitoring.Infrastructure.MonitorRunner;
 
 public class HttpClientRunner : IHttpClientRunner
 {
+    public const string DefaultHttpClientName = "AlertHawk.MonitorHttp";
+    public const string InsecureHttpClientName = "AlertHawk.MonitorHttp.Insecure";
+
     private readonly IMonitorRepository _monitorRepository;
     private readonly INotificationProducer _notificationProducer;
     private readonly IMonitorAlertRepository _monitorAlertRepository;
     private readonly IMonitorHistoryRepository _monitorHistoryRepository;
     private readonly ISystemConfigurationRepository _systemConfigurationRepository;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<HttpClientRunner> _logger;
     private int _daysToExpireCert;
     private readonly int _retryIntervalMilliseconds = 6000;
-    private readonly ILogger<HttpClientRunner> _logger;
 
     public HttpClientRunner(IMonitorRepository monitorRepository,
         INotificationProducer notificationProducer, IMonitorAlertRepository monitorAlertRepository,
-        IMonitorHistoryRepository monitorHistoryRepository, ISystemConfigurationRepository systemConfigurationRepository)
+        IMonitorHistoryRepository monitorHistoryRepository, ISystemConfigurationRepository systemConfigurationRepository,
+        IHttpClientFactory httpClientFactory, ILogger<HttpClientRunner> logger)
     {
         _monitorRepository = monitorRepository;
         _notificationProducer = notificationProducer;
         _monitorAlertRepository = monitorAlertRepository;
         _monitorHistoryRepository = monitorHistoryRepository;
         _systemConfigurationRepository = systemConfigurationRepository;
+        _httpClientFactory = httpClientFactory;
+        _logger = logger;
         _retryIntervalMilliseconds = Environment.GetEnvironmentVariable("HTTP_RETRY_INTERVAL_MS") != null
-            ? int.Parse(Environment.GetEnvironmentVariable("HTTP_RETRY_INTERVAL_MS"))
+            ? int.Parse(Environment.GetEnvironmentVariable("HTTP_RETRY_INTERVAL_MS")!)
             : 6000;
-        _logger = new LoggerFactory().CreateLogger<HttpClientRunner>();
     }
 
     public async Task CheckUrlsAsync(MonitorHttp monitorHttp)
@@ -123,7 +131,7 @@ public class HttpClientRunner : IHttpClientRunner
                     }
                     
                     retryCount++;
-                    Thread.Sleep(_retryIntervalMilliseconds);
+                    await Task.Delay(_retryIntervalMilliseconds);
 
                     if (retryCount == maxRetries)
                     {
@@ -201,116 +209,185 @@ public class HttpClientRunner : IHttpClientRunner
                     break;
                 }
 
-                Thread.Sleep(_retryIntervalMilliseconds);
+                await Task.Delay(_retryIntervalMilliseconds);
+            }
+            finally
+            {
+                response.Dispose();
             }
         }
     }
 
     public async Task<HttpResponseMessage> MakeHttpClientCall(MonitorHttp monitorHttp)
     {
-        var notAfter = DateTime.UtcNow;
-
-        using HttpClientHandler handler = new HttpClientHandler();
+        // CheckCertExpiry needs a handler that can capture expiry days via a local (Ssl callbacks
+        // do not reliably share AsyncLocal with the calling async flow). All other paths use
+        // IHttpClientFactory so connections are pooled across checks/retries.
         if (monitorHttp.CheckCertExpiry)
         {
-            handler.ServerCertificateCustomValidationCallback = (request, cert, chain, policyErrors) =>
-            {
-                if (cert != null) notAfter = cert.NotAfter;
-                _daysToExpireCert = (notAfter - DateTime.UtcNow).Days;
-                return true;
-            };
+            return await MakeHttpClientCallWithCertExpiryCheck(monitorHttp);
         }
 
-        if (monitorHttp.IgnoreTlsSsl)
-        {
-            handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
-        }
+        var clientName = monitorHttp.IgnoreTlsSsl
+            ? InsecureHttpClientName
+            : DefaultHttpClientName;
 
-        // Set the maximum number of automatic redirects
-        handler.MaxAutomaticRedirections = monitorHttp.MaxRedirects;
+        var client = _httpClientFactory.CreateClient(clientName);
+        client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
 
-        HttpClient? client = null;
         try
         {
-            client = new HttpClient(handler);
-            client.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
-            client.DefaultRequestHeaders.Add("Accept-Encoding", "br");
-            client.DefaultRequestHeaders.Add("Connection", "keep-alive");
-            client.DefaultRequestHeaders.Add("Accept", "*/*");
-
-            if (monitorHttp.Headers != null)
-            {
-                var newHeaders = monitorHttp.Headers;
-                foreach (var header in newHeaders)
-                {
-                    client.DefaultRequestHeaders.Add(header.Item1, header.Item2);
-                }
-            }
-
-            StringContent? content = null;
-
-            if (!string.IsNullOrEmpty(monitorHttp.Body))
-            {
-                try
-                {
-                    JsonDocument.Parse(monitorHttp.Body); // Throws if invalid
-                    content = new StringContent(monitorHttp.Body, System.Text.Encoding.UTF8, "application/json");
-                }
-                catch (JsonException err)
-                {
-                    // Log and reject
-                    _logger.LogError("Invalid JSON input: {message}", err.Message);
-                }
-            }
-
-            client.Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout);
-
-            var sw = new Stopwatch();
-            sw.Start();
-            HttpResponseMessage? response = null;
-
-            response = monitorHttp.MonitorHttpMethod switch
-            {
-                MonitorHttpMethod.Get => await client.GetAsync(monitorHttp.UrlToCheck),
-                MonitorHttpMethod.Post => await client.PostAsync(monitorHttp.UrlToCheck, content),
-                MonitorHttpMethod.Put => await client.PutAsync(monitorHttp.UrlToCheck, content),
-                _ => throw new ArgumentOutOfRangeException()
-            };
-
-            var elapsed = sw.ElapsedMilliseconds;
-            monitorHttp.ResponseTime = (int)elapsed;
-            sw.Stop();
-
-            monitorHttp.ResponseStatusCode = response.StatusCode;
-            monitorHttp.HttpVersion = response.Version.ToString();
-            return response;
+            return await SendRequestAsync(client, monitorHttp);
         }
-        // catch if System.Net.Http.HttpRequestException
         catch (HttpRequestException httpRequestException)
         {
             _logger.LogError("HTTP Request error: {message}", httpRequestException.Message);
-            client?.Dispose();
             return new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.ServiceUnavailable,
-                ReasonPhrase = httpRequestException.Message
+                ReasonPhrase = SanitizeReasonPhrase(httpRequestException.Message)
             };
         }
         catch (Exception err)
         {
             _logger.LogError("Error making HTTP call: {message}", err.Message);
-            client?.Dispose();
+            return new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError,
+                ReasonPhrase = "Internal Server Error"
+            };
         }
-        finally
+    }
+
+    private async Task<HttpResponseMessage> MakeHttpClientCallWithCertExpiryCheck(MonitorHttp monitorHttp)
+    {
+        var daysToExpire = 0;
+        var maxRedirects = monitorHttp.MaxRedirects is > 0 and <= 50 ? monitorHttp.MaxRedirects : 50;
+
+        using var handler = new HttpClientHandler
         {
-            client?.Dispose();
+            MaxAutomaticRedirections = maxRedirects,
+            AllowAutoRedirect = maxRedirects > 0,
+            // CheckCertExpiry previously always accepted the cert (callback returned true).
+            ServerCertificateCustomValidationCallback = (_, cert, _, _) =>
+            {
+                if (cert != null)
+                {
+                    daysToExpire = (cert.NotAfter - DateTime.UtcNow).Days;
+                }
+
+                return true;
+            }
+        };
+
+        using var client = new HttpClient(handler)
+        {
+            Timeout = TimeSpan.FromSeconds(monitorHttp.Timeout)
+        };
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("AlertHawk/1.0.1");
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "br");
+        client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "*/*");
+
+        try
+        {
+            var response = await SendRequestAsync(client, monitorHttp);
+            _daysToExpireCert = daysToExpire;
+            return response;
+        }
+        catch (HttpRequestException httpRequestException)
+        {
+            _daysToExpireCert = daysToExpire;
+            _logger.LogError("HTTP Request error: {message}", httpRequestException.Message);
+            return new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.ServiceUnavailable,
+                ReasonPhrase = SanitizeReasonPhrase(httpRequestException.Message)
+            };
+        }
+        catch (Exception err)
+        {
+            _daysToExpireCert = daysToExpire;
+            _logger.LogError("Error making HTTP call: {message}", err.Message);
+            return new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError,
+                ReasonPhrase = "Internal Server Error"
+            };
+        }
+    }
+
+    private async Task<HttpResponseMessage> SendRequestAsync(HttpClient client, MonitorHttp monitorHttp)
+    {
+        using var request = CreateHttpRequest(monitorHttp);
+
+        var sw = Stopwatch.StartNew();
+        var response = await client.SendAsync(request);
+        sw.Stop();
+
+        monitorHttp.ResponseTime = (int)sw.ElapsedMilliseconds;
+        monitorHttp.ResponseStatusCode = response.StatusCode;
+        monitorHttp.HttpVersion = response.Version.ToString();
+        return response;
+    }
+
+    private HttpRequestMessage CreateHttpRequest(MonitorHttp monitorHttp)
+    {
+        var method = monitorHttp.MonitorHttpMethod switch
+        {
+            MonitorHttpMethod.Get => HttpMethod.Get,
+            MonitorHttpMethod.Post => HttpMethod.Post,
+            MonitorHttpMethod.Put => HttpMethod.Put,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        var request = new HttpRequestMessage(method, monitorHttp.UrlToCheck);
+
+        if (!string.IsNullOrEmpty(monitorHttp.Body) && method != HttpMethod.Get)
+        {
+            try
+            {
+                JsonDocument.Parse(monitorHttp.Body); // Throws if invalid
+                request.Content = new StringContent(monitorHttp.Body, System.Text.Encoding.UTF8, "application/json");
+            }
+            catch (JsonException err)
+            {
+                _logger.LogError("Invalid JSON input: {message}", err.Message);
+            }
         }
 
-        return new HttpResponseMessage
+        if (monitorHttp.Headers != null)
         {
-            StatusCode = HttpStatusCode.InternalServerError,
-            ReasonPhrase = "Internal Server Error"
-        };
+            foreach (var header in monitorHttp.Headers)
+            {
+                if (!request.Headers.TryAddWithoutValidation(header.Item1, header.Item2))
+                {
+                    request.Content?.Headers.TryAddWithoutValidation(header.Item1, header.Item2);
+                }
+            }
+        }
+
+        return request;
+    }
+
+    /// <summary>
+    /// SSL callback for the shared insecure named client (IgnoreTlsSsl path).
+    /// </summary>
+    public static bool InsecureCertificateValidationCallback(
+        object sender,
+        X509Certificate? certificate,
+        X509Chain? chain,
+        SslPolicyErrors sslPolicyErrors) => true;
+
+    private static string SanitizeReasonPhrase(string message)
+    {
+        // HttpResponseMessage.ReasonPhrase rejects CR/LF and very long values.
+        if (string.IsNullOrEmpty(message))
+        {
+            return "Request failed";
+        }
+
+        var sanitized = message.Replace('\r', ' ').Replace('\n', ' ');
+        return sanitized.Length > 512 ? sanitized[..512] : sanitized;
     }
 
     public MonitorHttpHeaders CheckHttpHeaders(HttpResponseMessage response)
