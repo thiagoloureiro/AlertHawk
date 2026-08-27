@@ -10,6 +10,12 @@ public sealed class AnalysisJobService : IAnalysisJobService
     private static readonly TimeSpan JobTtl = TimeSpan.FromHours(24);
     private static readonly int MaxJobs = 500;
 
+    /// <summary>
+    /// Only one subscription analysis runs at a time to avoid Cost Management 429 storms
+    /// when multiple start-async jobs overlap.
+    /// </summary>
+    private static readonly SemaphoreSlim AnalysisGate = new(1, 1);
+
     private readonly ConcurrentDictionary<Guid, JobEntry> _jobs = new();
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<AnalysisJobService> _logger;
@@ -57,13 +63,14 @@ public sealed class AnalysisJobService : IAnalysisJobService
 
     private async Task RunAsync(JobEntry entry)
     {
-        lock (entry.Gate)
-        {
-            entry.Phase = AnalysisJobPhase.Running;
-        }
-
+        await AnalysisGate.WaitAsync().ConfigureAwait(false);
         try
         {
+            lock (entry.Gate)
+            {
+                entry.Phase = AnalysisJobPhase.Running;
+            }
+
             await using var scope = _scopeFactory.CreateAsyncScope();
             var orchestration = scope.ServiceProvider.GetRequiredService<IAnalysisOrchestrationService>();
             var result = await orchestration.RunAnalysisForSingleSubscriptionAsync(entry.SubscriptionId);
@@ -86,6 +93,10 @@ public sealed class AnalysisJobService : IAnalysisJobService
                 entry.HostErrorDetails = ex.ToString();
                 entry.CompletedAt = DateTimeOffset.UtcNow;
             }
+        }
+        finally
+        {
+            AnalysisGate.Release();
         }
     }
 

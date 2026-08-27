@@ -72,10 +72,7 @@ namespace FinOpsToolSample.Services
 
                 var jsonPayload = JsonSerializer.Serialize(queryPayload);
 
-                using var httpClient = new HttpClient();
-                httpClient.DefaultRequestHeaders.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token.Token);
-
+                var httpClient = AzureManagementHttp.Shared;
                 var url = $"https://management.azure.com/subscriptions/{subscriptionId}/providers/Microsoft.CostManagement/query?api-version=2023-11-01";
 
                 var historicalData = new List<HistoricalCostData>();
@@ -84,16 +81,17 @@ namespace FinOpsToolSample.Services
 
                 do
                 {
-                    // ARM rate limits are shared; spacing pages reduces 429s vs back-to-back POSTs.
+                    // Cost Management is strict: wait between pages (especially after a full 5k page).
                     await PaceBeforeCostQueryPageAsync(pageCount == 0, CancellationToken.None);
                     pageCount++;
-                    var requestUrl = string.IsNullOrEmpty(skipToken) 
-                        ? url 
+                    var requestUrl = string.IsNullOrEmpty(skipToken)
+                        ? url
                         : $"{url}&$skiptoken={Uri.EscapeDataString(skipToken)}";
 
-                    using var response = await AzureThrottledRequestRetry.SendPostWithRetryAsync(
+                    using var response = await AzureThrottledRequestRetry.SendCostManagementPostWithRetryAsync(
                         httpClient,
                         requestUrl,
+                        token.Token,
                         () => new StringContent(jsonPayload, Encoding.UTF8, "application/json"));
 
                     if (!response.IsSuccessStatusCode)
@@ -116,6 +114,15 @@ namespace FinOpsToolSample.Services
 
                     skipToken = HistoricalCostQueryResponseParser.TryGetNextSkipToken(properties);
 
+                    // Full pages almost always mean another request is coming — give ARM breathing room.
+                    if (!string.IsNullOrEmpty(skipToken) && rowCount >= 5000)
+                    {
+                        var coolDown = TimeSpan.FromSeconds(20 + Random.Shared.Next(0, 10));
+                        Console.WriteLine(
+                            $"⏳ Full page received; cooling down {coolDown.TotalSeconds:0}s before next Cost Management page...");
+                        await Task.Delay(coolDown).ConfigureAwait(false);
+                    }
+
                 } while (!string.IsNullOrEmpty(skipToken));
 
                 Console.WriteLine($"✅ Fetched {historicalData.Count} historical cost records across {pageCount} page(s)");
@@ -123,7 +130,7 @@ namespace FinOpsToolSample.Services
                 // Show summary
                 var totalCost = historicalData.Sum(h => h.Cost);
                 var dateRange = historicalData.GroupBy(h => h.Date.Date).Count();
-                
+
                 Console.WriteLine($"   Total Cost: ${totalCost:F2}");
                 Console.WriteLine($"   Days Covered: {dateRange}");
                 Console.WriteLine();
@@ -140,9 +147,14 @@ namespace FinOpsToolSample.Services
 
         private static Task PaceBeforeCostQueryPageAsync(bool isFirstPage, CancellationToken cancellationToken)
         {
+            // Cost Management Query often allows only a few QPS; sub-second pacing is not enough.
             var ms = isFirstPage
-                ? 300 + Random.Shared.Next(0, 400)
-                : 450 + Random.Shared.Next(0, 550);
+                ? 2000 + Random.Shared.Next(0, 2000)
+                : 8000 + Random.Shared.Next(0, 4000);
+            Console.WriteLine(
+                isFirstPage
+                    ? $"⏳ Waiting {ms / 1000.0:0.#}s before first historical Cost Management query..."
+                    : $"⏳ Waiting {ms / 1000.0:0.#}s before next historical Cost Management page...");
             return Task.Delay(TimeSpan.FromMilliseconds(ms), cancellationToken);
         }
     }

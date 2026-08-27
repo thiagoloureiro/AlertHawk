@@ -181,7 +181,7 @@ namespace FinOpsToolSample.Services
                 var costService = new CostManagementService(credential);
                 var historicalCostService = new HistoricalCostService(credential);
                 var dataCollector = new DataCollectionService();
-                var AIService = new AIRecommendationService(_AIConfig.ApiKey, _AIConfig.ApiUrl, _AIConfig.ApiKeyHeaderName);
+                using var AIService = new AIRecommendationService(_AIConfig.ApiKey, _AIConfig.ApiUrl, _AIConfig.ApiKeyHeaderName);
 
                 // Get subscription info
                 var subscriptionData = await AzureThrottledRequestRetry.ExecuteAsync(
@@ -197,6 +197,12 @@ namespace FinOpsToolSample.Services
 
                 // Set cost data in collector
                 dataCollector.SetCostData(totalCost, costsByResourceGroup, costsByService);
+
+                // Cost Management shares a tight QPS budget with historical query — pause between calls.
+                var gap = TimeSpan.FromSeconds(15 + Random.Shared.Next(0, 10));
+                Console.WriteLine(
+                    $"⏳ Waiting {gap.TotalSeconds:0}s before historical Cost Management query (rate-limit pacing)...");
+                await Task.Delay(gap).ConfigureAwait(false);
 
                 // Fetch Historical Costs (last 6 months)
                 var historicalCosts = await historicalCostService.FetchHistoricalCostsAsync(subscription, months: 6);

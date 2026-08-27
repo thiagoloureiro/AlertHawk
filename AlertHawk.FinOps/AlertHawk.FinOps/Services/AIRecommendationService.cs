@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace FinOpsToolSample.Services
 {
-    public class AIRecommendationService
+    public class AIRecommendationService : IDisposable
     {
         private const int MaxAttempts = 3;
         private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(600);
@@ -18,6 +18,7 @@ namespace FinOpsToolSample.Services
         private readonly string _apiKey;
         private readonly string _apiUrl;
         private readonly HttpClient _httpClient;
+        private readonly bool _ownsHttpClient;
 
         public AIRecommendationService(
             string apiKey,
@@ -27,6 +28,7 @@ namespace FinOpsToolSample.Services
         {
             _apiKey = apiKey;
             _apiUrl = apiUrl;
+            _ownsHttpClient = httpClient is null;
             _httpClient = httpClient ?? new HttpClient();
             _httpClient.Timeout = RequestTimeout;
             _httpClient.DefaultRequestHeaders.TryAddWithoutValidation(apiKeyHeaderName, _apiKey);
@@ -34,6 +36,14 @@ namespace FinOpsToolSample.Services
             _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "br");
             _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Connection", "keep-alive");
             _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "*/*");
+        }
+
+        public void Dispose()
+        {
+            if (_ownsHttpClient)
+            {
+                _httpClient.Dispose();
+            }
         }
 
         public async Task<(string recommendations, AIApiResponse? response)> GetRecommendationsAsync(AzureResourceData data)

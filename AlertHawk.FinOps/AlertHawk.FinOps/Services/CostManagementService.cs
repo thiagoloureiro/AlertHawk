@@ -63,14 +63,12 @@ namespace FinOpsToolSample.Services
 
                 var jsonPayload = JsonSerializer.Serialize(queryPayload);
 
-                using var httpClient = new HttpClient();
-                httpClient.DefaultRequestHeaders.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token.Token);
-
+                var httpClient = AzureManagementHttp.Shared;
                 var url = $"https://management.azure.com/subscriptions/{subscriptionId}/providers/Microsoft.CostManagement/query?api-version=2023-11-01";
-                using var response = await AzureThrottledRequestRetry.SendPostWithRetryAsync(
+                using var response = await AzureThrottledRequestRetry.SendCostManagementPostWithRetryAsync(
                     httpClient,
                     url,
+                    token.Token,
                     () => new StringContent(jsonPayload, Encoding.UTF8, "application/json"));
 
                 if (!response.IsSuccessStatusCode)

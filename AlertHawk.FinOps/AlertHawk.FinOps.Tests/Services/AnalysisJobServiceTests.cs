@@ -69,6 +69,56 @@ public class AnalysisJobServiceTests
     }
 
     [Fact]
+    public async Task StartAnalysis_SecondJobWaitsUntilFirstCompletes()
+    {
+        var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseFirst = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var secondStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var mockOrchestration = new Mock<IAnalysisOrchestrationService>();
+        mockOrchestration
+            .Setup(o => o.RunAnalysisForSingleSubscriptionAsync("sub-1"))
+            .Returns(async () =>
+            {
+                firstStarted.TrySetResult();
+                await releaseFirst.Task;
+                return new SubscriptionAnalysisResult { Success = true, SubscriptionId = "sub-1" };
+            });
+        mockOrchestration
+            .Setup(o => o.RunAnalysisForSingleSubscriptionAsync("sub-2"))
+            .Returns(async () =>
+            {
+                secondStarted.TrySetResult();
+                return new SubscriptionAnalysisResult { Success = true, SubscriptionId = "sub-2" };
+            });
+
+        var services = new ServiceCollection();
+        services.AddSingleton(mockOrchestration.Object);
+        await using var provider = services.BuildServiceProvider();
+        var svc = new AnalysisJobService(
+            provider.GetRequiredService<IServiceScopeFactory>(),
+            NullLogger<AnalysisJobService>.Instance);
+
+        var job1 = svc.StartAnalysis("sub-1");
+        await firstStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        var job2 = svc.StartAnalysis("sub-2");
+        Assert.False(
+            secondStarted.Task.IsCompleted,
+            "second analysis must not start while first holds the gate");
+
+        Assert.True(svc.TryGetStatus(job2, out var pending) && pending!.Status == "pending");
+
+        releaseFirst.TrySetResult();
+        await secondStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        var done1 = await WaitForTerminalStatusAsync(svc, job1, TimeSpan.FromSeconds(5));
+        var done2 = await WaitForTerminalStatusAsync(svc, job2, TimeSpan.FromSeconds(5));
+        Assert.Equal("completed", done1!.Status);
+        Assert.Equal("completed", done2!.Status);
+    }
+
+    [Fact]
     public void TryGetStatus_UnknownJobId_ReturnsFalse()
     {
         var services = new ServiceCollection();
