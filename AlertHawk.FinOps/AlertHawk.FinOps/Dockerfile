@@ -1,5 +1,5 @@
 # ---------- Base runtime (hardened, no shell) ----------
-FROM dhi.io/aspnetcore:10-alpine3.23 AS base
+FROM reg.mini.dev/dotnet-aspnet AS base
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 USER 65532
 WORKDIR /app

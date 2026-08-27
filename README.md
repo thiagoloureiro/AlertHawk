@@ -8,11 +8,15 @@ Create a new account or login with any personal Microsoft Account and try it!
 
 ## Screenshots
 
-<img width="1462" alt="image" src="https://github.com/thiagoloureiro/AlertHawk/assets/29433794/240ef626-c195-452b-99b7-5c2240b320c1">
+<img width="1689" height="910" alt="image" src="https://github.com/user-attachments/assets/1ce3f2a8-e852-47c2-a5c5-7cb6f8da8214" />
 
-<img width="929" alt="image" src="https://github.com/thiagoloureiro/AlertHawk/assets/29433794/c2ec386e-5183-4b5b-98d9-165a8c97329d">
+<img width="1672" height="832" alt="image" src="https://github.com/user-attachments/assets/555b3173-0af9-4cc3-922b-29757385960a" />
 
-<img width="1362" alt="image" src="https://github.com/thiagoloureiro/AlertHawk/assets/29433794/c451da38-e02a-4d9e-8c8a-228be3704f22">
+<img width="1674" height="822" alt="image" src="https://github.com/user-attachments/assets/cc9700ea-cdda-417f-9bdd-4bb7c91fd1a2" />
+
+<img width="1678" height="842" alt="image" src="https://github.com/user-attachments/assets/b9544f62-2a19-4db2-a439-efcb6a0a409d" />
+
+<img width="1697" height="512" alt="image" src="https://github.com/user-attachments/assets/1bf92c6b-8afb-4629-9c97-6bd17b6edc79" />
 
 <img width="442" alt="image" src="https://github.com/thiagoloureiro/AlertHawk/assets/29433794/357d0ce6-fc87-4998-b7bc-6c154867264a">
 
