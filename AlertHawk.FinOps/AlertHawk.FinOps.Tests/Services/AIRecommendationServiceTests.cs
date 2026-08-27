@@ -138,6 +138,71 @@ public class AIRecommendationServiceTests
     }
 
     [Fact]
+    public async Task GetRecommendationsAsync_WhenTransientFailureThenSuccess_RetriesAndReturnsContent()
+    {
+        var apiJson = JsonSerializer.Serialize(new
+        {
+            message_id = "mid",
+            agent_id = "aid",
+            model = "test-model",
+            timestamp = 0d,
+            conversation_id = "conv-retry",
+            application_id = "app",
+            output = new { content = "Retried OK.", tools_called = Array.Empty<string>() }
+        });
+
+        var attempts = 0;
+        var httpHandler = new TestHttpMessageHandler
+        {
+            Handler = (_, _) =>
+            {
+                attempts++;
+                if (attempts == 1)
+                {
+                    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+                    {
+                        Content = new StringContent("busy", Encoding.UTF8, "text/plain")
+                    });
+                }
+
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(apiJson, Encoding.UTF8, "application/json")
+                });
+            }
+        };
+
+        using var httpClient = new HttpClient(httpHandler);
+        var tempDir = Path.Combine(Path.GetTempPath(), "FinOpsTests_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+        var previous = Directory.GetCurrentDirectory();
+        try
+        {
+            Directory.SetCurrentDirectory(tempDir);
+            var svc = new AIRecommendationService("k", "https://api.example/ai", "x-api-key", httpClient);
+
+            var (recommendations, response) = await svc.GetRecommendationsAsync(SampleData());
+
+            Assert.Equal(2, attempts);
+            Assert.Equal("Retried OK.", recommendations);
+            Assert.NotNull(response);
+            Assert.Equal("conv-retry", response!.conversation_id);
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(previous);
+            try
+            {
+                Directory.Delete(tempDir, recursive: true);
+            }
+            catch
+            {
+                // ignore cleanup races on CI
+            }
+        }
+    }
+
+    [Fact]
     public async Task GetRecommendationsAsync_WhenApiReturnsError_ReturnsEmptyAndNullResponse()
     {
         var httpHandler = new TestHttpMessageHandler

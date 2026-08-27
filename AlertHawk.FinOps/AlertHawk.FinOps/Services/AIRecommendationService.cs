@@ -2,6 +2,7 @@ using FinOpsToolSample.Models;
 using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -11,6 +12,9 @@ namespace FinOpsToolSample.Services
 {
     public class AIRecommendationService
     {
+        private const int MaxAttempts = 3;
+        private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(600);
+
         private readonly string _apiKey;
         private readonly string _apiUrl;
         private readonly HttpClient _httpClient;
@@ -24,7 +28,12 @@ namespace FinOpsToolSample.Services
             _apiKey = apiKey;
             _apiUrl = apiUrl;
             _httpClient = httpClient ?? new HttpClient();
+            _httpClient.Timeout = RequestTimeout;
             _httpClient.DefaultRequestHeaders.TryAddWithoutValidation(apiKeyHeaderName, _apiKey);
+            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "AlertHawk/1.0.1");
+            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "br");
+            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Connection", "keep-alive");
+            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "*/*");
         }
 
         public async Task<(string recommendations, AIApiResponse? response)> GetRecommendationsAsync(AzureResourceData data)
@@ -38,9 +47,10 @@ namespace FinOpsToolSample.Services
             {
                 var prompt = BuildComprehensivePrompt(data);
 
-                Console.WriteLine("📤 Sending data to AI AI for analysis...");
+                Console.WriteLine("📤 Sending data to AI for analysis...");
                 Console.WriteLine($"   Analyzing {data.Resources.Count} resources");
                 Console.WriteLine($"   Total Monthly Cost: ${data.TotalMonthlyCost:F2}");
+                Console.WriteLine($"   HTTP timeout: {RequestTimeout.TotalSeconds:0}s · up to {MaxAttempts} attempts");
                 Console.WriteLine();
 
                 var request = new AIApiRequest
@@ -51,34 +61,25 @@ namespace FinOpsToolSample.Services
                 Console.WriteLine("🔍 Prompt sent to AI:");
                 Console.WriteLine(prompt);
                 Console.WriteLine();
-                
-                _httpClient.DefaultRequestHeaders.Add("User-Agent", "AlertHawk/1.0.1");
-                _httpClient.DefaultRequestHeaders.Add("Accept-Encoding", "br");
-                _httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
-                _httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
 
                 var jsonRequest = JsonSerializer.Serialize(request);
-                var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
-
-                _httpClient.Timeout = TimeSpan.FromSeconds(240);
-
-                var response = await _httpClient.PostAsync(_apiUrl, content);
+                using var response = await PostWithRetryAsync(jsonRequest).ConfigureAwait(false);
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    var error = await response.Content.ReadAsStringAsync();
+                    var error = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     throw new Exception($"AI API Error: {response.StatusCode} - {error}");
                 }
 
-                var responseJson = await response.Content.ReadAsStringAsync();
+                var responseJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 var AIResponse = JsonSerializer.Deserialize<AIApiResponse>(responseJson);
 
                 if (AIResponse?.output?.content != null)
                 {
-                    Console.WriteLine("✅ Recommendations received from AI AI");
+                    Console.WriteLine("✅ Recommendations received from AI");
                     Console.WriteLine();
                     Console.WriteLine("╔═══════════════════════════════════════════════════════╗");
-                    Console.WriteLine("║            AI AI RECOMMENDATIONS                    ║");
+                    Console.WriteLine("║            AI RECOMMENDATIONS                         ║");
                     Console.WriteLine("╚═══════════════════════════════════════════════════════╝");
                     Console.WriteLine();
                     Console.WriteLine(AIResponse.output.content);
@@ -86,8 +87,7 @@ namespace FinOpsToolSample.Services
                     Console.WriteLine($"📊 Conversation ID: {AIResponse.conversation_id}");
                     Console.WriteLine($"🤖 Model Used: {AIResponse.model}");
 
-                    // Save to markdown file
-                    await SaveRecommendationsToFile(data, AIResponse);
+                    await SaveRecommendationsToFile(data, AIResponse).ConfigureAwait(false);
 
                     return (AIResponse.output.content, AIResponse);
                 }
@@ -100,6 +100,93 @@ namespace FinOpsToolSample.Services
                 Console.WriteLine($"❌ Error getting recommendations from AI AI: {ex.Message}");
                 return (string.Empty, null);
             }
+        }
+
+        /// <summary>
+        /// POST with retries for timeouts and transient HTTP failures.
+        /// Fresh <see cref="HttpContent"/> is created each attempt.
+        /// </summary>
+        private async Task<HttpResponseMessage> PostWithRetryAsync(string jsonRequest)
+        {
+            HttpResponseMessage? response = null;
+
+            for (var attempt = 1; attempt <= MaxAttempts; attempt++)
+            {
+                try
+                {
+                    if (response != null)
+                    {
+                        response.Dispose();
+                        response = null;
+                    }
+
+                    using var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+                    response = await _httpClient.PostAsync(_apiUrl, content).ConfigureAwait(false);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        if (attempt > 1)
+                        {
+                            Console.WriteLine($"✅ AI API succeeded on attempt {attempt}/{MaxAttempts}");
+                        }
+
+                        return response;
+                    }
+
+                    var status = (int)response.StatusCode;
+                    if (!IsRetriableHttpStatus(status) || attempt == MaxAttempts)
+                    {
+                        return response;
+                    }
+
+                    Console.WriteLine(
+                        $"⚠️ AI API returned {(HttpStatusCode)status}; retrying ({attempt}/{MaxAttempts})...");
+                    response.Dispose();
+                    response = null;
+                    await Task.Delay(ComputeRetryDelay(attempt)).ConfigureAwait(false);
+                }
+                catch (Exception ex) when (IsRetriableException(ex) && attempt < MaxAttempts)
+                {
+                    Console.WriteLine(
+                        $"⚠️ AI request failed ({DescribeException(ex)}); retrying ({attempt}/{MaxAttempts})...");
+                    await Task.Delay(ComputeRetryDelay(attempt)).ConfigureAwait(false);
+                }
+            }
+
+            throw new InvalidOperationException("AI API request did not return a response after retries.");
+        }
+
+        private static bool IsRetriableHttpStatus(int statusCode) =>
+            statusCode == (int)HttpStatusCode.RequestTimeout
+            || statusCode == (int)HttpStatusCode.TooManyRequests
+            || statusCode == (int)HttpStatusCode.InternalServerError
+            || statusCode == (int)HttpStatusCode.BadGateway
+            || statusCode == (int)HttpStatusCode.ServiceUnavailable
+            || statusCode == (int)HttpStatusCode.GatewayTimeout;
+
+        private static bool IsRetriableException(Exception ex) =>
+            ex is TaskCanceledException
+            || ex is TimeoutException
+            || ex is HttpRequestException
+            || (ex.InnerException is TimeoutException)
+            || (ex.InnerException is TaskCanceledException);
+
+        private static string DescribeException(Exception ex)
+        {
+            if (ex is TaskCanceledException || ex.InnerException is TimeoutException)
+            {
+                return $"timeout after {RequestTimeout.TotalSeconds:0}s";
+            }
+
+            return ex.Message;
+        }
+
+        private static TimeSpan ComputeRetryDelay(int attempt)
+        {
+            // 5s, 15s between attempts (AI calls are long; keep backoff modest)
+            var seconds = attempt == 1 ? 5 : 15;
+            var jitterMs = Random.Shared.Next(0, 1000);
+            return TimeSpan.FromSeconds(seconds) + TimeSpan.FromMilliseconds(jitterMs);
         }
 
         private async Task<string> SaveRecommendationsToFile(AzureResourceData data, AIApiResponse response)
