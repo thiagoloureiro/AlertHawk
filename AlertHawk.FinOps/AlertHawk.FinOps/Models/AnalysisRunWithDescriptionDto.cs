@@ -6,6 +6,8 @@ namespace FinOpsToolSample.Models
         public string SubscriptionId { get; set; } = string.Empty;
         public string SubscriptionName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        /// <summary>Optional monthly budget (USD). Null when not set.</summary>
+        public decimal? Budget { get; set; }
         public DateTime RunDate { get; set; }
         public decimal TotalMonthlyCost { get; set; }
         public int TotalResourcesAnalyzed { get; set; }

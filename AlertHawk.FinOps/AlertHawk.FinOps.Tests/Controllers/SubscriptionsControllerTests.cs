@@ -85,21 +85,25 @@ public class SubscriptionsControllerTests
         var create = await controller.CreateOrUpdateSubscription(new CreateSubscriptionDto
         {
             SubscriptionId = " sub-1 ",
-            Description = "first"
+            Description = "first",
+            Budget = 1000m
         });
         var ok1 = Assert.IsType<OkObjectResult>(create.Result);
         var first = Assert.IsType<Subscription>(ok1.Value);
         Assert.Equal("sub-1", first.SubscriptionId);
         Assert.Equal("first", first.Description);
+        Assert.Equal(1000m, first.Budget);
 
         var update = await controller.CreateOrUpdateSubscription(new CreateSubscriptionDto
         {
             SubscriptionId = "sub-1",
-            Description = "second"
+            Description = "second",
+            Budget = 2500.50m
         });
         var ok2 = Assert.IsType<OkObjectResult>(update.Result);
         var second = Assert.IsType<Subscription>(ok2.Value);
         Assert.Equal("second", second.Description);
+        Assert.Equal(2500.50m, second.Budget);
         Assert.Equal(first.Id, second.Id);
     }
 

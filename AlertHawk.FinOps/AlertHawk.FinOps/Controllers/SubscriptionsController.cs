@@ -114,6 +114,7 @@ namespace FinOpsToolSample.Controllers
                 if (existing != null)
                 {
                     existing.Description = dto.Description ?? string.Empty;
+                    existing.Budget = dto.Budget;
                     existing.UpdatedAt = DateTime.UtcNow;
                     _context.Subscriptions.Update(existing);
                 }
@@ -123,6 +124,7 @@ namespace FinOpsToolSample.Controllers
                     {
                         SubscriptionId = dto.SubscriptionId.Trim(),
                         Description = dto.Description ?? string.Empty,
+                        Budget = dto.Budget,
                         CreatedAt = DateTime.UtcNow
                     };
                     _context.Subscriptions.Add(subscription);
@@ -165,6 +167,7 @@ namespace FinOpsToolSample.Controllers
                 }
 
                 subscription.Description = dto.Description ?? string.Empty;
+                subscription.Budget = dto.Budget;
                 subscription.UpdatedAt = DateTime.UtcNow;
 
                 _context.Subscriptions.Update(subscription);
@@ -217,10 +220,14 @@ namespace FinOpsToolSample.Controllers
     {
         public string SubscriptionId { get; set; } = string.Empty;
         public string? Description { get; set; }
+        /// <summary>Optional monthly budget in USD. Null clears / leaves unset.</summary>
+        public decimal? Budget { get; set; }
     }
 
     public class UpdateSubscriptionDto
     {
         public string Description { get; set; } = string.Empty;
+        /// <summary>Optional monthly budget in USD. Null clears the budget.</summary>
+        public decimal? Budget { get; set; }
     }
 }

@@ -7,6 +7,7 @@ CREATE TABLE [dbo].[Subscriptions] (
     [Id] INT IDENTITY(1,1) NOT NULL,
     [SubscriptionId] NVARCHAR(100) NOT NULL,
     [Description] NVARCHAR(500) NOT NULL,
+    [Budget] DECIMAL(18, 2) NULL,
     [CreatedAt] DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     [UpdatedAt] DATETIME2 NULL,
     CONSTRAINT [PK_Subscriptions] PRIMARY KEY ([Id])

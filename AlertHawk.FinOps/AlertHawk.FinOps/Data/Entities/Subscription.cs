@@ -16,6 +16,12 @@ namespace FinOpsToolSample.Data.Entities
         [MaxLength(500)]
         public string Description { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Optional monthly budget in USD. Null means no budget configured.
+        /// </summary>
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? Budget { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedAt { get; set; }

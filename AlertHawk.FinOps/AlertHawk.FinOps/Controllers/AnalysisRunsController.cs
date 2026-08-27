@@ -140,6 +140,7 @@ namespace FinOpsToolSample.Controllers
                             SubscriptionId = x.AnalysisRun.SubscriptionId,
                             SubscriptionName = x.AnalysisRun.SubscriptionName,
                             Description = subscription != null ? subscription.Description : string.Empty,
+                            Budget = subscription != null ? subscription.Budget : null,
                             RunDate = x.AnalysisRun.RunDate,
                             TotalMonthlyCost = x.AnalysisRun.TotalMonthlyCost,
                             TotalResourcesAnalyzed = x.AnalysisRun.TotalResourcesAnalyzed,
