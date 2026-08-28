@@ -84,6 +84,9 @@ export default defineConfig({
         collapsed: false,
         items: [
           { text: 'Overview', link: '/finops/' },
+          { text: 'Subscription budgets', link: '/finops/#subscription-budgets' },
+          { text: 'FinOps UI', link: '/finops/#finops-ui-alerthawk-ui' },
+          { text: 'Rate limits & analysis queue', link: '/finops/#analysis-pipeline-and-azure-rate-limits' },
           { text: 'Environment Variables', link: '/finops/#environment-variables' },
           { text: 'API Controllers', link: '/finops/#api-controllers' },
           { text: 'Helm Chart', link: '/finops/#helm-chart-reference' },

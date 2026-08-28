@@ -32,7 +32,7 @@ AlertHawk is composed of these main parts:
 | **Metrics API** | API to store and query metrics data |
 | **Monitoring** | Runs monitors (HTTP, TCP, K8s, etc.) and manages alerts |
 | **Notification** | Sends alerts via email, Slack, Teams, Telegram, webhooks, and more |
-| **FinOps** | Azure cost and resource analysis API with optional AI recommendations (see [FinOps](/finops/)) |
+| **FinOps** | Azure cost and resource analysis API with optional AI recommendations, subscription budgets, and FinOps Metrics UI (see [FinOps](/finops/)) |
 
 ## Documentation Sections
 
@@ -41,7 +41,7 @@ AlertHawk is composed of these main parts:
 - **[Metrics API](/metrics-api/)** — Metrics API usage and integration
 - **[Monitoring](/monitoring/)** — Monitors, groups, and alerting
 - **[Notification](/notification/)** — Notification channels and configuration
-- **[FinOps](/finops/)** — Azure FinOps analysis API, configuration, and endpoints
+- **[FinOps](/finops/)** — Azure FinOps analysis API, subscription budgets, UI features, configuration, and endpoints
 
 ## Next Steps
 

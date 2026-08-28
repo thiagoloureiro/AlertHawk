@@ -11,6 +11,7 @@ This folder contains the project documentation built with [VitePress](https://vi
 - **`metrics-api/`** — Metrics API
 - **`monitoring/`** — AlertHawk.Monitoring
 - **`notification/`** — AlertHawk.Notification
+- **`finops/`** — AlertHawk.FinOps (API, budgets, AI, rate limits, UI integration)
 - **`.vitepress/config.js`** — VitePress and theme config
 
 ## Commands
