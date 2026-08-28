@@ -13,4 +13,5 @@ FROM reg.mini.dev/nginx
 COPY --from=build /app/.vitepress/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Base image sets ENTRYPOINT to nginx; pass flags only (not "nginx" again).
+CMD ["-g", "daemon off;"]
