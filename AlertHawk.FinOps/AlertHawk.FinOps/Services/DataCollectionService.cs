@@ -23,10 +23,11 @@ namespace FinOpsToolSample.Services
 
         public AzureResourceData GetCollectedData() => _data;
 
-        public void SetSubscriptionInfo(string name, string id)
+        public void SetSubscriptionInfo(string name, string id, decimal? monthlyBudget = null)
         {
             _data.SubscriptionName = name;
             _data.SubscriptionId = id;
+            _data.MonthlyBudget = monthlyBudget;
         }
 
         public void SetCostData(decimal totalCost, Dictionary<string, decimal> byResourceGroup, List<ServiceCostDetail> byService)

@@ -33,6 +33,15 @@ namespace FinOpsToolSample.Services
             }
         }
 
+        public async Task<decimal?> GetSubscriptionBudgetAsync(string subscriptionId)
+        {
+            var subscription = await _context.Subscriptions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.SubscriptionId == subscriptionId);
+
+            return subscription?.Budget;
+        }
+
         public async Task<int> SaveAnalysisRunAsync(
             AzureResourceData data,
             AIApiResponse? AIResponse,

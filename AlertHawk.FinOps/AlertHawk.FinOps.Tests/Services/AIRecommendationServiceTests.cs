@@ -42,6 +42,49 @@ public class AIRecommendationServiceTests
     }
 
     [Fact]
+    public async Task GetRecommendationsAsync_WhenBudgetSet_IncludesBudgetContextInPrompt()
+    {
+        var capturedBody = string.Empty;
+        var apiJson = JsonSerializer.Serialize(new
+        {
+            message_id = "mid",
+            agent_id = "aid",
+            model = "test-model",
+            timestamp = 0d,
+            conversation_id = "conv-budget",
+            application_id = "app",
+            output = new { content = "Right-size expensive VMs.", tools_called = Array.Empty<string>() }
+        });
+
+        var httpHandler = new TestHttpMessageHandler
+        {
+            Handler = async (req, ct) =>
+            {
+                capturedBody = await req.Content!.ReadAsStringAsync(ct);
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(apiJson, Encoding.UTF8, "application/json")
+                };
+            }
+        };
+
+        using var httpClient = new HttpClient(httpHandler);
+        var svc = new AIRecommendationService("secret-key", "https://api.example/ai", "x-api-key", httpClient);
+
+        var data = SampleData();
+        data.TotalMonthlyCost = 8500m;
+        data.MonthlyBudget = 10000m;
+
+        var (recommendations, _) = await svc.GetRecommendationsAsync(data);
+
+        Assert.Equal("Right-size expensive VMs.", recommendations);
+        Assert.Contains("Monthly Budget: $10000.00", capturedBody);
+        Assert.Contains("Budget Utilization (MTD vs monthly budget): 85.0%", capturedBody);
+        Assert.Contains("NEAR BUDGET", capturedBody);
+        Assert.Contains("factor budget utilization into prioritization", capturedBody);
+    }
+
+    [Fact]
     public async Task GetRecommendationsAsync_WhenApiReturnsContent_ReturnsTextAndResponse_WritesReportInCurrentDirectory()
     {
         var apiJson = JsonSerializer.Serialize(new

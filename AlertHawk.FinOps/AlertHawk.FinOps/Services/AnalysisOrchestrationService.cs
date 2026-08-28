@@ -186,10 +186,11 @@ namespace FinOpsToolSample.Services
                 // Get subscription info
                 var subscriptionData = await AzureThrottledRequestRetry.ExecuteAsync(
                     () => subscription.GetAsync());
+                var monthlyBudget = await _databaseService.GetSubscriptionBudgetAsync(subscriptionId);
                 dataCollector.SetSubscriptionInfo(
                     subscriptionData.Value.Data.DisplayName ?? "Unknown",
-                    subscriptionData.Value.Data.SubscriptionId ?? "Unknown"
-                );
+                    subscriptionData.Value.Data.SubscriptionId ?? "Unknown",
+                    monthlyBudget);
 
                 // Fetch Cost Data
                 var (totalCost, costsByResourceGroup, costsByService) =

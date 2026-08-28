@@ -7,6 +7,8 @@ namespace FinOpsToolSample.Models
         public string SubscriptionName { get; set; } = string.Empty;
         public string SubscriptionId { get; set; } = string.Empty;
         public decimal TotalMonthlyCost { get; set; }
+        /// <summary>Monthly budget from Subscriptions table, when configured.</summary>
+        public decimal? MonthlyBudget { get; set; }
         public Dictionary<string, decimal> CostsByResourceGroup { get; set; } = new();
         public List<ServiceCostDetail> CostsByService { get; set; } = new();
         public List<ResourceInfo> Resources { get; set; } = new();

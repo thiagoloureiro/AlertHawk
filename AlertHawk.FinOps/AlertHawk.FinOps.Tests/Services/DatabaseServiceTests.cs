@@ -178,4 +178,26 @@ public class DatabaseServiceTests
         Assert.True(monthly.ContainsKey(key));
         Assert.Equal(100, monthly[key]);
     }
+
+    [Fact]
+    public async Task GetSubscriptionBudgetAsync_WhenConfigured_ReturnsBudget()
+    {
+        await using var db = FinOpsDbContextFactory.Create();
+        db.Subscriptions.Add(new Subscription
+        {
+            SubscriptionId = "sub-budget",
+            Description = "Prod",
+            Budget = 7500m,
+            CreatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var svc = new DatabaseService(db);
+
+        var budget = await svc.GetSubscriptionBudgetAsync("sub-budget");
+        var missing = await svc.GetSubscriptionBudgetAsync("unknown");
+
+        Assert.Equal(7500m, budget);
+        Assert.Null(missing);
+    }
 }

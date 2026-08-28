@@ -60,6 +60,10 @@ namespace FinOpsToolSample.Services
                 Console.WriteLine("📤 Sending data to AI for analysis...");
                 Console.WriteLine($"   Analyzing {data.Resources.Count} resources");
                 Console.WriteLine($"   Total Monthly Cost: ${data.TotalMonthlyCost:F2}");
+                if (data.MonthlyBudget is { } budget)
+                {
+                    Console.WriteLine($"   Monthly Budget: ${budget:F2}");
+                }
                 Console.WriteLine($"   HTTP timeout: {RequestTimeout.TotalSeconds:0}s · up to {MaxAttempts} attempts");
                 Console.WriteLine();
 
@@ -222,6 +226,11 @@ namespace FinOpsToolSample.Services
                 sb.AppendLine("## 📊 Executive Summary");
                 sb.AppendLine();
                 sb.AppendLine($"- **Total Monthly Cost (MTD):** ${data.TotalMonthlyCost:F2}");
+                if (data.MonthlyBudget is { } budget)
+                {
+                    sb.AppendLine($"- **Monthly Budget:** ${budget:F2}");
+                    AppendBudgetStatusLines(sb, data.TotalMonthlyCost, budget);
+                }
                 sb.AppendLine($"- **Resources Analyzed:** {data.Resources.Count}");
                 sb.AppendLine($"- **AI Model:** {response.model}");
                 sb.AppendLine($"- **Conversation ID:** {response.conversation_id}");
@@ -332,6 +341,11 @@ namespace FinOpsToolSample.Services
             sb.AppendLine($"Subscription: {data.SubscriptionName}");
             sb.AppendLine($"Subscription ID: {data.SubscriptionId}");
             sb.AppendLine($"Total Monthly Cost (Month to Date): ${data.TotalMonthlyCost:F2}");
+            if (data.MonthlyBudget is { } budget)
+            {
+                sb.AppendLine($"Monthly Budget: ${budget:F2}");
+                AppendBudgetStatusLines(sb, data.TotalMonthlyCost, budget, bulletPrefix: "- ");
+            }
             sb.AppendLine();
 
             // Cost breakdown by resource group
@@ -407,6 +421,11 @@ namespace FinOpsToolSample.Services
             sb.AppendLine("=== REQUEST ===");
             sb.AppendLine("Based on the above Azure resource data, please provide:");
             sb.AppendLine("1. Cost optimization recommendations prioritized by potential savings");
+            if (data.MonthlyBudget.HasValue)
+            {
+                sb.AppendLine("   - When a monthly budget is set, factor budget utilization into prioritization");
+                sb.AppendLine("   - Call out risks if MTD spend is on track to exceed the monthly budget");
+            }
             sb.AppendLine("2. Performance optimization suggestions");
             sb.AppendLine("3. Security and compliance recommendations");
             sb.AppendLine("4. Specific actions to take for each recommendation");
@@ -415,6 +434,36 @@ namespace FinOpsToolSample.Services
             sb.AppendLine("Please format the response in a clear, actionable manner with specific resource names and concrete steps.");
 
             return sb.ToString();
+        }
+
+        private static void AppendBudgetStatusLines(
+            StringBuilder sb,
+            decimal totalMonthlyCost,
+            decimal monthlyBudget,
+            string bulletPrefix = "- **")
+        {
+            var usagePercent = monthlyBudget > 0
+                ? totalMonthlyCost / monthlyBudget * 100m
+                : 0m;
+            var suffix = bulletPrefix.StartsWith("- **", StringComparison.Ordinal) ? "**" : "";
+
+            sb.AppendLine($"{bulletPrefix}Budget Utilization (MTD vs monthly budget):{suffix} {usagePercent:F1}%");
+
+            if (totalMonthlyCost >= monthlyBudget)
+            {
+                var overBy = totalMonthlyCost - monthlyBudget;
+                sb.AppendLine($"{bulletPrefix}Budget Status:{suffix} OVER BUDGET by ${overBy:F2}");
+            }
+            else if (usagePercent >= 80m)
+            {
+                var remaining = monthlyBudget - totalMonthlyCost;
+                sb.AppendLine($"{bulletPrefix}Budget Status:{suffix} NEAR BUDGET ({remaining:F2} remaining)");
+            }
+            else
+            {
+                var remaining = monthlyBudget - totalMonthlyCost;
+                sb.AppendLine($"{bulletPrefix}Budget Remaining:{suffix} ${remaining:F2}");
+            }
         }
     }
 }
