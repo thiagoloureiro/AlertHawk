@@ -1,5 +1,6 @@
 using FinOpsToolSample.Data;
 using FinOpsToolSample.Data.Entities;
+using FinOpsToolSample.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -115,6 +116,10 @@ namespace FinOpsToolSample.Controllers
                 {
                     existing.Description = dto.Description ?? string.Empty;
                     existing.Budget = dto.Budget;
+                    if (dto.InfraSupportCost.HasValue)
+                    {
+                        existing.InfraSupportCost = dto.InfraSupportCost.Value;
+                    }
                     existing.UpdatedAt = DateTime.UtcNow;
                     _context.Subscriptions.Update(existing);
                 }
@@ -125,6 +130,7 @@ namespace FinOpsToolSample.Controllers
                         SubscriptionId = dto.SubscriptionId.Trim(),
                         Description = dto.Description ?? string.Empty,
                         Budget = dto.Budget,
+                        InfraSupportCost = dto.InfraSupportCost ?? SubscriptionDefaults.InfraSupportCost,
                         CreatedAt = DateTime.UtcNow
                     };
                     _context.Subscriptions.Add(subscription);
@@ -168,6 +174,10 @@ namespace FinOpsToolSample.Controllers
 
                 subscription.Description = dto.Description ?? string.Empty;
                 subscription.Budget = dto.Budget;
+                if (dto.InfraSupportCost.HasValue)
+                {
+                    subscription.InfraSupportCost = dto.InfraSupportCost.Value;
+                }
                 subscription.UpdatedAt = DateTime.UtcNow;
 
                 _context.Subscriptions.Update(subscription);
@@ -222,6 +232,8 @@ namespace FinOpsToolSample.Controllers
         public string? Description { get; set; }
         /// <summary>Optional monthly budget in USD. Null clears / leaves unset.</summary>
         public decimal? Budget { get; set; }
+        /// <summary>Monthly infra support overlay (USD). Defaults to 400 when omitted on create.</summary>
+        public decimal? InfraSupportCost { get; set; }
     }
 
     public class UpdateSubscriptionDto
@@ -229,5 +241,7 @@ namespace FinOpsToolSample.Controllers
         public string Description { get; set; } = string.Empty;
         /// <summary>Optional monthly budget in USD. Null clears the budget.</summary>
         public decimal? Budget { get; set; }
+        /// <summary>Monthly infra support overlay (USD). Omit to leave unchanged.</summary>
+        public decimal? InfraSupportCost { get; set; }
     }
 }

@@ -253,7 +253,7 @@ public class AnalysisRunsControllerTests
                 CreatedAt = DateTime.UtcNow
             });
         db.Subscriptions.AddRange(
-            new Subscription { SubscriptionId = "sub-a", Description = "Desc A", Budget = 5000m, CreatedAt = DateTime.UtcNow },
+            new Subscription { SubscriptionId = "sub-a", Description = "Desc A", Budget = 5000m, InfraSupportCost = 250m, CreatedAt = DateTime.UtcNow },
             new Subscription { SubscriptionId = "sub-b", Description = "Desc B", Budget = null, CreatedAt = DateTime.UtcNow });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
@@ -266,10 +266,12 @@ public class AnalysisRunsControllerTests
         Assert.Equal("Alpha", list[0].SubscriptionName);
         Assert.Equal("Desc A", list[0].Description);
         Assert.Equal(5000m, list[0].Budget);
+        Assert.Equal(250m, list[0].InfraSupportCost);
         Assert.Equal(t2, list[0].RunDate);
         Assert.Equal("Beta", list[1].SubscriptionName);
         Assert.Equal("Desc B", list[1].Description);
         Assert.Null(list[1].Budget);
+        Assert.Equal(SubscriptionDefaults.InfraSupportCost, list[1].InfraSupportCost);
     }
 
     [Fact]
@@ -297,6 +299,7 @@ public class AnalysisRunsControllerTests
         Assert.Single(list);
         Assert.Equal(string.Empty, list[0].Description);
         Assert.Null(list[0].Budget);
+        Assert.Equal(SubscriptionDefaults.InfraSupportCost, list[0].InfraSupportCost);
     }
 
     [Fact]

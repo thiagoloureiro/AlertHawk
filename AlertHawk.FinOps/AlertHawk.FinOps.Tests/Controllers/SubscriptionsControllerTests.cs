@@ -1,6 +1,7 @@
 using AlertHawk.FinOps.Tests.Infrastructure;
 using FinOpsToolSample.Controllers;
 using FinOpsToolSample.Data.Entities;
+using FinOpsToolSample.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -105,6 +106,33 @@ public class SubscriptionsControllerTests
         Assert.Equal("second", second.Description);
         Assert.Equal(2500.50m, second.Budget);
         Assert.Equal(first.Id, second.Id);
+
+        var withInfra = await controller.CreateOrUpdateSubscription(new CreateSubscriptionDto
+        {
+            SubscriptionId = "sub-1",
+            Description = "second",
+            Budget = 2500.50m,
+            InfraSupportCost = 550m
+        });
+        var ok3 = Assert.IsType<OkObjectResult>(withInfra.Result);
+        var third = Assert.IsType<Subscription>(ok3.Value);
+        Assert.Equal(550m, third.InfraSupportCost);
+    }
+
+    [Fact]
+    public async Task CreateOrUpdateSubscription_DefaultInfraSupportCost_Is400()
+    {
+        await using var db = FinOpsDbContextFactory.Create();
+        var controller = new SubscriptionsController(db, NullLogger<SubscriptionsController>.Instance);
+
+        var create = await controller.CreateOrUpdateSubscription(new CreateSubscriptionDto
+        {
+            SubscriptionId = "sub-infra",
+            Description = "test"
+        });
+        var ok = Assert.IsType<OkObjectResult>(create.Result);
+        var sub = Assert.IsType<Subscription>(ok.Value);
+        Assert.Equal(SubscriptionDefaults.InfraSupportCost, sub.InfraSupportCost);
     }
 
     [Fact]

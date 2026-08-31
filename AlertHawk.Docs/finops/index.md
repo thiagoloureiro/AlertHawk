@@ -31,14 +31,15 @@ Each Azure subscription can have an optional **monthly budget** (USD) stored in 
 |-------|------|-------------|
 | `Description` | string | Free-text label shown in the UI |
 | `Budget` | `decimal?` | Monthly budget in USD; `null` means no budget |
+| `InfraSupportCost` | `decimal` | Monthly infra support overlay for historical charts (USD); default **400** |
 
 ### Database migration
 
-If upgrading an existing database, apply the SQL script before using budgets:
+If upgrading an existing database, apply the SQL scripts before using budgets or per-subscription infra support:
 
 ```sql
 -- AlertHawk.FinOps/Migrations/AddSubscriptionBudget.sql
-ALTER TABLE [dbo].[Subscriptions] ADD [Budget] DECIMAL(18, 2) NULL;
+-- AlertHawk.FinOps/Migrations/AddSubscriptionInfraSupportCost.sql
 ```
 
 The script is idempotent (`IF COL_LENGTH ... IS NULL`). New deployments that use EF `EnsureCreated` or full migrations already include the column when the schema is created from the current model.
@@ -51,12 +52,14 @@ Create or update metadata (including budget) with `POST /finops/api/Subscription
 {
   "subscriptionId": "00000000-0000-0000-0000-000000000000",
   "description": "Production workloads",
-  "budget": 10000.00
+  "budget": 10000.00,
+  "infraSupportCost": 400.00
 }
 ```
 
 - Omit `budget` or send `null` to clear the budget.
-- `GET /finops/api/AnalysisRuns/latest-per-subscription` returns `budget` on each row (joined from `Subscriptions`) together with the latest run’s MTD cost, so clients can compute utilization without a second call.
+- `infraSupportCost` defaults to **400** when omitted on create; used by the UI historical chart “Infra support costs” overlay.
+- `GET /finops/api/AnalysisRuns/latest-per-subscription` returns `budget` and `infraSupportCost` on each row (joined from `Subscriptions`) together with the latest run’s MTD cost, so clients can compute utilization without a second call.
 
 ### AI recommendations
 
@@ -77,7 +80,7 @@ The **FinOps Metrics** page in AlertHawk UI consumes the FinOps API. Highlights:
 | Feature | Description |
 |---------|-------------|
 | **Analysis** | Primary action — runs async analysis for the selected subscription (`POST /finops/api/Analysis/start-async`) |
-| **Description & budget** | Edit subscription description and monthly budget (same `POST /finops/api/Subscriptions` payload) |
+| **Description & budget** | Edit subscription description, monthly budget, and infra support cost (same `POST /finops/api/Subscriptions` payload) |
 | **Budget column** | Grid and table show budget; rows highlight **near budget** (≥80% MTD) and **over budget** (≥100%) |
 | **Cost details / AI / Historical / Forecast** | Explore cards open modals for the latest analysis run |
 | **Historical charts** | Filters by App ID, resource group, and service type (cascading); optional budget reference line |
@@ -229,6 +232,7 @@ Stores per-subscription **description** and optional **monthly budget** (USD). N
 | `subscriptionId` | string | Yes | Azure subscription GUID |
 | `description` | string | No | Display label |
 | `budget` | decimal | No | Monthly budget USD; `null` to unset |
+| `infraSupportCost` | decimal | No | Infra support overlay USD/mo; defaults to **400** on create |
 
 ### Resources — `/finops/api/Resources/*`
 

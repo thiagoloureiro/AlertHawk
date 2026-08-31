@@ -8,6 +8,7 @@ CREATE TABLE [dbo].[Subscriptions] (
     [SubscriptionId] NVARCHAR(100) NOT NULL,
     [Description] NVARCHAR(500) NOT NULL,
     [Budget] DECIMAL(18, 2) NULL,
+    [InfraSupportCost] DECIMAL(18, 2) NOT NULL CONSTRAINT [DF_Subscriptions_InfraSupportCost] DEFAULT (400),
     [CreatedAt] DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     [UpdatedAt] DATETIME2 NULL,
     CONSTRAINT [PK_Subscriptions] PRIMARY KEY ([Id])
