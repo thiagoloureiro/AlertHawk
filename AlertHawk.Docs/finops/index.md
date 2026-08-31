@@ -80,6 +80,7 @@ The **FinOps Metrics** page in AlertHawk UI consumes the FinOps API. Highlights:
 | Feature | Description |
 |---------|-------------|
 | **Analysis** | Primary action — runs async analysis for the selected subscription (`POST /finops/api/Analysis/start-async`) |
+| **Cost type label** | Header and detail panel show **Costs: Actual (invoice)** or **Costs: Amortized** from `GET /finops/api/Analysis/settings` (hover for description) |
 | **Description & budget** | Edit subscription description, monthly budget, and infra support cost (same `POST /finops/api/Subscriptions` payload) |
 | **Budget column** | Grid and table show budget; rows highlight **near budget** (≥80% MTD) and **over budget** (≥100%) |
 | **Cost details / AI / Historical / Forecast** | Explore cards open modals for the latest analysis run |
@@ -92,7 +93,9 @@ Budget thresholds in the UI match backend AI logic: **80%** = near, **100%** = o
 
 ## Analysis pipeline and Azure rate limits
 
-Cost and historical data come from the **Azure Cost Management Query** API, which is heavily rate-limited. The service mitigates **HTTP 429** responses by:
+Cost and historical data come from the **Azure Cost Management Query** API, which is heavily rate-limited. By default queries use **`ActualCost`** (invoice-style, as billed). Set **`Azure__CostQueryType=AmortizedCost`** to spread reservation and savings plan charges over the commitment term (FinOps / showback view). After changing this setting, **re-run analysis** so MTD and historical rows match the new mode; do not mix cost types in the same comparison window.
+
+The service mitigates **HTTP 429** responses by:
 
 - Serializing Cost Management POSTs process-wide (one query at a time)
 - Longer inter-page delays for historical `$skiptoken` pagination
@@ -135,6 +138,7 @@ On startup the app applies **EF Core migrations** when pending migrations exist;
 | `Azure__ClientId` | Application (client) id |
 | `Azure__ClientSecret` | Client secret |
 | `Azure__SubscriptionIds` | Comma-separated Azure subscription GUIDs to analyze |
+| `Azure__CostQueryType` | `ActualCost` (default, invoice / cash view) or `AmortizedCost` (reservation & savings plan spread). Exposed to the UI via `GET /finops/api/Analysis/settings`. |
 
 ### Weekly analysis (background)
 
@@ -193,6 +197,7 @@ Base path: **`/finops/api`**. Unless noted, endpoints use **`[Authorize]`** and 
 | `POST` | `/start` | Body: JSON string (Azure subscription id). Runs analysis synchronously; returns summary including `AnalysisRunId` |
 | `POST` | `/start-async` | Body: JSON string (subscription id). Returns `202 Accepted` with `JobId`; poll `GET jobs/{jobId}`. Jobs run **sequentially** (one active analysis per API instance) |
 | `GET` | `/jobs/{jobId}` | Job status: `pending`, `running`, `completed`, or `failed` |
+| `GET` | `/settings` | Active FinOps settings (e.g. Azure Cost Management query type label and description for UI) |
 | `POST` | `/cleanup` | Deletes old analysis runs, keeping the latest run per subscription (and related rows) |
 
 ### Analysis runs — `/finops/api/AnalysisRuns/*`

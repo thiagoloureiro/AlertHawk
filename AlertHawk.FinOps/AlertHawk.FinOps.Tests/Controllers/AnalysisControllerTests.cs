@@ -1,4 +1,6 @@
+using FinOpsToolSample.Configuration;
 using FinOpsToolSample.Controllers;
+using FinOpsToolSample.Models;
 using FinOpsToolSample.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -258,6 +260,48 @@ public class AnalysisControllerTests
         var status = Assert.IsType<ObjectResult>(result);
         Assert.Equal(500, status.StatusCode);
     }
+
+    [Fact]
+    public void GetAnalysisSettings_DefaultsToActualCost()
+    {
+        var config = new ConfigurationBuilder().Build();
+        var controller = CreateController(config);
+
+        var result = controller.GetAnalysisSettings();
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var dto = Assert.IsType<FinOpsAnalysisSettingsDto>(ok.Value);
+        Assert.Equal(AzureCostQueryType.ActualCost, dto.CostQueryType);
+        Assert.Equal("Actual", dto.CostQueryTypeLabel);
+    }
+
+    [Fact]
+    public void GetAnalysisSettings_ReadsAmortizedCostFromConfiguration()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Azure:CostQueryType"] = "AmortizedCost",
+            })
+            .Build();
+        var controller = CreateController(config);
+
+        var result = controller.GetAnalysisSettings();
+
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var dto = Assert.IsType<FinOpsAnalysisSettingsDto>(ok.Value);
+        Assert.Equal(AzureCostQueryType.AmortizedCost, dto.CostQueryType);
+        Assert.Equal("Amortized", dto.CostQueryTypeLabel);
+        Assert.Contains("spread", dto.CostQueryTypeDescription, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static AnalysisController CreateController(IConfiguration config) =>
+        new(
+            NullLogger<AnalysisController>.Instance,
+            new Mock<IAnalysisOrchestrationService>(MockBehavior.Strict).Object,
+            new Mock<IAnalysisJobService>(MockBehavior.Strict).Object,
+            new Mock<IDataCleanupService>(MockBehavior.Strict).Object,
+            config);
 
     private sealed class StubAnalysisJobService : IAnalysisJobService
     {

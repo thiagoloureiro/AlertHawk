@@ -1,3 +1,5 @@
+using FinOpsToolSample.Configuration;
+using FinOpsToolSample.Models;
 using FinOpsToolSample.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -123,6 +125,22 @@ namespace FinOpsToolSample.Controllers
             }
 
             return Ok(status);
+        }
+
+        /// <summary>
+        /// Returns FinOps analysis settings (e.g. Azure Cost Management query type) for UI display.
+        /// </summary>
+        [HttpGet("settings")]
+        public ActionResult<FinOpsAnalysisSettingsDto> GetAnalysisSettings()
+        {
+            var costQueryType = AzureCostQueryType.Normalize(_configuration["Azure:CostQueryType"]);
+
+            return Ok(new FinOpsAnalysisSettingsDto
+            {
+                CostQueryType = costQueryType,
+                CostQueryTypeLabel = AzureCostQueryType.DisplayLabel(costQueryType),
+                CostQueryTypeDescription = AzureCostQueryType.Description(costQueryType),
+            });
         }
 
         /// <summary>

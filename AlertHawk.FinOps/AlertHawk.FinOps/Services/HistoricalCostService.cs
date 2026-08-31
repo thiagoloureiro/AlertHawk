@@ -1,6 +1,7 @@
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
+using FinOpsToolSample.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,10 +16,12 @@ namespace FinOpsToolSample.Services
     public class HistoricalCostService
     {
         private readonly ClientSecretCredential _credential;
+        private readonly string _costQueryType;
 
-        public HistoricalCostService(ClientSecretCredential credential)
+        public HistoricalCostService(ClientSecretCredential credential, string costQueryType)
         {
             _credential = credential;
+            _costQueryType = AzureCostQueryType.Normalize(costQueryType);
         }
 
         public async Task<List<HistoricalCostData>> FetchHistoricalCostsAsync(
@@ -26,6 +29,8 @@ namespace FinOpsToolSample.Services
             int months = 6)
         {
             Console.WriteLine($"\n=== Fetching {months} Months Historical Cost Data ===");
+            Console.WriteLine(
+                $"Cost query type: {AzureCostQueryType.DisplayLabel(_costQueryType)} ({_costQueryType})");
 
             try
             {
@@ -46,29 +51,10 @@ namespace FinOpsToolSample.Services
 
                 Console.WriteLine($"📅 Date Range: {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
 
-                var queryPayload = new
-                {
-                    type = "ActualCost",
-                    timeframe = "Custom",
-                    timePeriod = new
-                    {
-                        from = startDate.ToString("yyyy-MM-ddT00:00:00Z"),
-                        to = endDate.ToString("yyyy-MM-ddT23:59:59Z")
-                    },
-                    dataset = new
-                    {
-                        granularity = "Daily",
-                        aggregation = new Dictionary<string, object>
-                        {
-                            ["totalCost"] = new { name = "PreTaxCost", function = "Sum" }
-                        },
-                        grouping = new[]
-                        {
-                            new { type = "Dimension", name = "ResourceGroupName" },
-                            new { type = "Dimension", name = "ServiceName" }
-                        }
-                    }
-                };
+                var queryPayload = CostManagementQueryBuilder.BuildCustomDailyQuery(
+                    _costQueryType,
+                    startDate,
+                    endDate);
 
                 var jsonPayload = JsonSerializer.Serialize(queryPayload);
 

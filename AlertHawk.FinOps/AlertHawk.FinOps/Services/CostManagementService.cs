@@ -1,6 +1,7 @@
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
+using FinOpsToolSample.Configuration;
 using FinOpsToolSample.Models;
 using System;
 using System.Collections.Generic;
@@ -15,15 +16,19 @@ namespace FinOpsToolSample.Services
     public class CostManagementService : ICostAnalysisService
     {
         private readonly ClientSecretCredential _credential;
+        private readonly string _costQueryType;
 
-        public CostManagementService(ClientSecretCredential credential)
+        public CostManagementService(ClientSecretCredential credential, string costQueryType)
         {
             _credential = credential;
+            _costQueryType = AzureCostQueryType.Normalize(costQueryType);
         }
 
         public async Task<(decimal totalCost, Dictionary<string, decimal> byResourceGroup, List<ServiceCostDetail> byService)> AnalyzeAsync(SubscriptionResource subscription, ArmClient armClient)
         {
             Console.WriteLine("=== Fetching Cost Data ===");
+            Console.WriteLine(
+                $"Cost query type: {AzureCostQueryType.DisplayLabel(_costQueryType)} ({_costQueryType})");
 
             try
             {
@@ -42,24 +47,7 @@ namespace FinOpsToolSample.Services
                 var token = await AzureThrottledRequestRetry.ExecuteAsync(
                     async () => await _credential.GetTokenAsync(tokenRequestContext, default));
 
-                var queryPayload = new
-                {
-                    type = "ActualCost",
-                    timeframe = "MonthToDate",
-                    dataset = new
-                    {
-                        granularity = "Daily",
-                        aggregation = new Dictionary<string, object>
-                        {
-                            ["totalCost"] = new { name = "PreTaxCost", function = "Sum" }
-                        },
-                        grouping = new[]
-                        {
-                            new { type = "Dimension", name = "ResourceGroupName" },
-                            new { type = "Dimension", name = "ServiceName" }
-                        }
-                    }
-                };
+                var queryPayload = CostManagementQueryBuilder.BuildMonthToDateQuery(_costQueryType);
 
                 var jsonPayload = JsonSerializer.Serialize(queryPayload);
 

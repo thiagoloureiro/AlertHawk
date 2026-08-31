@@ -178,8 +178,8 @@ namespace FinOpsToolSample.Services
                     new RedisAnalysisService(credential)
                 };
 
-                var costService = new CostManagementService(credential);
-                var historicalCostService = new HistoricalCostService(credential);
+                var costService = new CostManagementService(credential, _azureConfig.GetNormalizedCostQueryType());
+                var historicalCostService = new HistoricalCostService(credential, _azureConfig.GetNormalizedCostQueryType());
                 var dataCollector = new DataCollectionService();
                 using var AIService = new AIRecommendationService(_AIConfig.ApiKey, _AIConfig.ApiUrl, _AIConfig.ApiKeyHeaderName);
 

@@ -139,6 +139,7 @@ Under `finops-api.env` in `values.yaml`. Container image: `image.finops-api`. Se
 | `Azure__ClientId` | Application (client) id for Azure data collection (often the same app as `AzureAd__ClientId` when one registration is used for both API auth and ARM) |
 | `Azure__ClientSecret` | Client secret for `Azure__*` (store as a secret in real deployments) |
 | `Azure__SubscriptionIds` | **Required for scheduled or multi-subscription analysis.** Comma-separated Azure subscription GUIDs |
+| `Azure__CostQueryType` | `ActualCost` (default) or `AmortizedCost` for Cost Management queries |
 | `AI__ApiUrl` | AI / agent HTTP endpoint for recommendations (must match `AI:ApiUrl` in configuration) |
 | `AI__ApiKey` | API key sent to the AI endpoint |
 | `AI__ApiKeyHeaderName` | HTTP header name for the API key |
