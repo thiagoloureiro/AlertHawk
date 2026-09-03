@@ -9,8 +9,8 @@ public class CostDetailResourceGroupTagsTests
     {
         var rows = new (string ResourceGroup, string? TagsJson)[]
         {
-            ("rg1", """{"GAR_ID":"g1","COST_CENTER":"cc"}"""),
-            ("rg1", """{"GAR_ID":"g1","COST_CENTER":"cc"}""")
+            ("rg1", """{"GAR_ID":"g1","COST_CENTER":"cc","APPLICATION":"Payments"}"""),
+            ("rg1", """{"GAR_ID":"g1","COST_CENTER":"cc","APPLICATION":"Payments"}""")
         };
 
         var map = CostDetailResourceGroupTags.MergeByResourceGroup(rows);
@@ -18,6 +18,23 @@ public class CostDetailResourceGroupTagsTests
         Assert.True(map.TryGetValue("rg1", out var tags));
         Assert.Equal("g1", tags["GAR_ID"]);
         Assert.Equal("cc", tags["COST_CENTER"]);
+        Assert.Equal("Payments", tags["APPLICATION"]);
+    }
+
+    [Fact]
+    public void MergeByResourceGroup_CanonicalizesApplicationTagCasing()
+    {
+        var rows = new (string ResourceGroup, string? TagsJson)[]
+        {
+            ("rg1", """{"application":"Payments"}"""),
+            ("rg1", """{"APPLICATION":"Payments"}""")
+        };
+
+        var map = CostDetailResourceGroupTags.MergeByResourceGroup(rows);
+
+        Assert.True(map.TryGetValue("rg1", out var tags));
+        Assert.Equal("Payments", tags["APPLICATION"]);
+        Assert.False(tags.ContainsKey("application"));
     }
 
     [Fact]

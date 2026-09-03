@@ -35,7 +35,7 @@ namespace FinOpsToolSample.Services
 
                     try
                     {
-                        var d = JsonSerializer.Deserialize<Dictionary<string, string>>(row.TagsJson);
+                        var d = DeserializeTags(row.TagsJson);
                         if (d is { Count: > 0 })
                         {
                             dicts.Add(d);
@@ -77,7 +77,7 @@ namespace FinOpsToolSample.Services
 
                     try
                     {
-                        var d = JsonSerializer.Deserialize<Dictionary<string, string>>(row.TagsJson);
+                        var d = DeserializeTags(row.TagsJson);
                         if (d is { Count: > 0 })
                         {
                             dicts.Add(d);
@@ -127,14 +127,20 @@ namespace FinOpsToolSample.Services
                 return null;
             }
 
-            var merged = new Dictionary<string, string>();
+            var merged = new Dictionary<string, string>(System.StringComparer.Ordinal);
             foreach (var dict in dicts)
             {
                 foreach (var kv in dict)
                 {
-                    if (!merged.TryGetValue(kv.Key, out var existing))
+                    if (string.IsNullOrWhiteSpace(kv.Key))
                     {
-                        merged[kv.Key] = kv.Value;
+                        continue;
+                    }
+
+                    var key = DataCollectionResourceTags.CanonicalKey(kv.Key);
+                    if (!merged.TryGetValue(key, out var existing))
+                    {
+                        merged[key] = kv.Value;
                     }
                     else if (existing == MultipleValuesSentinel)
                     {
@@ -142,12 +148,17 @@ namespace FinOpsToolSample.Services
                     }
                     else if (!string.Equals(existing, kv.Value, System.StringComparison.Ordinal))
                     {
-                        merged[kv.Key] = MultipleValuesSentinel;
+                        merged[key] = MultipleValuesSentinel;
                     }
                 }
             }
 
             return merged.Count > 0 ? merged : null;
+        }
+
+        private static Dictionary<string, string>? DeserializeTags(string tagsJson)
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, string>>(tagsJson);
         }
     }
 }

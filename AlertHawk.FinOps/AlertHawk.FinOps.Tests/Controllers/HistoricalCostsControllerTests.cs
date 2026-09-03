@@ -51,7 +51,7 @@ public class HistoricalCostsControllerTests
             ResourceName = "sa1",
             ResourceGroup = "rg-prod",
             Location = "eastus",
-            TagsJson = """{"GAR_ID":"g-1","COST_CENTER":"cc"}""",
+            TagsJson = """{"GAR_ID":"g-1","APPLICATION":"Payments","COST_CENTER":"cc"}""",
             RecordedAt = DateTime.UtcNow
         });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -64,6 +64,7 @@ public class HistoricalCostsControllerTests
         var row = Assert.Single(list);
         Assert.NotNull(row.Tags);
         Assert.Equal("g-1", row.Tags["GAR_ID"]);
+        Assert.Equal("Payments", row.Tags["APPLICATION"]);
         Assert.Equal("cc", row.Tags["COST_CENTER"]);
     }
 

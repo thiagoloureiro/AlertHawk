@@ -72,6 +72,7 @@ public class DatabaseServiceTests
                     Tags = new Dictionary<string, string>
                     {
                         ["GAR_ID"] = "gar-1",
+                        ["APPLICATION"] = "Payments",
                         ["COST_CENTER"] = "cc-99"
                     }
                 }
@@ -90,6 +91,8 @@ public class DatabaseServiceTests
         Assert.NotNull(savedResource.TagsJson);
         Assert.Contains("GAR_ID", savedResource.TagsJson, StringComparison.Ordinal);
         Assert.Contains("gar-1", savedResource.TagsJson, StringComparison.Ordinal);
+        Assert.Contains("APPLICATION", savedResource.TagsJson, StringComparison.Ordinal);
+        Assert.Contains("Payments", savedResource.TagsJson, StringComparison.Ordinal);
         Assert.Contains("COST_CENTER", savedResource.TagsJson, StringComparison.Ordinal);
     }
 
