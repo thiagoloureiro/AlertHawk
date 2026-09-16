@@ -27,6 +27,8 @@ public class MonitorGroupServiceTests
 
     public MonitorGroupServiceTests()
     {
+        Environment.SetEnvironmentVariable("AUTH_API_URL", "https://fakeUrl/auth/");
+
         _monitorGroupRepositoryMock = new Mock<IMonitorGroupRepository>();
         _cachingMock = new Mock<ICaching>();
         _monitorRepositoryMock = new Mock<IMonitorRepository>();

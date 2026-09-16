@@ -20,13 +20,13 @@
 		<PackageReference Include="MassTransit.RabbitMQ" Version="8.5.10" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
 		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.2.3" />
-		<PackageReference Include="Sentry.AspNetCore" Version="6.9.0" />
+		<PackageReference Include="Sentry.AspNetCore" Version="6.11.0" />
 		<PackageReference Include="Microsoft.Identity.Web" Version="4.14.2" />
 		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
-		<PackageReference Include="Hangfire.Core" Version="1.8.24" />
-		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.24" />
-		<PackageReference Include="Dapper" Version="2.1.79" />
-		<PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.2" />
+		<PackageReference Include="Hangfire.Core" Version="1.8.25" />
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.25" />
+		<PackageReference Include="Dapper" Version="2.1.86" />
+		<PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.3" />
 
 	</ItemGroup>
 
