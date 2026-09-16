@@ -1,4 +1,5 @@
-using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Diagnostics.CodeAnalysis;
 
@@ -9,17 +10,25 @@ public class SecurityRequirementsOperationFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
-        var bearerScheme = new OpenApiSecurityScheme
-        {
-            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-        };
+        var hasAuthorizeAttribute =
+            context.MethodInfo.GetCustomAttributes(true).OfType<AuthorizeAttribute>().Any() ||
+            context.MethodInfo.DeclaringType?.GetCustomAttributes(true).OfType<AuthorizeAttribute>().Any() == true;
 
-        operation.Security = new List<OpenApiSecurityRequirement>
+        var hasAllowAnonymousAttribute =
+            context.MethodInfo.GetCustomAttributes(true).OfType<AllowAnonymousAttribute>().Any() ||
+            context.MethodInfo.DeclaringType?.GetCustomAttributes(true).OfType<AllowAnonymousAttribute>().Any() == true;
+
+        if (!hasAuthorizeAttribute || hasAllowAnonymousAttribute)
         {
-            new()
+            return;
+        }
+
+        operation.Security =
+        [
+            new OpenApiSecurityRequirement
             {
-                [bearerScheme] = new List<string>()
+                [new OpenApiSecuritySchemeReference("Bearer")] = []
             }
-        };
+        ];
     }
 }
