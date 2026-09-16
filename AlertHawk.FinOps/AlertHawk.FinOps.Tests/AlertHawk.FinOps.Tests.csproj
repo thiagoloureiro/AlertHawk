@@ -6,20 +6,27 @@
         <Nullable>enable</Nullable>
         <OutputType>Exe</OutputType>
         <IsPackable>false</IsPackable>
-        <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
-        <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+
+        <!-- To enable Microsoft.Testing.Platform, uncomment the following line. -->
+        <!-- <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner> -->
+        <!-- Note: to use Microsoft.Testing.Platform correctly with dotnet test: -->
+        <!-- 1. You must add dotnet.config specifying the test runner to be Microsoft.Testing.Platform -->
+        <!-- 2. You must use .NET 10 SDK or later -->
+        <!-- For more information, see https://aka.ms/dotnet-test/mtp and https://xunit.net/docs/getting-started/v3/microsoft-testing-platform -->
+        <!-- To enable code coverage with Microsoft.Testing.Platform, add a package reference to Microsoft.Testing.Extensions.CodeCoverage -->
+        <!-- https://learn.microsoft.comdotnet/core/testing/microsoft-testing-platform-extensions-code-coverage -->
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="coverlet.collector" Version="8.0.1">
+        <PackageReference Include="coverlet.collector" Version="10.0.1">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="coverlet.msbuild" Version="8.0.1">
+        <PackageReference Include="coverlet.msbuild" Version="10.0.1">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.12" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.9" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
         <PackageReference Include="Moq" Version="4.20.72"/>
         <PackageReference Include="xunit.v3" Version="3.2.2" />
