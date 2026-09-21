@@ -1,6 +1,7 @@
 using AlertHawk.Metrics.API.Models;
 using AlertHawk.Metrics.API.Producers;
 using AlertHawk.Metrics.API.Services;
+using EasyMemoryCache;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sentry;
@@ -11,24 +12,31 @@ namespace AlertHawk.Metrics.API.Controllers;
 [Route("api/metrics")]
 public class MetricsController : ControllerBase
 {
+    private const string UniqueClusterNamesCacheKey = "uniqueClusterNames";
+    private const string UniqueNamespaceNamesCacheKeyPrefix = "uniqueNamespaceNames";
+    private const int CacheExpirationMinutes = 20;
+
     private readonly IClickHouseService _clickHouseService;
     private readonly NodeStatusTracker _nodeStatusTracker;
     private readonly INotificationProducer _notificationProducer;
     private readonly IAzurePricesService _azurePricesService;
     private readonly ILogger<MetricsController> _logger;
+    private readonly ICaching _caching;
 
     public MetricsController(
         IClickHouseService clickHouseService,
         NodeStatusTracker nodeStatusTracker,
         INotificationProducer notificationProducer,
         IAzurePricesService azurePricesService,
-        ILogger<MetricsController> logger)
+        ILogger<MetricsController> logger,
+        ICaching caching)
     {
         _clickHouseService = clickHouseService;
         _nodeStatusTracker = nodeStatusTracker;
         _notificationProducer = notificationProducer;
         _azurePricesService = azurePricesService;
         _logger = logger;
+        _caching = caching;
     }
 
     /// <summary>
@@ -387,10 +395,14 @@ public class MetricsController : ControllerBase
     {
         try
         {
-            var clusterNames = await _clickHouseService.GetUniqueClusterNamesAsync();
-
-            // Order alphabetically
-            var orderedClusterNames = clusterNames.OrderBy(name => name).ToList();
+            var orderedClusterNames = await _caching.GetOrSetObjectFromCacheAsync(
+                UniqueClusterNamesCacheKey,
+                CacheExpirationMinutes,
+                async () =>
+                {
+                    var clusterNames = await _clickHouseService.GetUniqueClusterNamesAsync();
+                    return clusterNames.OrderBy(name => name).ToList();
+                });
 
             return Ok(orderedClusterNames);
         }
@@ -411,10 +423,18 @@ public class MetricsController : ControllerBase
     {
         try
         {
-            var namespaceNames = await _clickHouseService.GetUniqueNamespaceNamesAsync(clusterName);
+            var cacheKey = string.IsNullOrWhiteSpace(clusterName)
+                ? $"{UniqueNamespaceNamesCacheKeyPrefix}_all"
+                : $"{UniqueNamespaceNamesCacheKeyPrefix}_{clusterName}";
 
-            // Order alphabetically
-            var orderedNamespaces = namespaceNames.OrderBy(name => name).ToList();
+            var orderedNamespaces = await _caching.GetOrSetObjectFromCacheAsync(
+                cacheKey,
+                CacheExpirationMinutes,
+                async () =>
+                {
+                    var namespaceNames = await _clickHouseService.GetUniqueNamespaceNamesAsync(clusterName);
+                    return namespaceNames.OrderBy(name => name).ToList();
+                });
 
             return Ok(orderedNamespaces);
         }

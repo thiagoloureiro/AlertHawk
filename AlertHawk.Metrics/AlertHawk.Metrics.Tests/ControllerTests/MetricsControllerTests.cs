@@ -2,6 +2,7 @@ using AlertHawk.Metrics.API.Controllers;
 using AlertHawk.Metrics.API.Models;
 using AlertHawk.Metrics.API.Producers;
 using AlertHawk.Metrics.API.Services;
+using EasyMemoryCache;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ public class MetricsControllerTests
     private readonly Mock<INotificationProducer> _mockNotificationProducer;
     private readonly Mock<IAzurePricesService> _mockAzurePricesService;
     private readonly Mock<ILogger<MetricsController>> _mockLogger;
+    private readonly Mock<ICaching> _mockCaching;
     private readonly MetricsController _controller;
 
     public MetricsControllerTests()
@@ -26,13 +28,15 @@ public class MetricsControllerTests
         _mockNotificationProducer = new Mock<INotificationProducer>();
         _mockAzurePricesService = new Mock<IAzurePricesService>();
         _mockLogger = new Mock<ILogger<MetricsController>>();
+        _mockCaching = new Mock<ICaching>();
         
         _controller = new MetricsController(
             _mockClickHouseService.Object,
             _nodeStatusTracker,
             _mockNotificationProducer.Object,
             _mockAzurePricesService.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockCaching.Object);
         
         // Setup controller context for authorization
         var claims = new List<Claim> { new Claim(ClaimTypes.Name, "testuser") };
