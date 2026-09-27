@@ -18,6 +18,8 @@ public class AuthControllerTests
     private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly AuthController _controller;
     private readonly Mock<IUsersMonitorGroupService> _mockUsersGroupService;
+    private readonly Mock<IGetOrCreateUserService> _mockGetOrCreateUserService;
+    private readonly Mock<IMobileAuthCodeService> _mockMobileAuthCodeService;
 
     public AuthControllerTests()
     {
@@ -25,7 +27,10 @@ public class AuthControllerTests
         _mockJwtTokenService = new Mock<IJwtTokenService>();
         _mockConfiguration = new Mock<IConfiguration>();
         _mockUsersGroupService = new Mock<IUsersMonitorGroupService>();
-        _controller = new AuthController(_mockUserService.Object, _mockJwtTokenService.Object, _mockConfiguration.Object, _mockUsersGroupService.Object)
+        _mockGetOrCreateUserService = new Mock<IGetOrCreateUserService>();
+        _mockMobileAuthCodeService = new Mock<IMobileAuthCodeService>();
+        _controller = new AuthController(_mockUserService.Object, _mockJwtTokenService.Object, _mockConfiguration.Object,
+            _mockUsersGroupService.Object, _mockGetOrCreateUserService.Object, _mockMobileAuthCodeService.Object)
         {
             ControllerContext = new ControllerContext
             {
@@ -252,5 +257,102 @@ public class AuthControllerTests
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         var message = Assert.IsType<Message>(badRequestResult.Value);
         Assert.Equal("Invalid API key.", message.Content);
+    }
+
+    [Fact]
+    public async Task IssueMobileAuthCode_WhenUserExists_ReturnsCode()
+    {
+        var user = new UsersBuilder().WithUserEmailAndAdminIsFalse("");
+        var expiresAt = DateTime.UtcNow.AddMinutes(10);
+        _mockGetOrCreateUserService
+            .Setup(x => x.GetUserOrCreateUser(It.IsAny<System.Security.Claims.ClaimsPrincipal>()))
+            .ReturnsAsync(user);
+        _mockMobileAuthCodeService
+            .Setup(x => x.IssueAsync(user.Id))
+            .ReturnsAsync(new MobileAuthCodeIssued("ABCD-2345", expiresAt));
+
+        var result = await _controller.IssueMobileAuthCode();
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal("ABCD-2345", okResult.Value?.GetType().GetProperty("code")?.GetValue(okResult.Value));
+        Assert.Equal(expiresAt, okResult.Value?.GetType().GetProperty("expiresAt")?.GetValue(okResult.Value));
+    }
+
+    [Fact]
+    public async Task IssueMobileAuthCode_WhenUserMissing_ReturnsBadRequest()
+    {
+        _mockGetOrCreateUserService
+            .Setup(x => x.GetUserOrCreateUser(It.IsAny<System.Security.Claims.ClaimsPrincipal>()))
+            .ReturnsAsync((UserDto?)null);
+
+        var result = await _controller.IssueMobileAuthCode();
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        var message = Assert.IsType<Message>(badRequestResult.Value);
+        Assert.Equal("User not found.", message.Content);
+    }
+
+    [Fact]
+    public async Task RedeemMobileAuthCode_ValidCode_ReturnsTokenAndEmail()
+    {
+        var userId = Guid.NewGuid();
+        var user = new UserDto(userId, "testuser", "user@user.com", false);
+        var token = "test_token";
+        SetupMobileApiKey("your_auth_api_key");
+        _mockMobileAuthCodeService.Setup(x => x.ConsumeAsync("ABCD-2345")).ReturnsAsync(userId);
+        _mockUserService.Setup(x => x.Get(userId)).ReturnsAsync(user);
+        _mockJwtTokenService.Setup(x => x.GenerateToken(user)).Returns(token);
+
+        var result = await _controller.RedeemMobileAuthCode(new MobileAuthCodeRedeem
+        {
+            Code = "ABCD-2345",
+            ApiKey = "your_auth_api_key"
+        });
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(token, okResult.Value?.GetType().GetProperty("token")?.GetValue(okResult.Value));
+        Assert.Equal(user.Email, okResult.Value?.GetType().GetProperty("email")?.GetValue(okResult.Value));
+        _mockUserService.Verify(x => x.UpdateUserToken(token, user.Username.ToLower()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RedeemMobileAuthCode_InvalidApiKey_ReturnsBadRequest()
+    {
+        SetupMobileApiKey("your_auth_api_key");
+
+        var result = await _controller.RedeemMobileAuthCode(new MobileAuthCodeRedeem
+        {
+            Code = "ABCD-2345",
+            ApiKey = "invalid"
+        });
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        var message = Assert.IsType<Message>(badRequestResult.Value);
+        Assert.Equal("Invalid API key.", message.Content);
+        _mockMobileAuthCodeService.Verify(x => x.ConsumeAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RedeemMobileAuthCode_InvalidCode_ReturnsBadRequest()
+    {
+        SetupMobileApiKey("your_auth_api_key");
+        _mockMobileAuthCodeService.Setup(x => x.ConsumeAsync(It.IsAny<string>())).ReturnsAsync((Guid?)null);
+
+        var result = await _controller.RedeemMobileAuthCode(new MobileAuthCodeRedeem
+        {
+            Code = "ABCD-2345",
+            ApiKey = "your_auth_api_key"
+        });
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        var message = Assert.IsType<Message>(badRequestResult.Value);
+        Assert.Equal("Invalid or expired code.", message.Content);
+    }
+
+    private void SetupMobileApiKey(string apiKey)
+    {
+        var mockSection = new Mock<IConfigurationSection>();
+        mockSection.Setup(s => s.Value).Returns(apiKey);
+        _mockConfiguration.Setup(c => c.GetSection("MOBILE_API_KEY")).Returns(mockSection.Object);
     }
 }

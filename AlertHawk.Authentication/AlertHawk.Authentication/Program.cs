@@ -138,6 +138,9 @@ using (var scope = app.Services.CreateScope())
 
     var userSubscriptionsRepository = scope.ServiceProvider.GetRequiredService<IUserSubscriptionsRepository>();
     await userSubscriptionsRepository.EnsureTableExistsAsync();
+
+    var mobileAuthCodeRepository = scope.ServiceProvider.GetRequiredService<IMobileAuthCodeRepository>();
+    await mobileAuthCodeRepository.EnsureTableExistsAsync();
 }
 
 // Configure the HTTP request pipeline.

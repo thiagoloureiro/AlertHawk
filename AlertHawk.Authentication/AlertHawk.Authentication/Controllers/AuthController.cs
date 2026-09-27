@@ -2,6 +2,7 @@
 using AlertHawk.Authentication.Domain.Custom;
 using AlertHawk.Authentication.Domain.Entities;
 using AlertHawk.Authentication.Infrastructure.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -15,14 +16,19 @@ namespace AlertHawk.Authentication.Controllers
         private readonly IJwtTokenService _jwtTokenService;
         private readonly IConfiguration _configuration;
         private readonly IUsersMonitorGroupService _monitorGroupService;
+        private readonly IGetOrCreateUserService _getOrCreateUserService;
+        private readonly IMobileAuthCodeService _mobileAuthCodeService;
 
         public AuthController(IUserService userService, IJwtTokenService jwtTokenService, IConfiguration configuration,
-            IUsersMonitorGroupService monitorGroupService)
+            IUsersMonitorGroupService monitorGroupService, IGetOrCreateUserService getOrCreateUserService,
+            IMobileAuthCodeService mobileAuthCodeService)
         {
             _userService = userService;
             _jwtTokenService = jwtTokenService;
             _configuration = configuration;
             _monitorGroupService = monitorGroupService;
+            _getOrCreateUserService = getOrCreateUserService;
+            _mobileAuthCodeService = mobileAuthCodeService;
         }
 
         [HttpPost("azure")]
@@ -125,6 +131,52 @@ namespace AlertHawk.Authentication.Controllers
                 SentrySdk.CaptureException(err);
                 return StatusCode(StatusCodes.Status500InternalServerError, new Message("Something went wrong."));
             }
+        }
+
+        [Authorize]
+        [HttpPost("mobileCode")]
+        [SwaggerOperation(Summary = "Issue a one-time code so the mobile app can sign in as the current user")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Message), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> IssueMobileAuthCode()
+        {
+            var user = await _getOrCreateUserService.GetUserOrCreateUser(User);
+            if (user is null)
+            {
+                return BadRequest(new Message("User not found."));
+            }
+
+            var issued = await _mobileAuthCodeService.IssueAsync(user.Id);
+            return Ok(new { code = issued.Code, expiresAt = issued.ExpiresAt });
+        }
+
+        [HttpPost("mobile")]
+        [SwaggerOperation(Summary = "Exchange a one-time mobile sign-in code for a user token")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Message), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> RedeemMobileAuthCode([FromBody] MobileAuthCodeRedeem request)
+        {
+            if (request.ApiKey != _configuration.GetSection("MOBILE_API_KEY").Value)
+            {
+                return BadRequest(new Message("Invalid API key."));
+            }
+
+            var userId = await _mobileAuthCodeService.ConsumeAsync(request.Code);
+            if (userId is null)
+            {
+                return BadRequest(new Message("Invalid or expired code."));
+            }
+
+            var user = await _userService.Get(userId.Value);
+            if (user is null)
+            {
+                return BadRequest(new Message("Invalid or expired code."));
+            }
+
+            var token = _jwtTokenService.GenerateToken(user);
+            await _userService.UpdateUserToken(token, user.Username.ToLower());
+
+            return Ok(new { token, email = user.Email });
         }
     }
 }

@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddTransient<IGetOrCreateUserService, GetOrCreateUserService>();
         services.AddTransient<IUserClustersService, UserClustersService>();
         services.AddTransient<IUserSubscriptionsService, UserSubscriptionsService>();
+        services.AddTransient<IMobileAuthCodeService, MobileAuthCodeService>();
         return services;
     }
 }
