@@ -25,7 +25,7 @@ public class UserRepository : BaseRepository, IUserRepository
         const string sql =
             "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE Id = @Id";
         var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { Id = id });
-        return user == null ? null : new UserDto(user.Id, user.Username, user.Email, user.IsAdmin);
+        return user == null ? null : new UserDto(user.Id, user.Username, user.Email, user.IsAdmin, user.LastLogon);
     }
 
     public async Task<UserDto?> GetByEmail(string email)
@@ -34,7 +34,7 @@ public class UserRepository : BaseRepository, IUserRepository
             "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE LOWER(Email) = LOWER(@Email)";
         var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql,
             new { Email = email.ToLower(CultureInfo.InvariantCulture) });
-        return user == null ? null : new UserDto(user.Id, user.Username, user.Email, user.IsAdmin);
+        return user == null ? null : new UserDto(user.Id, user.Username, user.Email, user.IsAdmin, user.LastLogon);
     }
 
     public async Task<UserDto?> GetByUsername(string username)
@@ -43,14 +43,14 @@ public class UserRepository : BaseRepository, IUserRepository
             "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon  FROM Users WHERE LOWER(Username) = LOWER(@Username)";
         var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql,
             new { Username = username.ToLower(CultureInfo.InvariantCulture) });
-        return user == null ? null : new UserDto(user.Id, user.Username, user.Email, user.IsAdmin);
+        return user == null ? null : new UserDto(user.Id, user.Username, user.Email, user.IsAdmin, user.LastLogon);
     }
 
     public async Task<IEnumerable<UserDto>?> GetAll()
     {
         const string sql = "SELECT Id, Email, Username, IsAdmin, CreatedAt, UpdatedAt, LastLogon FROM Users";
         var user = await ExecuteQueryAsync<User>(sql);
-        return user?.Select(u => new UserDto(u.Id, u.Username, u.Email, u.IsAdmin)).ToList();
+        return user?.Select(u => new UserDto(u.Id, u.Username, u.Email, u.IsAdmin, u.LastLogon)).ToList();
     }
 
     public async Task Delete(Guid id)
@@ -65,7 +65,7 @@ public class UserRepository : BaseRepository, IUserRepository
     {
         const string sql = "SELECT Username, Email, IsAdmin FROM Users WHERE Token = @jwtToken";
         var user = await ExecuteQueryFirstOrDefaultAsync<User>(sql, new { jwtToken });
-        return user == null ? null : new UserDto(user.Id, user.Username, user.Email, user.IsAdmin);
+        return user == null ? null : new UserDto(user.Id, user.Username, user.Email, user.IsAdmin, user.LastLogon);
     }
 
     public async Task UpdateUserToken(string token, string username)
@@ -96,7 +96,7 @@ public class UserRepository : BaseRepository, IUserRepository
             return null;
         }
 
-        return new UserDto(user.Id, user.Username, user.Email, user.IsAdmin);
+        return new UserDto(user.Id, user.Username, user.Email, user.IsAdmin, user.LastLogon);
     }
 
     public async Task<IEnumerable<string>?> GetUserDeviceTokenList(Guid userId)
@@ -119,7 +119,13 @@ public class UserRepository : BaseRepository, IUserRepository
                           "JOIN UsersMonitorGroup umg ON u.Id = umg.UserId " +
                           "WHERE umg.GroupMonitorId = @groupId";
         var list = await ExecuteQueryAsyncWithParameters<User>(sql, new { groupId });
-        return list?.Select(u => new UserDto(u.Id, u.Username, u.Email, u.IsAdmin)).ToList();
+        return list?.Select(u => new UserDto(u.Id, u.Username, u.Email, u.IsAdmin, u.LastLogon)).ToList();
+    }
+
+    public async Task UpdateLastLogon(Guid userId, DateTime lastLogon)
+    {
+        const string sql = "UPDATE Users SET LastLogon = @LastLogon WHERE Id = @Id";
+        await ExecuteNonQueryAsync(sql, new { Id = userId, LastLogon = lastLogon });
     }
 
     public async Task UpdateUserDeviceToken(string deviceToken, Guid userId)

@@ -9,11 +9,11 @@ public static class UserMapper
 {
     public static UserDto? MapToDto(User? user)
     {
-        return user == null ? null : new UserDto(user.Id, user.Username, user.Email, user.IsAdmin);
+        return user == null ? null : new UserDto(user.Id, user.Username, user.Email, user.IsAdmin, user.LastLogon);
     }
 
     public static IEnumerable<UserDto>? MapToDtoList(IEnumerable<User>? users)
     {
-        return users?.Select(u => new UserDto(u.Id, u.Username, u.Email, u.IsAdmin)).ToList();
+        return users?.Select(u => new UserDto(u.Id, u.Username, u.Email, u.IsAdmin, u.LastLogon)).ToList();
     }
 }

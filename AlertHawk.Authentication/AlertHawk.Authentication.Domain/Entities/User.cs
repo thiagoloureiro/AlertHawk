@@ -12,4 +12,5 @@ public class User
     public string Salt { get; set; }
     public bool IsAdmin { get; set; }
     public string? Token { get; set; }
+    public DateTime? LastLogon { get; set; }
 }

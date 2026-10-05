@@ -303,4 +303,15 @@ public class UserServiceTests
         // Assert
         _mockUserRepository.Verify(r => r.UpdatePassword(username, password), Times.Once);
     }
+
+    [Fact]
+    public async Task UpdateLastLogon_CallsRepositoryUpdateLastLogon()
+    {
+        var userId = Guid.NewGuid();
+        var lastLogon = DateTime.UtcNow;
+
+        await _userService.UpdateLastLogon(userId, lastLogon);
+
+        _mockUserRepository.Verify(r => r.UpdateLastLogon(userId, lastLogon), Times.Once);
+    }
 }

@@ -436,7 +436,10 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var returnedUser = Assert.IsType<UserDto>(okResult.Value);
-            Assert.Equal(user, returnedUser);
+            Assert.Equal(user.Id, returnedUser.Id);
+            Assert.Equal(user.Email, returnedUser.Email);
+            Assert.NotNull(returnedUser.LastLogon);
+            _mockUserService.Verify(s => s.UpdateLastLogon(user.Id, It.IsAny<DateTime>()), Times.Once);
         }
 
         [Fact]
@@ -453,7 +456,10 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var returnedUser = Assert.IsType<UserDto>(okResult.Value);
-            Assert.Equal(user, returnedUser);
+            Assert.Equal(user.Id, returnedUser.Id);
+            Assert.Equal(user.Email, returnedUser.Email);
+            Assert.NotNull(returnedUser.LastLogon);
+            _mockUserService.Verify(s => s.UpdateLastLogon(user.Id, It.IsAny<DateTime>()), Times.Once);
         }
 
         [Fact]
@@ -467,6 +473,7 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Null(okResult.Value);
+            _mockUserService.Verify(s => s.UpdateLastLogon(It.IsAny<Guid>(), It.IsAny<DateTime>()), Times.Never);
         }
 
         [Fact]
@@ -890,7 +897,10 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var returnedUser = Assert.IsType<UserDto>(okResult.Value);
-            Assert.Equal(existingUser, returnedUser);
+            Assert.Equal(existingUser.Id, returnedUser.Id);
+            Assert.Equal(existingUser.Email, returnedUser.Email);
+            Assert.NotNull(returnedUser.LastLogon);
+            _mockUserService.Verify(s => s.UpdateLastLogon(existingUser.Id, It.IsAny<DateTime>()), Times.Once);
 
             // Verify GetUserOrCreateUser was not called since user exists
             _mockGetOrCreateUserService.Verify(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()), Times.Never);
@@ -914,7 +924,10 @@ namespace AlertHawk.Authentication.Tests.ControllerTests
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var returnedUser = Assert.IsType<UserDto>(okResult.Value);
-            Assert.Equal(newUser, returnedUser);
+            Assert.Equal(newUser.Id, returnedUser.Id);
+            Assert.Equal(newUser.Email, returnedUser.Email);
+            Assert.NotNull(returnedUser.LastLogon);
+            _mockUserService.Verify(s => s.UpdateLastLogon(newUser.Id, It.IsAny<DateTime>()), Times.Once);
 
             // Verify GetUserOrCreateUser was called since user didn't exist
             _mockGetOrCreateUserService.Verify(x => x.GetUserOrCreateUser(It.IsAny<ClaimsPrincipal>()), Times.Once);

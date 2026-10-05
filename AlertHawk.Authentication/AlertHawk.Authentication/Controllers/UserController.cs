@@ -278,6 +278,13 @@ public class UserController : ControllerBase
             result = await _getOrCreateUserService.GetUserOrCreateUser(User);
         }
 
+        if (result != null)
+        {
+            var lastLogon = DateTime.UtcNow;
+            await _userService.UpdateLastLogon(result.Id, lastLogon);
+            result = result with { LastLogon = lastLogon };
+        }
+
         return Ok(result);
     }
 

@@ -115,6 +115,11 @@ public class UserService : IUserService
         await _userRepository.UpdateUserDeviceToken(deviceToken, userId);
     }
 
+    public async Task UpdateLastLogon(Guid userId, DateTime lastLogon)
+    {
+        await _userRepository.UpdateLastLogon(userId, lastLogon);
+    }
+
     public async Task<IEnumerable<string>?> GetUserDeviceTokenList(Guid userId)
     {
         return await _userRepository.GetUserDeviceTokenList(userId);
