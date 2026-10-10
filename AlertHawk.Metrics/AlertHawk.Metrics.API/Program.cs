@@ -267,9 +267,11 @@ builder.Services.AddAuthorization(options =>
 });
 
 var app = builder.Build();
+var apiKeyValidator = app.Services.GetRequiredService<IApiKeyValidator>();
 app.Logger.LogInformation(
-    "API key authentication loaded {KeyCount} key(s) for metrics read endpoints.",
-    app.Services.GetRequiredService<IApiKeyValidator>().Count);
+    apiKeyValidator.IsConfigured
+        ? "API key authentication is configured for metrics read endpoints."
+        : "API key authentication is not configured. Set ApiKey to allow key access to metrics read endpoints.");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

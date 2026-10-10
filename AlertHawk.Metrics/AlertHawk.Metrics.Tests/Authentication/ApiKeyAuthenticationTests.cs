@@ -12,81 +12,50 @@ namespace AlertHawk.Metrics.Tests.Authentication;
 public class ApiKeyValidatorTests
 {
     [Fact]
-    public void Match_ConfiguredKey_ReturnsItsName()
+    public void Match_ConfiguredKey_ReturnsTheApiKeyIdentity()
     {
-        var validator = Validator(
-            ("rancher-extension", "metrics-key-0123456789"),
-            ("other", "another-key-0123456789"));
+        var validator = Validator("myapikey");
 
-        Assert.Equal("other", validator.Match("another-key-0123456789"));
-        Assert.Equal(2, validator.Count);
+        Assert.True(validator.IsConfigured);
+        Assert.Equal(ApiKeyValidator.IdentityName, validator.Match("myapikey"));
     }
 
     [Fact]
     public void Match_WrongKey_ReturnsNull()
     {
-        var validator = Validator(("rancher-extension", "metrics-key-0123456789"));
+        var validator = Validator("myapikey");
 
-        Assert.Null(validator.Match("metrics-key-0123456780"));
-        Assert.Null(validator.Match("metrics-key-0123456789-extra"));
+        Assert.Null(validator.Match("other-key"));
+        Assert.Null(validator.Match("myapikey-extra"));
         Assert.Null(validator.Match(""));
     }
 
     [Fact]
-    public void Match_NoKeysConfigured_ReturnsNull()
+    public void Match_BlankKey_IsNotConfigured()
+    {
+        var validator = Validator("   ");
+
+        Assert.False(validator.IsConfigured);
+        Assert.Null(validator.Match("myapikey"));
+    }
+
+    [Fact]
+    public void Match_NoKeyConfigured_ReturnsNull()
     {
         var validator = new ApiKeyValidator(new ConfigurationBuilder().Build());
 
-        Assert.Equal(0, validator.Count);
-        Assert.Null(validator.Match("metrics-key-0123456789"));
+        Assert.False(validator.IsConfigured);
+        Assert.Null(validator.Match("myapikey"));
     }
 
-    [Fact]
-    public void Match_ApiKeysEnvironmentList_AcceptsEachKey()
+    private static ApiKeyValidator Validator(string key)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["API_KEYS"] = " first-key-0123456789 , second-key-0123456789 ",
+                [ApiKeyValidator.ConfigurationKey] = key,
             })
             .Build();
-        var validator = new ApiKeyValidator(configuration);
-
-        Assert.Equal("api-key-1", validator.Match("first-key-0123456789"));
-        Assert.Equal("api-key-2", validator.Match("second-key-0123456789"));
-    }
-
-    [Fact]
-    public void Match_BlankAndDuplicateKeys_AreIgnored()
-    {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ApiKeys:Keys:0:Name"] = "primary",
-                ["ApiKeys:Keys:0:Key"] = "metrics-key-0123456789",
-                ["ApiKeys:Keys:1:Name"] = "blank",
-                ["ApiKeys:Keys:1:Key"] = "   ",
-                ["ApiKeys:Keys:2:Name"] = "duplicate",
-                ["ApiKeys:Keys:2:Key"] = "metrics-key-0123456789",
-                ["API_KEYS"] = "metrics-key-0123456789",
-            })
-            .Build();
-        var validator = new ApiKeyValidator(configuration);
-
-        Assert.Equal(1, validator.Count);
-        Assert.Equal("primary", validator.Match("metrics-key-0123456789"));
-    }
-
-    private static ApiKeyValidator Validator(params (string Name, string Key)[] keys)
-    {
-        var values = new Dictionary<string, string?>();
-        for (var i = 0; i < keys.Length; i++)
-        {
-            values[$"ApiKeys:Keys:{i}:Name"] = keys[i].Name;
-            values[$"ApiKeys:Keys:{i}:Key"] = keys[i].Key;
-        }
-
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
 
         return new ApiKeyValidator(configuration);
     }
@@ -97,19 +66,19 @@ public class ApiKeyAuthenticationHandlerTests
     [Fact]
     public async Task Authenticate_ValidKey_SucceedsWithKeyName()
     {
-        var context = Context(("rancher-extension", "metrics-key-0123456789"));
-        context.Request.Headers[ApiKeyAuthenticationHandler.HeaderName] = "metrics-key-0123456789";
+        var context = Context("myapikey");
+        context.Request.Headers[ApiKeyAuthenticationHandler.HeaderName] = "myapikey";
 
         var result = await context.AuthenticateAsync(ApiKeyAuthenticationHandler.SchemeName);
 
         Assert.True(result.Succeeded);
-        Assert.Equal("rancher-extension", result.Principal?.Identity?.Name);
+        Assert.Equal(ApiKeyValidator.IdentityName, result.Principal?.Identity?.Name);
     }
 
     [Fact]
     public async Task Authenticate_MissingHeader_DoesNotAuthenticate()
     {
-        var context = Context(("rancher-extension", "metrics-key-0123456789"));
+        var context = Context("myapikey");
 
         var result = await context.AuthenticateAsync(ApiKeyAuthenticationHandler.SchemeName);
 
@@ -120,8 +89,8 @@ public class ApiKeyAuthenticationHandlerTests
     [Fact]
     public async Task Authenticate_InvalidKey_Fails()
     {
-        var context = Context(("rancher-extension", "metrics-key-0123456789"));
-        context.Request.Headers[ApiKeyAuthenticationHandler.HeaderName] = "wrong-key-0123456789";
+        var context = Context("myapikey");
+        context.Request.Headers[ApiKeyAuthenticationHandler.HeaderName] = "wrong-key";
 
         var result = await context.AuthenticateAsync(ApiKeyAuthenticationHandler.SchemeName);
 
@@ -129,16 +98,14 @@ public class ApiKeyAuthenticationHandlerTests
         Assert.NotNull(result.Failure);
     }
 
-    private static DefaultHttpContext Context(params (string Name, string Key)[] keys)
+    private static DefaultHttpContext Context(string key)
     {
-        var values = new Dictionary<string, string?>();
-        for (var i = 0; i < keys.Length; i++)
-        {
-            values[$"ApiKeys:Keys:{i}:Name"] = keys[i].Name;
-            values[$"ApiKeys:Keys:{i}:Key"] = keys[i].Key;
-        }
-
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [ApiKeyValidator.ConfigurationKey] = key,
+            })
+            .Build();
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton<IApiKeyValidator>(new ApiKeyValidator(configuration));
