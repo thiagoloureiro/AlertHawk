@@ -1,3 +1,4 @@
+using AlertHawk.Metrics.API.Authentication;
 using AlertHawk.Metrics.API.Models;
 using AlertHawk.Metrics.API.Producers;
 using AlertHawk.Metrics.API.Services;
@@ -47,7 +48,7 @@ public class MetricsController : ControllerBase
     /// <param name="clusterName"></param>
     /// <returns>List of pod/container metrics</returns>
     [HttpGet("namespace")]
-    [Authorize]
+    [Authorize(Policy = MetricsPolicies.Read)]
     public async Task<ActionResult<List<PodMetricDto>>> GetMetricsByNamespace(
         [FromQuery] string? @namespace = null,
         [FromQuery] int? minutes = 1440,
@@ -72,7 +73,7 @@ public class MetricsController : ControllerBase
     /// <param name="clusterName"></param>
     /// <returns>List of pod/container metrics for the namespace</returns>
     [HttpGet("namespace/{namespace}")]
-    [Authorize]
+    [Authorize(Policy = MetricsPolicies.Read)]
     public async Task<ActionResult<List<PodMetricDto>>> GetMetricsByNamespaceName(
         string @namespace,
         [FromQuery] int? minutes = 1440,
@@ -97,7 +98,7 @@ public class MetricsController : ControllerBase
     /// <param name="clusterName"></param>
     /// <returns>List of node metrics</returns>
     [HttpGet("node")]
-    [Authorize]
+    [Authorize(Policy = MetricsPolicies.Read)]
     public async Task<ActionResult<List<NodeMetricDto>>> GetNodeMetrics(
         [FromQuery] string? nodeName = null,
         [FromQuery] int? minutes = 1440,
@@ -122,7 +123,7 @@ public class MetricsController : ControllerBase
     /// <param name="clusterName"></param>
     /// <returns>List of node metrics for the specified node</returns>
     [HttpGet("node/{nodeName}")]
-    [Authorize]
+    [Authorize(Policy = MetricsPolicies.Read)]
     public async Task<ActionResult<List<NodeMetricDto>>> GetNodeMetricsByName(
         string nodeName,
         [FromQuery] int? minutes = 1440,
@@ -343,7 +344,7 @@ public class MetricsController : ControllerBase
     /// <param name="clusterName">Optional cluster name filter</param>
     /// <returns>List of PVC metrics</returns>
     [HttpGet("pvc")]
-    [Authorize]
+    [Authorize(Policy = MetricsPolicies.Read)]
     public async Task<ActionResult<List<PvcMetricDto>>> GetPvcMetrics(
         [FromQuery] string? @namespace = null,
         [FromQuery] int? minutes = 1440,
@@ -368,7 +369,7 @@ public class MetricsController : ControllerBase
     /// <param name="clusterName">Optional cluster name filter</param>
     /// <returns>List of PVC metrics for the namespace</returns>
     [HttpGet("pvc/namespace/{namespace}")]
-    [Authorize]
+    [Authorize(Policy = MetricsPolicies.Read)]
     public async Task<ActionResult<List<PvcMetricDto>>> GetPvcMetricsByNamespace(
         string @namespace,
         [FromQuery] int? minutes = 1440,
@@ -390,7 +391,7 @@ public class MetricsController : ControllerBase
     /// </summary>
     /// <returns>List of unique cluster names</returns>
     [HttpGet("clusters")]
-    [Authorize]
+    [Authorize(Policy = MetricsPolicies.Read)]
     public async Task<ActionResult<List<string>>> GetUniqueClusterNames()
     {
         try
@@ -418,7 +419,7 @@ public class MetricsController : ControllerBase
     /// <param name="clusterName">Optional cluster name filter</param>
     /// <returns>List of unique namespace names</returns>
     [HttpGet("namespaces")]
-    [Authorize]
+    [Authorize(Policy = MetricsPolicies.Read)]
     public async Task<ActionResult<List<string>>> GetUniqueNamespaceNames([FromQuery] string? clusterName = null)
     {
         try
