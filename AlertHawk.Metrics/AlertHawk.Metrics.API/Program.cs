@@ -1,10 +1,12 @@
 using AlertHawk.Metrics.API;
+using AlertHawk.Metrics.API.Authentication;
 using AlertHawk.Metrics.API.Producers;
 using AlertHawk.Metrics.API.Repositories;
 using AlertHawk.Metrics.API.Services;
 using EasyMemoryCache.Configuration;
 using Hangfire;
 using MassTransit;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
@@ -125,6 +127,13 @@ builder.Services.AddSwaggerGen(c =>
         Description =
             "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 1safsfsdfdfd\"",
     });
+    c.AddSecurityDefinition(ApiKeyAuthenticationHandler.SchemeName, new OpenApiSecurityScheme
+    {
+        Name = ApiKeyAuthenticationHandler.HeaderName,
+        Type = SecuritySchemeType.ApiKey,
+        In = ParameterLocation.Header,
+        Description = "API key for service clients such as the Rancher metrics extension.",
+    });
 });
 
 // Register ClickHouse service
@@ -203,6 +212,41 @@ builder.Services.AddAuthentication(options =>
     })
     .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"), jwtBearerScheme: "AzureAd");
 
+builder.Services.AddAuthentication()
+    .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
+        ApiKeyAuthenticationHandler.SchemeName,
+        _ => { });
+
+builder.Services.AddSingleton<IApiKeyValidator>(sp =>
+    new ApiKeyValidator(sp.GetRequiredService<IConfiguration>()));
+
+var corsOrigins = configuration["Cors:Origins"];
+if (string.IsNullOrWhiteSpace(corsOrigins))
+{
+    corsOrigins = configuration["CORS_ORIGINS"];
+}
+
+if (string.IsNullOrWhiteSpace(corsOrigins))
+{
+    corsOrigins = "*";
+}
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("MetricsClients", policy =>
+    {
+        policy.AllowAnyHeader().AllowAnyMethod();
+        if (corsOrigins == "*")
+        {
+            policy.AllowAnyOrigin();
+            return;
+        }
+
+        var origins = corsOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        policy.WithOrigins(origins);
+    });
+});
+
 builder.Services.AddAuthorization(options =>
 {
     var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(
@@ -211,9 +255,23 @@ builder.Services.AddAuthorization(options =>
     );
     defaultAuthorizationPolicyBuilder = defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
     options.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
+
+    options.AddPolicy(MetricsPolicies.Read, policy =>
+    {
+        policy.AddAuthenticationSchemes(
+            "JwtBearer",
+            "AzureAd",
+            ApiKeyAuthenticationHandler.SchemeName);
+        policy.RequireAuthenticatedUser();
+    });
 });
 
 var app = builder.Build();
+var apiKeyValidator = app.Services.GetRequiredService<IApiKeyValidator>();
+app.Logger.LogInformation(
+    apiKeyValidator.IsConfigured
+        ? "API key authentication is configured for metrics read endpoints."
+        : "API key authentication is not configured. Set ApiKey to allow key access to metrics read endpoints.");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -231,6 +289,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("MetricsClients");
 app.UseAuthentication();
 app.UseAuthorization();
 
