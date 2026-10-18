@@ -21,16 +21,16 @@
     <PackageReference Include="Azure.ResourceManager.AppService" Version="1.5.0" />
     <PackageReference Include="Azure.ResourceManager.Resources" Version="1.12.0" />
     <PackageReference Include="Azure.Monitor.Query" Version="1.7.1" />
-    <PackageReference Include="Azure.ResourceManager.ContainerService" Version="1.7.0" />
-    <PackageReference Include="KubernetesClient" Version="19.0.2" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
-    <PackageReference Include="Microsoft.Identity.Web" Version="4.14.2" />
+    <PackageReference Include="Azure.ResourceManager.ContainerService" Version="1.8.0" />
+    <PackageReference Include="KubernetesClient" Version="21.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="4.16.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Sentry.AspNetCore" Version="6.11.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+    <PackageReference Include="Sentry.AspNetCore" Version="6.12.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.0" />
   </ItemGroup>
 
 </Project>
