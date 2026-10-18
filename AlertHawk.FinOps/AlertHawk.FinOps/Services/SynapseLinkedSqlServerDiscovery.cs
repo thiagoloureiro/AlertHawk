@@ -24,6 +24,14 @@ namespace FinOpsToolSample.Services
 
         public HashSet<string> SynapseWorkspaceNames { get; }
 
+        /// <summary>Test helper — builds exclusions without calling Azure ARM.</summary>
+        internal static SynapseSqlExclusions CreateForTests(
+            IEnumerable<string>? analyticsLinkedSqlServerResourceIds = null,
+            IEnumerable<string>? synapseWorkspaceNames = null) =>
+            new(
+                new HashSet<string>(analyticsLinkedSqlServerResourceIds ?? [], StringComparer.OrdinalIgnoreCase),
+                new HashSet<string>(synapseWorkspaceNames ?? [], StringComparer.OrdinalIgnoreCase));
+
         public static async Task<SynapseSqlExclusions> DiscoverAsync(SubscriptionResource subscription)
         {
             var analyticsServerIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -69,7 +77,7 @@ namespace FinOpsToolSample.Services
             return SynapseWorkspaceNames.Contains(serverName);
         }
 
-        private static bool TryGetSqlServerResourceIdAndName(
+        internal static bool TryGetSqlServerResourceIdAndName(
             string databaseResourceId,
             out string serverResourceId,
             out string serverName)
