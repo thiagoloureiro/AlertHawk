@@ -19,6 +19,7 @@
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.13" />
         <PackageReference Include="Polly" Version="8.8.0" />
         <PackageReference Include="Sentry" Version="6.12.1" />
+        <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\AlertHawk.Monitoring.Domain\AlertHawk.Monitoring.Domain.csproj" />
