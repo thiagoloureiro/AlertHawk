@@ -9,7 +9,7 @@ COPY . .
 RUN npm run docs:build
 
 # Production stage
-FROM reg.mini.dev/nginx
+FROM dhi.io/nginx:1
 COPY --from=build /app/.vitepress/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
