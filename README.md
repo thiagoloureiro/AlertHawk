@@ -96,29 +96,25 @@ More details: [Helm docs](AlertHawk.Docs/helm/index.md) · [AlertHawk.Chart](htt
 
 Images are published to Docker Hub under [`thiagoguaru`](https://hub.docker.com/u/thiagoguaru).
 
+GitHub Actions tests, builds, and pushes an image when that project changes on `main`. Those builds are tagged `latest` and `sha-<commit>`. To publish a numbered tag (the versions pinned in the Helm charts), run the workflow from the Actions tab and set `version`, for example `3.3.16`. That push also opens a GitHub Release named `<image>-<version>`.
+
 ### Notification
 
 [![Docker Image Size](https://img.shields.io/docker/image-size/thiagoguaru/alerthawk.notification/latest?style=flat-square&label=image%20size)](https://hub.docker.com/r/thiagoguaru/alerthawk.notification)
 [![Docker Pulls](https://img.shields.io/docker/pulls/thiagoguaru/alerthawk.notification?style=flat-square)](https://hub.docker.com/r/thiagoguaru/alerthawk.notification)
-[![Build status](https://thiagoguaru.visualstudio.com/AlertHawk/_apis/build/status/AlertHawk.Notification%20-%20Docker)](https://thiagoguaru.visualstudio.com/AlertHawk/_build/latest?definitionId=10)
-![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/thiagoguaru/alerthawk/9?style=flat-square)
-![Azure DevOps tests](https://img.shields.io/azure-devops/tests/thiagoguaru/alerthawk/9?style=flat-square)
+[![Build status](https://github.com/thiagoloureiro/AlertHawk/actions/workflows/notification-docker.yml/badge.svg)](https://github.com/thiagoloureiro/AlertHawk/actions/workflows/notification-docker.yml)
 
 ### Authentication
 
 [![Docker Image Size](https://img.shields.io/docker/image-size/thiagoguaru/alerthawk.authentication/latest?style=flat-square&label=image%20size)](https://hub.docker.com/r/thiagoguaru/alerthawk.authentication)
 [![Docker Pulls](https://img.shields.io/docker/pulls/thiagoguaru/alerthawk.authentication?style=flat-square)](https://hub.docker.com/r/thiagoguaru/alerthawk.authentication)
-[![Build status](https://thiagoguaru.visualstudio.com/AlertHawk/_apis/build/status/AlertHawk.Authentication%20-%20Docker)](https://thiagoguaru.visualstudio.com/AlertHawk/_build/latest?definitionId=14)
-![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/thiagoguaru/alerthawk/14?style=flat-square)
-![Azure DevOps tests](https://img.shields.io/azure-devops/tests/thiagoguaru/alerthawk/14?style=flat-square)
+[![Build status](https://github.com/thiagoloureiro/AlertHawk/actions/workflows/authentication-docker.yml/badge.svg)](https://github.com/thiagoloureiro/AlertHawk/actions/workflows/authentication-docker.yml)
 
 ### Monitoring
 
 [![Docker Image Size](https://img.shields.io/docker/image-size/thiagoguaru/alerthawk.monitoring/latest?style=flat-square&label=image%20size)](https://hub.docker.com/r/thiagoguaru/alerthawk.monitoring)
 [![Docker Pulls](https://img.shields.io/docker/pulls/thiagoguaru/alerthawk.monitoring?style=flat-square)](https://hub.docker.com/r/thiagoguaru/alerthawk.monitoring)
-[![Build status](https://thiagoguaru.visualstudio.com/AlertHawk/_apis/build/status/AlertHawk.Monitoring%20-%20Docker)](https://thiagoguaru.visualstudio.com/AlertHawk/_build/latest?definitionId=11)
-![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/thiagoguaru/alerthawk/12?style=flat-square)
-![Azure DevOps tests](https://img.shields.io/azure-devops/tests/thiagoguaru/alerthawk/12?style=flat-square)
+[![Build status](https://github.com/thiagoloureiro/AlertHawk/actions/workflows/monitoring-docker.yml/badge.svg)](https://github.com/thiagoloureiro/AlertHawk/actions/workflows/monitoring-docker.yml)
 
 ### Metrics
 
@@ -126,17 +122,14 @@ Images are published to Docker Hub under [`thiagoguaru`](https://hub.docker.com/
 [![Docker Pulls (API)](https://img.shields.io/docker/pulls/thiagoguaru/alerthawk.metrics.api?style=flat-square&label=api%20pulls)](https://hub.docker.com/r/thiagoguaru/alerthawk.metrics.api)
 [![Docker Image Size (Agent)](https://img.shields.io/docker/image-size/thiagoguaru/alerthawk.metrics/latest?style=flat-square&label=agent%20image)](https://hub.docker.com/r/thiagoguaru/alerthawk.metrics)
 [![Docker Pulls (Agent)](https://img.shields.io/docker/pulls/thiagoguaru/alerthawk.metrics?style=flat-square&label=agent%20pulls)](https://hub.docker.com/r/thiagoguaru/alerthawk.metrics)
-[![Build status](https://dev.azure.com/thiagoguaru/AlertHawk/_apis/build/status/AlertHawk.Monitoring/AlertHawk.Metrics%20-%20Tests)](https://dev.azure.com/thiagoguaru/AlertHawk/_build/latest?definitionId=54)
-![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/thiagoguaru/alerthawk/54?style=flat-square)
-![Azure DevOps tests](https://img.shields.io/azure-devops/tests/thiagoguaru/alerthawk/54?style=flat-square)
+[![API build](https://github.com/thiagoloureiro/AlertHawk/actions/workflows/metrics-api-docker.yml/badge.svg)](https://github.com/thiagoloureiro/AlertHawk/actions/workflows/metrics-api-docker.yml)
+[![Agent build](https://github.com/thiagoloureiro/AlertHawk/actions/workflows/metrics-agent-docker.yml/badge.svg)](https://github.com/thiagoloureiro/AlertHawk/actions/workflows/metrics-agent-docker.yml)
 
 ### FinOps
 
 [![Docker Image Size](https://img.shields.io/docker/image-size/thiagoguaru/alerthawk.finops.api/latest?style=flat-square&label=image%20size)](https://hub.docker.com/r/thiagoguaru/alerthawk.finops.api)
 [![Docker Pulls](https://img.shields.io/docker/pulls/thiagoguaru/alerthawk.finops.api?style=flat-square)](https://hub.docker.com/r/thiagoguaru/alerthawk.finops.api)
-[![Build status](https://thiagoguaru.visualstudio.com/AlertHawk/_apis/build/status/AlertHawk.Monitoring%20-%20Docker)](https://thiagoguaru.visualstudio.com/AlertHawk/_build/latest?definitionId=65)
-![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/thiagoguaru/alerthawk/66?style=flat-square)
-![Azure DevOps tests](https://img.shields.io/azure-devops/tests/thiagoguaru/alerthawk/66?style=flat-square)
+[![Build status](https://github.com/thiagoloureiro/AlertHawk/actions/workflows/finops-docker.yml/badge.svg)](https://github.com/thiagoloureiro/AlertHawk/actions/workflows/finops-docker.yml)
 
 ## Documentation
 

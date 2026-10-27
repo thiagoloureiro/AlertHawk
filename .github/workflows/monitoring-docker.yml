@@ -1,0 +1,33 @@
+name: Monitoring image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "AlertHawk.Monitoring/**"
+      - ".github/workflows/monitoring-docker.yml"
+      - ".github/workflows/docker-publish.yml"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version (for example 3.3.16). Leave empty to publish latest and the commit SHA only.
+        required: false
+        type: string
+
+concurrency:
+  group: monitoring-image-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    uses: ./.github/workflows/docker-publish.yml
+    with:
+      image_name: alerthawk.monitoring
+      context: AlertHawk.Monitoring
+      dockerfile: AlertHawk.Monitoring/Dockerfile
+      test_project: AlertHawk.Monitoring/AlertHawk.Monitoring.sln
+      version: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '' }}
+    secrets: inherit
