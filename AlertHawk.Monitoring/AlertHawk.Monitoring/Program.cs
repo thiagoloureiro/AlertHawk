@@ -180,6 +180,7 @@ builder.Services.AddCustomRepositories();
 
 builder.Services.AddTransient<IHttpClientRunner, HttpClientRunner>();
 builder.Services.AddTransient<ITcpClientRunner, TcpClientRunner>();
+builder.Services.AddTransient<IK8sNodeClient, K8sNodeClient>();
 builder.Services.AddTransient<IK8sClientRunner, K8sClientRunner>();
 
 builder.Services.AddTransient<INotificationProducer, NotificationProducer>();

@@ -6,9 +6,20 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
 {
     public class SlackNotifier : ISlackNotifier
     {
+        private readonly HttpClient? _httpClient;
+
+        public SlackNotifier()
+        {
+        }
+
+        public SlackNotifier(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
+
         public async Task SendNotification(string channel, string message, string webHookUrl)
         {
-            using HttpClient httpClient = new HttpClient();
+            var httpClient = _httpClient ?? new HttpClient();
 
             // Check if message indicates healthy or has issues
             // For node metrics: "is healthy" or "has issues"
@@ -35,6 +46,11 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
             using HttpResponseMessage response = await httpClient.PostAsync(webHookUrl, content);
 
             response.EnsureSuccessStatusCode();
+
+            if (_httpClient is null)
+            {
+                httpClient.Dispose();
+            }
         }
     }
 }

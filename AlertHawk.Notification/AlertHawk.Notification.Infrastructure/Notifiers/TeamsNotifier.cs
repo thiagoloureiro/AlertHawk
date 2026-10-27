@@ -6,9 +6,20 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
 {
     public class TeamsNotifier : ITeamsNotifier
     {
+        private readonly HttpClient? _httpClient;
+
+        public TeamsNotifier()
+        {
+        }
+
+        public TeamsNotifier(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
+
         public async Task SendNotification(string message, string webHookUrl)
         {
-            using HttpClient httpClient = new HttpClient();
+            var httpClient = _httpClient ?? new HttpClient();
 
             // Check if message indicates healthy or has issues
             // For node metrics: "is healthy" or "has issues"
@@ -26,11 +37,16 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers
 
             string jsonPayload = JsonSerializer.Serialize(payloadObj);
 
-            StringContent content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+            using StringContent content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
-            HttpResponseMessage response = await httpClient.PostAsync(webHookUrl, content);
+            using HttpResponseMessage response = await httpClient.PostAsync(webHookUrl, content);
 
             response.EnsureSuccessStatusCode();
+
+            if (_httpClient is null)
+            {
+                httpClient.Dispose();
+            }
         }
     }
 }

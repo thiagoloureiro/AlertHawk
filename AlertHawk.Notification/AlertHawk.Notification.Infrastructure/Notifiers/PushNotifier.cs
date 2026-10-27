@@ -7,11 +7,27 @@ namespace AlertHawk.Notification.Infrastructure.Notifiers;
 
 public class PushNotifier: IPushNotifier
 {
+    private static readonly Uri PushyBaseAddress = new("https://api.pushy.me");
+    private readonly HttpClient? _httpClient;
+
+    public PushNotifier()
+    {
+    }
+
+    public PushNotifier(HttpClient httpClient)
+    {
+        if (httpClient.BaseAddress is null)
+        {
+            httpClient.BaseAddress = PushyBaseAddress;
+        }
+
+        _httpClient = httpClient;
+    }
+
     public async Task SendNotification(string message, NotificationPush notificationPush)
     {
         var api_key= Environment.GetEnvironmentVariable("PUSHY_API_KEY");
-        using var client = new HttpClient();
-        client.BaseAddress = new Uri("https://api.pushy.me");
+        var client = _httpClient ?? new HttpClient { BaseAddress = PushyBaseAddress };
         
         // Check if message indicates healthy or has issues
         // For node metrics: "is healthy" or "has issues"
@@ -33,5 +49,10 @@ public class PushNotifier: IPushNotifier
         using HttpResponseMessage response = await client.PostAsync($"/push?api_key={api_key}", content);
 
         response.EnsureSuccessStatusCode();
+
+        if (_httpClient is null)
+        {
+            client.Dispose();
+        }
     }
 }
