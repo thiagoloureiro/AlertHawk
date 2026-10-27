@@ -5,8 +5,6 @@ using AlertHawk.Monitoring.Domain.Entities;
 using AlertHawk.Monitoring.Domain.Interfaces.MonitorRunners;
 using AlertHawk.Monitoring.Domain.Interfaces.Producers;
 using AlertHawk.Monitoring.Domain.Interfaces.Repositories;
-using k8s;
-using k8s.KubeConfigModels;
 using k8s.Models;
 using Microsoft.Extensions.Logging;
 
@@ -20,11 +18,13 @@ public class K8sClientRunner : IK8sClientRunner
     private readonly INotificationProducer _notificationProducer;
     private readonly IMonitorAlertRepository _monitorAlertRepository;
     private readonly ISystemConfigurationRepository _systemConfigurationRepository;
+    private readonly IK8sNodeClient _k8sNodeClient;
     private readonly int _retryIntervalMilliseconds = 6000;
 
     public K8sClientRunner(ILogger<K8sClientRunner> logger, IMonitorHistoryRepository monitorHistoryRepository,
         IMonitorRepository monitorRepository, INotificationProducer notificationProducer,
-        IMonitorAlertRepository monitorAlertRepository, ISystemConfigurationRepository systemConfigurationRepository)
+        IMonitorAlertRepository monitorAlertRepository, ISystemConfigurationRepository systemConfigurationRepository,
+        IK8sNodeClient k8sNodeClient)
     {
         _logger = logger;
         _monitorHistoryRepository = monitorHistoryRepository;
@@ -32,6 +32,7 @@ public class K8sClientRunner : IK8sClientRunner
         _notificationProducer = notificationProducer;
         _monitorAlertRepository = monitorAlertRepository;
         _systemConfigurationRepository = systemConfigurationRepository;
+        _k8sNodeClient = k8sNodeClient;
     }
 
     [ExcludeFromCodeCoverage]
@@ -208,18 +209,12 @@ public class K8sClientRunner : IK8sClientRunner
             _logger.LogInformation("Wrote kubeconfig to file");
         }
 
-        _logger.LogInformation("Building Kubernetes client");
-        var config = KubernetesClientConfiguration.BuildConfigFromConfigFile(filePath);
-        var client = new Kubernetes(config);
-
         _logger.LogInformation("Fetching nodes from Kubernetes");
-
-        // Fetch nodes from Kubernetes
-        var nodes = await client.CoreV1.ListNodeAsync();
+        var nodes = await _k8sNodeClient.ListNodesAsync(filePath);
 
         List<K8sNodeStatusModel> nodeStatuses = new List<K8sNodeStatusModel>();
 
-        foreach (var node in nodes.Items)
+        foreach (var node in nodes)
         {
             _logger.LogInformation($"Processing node {node.Metadata.Name}");
             var nodeStatus = new K8sNodeStatusModel

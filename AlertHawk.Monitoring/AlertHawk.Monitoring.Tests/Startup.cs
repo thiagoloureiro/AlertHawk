@@ -52,6 +52,7 @@ public class Startup
 
         services.AddTransient<IHttpClientRunner, HttpClientRunner>();
         services.AddTransient<ITcpClientRunner, TcpClientRunner>();
+        services.AddTransient<IK8sNodeClient, K8sNodeClient>();
         services.AddTransient<IK8sClientRunner, K8sClientRunner>();
         
         services.AddTransient<INotificationProducer, NotificationProducer>();
