@@ -21,18 +21,18 @@
     <PackageReference Include="Azure.ResourceManager.AppService" Version="1.5.0" />
     <PackageReference Include="Azure.ResourceManager.Resources" Version="1.12.0" />
     <PackageReference Include="Azure.Monitor.Query" Version="1.7.1" />
-    <PackageReference Include="Azure.ResourceManager.ContainerService" Version="1.8.0" />
+    <PackageReference Include="Azure.ResourceManager.ContainerService" Version="1.9.0" />
     <PackageReference Include="KubernetesClient" Version="21.0.8" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.14" />
     <PackageReference Include="Microsoft.Identity.Web" Version="4.16.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Sentry.AspNetCore" Version="6.12.1" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.0" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.13" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.1" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.14" />
   </ItemGroup>
 
 </Project>
