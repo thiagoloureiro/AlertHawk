@@ -252,7 +252,8 @@ public class MonitorControllerTests
             UrlToCheck = "http://urltocheck.com",
             Timeout = 0,
             HeartBeatInterval = 0,
-            Retries = 0
+            Retries = 0,
+            MonitorGroup = 1
         };
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
@@ -260,8 +261,15 @@ public class MonitorControllerTests
 
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
         var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
+        monitorGroupServiceMock.GetMonitorGroupList("valid.token.here")
+            .Returns(new List<MonitorGroup> { new() { Id = 1, Name = "Name" } });
 
         var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        controller.Request.Headers["Authorization"] = "Bearer valid.token.here";
 
         // Act
         var result = await controller.CreateMonitorHttp(monitorHttp);
@@ -269,6 +277,36 @@ public class MonitorControllerTests
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(1, okResult.Value);
+    }
+
+    [Fact]
+    public async Task CreateMonitorHttp_Returns_Forbidden_When_User_Lacks_Group()
+    {
+        var monitorHttp = new MonitorHttp
+        {
+            Name = "Test Monitor",
+            UrlToCheck = "http://urltocheck.com",
+            MonitorGroup = 99
+        };
+        var monitorServiceMock = Substitute.For<IMonitorService>();
+        var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
+        var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
+        var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
+        monitorGroupServiceMock.GetMonitorGroupList("valid.token.here")
+            .Returns(new List<MonitorGroup> { new() { Id = 1, Name = "Name" } });
+
+        var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        controller.Request.Headers["Authorization"] = "Bearer valid.token.here";
+
+        var result = await controller.CreateMonitorHttp(monitorHttp);
+
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(StatusCodes.Status403Forbidden, objectResult.StatusCode);
+        await monitorServiceMock.DidNotReceive().CreateMonitorHttp(Arg.Any<MonitorHttp>());
     }
 
     [Fact]
@@ -344,7 +382,8 @@ public class MonitorControllerTests
             Timeout = 0,
             HeartBeatInterval = 0,
             Retries = 0,
-            Id = 1
+            Id = 1,
+            MonitorGroup = 1
         };
 
         var token = "Bearer valid.token.here";
@@ -947,7 +986,8 @@ public class MonitorControllerTests
             ClusterName = "TestCluster",
             KubeConfig = "base64Config",
             HeartBeatInterval = 0,
-            Retries = 0
+            Retries = 0,
+            MonitorGroup = 1
         };
         var monitorServiceMock = Substitute.For<IMonitorService>();
         var monitorAgentServiceMock = Substitute.For<IMonitorAgentService>();
@@ -955,8 +995,15 @@ public class MonitorControllerTests
 
         var monitorGroupServiceMock = Substitute.For<IMonitorGroupService>();
         var systemConfigurationRepositoryMock = Substitute.For<ISystemConfigurationRepository>();
+        monitorGroupServiceMock.GetMonitorGroupList("valid.token.here")
+            .Returns(new List<MonitorGroup> { new() { Id = 1, Name = "Name" } });
 
         var controller = new MonitorController(monitorServiceMock, monitorAgentServiceMock, monitorGroupServiceMock, systemConfigurationRepositoryMock);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        controller.Request.Headers["Authorization"] = "Bearer valid.token.here";
 
         // Act
         var result = await controller.CreateMonitorK8s(monitorK8s);

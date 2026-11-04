@@ -130,6 +130,12 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("createMonitorHttp")]
         public async Task<IActionResult> CreateMonitorHttp([FromBody] MonitorHttp monitorHttp)
         {
+            var denied = await DenyUnlessGroupAccess(monitorHttp.MonitorGroup);
+            if (denied != null)
+            {
+                return denied;
+            }
+
             var monitorId = await _monitorService.CreateMonitorHttp(monitorHttp);
             await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
             {
@@ -198,6 +204,15 @@ namespace AlertHawk.Monitoring.Controllers
                     new Message("This user is not authorized to do this operation"));
             }
 
+            if (monitorHttp.MonitorGroup > 0)
+            {
+                var denied = await DenyUnlessGroupAccess(monitorHttp.MonitorGroup);
+                if (denied != null)
+                {
+                    return denied;
+                }
+            }
+
             await _monitorService.UpdateMonitorHttp(monitorHttp);
             return Ok();
         }
@@ -214,6 +229,15 @@ namespace AlertHawk.Monitoring.Controllers
                     new Message("This user is not authorized to do this operation"));
             }
 
+            if (monitorK8S.MonitorGroup > 0)
+            {
+                var denied = await DenyUnlessGroupAccess(monitorK8S.MonitorGroup);
+                if (denied != null)
+                {
+                    return denied;
+                }
+            }
+
             await _monitorService.UpdateMonitorK8s(monitorK8S);
             return Ok();
         }
@@ -223,6 +247,12 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("createMonitorTcp")]
         public async Task<IActionResult> CreateMonitorTcp([FromBody] MonitorTcp monitorTcp)
         {
+            var denied = await DenyUnlessGroupAccess(monitorTcp.MonitorGroup);
+            if (denied != null)
+            {
+                return denied;
+            }
+
             var monitorId = await _monitorService.CreateMonitorTcp(monitorTcp);
             await _monitorGroupService.AddMonitorToGroup(new MonitorGroupItems
             {
@@ -237,6 +267,12 @@ namespace AlertHawk.Monitoring.Controllers
         [HttpPost("createMonitorK8s")]
         public async Task<IActionResult> CreateMonitorK8s([FromBody] MonitorK8s monitorK8s)
         {
+            var denied = await DenyUnlessGroupAccess(monitorK8s.MonitorGroup);
+            if (denied != null)
+            {
+                return denied;
+            }
+
             if (!string.IsNullOrEmpty(monitorK8s.KubeConfig))
             {
                 var fileBytes = Convert.FromBase64String(monitorK8s.KubeConfig); // Decode base64 string
@@ -268,6 +304,15 @@ namespace AlertHawk.Monitoring.Controllers
                     new Message("This user is not authorized to do this operation"));
             }
 
+            if (monitorTcp.MonitorGroup > 0)
+            {
+                var denied = await DenyUnlessGroupAccess(monitorTcp.MonitorGroup);
+                if (denied != null)
+                {
+                    return denied;
+                }
+            }
+
             await _monitorService.UpdateMonitorTcp(monitorTcp);
             return Ok();
         }
@@ -287,6 +332,29 @@ namespace AlertHawk.Monitoring.Controllers
 
             await _monitorService.DeleteMonitor(id, jwtToken);
             return Ok();
+        }
+
+        private async Task<IActionResult?> DenyUnlessGroupAccess(int groupId)
+        {
+            var jwtToken = TokenUtils.GetJwtToken(Request.Headers["Authorization"].ToString());
+            if (await UserCanAccessGroup(groupId, jwtToken))
+            {
+                return null;
+            }
+
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new Message("This user is not authorized to do this operation"));
+        }
+
+        private async Task<bool> UserCanAccessGroup(int groupId, string? jwtToken)
+        {
+            if (string.IsNullOrEmpty(jwtToken) || groupId <= 0)
+            {
+                return false;
+            }
+
+            var userGroups = await _monitorGroupService.GetMonitorGroupList(jwtToken);
+            return userGroups != null && userGroups.Any(x => x.Id == groupId);
         }
 
         private async Task<bool> VerifyUserGroupPermissions(int id, string? jwtToken)
