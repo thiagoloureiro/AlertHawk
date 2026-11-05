@@ -9,6 +9,7 @@ using EasyMemoryCache;
 using EasyMemoryCache.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Net;
 using System.Net.Http.Headers;
 using Monitor = AlertHawk.Monitoring.Domain.Entities.Monitor;
 
@@ -256,6 +257,11 @@ public class MonitorService : IMonitorService
 
         monitorHttp.UrlToCheck = monitorHttp.UrlToCheck.TrimStart();
         monitorHttp.UrlToCheck = monitorHttp.UrlToCheck.TrimEnd();
+
+        if (!string.IsNullOrWhiteSpace(monitorHttp.Body))
+        {
+            monitorHttp.Body = WebUtility.HtmlEncode(monitorHttp.Body.Trim());
+        }
 
         if (monitorHttp!.Headers != null)
         {
