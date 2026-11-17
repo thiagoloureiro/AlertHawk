@@ -17,7 +17,7 @@
 
 <p align="center">
   <a href="https://github.com/thiagoloureiro/AlertHawk/blob/main/LICENSE"><img src="https://img.shields.io/github/license/thiagoloureiro/AlertHawk?style=flat-square" alt="License" /></a>
-  <a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET-10.0-512BD4?style=flat-square&logo=dotnet" alt=".NET 10" /></a>
+  <a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET-11.0-512BD4?style=flat-square&logo=dotnet" alt=".NET 11" /></a>
   <a href="https://alerthawk.net"><img src="https://img.shields.io/badge/demo-alerthawk.net-0A7EA4?style=flat-square" alt="Live demo" /></a>
   <a href="https://github.com/thiagoloureiro/AlertHawk/stargazers"><img src="https://img.shields.io/github/stars/thiagoloureiro/AlertHawk?style=flat-square" alt="Stars" /></a>
   <a href="https://github.com/thiagoloureiro/AlertHawk/network/members"><img src="https://img.shields.io/github/forks/thiagoloureiro/AlertHawk?style=flat-square" alt="Forks" /></a>
