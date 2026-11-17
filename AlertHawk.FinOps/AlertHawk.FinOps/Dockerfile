@@ -1,5 +1,5 @@
 # ---------- Base runtime (hardened, no shell) ----------
-FROM dhi.io/aspnetcore:10 AS base
+FROM dhi.io/aspnetcore:11 AS base
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 USER 65532
 WORKDIR /app
@@ -8,13 +8,13 @@ EXPOSE 8081
 
 
 # ---------- Cert stage (has apk + shell) ----------
-FROM alpine:3.22 AS certs
+FROM alpine AS certs
 RUN apk add --no-cache ca-certificates \
  && update-ca-certificates
 
 
 # This stage is used to build the service project
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["AlertHawk.FinOps/AlertHawk.FinOps.csproj", "AlertHawk.FinOps/"]
